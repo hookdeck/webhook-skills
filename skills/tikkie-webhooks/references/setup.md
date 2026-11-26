@@ -92,8 +92,8 @@ npx hookdeck-cli listen 3000 tikkie --path /webhooks/tikkie   # Express / Next.j
 npx hookdeck-cli listen 8000 tikkie --path /webhooks/tikkie   # FastAPI
 ```
 
-Subscribe with the printed Hookdeck URL as `url`. Hookdeck's `TIKKIE` source
-type accepts `POST` only and has no verification step. Keep the
+Subscribe with the printed Hookdeck URL as `url`. Tikkie sends no
+signature, so there is nothing for Hookdeck to verify. Keep the
 `subscriptionId` check and the re-fetch in your handler. To test without
 waiting for a real payment, `POST` one of the example payloads from
 [overview.md](overview.md) to your endpoint.

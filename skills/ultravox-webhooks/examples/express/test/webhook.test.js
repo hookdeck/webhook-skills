@@ -101,16 +101,28 @@ describe('Ultravox webhook', () => {
     expect(res.status).toBe(401);
   });
 
-  test('rejects malformed signatures (length, alphabet, prefix, list)', async () => {
+  test('accepts a comma-separated list when any signature matches (several secrets)', async () => {
+    const body = event('call.ended');
+    const ts = new Date().toISOString();
+    const other = sign(body, ts, 'previous_secret');
+    for (const signature of [`${other},${sign(body, ts)}`, `${sign(body, ts)},${other}`]) {
+      const res = await post(body, { timestamp: ts, signature });
+      expect(res.status).toBe(204);
+    }
+  });
+
+  test('rejects malformed signatures (length, alphabet, prefix, list with no match)', async () => {
     const body = event('call.ended');
     const ts = new Date().toISOString();
     const good = sign(body, ts);
+    const other = sign(body, ts, 'previous_secret');
     for (const signature of [
       good.slice(0, 62),
       good + '00',
       'z'.repeat(64),
       `sha256=${good}`,
-      `${good},${good}`,
+      `${other},${other}`,
+      `${good} ,x`,
     ]) {
       const res = await post(body, { timestamp: ts, signature });
       expect(res.status).toBe(401);

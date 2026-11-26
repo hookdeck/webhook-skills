@@ -12,7 +12,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Formbricks sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Formbricks sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers) {
   const prefix = headers['webhook-id'] ? 'webhook' : 'svix';
   return {
@@ -73,7 +73,7 @@ app.post('/webhooks/formbricks', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Response finished:', data.id, 'survey', data.surveyId);
       break;
     default:
-      // The documented list may not be exhaustive: ignore what you don't need
+      // Test Endpoint sends {"event":"testEndpoint"}: answer 200 and ignore anything else
       console.log('Unhandled event type:', eventType);
   }
 

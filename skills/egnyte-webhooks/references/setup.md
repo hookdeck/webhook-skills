@@ -8,7 +8,7 @@
 
 ## How Do I Choose the authHeader?
 
-Egnyte has no dashboard screen for webhooks; you register them through the API. The
+Egnyte documents webhook registration through the API. The
 `authHeader` field is optional, but **without it Egnyte sends nothing to verify**, so always
 set it. Pick a long random secret and decide the exact string, for example
 `Bearer secret-token-12345` (the docs' example), and store that same full string as

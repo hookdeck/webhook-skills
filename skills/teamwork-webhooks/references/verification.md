@@ -59,5 +59,5 @@ def verify_teamwork_webhook(raw_body: bytes, signature: str | None, token: str |
 
 - Confirm the webhook is Version 2 and has a token set.
 - Confirm the env var matches the token exactly (no whitespace).
-- Print the raw body length and compare with Teamwork's delivery log.
+- Log the raw body length and confirm nothing parsed or re-serialized the body before verification.
 - Return `401` for failures during development so they're easy to spot.

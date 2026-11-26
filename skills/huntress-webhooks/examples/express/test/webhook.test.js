@@ -38,10 +38,27 @@ describe('Huntress webhook handler', () => {
     expect(res.body.type).toBeNull();
   });
 
-  test('reports the type when the body has one', async () => {
-    const res = await send(JSON.stringify({ type: 'example.event', data: {} }));
+  test('reports event_type, not the body-level type field', async () => {
+    const res = await send(JSON.stringify({ event_type: 'escalation.created', type: 'not_the_event_type' }));
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('example.event');
+    expect(res.body.type).toBe('escalation.created');
+  });
+
+  test('accepts the Standard Webhooks header names a live Huntress delivery used', async () => {
+    // Live test delivery, 2026-11-18: webhook-* headers, not svix-*
+    const payload = JSON.stringify({ event_type: 'test.event', message: 'Hello World' });
+    const msgId = `msg_${crypto.randomBytes(12).toString('hex')}`;
+    const timestamp = now();
+    const res = await request(app)
+      .post('/webhooks/huntress')
+      .set('Content-Type', 'application/json')
+      .set('webhook-id', msgId)
+      .set('webhook-timestamp', timestamp)
+      .set('webhook-signature', sign(payload, msgId, timestamp))
+      .send(payload);
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(msgId);
+    expect(res.body.type).toBe('test.event');
   });
 
   test('verifies regardless of Content-Type', async () => {

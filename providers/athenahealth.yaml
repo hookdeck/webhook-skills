@@ -9,8 +9,7 @@ notes: >
   'sha256=<hex>' (WebSub content signing, https://www.w3.org/TR/websub/#signing-content): HMAC-SHA256
   hex of the raw body keyed with the X-Hub-Secret value the subscriber chose and sent when creating
   the FHIR Subscription. athenahealth says the method may change from sha256 and receivers should
-  check the method in the header; Hookdeck's athenahealth source only verifies sha256, so the examples
-  require the sha256= prefix, reject any other method, and the skill says a future method change would
+  check the method in the header; The examples require the sha256= prefix, reject any other method, and the skill says a future method change would
   fail verification. Compare in constant time: in Node, check the received value is exactly 64 hex
   chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently truncates), or
   compare the lowercase hex strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a

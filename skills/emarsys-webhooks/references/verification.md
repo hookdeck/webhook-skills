@@ -70,7 +70,7 @@ def verify(headers, username, password):
 
 ## Common Gotchas
 
-- **Hookdeck never sends a 401 challenge.** The credentials must arrive with each request. If
+- **No 401 challenge.** The credentials must arrive with each request. If
   deliveries show as failed verification in Hookdeck, they are not arriving. Check that HTTP
   basic authentication is selected in the preset.
 - **Preemptive sending is undocumented.** Emarsys's docs don't say whether the credentials are

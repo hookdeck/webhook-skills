@@ -38,21 +38,21 @@ async def verified_body(request: Request) -> bytes:
 
 def handle_event(event: dict) -> None:
     event_type = event.get("type")
-    device_id = event.get("deviceId")
+    device_id = (event.get("data") or {}).get("deviceId")  # device events carry it inside `data`
 
     if event_type == "device.discovered":
         print(f"Device discovered: {device_id}")
-        # TODO: register the device in your system
+        # Your code: register the device in your system
     elif event_type == "device.updated":
         print(f"Device updated: {device_id}")
-        # TODO: sync device state
+        # Your code: sync device state
     elif event_type == "device.disconnected":
         print(f"Device disconnected: {device_id}")
     elif event_type == "command.succeeded":
         print(f"Command succeeded for device {device_id}")
     elif event_type == "command.failed":
         print(f"Command failed for device {device_id}")
-        # TODO: retry or alert
+        # Your code: retry or alert
     elif event_type == "command.overridden":
         print(f"Command overridden for device {device_id}")
     elif event_type == "customer.created":

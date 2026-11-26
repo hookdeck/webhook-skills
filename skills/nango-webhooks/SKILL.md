@@ -6,7 +6,7 @@ description: >
   hex of the raw body, keyed with the environment's webhook signing key, not
   the API key), or handling Nango webhook types: auth (connection creation,
   override, refresh, deletion), sync (sync run succeeded or failed), forward
-  (external API webhooks forwarded through Nango), and async_action.
+  (external API webhooks forwarded through Nango), and the deprecated async_action.
 license: MIT
 metadata:
   author: hookdeck
@@ -63,7 +63,7 @@ Nango has no per-event names; route on the body's `type` (and `operation` / `suc
 | `auth` | `operation`: `creation` \| `override` \| `refresh` \| `deletion`; `success`; `connectionId`; `providerConfigKey`; `tags` | Connection created, re-authorized, token refresh failed or recovered, connection deleted |
 | `sync` | `success`; `syncName`; `model`; `modifiedAfter`; `responseResults`; `checkpoints`; `error` | A sync function run finished (succeeded or failed) |
 | `forward` | `from`; `providerConfigKey`; `connectionId` (optional); `payload`; `unverified` (optional) | An external API webhook was forwarded through Nango |
-| `async_action` | `connectionId`; `providerConfigKey`; `payload` | An async action finished |
+| `async_action` | `connectionId`; `providerConfigKey`; `payload` (`id`, `statusUrl`) | A deprecated async action finished; fetch its result from `statusUrl` |
 
 `auth` + `creation` with `success: true` is the one you **must** handle: it is how you learn the new `connectionId` (match it to your user via `tags`).
 

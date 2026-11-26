@@ -11,7 +11,7 @@ Chargeblast webhooks are delivered by Svix. Each request includes:
 | `svix-signature` | Space-delimited list of `v1,<base64 signature>` entries |
 | `X-Event-Type` | Event type, for example `alert.created` (not part of the signature) |
 
-Svix implements Standard Webhooks, whose `webhook-id`, `webhook-timestamp` and `webhook-signature` headers carry the same values. The Svix libraries accept either set of names, and Hookdeck reads the `webhook-*` names when `svix-id` is absent, so the examples do the same.
+Svix implements Standard Webhooks, whose `webhook-id`, `webhook-timestamp` and `webhook-signature` headers carry the same values. The Svix libraries accept either set of names, and the examples read the `webhook-*` names when `svix-id` is absent.
 
 The algorithm:
 

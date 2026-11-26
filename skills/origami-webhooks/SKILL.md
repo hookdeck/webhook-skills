@@ -37,7 +37,7 @@ HMAC-SHA256 using the base64-decoded secret (the part after `whsec_`), base64-en
 and sends one or more space-separated `v1,<signature>` entries (two during a secret rotation).
 Use the `standardwebhooks` library, which compares in constant time. Read the `webhook-*` headers,
 and when `webhook-id` is absent fall back to the `svix-*` headers (`svix-id`, `svix-timestamp`,
-`svix-signature`), as Hookdeck does, then hand the library the values under the `webhook-*` names.
+`svix-signature`), then hand the library the values under the `webhook-*` names.
 
 ```javascript
 import { Webhook } from 'standardwebhooks';

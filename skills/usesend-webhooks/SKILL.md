@@ -70,7 +70,7 @@ replays resend the original timestamp. See
 ### Timestamp tolerance is opt-in
 
 The examples do **not** reject old timestamps by default. Hookdeck retries and
-replays resend the original headers, and Hookdeck itself applies no tolerance,
+replays resend the original headers,
 so a fixed window would reject legitimate retries. To turn one on, set
 `USESEND_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). Remember the header is
 in milliseconds. Deduplicate on the payload `id` either way.

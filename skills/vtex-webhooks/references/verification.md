@@ -12,7 +12,7 @@ every request.
 
 The header name is yours to choose, so the examples read it from `VTEX_WEBHOOK_HEADER` (default
 `X-Webhook-Secret`) and the expected value from `VTEX_WEBHOOK_SECRET`. This is an API key style
-check: header name plus exact value, which is how Hookdeck's VTEX source verifies it.
+check: header name plus exact value.
 
 ## What a Shared Credential Does and Doesn't Give You
 

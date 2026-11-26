@@ -56,18 +56,18 @@ function verifyPaypercut(rawBody /* Buffer */, header, secret) {
 - The header may hold several `v1=` entries: accept if **any** matches. A header with no `t=` fails.
 - Hex is compared case-insensitively: require exactly 64 hex characters, lowercase, then compare in constant time. Python: `hmac.compare_digest` on bytes.
 - Missing or empty header, malformed value or mismatch: `401`. Missing secret: `500` (fail closed). A verified body that isn't an event (`type` must be a string): `400`.
-- **No timestamp window by default.** Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. The examples offer an opt-in `PAYPERCUT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off; `t` is Unix seconds; Paypercut suggests 300) if you want one.
-- Dedupe on the `Paypercut-Delivery-Id` header; `Paypercut-Event-Id` carries the event id.
+- **No timestamp window by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in `PAYPERCUT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off; `t` is Unix seconds; Paypercut suggests 300) if you want one.
+- Dedupe on the `Paypercut-Delivery-Id` header, which retries of a delivery repeat; `Paypercut-Event-Id` carries the event id.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## HTTP Methods
 
-Paypercut's docs don't name the HTTP method of a delivery. The examples therefore accept **GET, POST, PUT, PATCH and DELETE** on the webhook route, verify the signature first for every method, and treat a missing body as empty bytes (a bodyless request is verified over zero bytes, then acknowledged with `200`). Hookdeck's Paypercut source pre-selects POST without managing the method, so if Paypercut uses any other method, **also allow that method on the Hookdeck source**.
+Paypercut's docs don't name the HTTP method of a delivery. The examples therefore accept **GET, POST, PUT, PATCH and DELETE** on the webhook route, verify the signature first for every method, and treat a missing body as empty bytes (a bodyless request is verified over zero bytes, then acknowledged with `200`). If Paypercut uses a method other than POST, **also allow that method on the Hookdeck source** ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Payload and Types
 
-Dispatch on the body's `type` field. The docs' payload-validation sample requires `type` (string) and `data`, and connected-account events add a top-level `account`. Paypercut documents no delivered sample body, so treat `type` as holding the identifier from the event catalogue.
+Dispatch on the body's `type` field, which holds the event identifier. `data.object` is a snapshot of the resource, and connected-account events name their account in a top-level `account`. Paypercut's [Types of events](https://docs.paypercut.io/api-reference/tag/events/types) page has an example body for every event. Dashboard endpoint tests arrive as `webhook_endpoint.test`, which can't be subscribed to: acknowledge it.
 
 | Event | Sent When |
 |-------|-----------|

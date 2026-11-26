@@ -12,8 +12,7 @@ notes: >
   confirmed from the full rendered docs, not just "couldn't find it". Do NOT invent an
   X-Zift-Signature and this is NOT Standard Webhooks. Authenticity relies only on HTTPS +
   endpoint-URL secrecy (recommend IP allowlisting Zift's egress ranges at the load
-  balancer). A tunnel/gateway (e.g. Hookdeck's ZIFT source) cannot cryptographically
-  verify these — treat as unverified/passthrough. Because there is no body signature,
+  balancer). With no signature, nothing in front of the app (e.g. a Hookdeck source) can cryptographically verify these — treat them as unverified. Because there is no body signature,
   ordinary JSON parsing is safe. The ONE protocol requirement is the ACKNOWLEDGEMENT: to
   ack a delivery the endpoint MUST return a JSON body echoing the received notificationId,
   e.g. {"notificationId": 272638} — Zift accepts an int OR a string, so pass the value

@@ -53,21 +53,21 @@ function handleChat(chat) {
   if (ref && ref.type === 'ticket') {
     console.log(`  about ticket ${text(ref.id)}`);
   }
-  // TODO: notify technicians, or follow up on 'missed' / 'callback' sessions
+  // Your code: notify technicians, or follow up on 'missed' / 'callback' sessions
 }
 
 function handleTicket(ticket) {
   const id = text(ticket.id);
   if (Object.hasOwn(ticket, 'from') && ticket.from === null) {
     console.log(`Ticket ${id} created`);
-    // TODO: act on the new ticket
+    // Your code: act on the new ticket
   } else if (isObject(ticket.from)) {
     const previous = ticket.from;
     const changed = Object.keys(ticket).filter(
       (key) => key !== 'from' && JSON.stringify(ticket[key]) !== JSON.stringify(previous[key])
     );
     console.log(`Ticket ${id} changed: ${changed.join(', ') || 'no fields'}`);
-    // TODO: act on the fields that changed
+    // Your code: act on the fields that changed
   } else {
     console.log(`Ticket ${id} event (no previous state, sent by a Tokity Events action)`);
   }

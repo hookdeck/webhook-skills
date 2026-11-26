@@ -3,7 +3,7 @@
 Minimal example of receiving Rebilly webhooks and authenticating them with HTTP basic access
 authentication.
 
-Rebilly also signs every webhook (a `Security-Signature` JWT and Standard Webhooks `v1a` Ed25519
+Rebilly also signs every webhook (a `Security-Signature` JWT and organization-bound `v2a` and legacy `v1a` Ed25519
 signatures), but Hookdeck's Rebilly source checks only basic auth, so this example does too. A
 static credential authenticates the sender, not the body, and gives no replay protection: use
 HTTPS and rotate the credential if it leaks. See
@@ -62,8 +62,7 @@ npx hookdeck-cli listen 3000 rebilly --path /webhooks/rebilly
 ```
 
 Put the printed URL in the Rebilly webhook, set HTTP basic access authentication on it, and allow
-the webhook's method (GET, POST, PUT, PATCH or DELETE) on the Hookdeck source: it pre-selects POST.
-Hookdeck never sends a 401 challenge, so the credentials must arrive with each request.
+the webhook's method (GET, POST, PUT, PATCH or DELETE) on the Hookdeck source. The credentials must arrive with each request (there is no challenge round trip).
 
 ## How It Works
 

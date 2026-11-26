@@ -21,7 +21,7 @@ Digital Samba does not sign payloads, so there is no HMAC to verify. The handler
    cp .env.example .env
    ```
 
-3. Set `DIGITAL_SAMBA_WEBHOOK_SECRET` to the bare secret you used as `authorization_header`. Set authorization_header on the webhook through the Digital Samba REST API, then paste the same secret.
+3. Set `DIGITAL_SAMBA_WEBHOOK_SECRET` to the bare secret you used as `authorization_header`. Set it in the webhook's authorisation header field in the dashboard, or as `authorization_header` through the REST API.
 
 ## Run
 

@@ -2,54 +2,66 @@
 
 ## What Are Mailcoach Webhooks?
 
-Mailcoach (email marketing by Spatie, hosted and self-hosted) can send a request to your app whenever something happens in Mailcoach, so you can keep a local database in near-real-time sync. Webhooks are configured on the Webhooks screen in Mailcoach settings and are sent as an HTTP `POST` with a JSON body. Mailcoach sends them with `spatie/laravel-webhook-server`.
+Mailcoach (email marketing by Spatie) notifies your application when something changes in Mailcoach. It sends an HTTP `POST` with a JSON body to your HTTPS receiver. These are different from provider feedback sent *to* Mailcoach, and from the Webhook trigger that starts an automation.
 
-The introduction in Mailcoach's docs also mentions tags being added or removed, but the Payloads section documents only the four events below, so only those are covered here.
-
-## Common Event Types
+## Event Types
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `UnconfirmedSubscriberCreatedEvent` | A person is added to a list that uses confirmation; not yet confirmed | Show a "pending" state, send your own follow-up |
-| `SubscribedEvent` | A subscriber is confirmed | Create or update the user or contact in your database |
-| `UnsubscribedEvent` | Someone unsubscribes | Stop marketing sync, update consent flags |
-| `CampaignSentEvent` | A campaign has been fully sent | Record the send and its statistics |
+| `SubscribedEvent` | A subscription becomes confirmed | Create or update the contact in your database |
+| `ResubscribedEvent` | A previously unsubscribed address subscribes again | Restore marketing consent |
+| `UnconfirmedSubscriberCreatedEvent` | A new address awaits confirmation | Show a "pending" state; don't treat it as permission to send |
+| `UnsubscribedEvent` | Someone unsubscribes | Update consent flags |
+| `TagAddedEvent` | A tag is added to a subscriber (`added_tag`) | Sync segments or CRM fields |
+| `TagRemovedEvent` | A tag is removed from a subscriber (`removed_tag`) | Sync segments or CRM fields |
+| `CampaignSentEvent` | Mailcoach marks a campaign as sent | Record the send; fetch final statistics later |
+| `ContentOpenedEvent` | A campaign email is opened | Engagement tracking |
+| `LinkClickedEvent` | A link in an email is clicked | Engagement tracking |
+| `BounceRegisteredEvent` | A permanent delivery failure is recorded | Flag the address |
+| `SoftBounceRegisteredEvent` | A temporary delivery failure is recorded | Watch for repeats |
 
-The event name is the `event` field in the body (the PHP event class name). No header names the event, so dispatch on it and ignore unknown values.
+The event name is the top-level `event` field. No header names the event, so dispatch on it and ignore unknown values. The `text` field, when present, is a human-readable summary, not an identifier.
 
 ## Event Payload Structure
 
-Each payload lists `event` first, then the fields flat beside it.
+Fields are top-level, not wrapped in `data`. UUIDs are strings, absent timestamps and names may be `null`, and timestamps are JSON date strings.
 
-Subscriber events (`UnconfirmedSubscriberCreatedEvent`, `SubscribedEvent`, `UnsubscribedEvent`):
+Subscriber events use the subscriber resource. Mailcoach's `SubscribedEvent` example (email and first name replaced with placeholders):
 
 ```json
 {
   "event": "SubscribedEvent",
-  "email_list_uuid": "8d0c2a8e-1c5b-4e0a-9d54-0f9b1b6a7c11",
-  "email": "jane@example.com",
-  "first_name": "Jane",
-  "last_name": "Doe",
-  "extra_attributes": [],
-  "tags": ["newsletter"],
-  "subscribed_at": "2026-10-26T09:00:00.000000Z",
+  "uuid": "2051c60c-a9f3-31d0-a58c-7adcc32ea2e3",
+  "email_list_uuid": "a69075c6-ff5c-4b6a-b217-12026cb72e4f",
+  "email": "user1@example.com",
+  "first_name": "Example",
+  "last_name": null,
+  "extra_attributes": {},
+  "tags": [],
+  "subscribed_at": "2026-11-18T10:00:00.000000Z",
   "unsubscribed_at": null,
-  "created_at": "2026-10-26T08:59:00.000000Z",
-  "updated_at": "2026-10-26T09:00:00.000000Z"
+  "created_at": "2026-11-18T09:59:00.000000Z",
+  "updated_at": "2026-11-18T10:00:00.000000Z",
+  "text": "Email user1@example.com subscribed to list Newsletter"
 }
 ```
 
-`CampaignSentEvent` fields: `uuid`, `name`, `email_list_uuid`, `email_list`, `template_uuid`, `template`, `from_email`, `from_name`, `status`, `html`, `structured_html`, `email_html`, `webview_html`, `fields`, `utm_tags`, `sent_to_number_of_subscribers`, `segment_class`, `segment_description`, `open_count`, `unique_open_count`, `open_rate`, `click_count`, `unique_click_count`, `click_rate`, `unsubscribe_count`, `unsubscribe_rate`, `bounce_count`, `bounce_rate`, `sent_at`, `statistics_calculated_at`, `scheduled_at`, `summary_mail_sent_at`, `created_at`, `updated_at`.
+`TagAddedEvent` and `TagRemovedEvent` add `added_tag` or `removed_tag`, a string with the tag name.
 
-The docs list field names only; the example values above are illustrative.
+`CampaignSentEvent` is the campaign resource flattened at the top level, plus `event` and `text`. Its `uuid` identifies the campaign, not an individual send. It includes the content and statistics, so don't log it publicly.
+
+`ContentOpenedEvent` currently covers campaign opens and carries `open_uuid`, `send_uuid`, `model_uuid`, `model_type`, `subscriber_uuid`, `subscriber_email` and `opened_at`. `model_type` is the installation's morph-class value, so don't hard-code a guessed class name. `LinkClickedEvent` carries `send_uuid`, `click_uuid`, `link_uuid`, `email_list_uuid`, `subscriber_uuid`, `subscriber_email` and `clicked_at`; use `link_uuid` with the Links API to get the URL. Automated scanners can produce opens and clicks.
+
+The bounce events carry `send_uuid`, `subscriber_uuid`, `subscriber_email` and `email_list_uuid`.
 
 ## Delivery Notes
 
-- A webhook can be disabled after too many consecutive failures. On self-hosted installs set `maximum_attempts` (for example 5) under `webhooks` in `config/mailcoach.php` and opt in with `disable_failed_webhooks` under `opt_in_features`. Retries do not count toward that limit.
-- The docs do not state what counts as success or the retry timing. Respond with a 2xx quickly and process asynchronously.
-- There is no delivery or event ID in the documented payload, so deduplicate on your own key (for example `email_list_uuid` plus `email` plus the event name and timestamp).
-- Mailcoach can keep a log of webhook calls (`webhooks.logs` in `config/mailcoach.php`, then publish and run the migrations), and you can choose which event types a webhook receives on its details page.
+- Return a 2xx after accepting the event durably. A request times out after 10 seconds.
+- A failed delivery gets at most five attempts in total, retried after 10, 100, 1,000 and 10,000 seconds (queue scheduling can add delay).
+- Hosted Mailcoach disables a webhook after five consecutive calls exhaust their attempts. A successful call resets the count. Re-enabling it doesn't replay missed events; reconcile through the Subscribers API.
+- Event order and exactly-once delivery aren't guaranteed. Use `click_uuid` or `open_uuid` where present as part of a dedupe key, together with the event name; subscriber changes need your own key or a state check. Don't dedupe all future events on the subscriber UUID alone.
+- Inspect **Webhook logs** on the webhook's details page.
 
 ## Full Reference
 
-See [Mailcoach's webhook documentation](https://www.mailcoach.app/resources/learn-mailcoach/advanced/webhooks/).
+See [Mailcoach's webhook documentation](https://www.mailcoach.app/docs/advanced/webhooks/).

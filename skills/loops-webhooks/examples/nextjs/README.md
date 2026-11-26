@@ -1,0 +1,53 @@
+# Loops Webhooks - Next.js Example
+
+Minimal Next.js example of receiving [Loops](https://loops.so/docs/webhooks) webhooks with signature verification (`Webhook-Id` / `Webhook-Timestamp` / `Webhook-Signature`, base64-decoded secret).
+
+## Prerequisites
+
+- Node.js 18+
+- A Loops account (webhooks are available to all Loops users)
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. Set `LOOPS_WEBHOOK_SECRET` to the signing secret shown in Loops under [Settings -> Webhooks](https://app.loops.so/settings?page=webhooks) (see [setup](../../references/setup.md)). Paste it as shown, with or without a `whsec_` prefix.
+
+## Run
+
+```bash
+npm run dev
+```
+
+Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/loops` in [app/webhooks/loops/route.ts](app/webhooks/loops/route.ts).
+
+## Test
+
+```bash
+npm test
+```
+
+The tests sign requests the way Loops does. They check the Standard Webhooks reference vector (with and without `whsec_`, and end to end), `contact.created`, `email.softBounced` and `testing.testEvent` payloads from the Loops docs, two signatures after a secret roll, a secret used without decoding, tampered bodies, the optional timestamp window, repeated deliveries (same `Webhook-Id`), and the fail-closed path when no secret is configured.
+
+## Receive real webhooks locally
+
+```bash
+npx hookdeck-cli listen 3000 loops --path /webhooks/loops
+```
+
+Paste the printed URL as the endpoint in Loops (Settings -> Webhooks), toggle on the events you want, and send a test request from the same page. Loops allows one endpoint per account, so this replaces any URL already set.
+
+## Notes
+
+- The route reads `request.arrayBuffer()` before parsing. The signature covers the exact raw body, so `request.json()` before verifying breaks it.
+- If `LOOPS_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
+- `LOOPS_WEBHOOK_TOLERANCE_SECONDS` turns on a timestamp window (Loops' example uses 300 seconds). It's off by default because a delivery replayed later through a relay keeps its original timestamp; duplicates are caught by `Webhook-Id` instead.
+- Respond within 15 seconds. Loops retries non-`2xx` responses, up to eight attempts over about 28 hours.

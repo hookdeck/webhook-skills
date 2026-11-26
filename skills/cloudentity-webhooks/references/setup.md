@@ -15,14 +15,15 @@
 5. Click **Create**. When prompted, **copy the API key**: it is shown once. Store it as
    `CLOUDENTITY_WEBHOOK_API_KEY`.
 
-SecureAuth sends this key as plain text in the `X-API-Key` header of every request. Webhooks can
+SecureAuth sends this key as plain text in the `X-Api-Key` header of every request (header names
+are case-insensitive). Webhooks can
 also be managed through the Webhook CRUD APIs.
 
 ## Test Mode vs Live Mode
 
 There is no separate test mode. To test against a development endpoint with an untrusted
-certificate, enable **Developer mode** to disable certificate validation for SecureAuth
-requests. Don't leave it on for production.
+certificate, enable **Developer mode**, which turns off TLS certificate verification for webhook
+requests. Don't leave it on for an endpoint that receives real data.
 
 ## Test
 

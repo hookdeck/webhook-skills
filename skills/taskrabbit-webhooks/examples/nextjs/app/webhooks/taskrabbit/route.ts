@@ -68,14 +68,14 @@ export async function POST(request: Request) {
         projectUuid: event.project_uuid,
         reference: event.agreement_external_reference,
       });
-      // TODO: mark the order fulfilled in your system
+      // Mark the order fulfilled in your system
       break;
     case 'project.canceled':
       console.log('Project canceled:', {
         projectUuid: event.project_uuid,
         reason: event.cancellation_reason,
       });
-      // TODO: release the order / notify the customer
+      // Release the order / notify the customer
       break;
     case 'project.rescheduled':
       console.log('Project rescheduled:', {
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         from: event.previous_start_time,
         to: event.new_start_time,
       });
-      // TODO: update the scheduled start time
+      // Update the scheduled start time
       break;
     default:
       console.log('Unhandled event type:', event.event);

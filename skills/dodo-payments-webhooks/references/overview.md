@@ -2,7 +2,7 @@
 
 ## What Are Dodo Payments Webhooks?
 
-[Dodo Payments](https://dodopayments.com) is a merchant-of-record payments platform. It sends an HTTP POST with a JSON body to every webhook endpoint you add under **Developer > Webhooks** whenever something happens to a payment, refund, dispute, subscription, license key, entitlement grant, credit balance, checkout, dunning attempt or payout. Deliveries follow the [Standard Webhooks](https://standardwebhooks.com/) specification and are signed with the endpoint's `whsec_` secret.
+[Dodo Payments](https://dodopayments.com) is a merchant-of-record payments platform. It sends an HTTP POST with a JSON body to every webhook endpoint you add under **Developer > Webhooks** whenever something happens to a payment, refund, dispute, subscription, invoice, license key, entitlement grant, credit balance, checkout, dunning attempt or payout. Deliveries follow the [Standard Webhooks](https://standardwebhooks.com/) specification and are signed with the endpoint's `whsec_` secret.
 
 You can also pick an integration connector (Slack, Discord, Zapier, Resend, SendGrid and others) instead of a URL; connectors transform the events for you and need no handler.
 
@@ -25,7 +25,7 @@ You can also pick an integration connector (Slack, Discord, Zapier, Resend, Send
 | `type` | The event type, for example `payment.succeeded`. This is what handlers switch on |
 | `timestamp` | ISO 8601 time the event occurred. Use it to order events |
 | `data` | Event-specific payload. Fields vary per event |
-| `data.payload_type` | Resource kind: `Payment`, `Subscription`, `Refund`, `Dispute`, `LicenseKey`, `CreditLedgerEntry`, `CreditBalanceLow`, `AbandonedCheckout`, `DunningAttempt`, `EntitlementGrant` or `Payout`. It names the resource, not the event |
+| `data.payload_type` | Resource kind: `Payment`, `Subscription`, `Refund`, `Dispute`, `LicenseKey`, `CreditLedgerEntry`, `CreditBalanceLow`, `AbandonedCheckout`, `DunningAttempt`, `EntitlementGrant`, `Payout` or `Invoice`. It names the resource, not the event |
 
 There is no event id in the body. The `webhook-id` header is unique per message and stable across retries, so it is the idempotency key.
 
@@ -52,7 +52,7 @@ The examples route these events and log the rest:
 
 ## Full Event List
 
-Dodo documents 48 event types (the list may not be exhaustive, so ignore types you don't recognise):
+Dodo documents 56 event types (the list may not be exhaustive, so ignore types you don't recognise):
 
 | Resource | Events |
 |----------|--------|
@@ -60,6 +60,7 @@ Dodo documents 48 event types (the list may not be exhaustive, so ignore types y
 | Refund | `refund.succeeded`, `refund.failed` |
 | Dispute | `dispute.opened`, `dispute.challenged`, `dispute.accepted`, `dispute.cancelled`, `dispute.expired`, `dispute.won`, `dispute.lost` |
 | Subscription | `subscription.active`, `subscription.updated`, `subscription.past_due`, `subscription.on_hold`, `subscription.paused`, `subscription.unpaused`, `subscription.renewed`, `subscription.plan_changed`, `subscription.update_payment_method`, `subscription.cancelled`, `subscription.failed`, `subscription.expired` |
+| Invoice | `invoice.finalized`, `invoice.sent`, `invoice.paid`, `invoice.payment_failed`, `invoice.past_due`, `invoice.reopened`, `invoice.voided`, `invoice.marked_uncollectable` |
 | License key | `license_key.created` |
 | Entitlement grant | `entitlement_grant.created`, `entitlement_grant.delivered`, `entitlement_grant.failed`, `entitlement_grant.revoked` |
 | Credit | `credit.added`, `credit.deducted`, `credit.expired`, `credit.rolled_over`, `credit.rollover_forfeited`, `credit.overage_charged`, `credit.overage_reset`, `credit.manual_adjustment`, `credit.balance_low` |
@@ -67,7 +68,7 @@ Dodo documents 48 event types (the list may not be exhaustive, so ignore types y
 | Dunning | `dunning.started`, `dunning.recovered` |
 | Payout | `payout.created`, `payout.in_progress`, `payout.on_hold`, `payout.success`, `payout.failed` |
 
-`payout.created` was previously emitted as `payout.not_initiated`; update any endpoint filter that still uses the old name.
+`payout.created` was previously emitted as `payout.not_initiated`; update any endpoint filter that still uses the old name. Invoice events apply to invoice-based billing, and their payload is the invoice as it stands at delivery, so read `status` from it rather than assuming it from the event type.
 
 ## Delivery Behaviour
 

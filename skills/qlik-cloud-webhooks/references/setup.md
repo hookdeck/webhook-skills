@@ -29,9 +29,7 @@ body). Without one **no signature is sent**.
 
 ## HTTP Method and Hookdeck
 
-Qlik Cloud's docs don't name the HTTP method of a delivery. Hookdeck's Qlik Cloud source pre-selects
-POST without managing the method (you can change it), so any other method the sender uses must also
-be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE.
+Qlik's [Webhooks API reference](https://qlik.dev/apis/rest/core/webhooks/) describes a delivery as a POST request. Any other method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE defensively.
 
 ## Testing and Redelivery
 

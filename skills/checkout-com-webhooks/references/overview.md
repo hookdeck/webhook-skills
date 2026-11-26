@@ -46,7 +46,7 @@ Every event shares the same envelope:
 
 | Field | Notes |
 |---|---|
-| `id` | The **event** id, prefixed `evt_`. Your idempotency key. |
+| `id` | The **event** id, prefixed `evt_`. Deduplicate on `type` plus `id`. |
 | `type` | snake_case event name (see below). Never dotted. |
 | `version` | Event **schema** version, e.g. `"1.0.29"` — not an API version. |
 | `created_on` *or* `timestamp` | **The field name varies by event.** Read `created_on ?? timestamp`. |
@@ -143,21 +143,22 @@ Compliance, Disputes, Fraud, Gateway, Identities, Issuing, Network tokens,
 Platforms, Real-Time Account Updater, Reports, Settlements. Subscribe only to the events you
 actually handle — an unsubscribed event is one you never have to dispatch.
 
-## Idempotency: Deduplicate on `id`
+## Idempotency: Deduplicate on `type` plus `id`
 
 Delivery is **at-least-once**. The same event can arrive more than once, most
 obviously when a retry races a slow 200 from your server.
 
-Use the envelope `id` (`evt_…`) as the idempotency key. There is no per-delivery
-id header, and no timestamp is signed, so `id` is also your only replay
-protection: a replayed request carries a valid `Cko-Signature` — it is a byte
+Use the envelope `type` plus `id` (`evt_…`) as the idempotency key. Key on both,
+because Checkout.com's own documentation examples reuse one `evt_…` id across
+different event types. There is no per-delivery id header, and no timestamp is
+signed, so this key is also your only replay protection: a replayed request carries a valid `Cko-Signature` — it is a byte
 copy — and only deduplication stops it being processed twice.
 
-Keep processed ids for at least **31 hours** to cover the automatic retry
-window. That is a floor, not a ceiling: since the id is your only replay
-protection, keeping ids longer (or permanently, keyed by `evt_…`) is safer.
-Webhooks can also be resent manually from the Dashboard or API at any time;
-whether a resend reuses the original `evt_…` id is not documented.
+Keep processed keys for at least **31 hours** to cover the automatic retry
+window. That is a floor, not a ceiling: webhooks can also be resent from the
+Dashboard or the reflow API for events up to 90 days old, so keeping keys for
+90 days (or permanently) is safer. Checkout.com warns that a manual resend may
+cause duplicates if automatic retries are still scheduled.
 
 ## Delivery and Retries
 

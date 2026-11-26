@@ -39,13 +39,14 @@ def verify_estuary_request(headers, config=os.environ) -> bool:
 
 
 def classify(payload):
-    """There is no vendor event field. A trigger body is the author's payloadTemplate
-    (which may include materialization_name); the HTTP Webhook connector sends documents."""
+    """There is no vendor event field. The HTTP Webhook connector POSTs a JSON array of
+    documents from one binding; a trigger body is whatever its payloadTemplate renders,
+    so its keys are the ones you chose (Estuary's example uses materialization and runId)."""
     if payload is None:
         return "empty"
-    if isinstance(payload, dict) and "materialization_name" in payload:
-        return "trigger"
-    return "document"
+    if isinstance(payload, list):
+        return "documents"
+    return "trigger"
 
 
 async def require_estuary_auth(request: Request) -> None:
@@ -58,12 +59,12 @@ def handle_event(payload) -> None:
     kind = classify(payload)
 
     if kind == "trigger":
-        print(f"Estuary trigger: {payload.get('materialization_name')} (run {payload.get('run_id')})")
-        # TODO: react to the committed transaction (e.g. start a downstream job)
+        print("Estuary trigger received")
+        # Your code: react to the committed transaction (e.g. start a downstream job)
 
-    elif kind == "document":
-        print("Estuary document received")
-        # TODO: store or process the document
+    elif kind == "documents":
+        print(f"Estuary connector batch: {len(payload)} documents")
+        # Your code: store or process the documents
 
     else:
         print("Estuary request with an empty body")

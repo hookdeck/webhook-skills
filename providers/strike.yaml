@@ -1,0 +1,29 @@
+name: strike
+displayName: Strike
+docs:
+  webhooks: https://docs.strike.me/webhooks/overview
+  verification: https://docs.strike.me/webhooks/signature-verification
+  events: https://docs.strike.me/api/
+notes: >
+  Strike = strike.me (Zap Solutions), the Bitcoin/Lightning payments platform; not Stripe, Strike
+  Graph or Strikedeck. Subscriptions are created over the API (POST /v1/subscriptions with
+  webhookUrl, webhookVersion, secret, enabled, eventTypes; all required). X-Webhook-Signature =
+  lowercase hex HMAC-SHA256 of the raw body keyed with the subscription secret the integrator
+  chooses (10-50 chars), not the API key. No timestamp, prefix or handshake. Strike's JS sample
+  hashes JSON.stringify(parsed body); hash the raw bytes instead. Payload is a thin WebhookEvent
+  {id, eventType, webhookVersion, data{entityId, changes on *.updated}, created, deliverySuccess}
+  with no entity data: fetch by data.entityId (invoice.* -> GET /v1/invoices/{id}, etc.). 14 events
+  (invoice.created/updated, payment-method.bank.created/updated, payout.created/updated,
+  payout-originator.created/updated, currency-exchange-quote.updated, payment.created/updated,
+  deposit.updated, receive-request.receive-pending/receive-completed); new event types are
+  non-breaking, so 2xx unknown types. 5-second timeout; 12 retries over ~9 days (3s, 9s, 27s...);
+  410/501 opts out of retries; dedupe on id. GET /v1/events holds 30 days (OData; the docs' example
+  filter has inverted date bounds and needs parentheses). webhookVersion v2 is accepted by the
+  API but its payload is undocumented as of 2026-11-20. Hookdeck source type STRIKE.
+testScenario:
+  events:
+    - invoice.updated
+    - payment.updated
+    - receive-request.receive-completed
+catalog:
+  summary: Verify Strike (strike.me) webhooks (`X-Webhook-Signature` lowercase hex HMAC-SHA256 of the raw body keyed with your subscription secret), fetch the entity by data.entityId, handle invoice.updated, payment.updated and payout.updated events

@@ -41,7 +41,7 @@ function handleEvent(payload) {
       // data is an array of { field, value, device, timestamp } for the fields just recorded
       const rows = Array.isArray(data) ? data : [];
       console.log(`Device measurement: ${rows.length} value(s)`);
-      // TODO: store each row in your database (row.device, row.field, row.value, row.timestamp)
+      // Store each row in your database (row.device, row.field, row.value, row.timestamp)
       break;
     }
 
@@ -49,14 +49,14 @@ function handleEvent(payload) {
       // data.result is the raw payload decoder output; data.log and data.device may be null
       const results = Array.isArray(data && data.result) ? data.result : [];
       console.log(`Decoder output: ${results.length} result(s) for product ${data && data.product}`);
-      // TODO: act on raw decoder data that isn't stored in the time-series database
+      // Act on raw decoder data that isn't stored in the time-series database
       break;
     }
 
     case 'downlink': {
       // data.meta.type is e.g. "lorawan"; data.payload is the base64 downlink payload
       console.log(`Downlink sent to device ${data && data.device}`);
-      // TODO: audit or mirror the downlink (data.meta, data.payload, data.product_slug)
+      // Audit or mirror the downlink (data.meta, data.payload, data.product_slug)
       break;
     }
 

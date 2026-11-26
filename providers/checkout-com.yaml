@@ -8,8 +8,7 @@ docs:
 notes: >
   IDENTITY: Checkout.com (checkout.com), the global payments processor — card acquiring,
   APMs, disputes, payouts, issuing, identity verification. Skill slug is `checkout-com` to
-  match Hookdeck's source type CHECKOUT_COM (added in hookdeck/core#5669; the console provider
-  key is `checkout`). NOT Checkout Page (checkoutpage.co), NOT CheckoutJoy, NOT 2Checkout /
+  match Hookdeck's source type CHECKOUT_COM (the console provider key is `checkout`). NOT Checkout Page (checkoutpage.co), NOT CheckoutJoy, NOT 2Checkout /
   Verifone (a different company with an entirely different IPN/INS scheme), NOT Stripe
   Checkout, NOT Shopify checkout webhooks. Targets the current ("NAS" / Workflows) platform.
 

@@ -11,8 +11,7 @@ Agntix signs every delivery per Standard Webhooks, with Svix's header names:
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Agntix source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+carry the same values. The examples read the `svix-*` headers and fall back to the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 
@@ -140,7 +139,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDKs.** See the Hookdeck section above.
-- **One secret per endpoint.** Each endpoint has its own `whsec_` secret, shown in the dashboard's Developer section (Svix).
+- **Wrong secret.** Agntix's docs don't say where the secret is shown; use the one from the endpoint you added under Developer, not an API key.
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures

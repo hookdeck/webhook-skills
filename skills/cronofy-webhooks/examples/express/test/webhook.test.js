@@ -39,7 +39,7 @@ function post(rawBody, hmacHeader) {
 }
 
 describe('Cronofy published test vectors', () => {
-  // https://docs.cronofy.com/developers/push-notifications/authentication/
+  // https://docs.cronofy.com/api-reference/authorization/webhook-authentication/
   const WELL_KNOWN_BODY = '{"example":"well-known"}';
   const DIGEST_1 = '5DxentQi5YSXODEzTVv06sRwJ3pULIz1KrYv20qxEK0=';
   const DIGEST_2 = 'BmQmWVuZ70ILWjr1CAt5oC7YOolgnku4WZtlrKfx/6k=';
@@ -124,7 +124,7 @@ describe('verifyCronofyWebhook', () => {
     expect(verifyCronofyWebhook(reserialized, sign(body), TEST_SECRET)).toBe(false);
   });
 
-  // Parity with the hookdeck/core CRONOFY controller, which filters empty candidates.
+  // Empty candidates are filtered out.
   it('rejects a header of only separators', () => {
     expect(verifyCronofyWebhook(body, ' , ', TEST_SECRET)).toBe(false);
     expect(verifyCronofyWebhook(body, '', TEST_SECRET)).toBe(false);

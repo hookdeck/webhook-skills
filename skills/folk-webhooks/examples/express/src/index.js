@@ -100,7 +100,15 @@ function handleEvent(event) {
       console.log(`${type}: ${data.id}`);
       break;
 
-    // --- Reminders ---------------------------------------------------------
+    // --- Tasks -------------------------------------------------------------
+    case 'task.created':
+    case 'task.updated':
+    case 'task.completed':
+    case 'task.deleted':
+      console.log(`${type}: ${data.id}`);
+      break;
+
+    // --- Reminders (deprecated, removed on February 13, 2027) --------------
     case 'reminder.created':
     case 'reminder.updated':
     case 'reminder.deleted':

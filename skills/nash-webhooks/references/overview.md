@@ -26,7 +26,7 @@ Every payload has three fields:
     "id": "job_R7FXJrfB99bpvpzf6CriJC",
     "isBatch": false,
     "portalUrl": "https://portal.usenash.com/active/job_R7FXJrfB99bpvpzf6CriJC",
-    "jobConfigurations": [ { "tasks": [ { "status": "dropoff_enroute" } ] } ]
+    "jobConfigurations": [ { "tasks": [ { "id": "tsk_7xKGR6PW2pBtuTeRg2b7Bw" } ] } ]
   }
 }
 ```

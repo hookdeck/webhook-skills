@@ -16,8 +16,8 @@
 
 ## Get Your Signing Secret
 
-Tidio generates a webhook secret for signing. Copy it from the webhook settings and store it as
-`TIDIO_WEBHOOK_SECRET`. The secret is used as-is (its UTF-8 bytes), not decoded. There can be several
+Tidio generates a webhook secret for signing. Tidio's docs don't say where the panel shows it, so look in
+the webhook's settings under **Settings > Developer > Webhooks**, and store it as `TIDIO_WEBHOOK_SECRET`. The secret is used as-is (its UTF-8 bytes), not decoded. There can be several
 secrets; Tidio then sends one `s=` signature per secret in `x-tidio-signature`, and a request is valid when any
 one matches.
 

@@ -4,7 +4,7 @@
 
 A V2 webhook sends an HTTP payload to your HTTPS address when a trigger event happens on a file or folder (or on something inside a folder). You create it through the Box API (`POST /2.0/webhooks`) for one target, choose the triggers, and Box delivers a JSON body.
 
-V1 webhooks (the old "Sent, Created, Uploaded, ..." list) are unsigned and not covered here. Box Sign has its own webhooks, also not covered.
+V1 webhooks (the old "Sent, Created, Uploaded, ..." list) are unsigned and not covered here. Box Sign events (`SIGN_REQUEST.*`) are V2 triggers on the same webhooks, so they are covered.
 
 ## Common Event Types
 
@@ -58,7 +58,7 @@ Applies to files (F) and/or folders (D). Strings are exact.
 
 ## Delivery and Retries
 
-A delivery fails when Box doesn't get a `2xx` within 30 seconds. Box retries up to 5 times over 1 hour (Box notes these numbers could change). Respond fast and process asynchronously. Box's docs don't name the HTTP method ("Box makes an HTTP call to the `address`"); Hookdeck's Box source pre-selects POST and leaves the method unmanaged.
+A delivery fails when Box doesn't get a `2xx` within 30 seconds. Box retries up to 5 times over 1 hour (Box notes these numbers could change). Respond fast and process asynchronously. The V2 webhooks page says only "Box makes an HTTP call to the `address`"; the Box Sign webhooks page says Box sends an HTTP `POST`.
 
 ## Full Event Reference
 

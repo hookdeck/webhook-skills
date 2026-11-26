@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 3000;
 // Hail signs every delivery with an X-Hail-Signature header:
 //   t=<unix>,v1=<hex>
 // v1 is HMAC-SHA256 (hex) of "<t>.<raw body>", keyed with the whole signing secret
-// (including whsec_) as UTF-8. This is NOT Standard Webhooks: no svix / standardwebhooks library,
-// no stripping or base64-decoding of the whsec_ prefix.
+// (prefix included) as UTF-8. This is NOT Standard Webhooks: no svix / standardwebhooks library,
+// no stripping or base64-decoding of the secret prefix.
 // https://hail.so/docs/webhooks
 
 // Optional replay window in seconds. Off by default (0): Hookdeck retries and replays carry the
@@ -65,7 +65,7 @@ function verifyHail(rawBody, signatureHeader, secret) {
 
   const expected = Buffer.from(
     crypto
-      .createHmac('sha256', secret) // whole secret incl. whsec_, used as-is
+      .createHmac('sha256', secret) // whole secret incl. its prefix, used as-is
       .update(`${t}.`)
       .update(rawBody)
       .digest('hex')

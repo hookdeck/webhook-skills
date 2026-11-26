@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
 function handleEvent(payload: any) {
   // `event` is the topic; `payload` is the entry/invite/etc., `meta` has the location and company.
-  // TODO: dedupe (e.g. on event + payload.id); Envoy retries failed deliveries.
+  // Dedupe (e.g. on event + payload.id) before acting: Envoy retries failed deliveries.
   const { event, payload: data, meta } = payload ?? {};
   const attrs = data?.attributes ?? {};
   const who = attrs['full-name'] ?? data?.id;

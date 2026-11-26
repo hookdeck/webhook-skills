@@ -2,7 +2,7 @@
 
 ## What Are PAY.JP Webhooks?
 
-PAY.JP (Japanese payments, API v1) creates an `event` object whenever an API resource is created or changed. If you have registered a destination URL, PAY.JP sends that event to it as an HTTP `POST` with a JSON body. Webhooks are useful for asynchronous changes such as a subscription renewal, which PAY.JP's servers trigger rather than your client. Requests are not signed; each carries an `X-Payjp-Webhook-Token` header holding your account's token so you can confirm it came from PAY.JP.
+PAY.JP (Japanese payments) creates an `event` object whenever an API resource is created or changed. If you have registered a destination URL, PAY.JP sends that event to it as an HTTP `POST` with a JSON body. Webhooks are useful for asynchronous changes such as a subscription renewal, which PAY.JP's servers trigger rather than your client. Requests are not signed; each carries an `X-Payjp-Webhook-Token` header holding your account's token so you can confirm it came from PAY.JP.
 
 ## Common Event Types
 
@@ -36,6 +36,21 @@ PAY.JP (Japanese payments, API v1) creates an `event` object whenever an API res
 | `statement.created` | A statement is created | Archive |
 | `balance.created` / `balance.fixed` / `balance.closed` / `balance.merged` | A balance changes | Reconcile |
 
+## API v2 Event Types
+
+Accounts on PAY.JP API v2 receive these types at the same URLs, with the same token header. The customer, dispute, term, statement and balance types above appear in both versions.
+
+| Resource | Events |
+|----------|--------|
+| Payment flow | `payment_flow.created`, `payment_flow.succeeded`, `payment_flow.canceled`, `payment_flow.amount_capturable_updated`, `payment_flow.payment_failed`, `payment_flow.requires_action`, `payment_flow.processing` |
+| Setup flow | `setup_flow.created`, `setup_flow.succeeded`, `setup_flow.canceled`, `setup_flow.requires_action`, `setup_flow.setup_failed` |
+| Payment method | `payment_method.attached`, `payment_method.detached`, `payment_method.updated` |
+| Checkout Session | `checkout.session.completed`, `checkout.session.expired` |
+| Refund | `refund.created`, `refund.updated`, `refund.failed` |
+| Catalog | `product.created`, `product.updated`, `product.deleted`, `price.created`, `price.updated`, `price.deleted`, `tax_rate.created`, `tax_rate.updated` |
+
+PAY.JP's v2 guide shows the webhook body with `created` in Unix seconds, while the v2 Events API schema lists `created_at` and `updated_at` (ISO 8601). Accept either.
+
 ## Event Payload Structure
 
 ```json
@@ -65,4 +80,4 @@ PAY.JP (Japanese payments, API v1) creates an `event` object whenever an API res
 
 ## Full Event Reference
 
-See [PAY.JP's webhook guide](https://docs.pay.jp/v1/webhook) and the [event list in the API reference](https://docs.pay.jp/v1/api).
+See [PAY.JP's webhook guide](https://docs.pay.jp/v1/webhook), the [event list in the API reference](https://docs.pay.jp/v1/api/) and the [v2 events and webhooks guide](https://docs.pay.jp/v2/guide/developers/event-webhook).

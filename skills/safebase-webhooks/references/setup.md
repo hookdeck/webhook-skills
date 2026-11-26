@@ -29,7 +29,7 @@ SAFEBASE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx
 Paste the endpoint's Signing Secret from the SafeBase webhook portal exactly as shown, including any whsec_ prefix.
 
 SafeBase's help article doesn't show the secret format or the header names. The `whsec_`
-secret and `svix-*` headers are Svix defaults, which Hookdeck's SafeBase source assumes.
+secret and `svix-*` headers are Svix defaults.
 
 ## How Do I Test Locally?
 

@@ -65,30 +65,30 @@ async def clickup_webhook(
     # The event name is in the body; ClickUp sends no event header
     if event == "taskCreated":
         print(f"Task created: {payload.get('task_id')}")
-        # TODO: Sync the new task to your system
+        # Sync the new task to your system
 
     elif event == "taskUpdated":
         print(f"Task updated: {payload.get('task_id')}")
-        # TODO: Fetch the task from the API or apply history_items changes
+        # Fetch the task from the API or apply history_items changes
 
     elif event == "taskDeleted":
         print(f"Task deleted: {payload.get('task_id')}")
-        # TODO: Remove mirrored records
+        # Remove mirrored records
 
     elif event == "taskStatusUpdated":
         status_item = next((i for i in history_items if i.get("field") == "status"), {})
         before = (status_item.get("before") or {}).get("status")
         after = (status_item.get("after") or {}).get("status")
         print(f"Task {payload.get('task_id')} status: {before} -> {after}")
-        # TODO: Trigger workflow automation
+        # Trigger workflow automation
 
     elif event == "taskAssigneeUpdated":
         print(f"Task assignee updated: {payload.get('task_id')}")
-        # TODO: Notify the new assignee
+        # Notify the new assignee
 
     elif event == "taskCommentPosted":
         print(f"Comment posted on task: {payload.get('task_id')}")
-        # TODO: Forward the comment to chat
+        # Forward the comment to chat
 
     elif event in ("listCreated", "listUpdated", "listDeleted"):
         print(f"{event}: List {payload.get('list_id')}")

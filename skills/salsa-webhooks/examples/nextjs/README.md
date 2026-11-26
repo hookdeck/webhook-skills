@@ -1,6 +1,6 @@
 # Salsa Webhooks - Next.js Example
 
-Minimal Next.js App Router example of receiving [Salsa](https://docs.salsa.dev) (embedded payroll API) webhooks with signature verification. Salsa signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the route verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal Next.js App Router example of receiving [Salsa](https://docs.salsa.dev) (embedded payroll API) webhooks with signature verification. Salsa signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the route verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

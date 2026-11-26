@@ -65,7 +65,7 @@ function handleEvent(payload) {
   switch (type) {
     case 'PUSH_ARTIFACT':
       console.log(`Artifact pushed to ${repo}`);
-      // TODO: trigger a build or deployment for the pushed artifact
+      // Your code: trigger a build or deployment for the pushed artifact
       break;
 
     case 'PULL_ARTIFACT':
@@ -78,7 +78,7 @@ function handleEvent(payload) {
 
     case 'SCANNING_COMPLETED':
       console.log(`Scan completed for ${repo}`);
-      // TODO: inspect scan_overview severity and gate promotion
+      // Your code: inspect scan_overview severity and gate promotion
       break;
 
     case 'SCANNING_STOPPED':
@@ -91,7 +91,7 @@ function handleEvent(payload) {
 
     case 'QUOTA_EXCEED':
       console.log(`Project quota exceeded at ${repo}`);
-      // TODO: alert the project owners
+      // Your code: alert the project owners
       break;
 
     case 'QUOTA_WARNING':

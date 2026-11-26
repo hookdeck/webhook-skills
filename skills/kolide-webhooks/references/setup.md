@@ -12,7 +12,7 @@
 3. Choose "Reveal Secret" on the webhook settings screen and copy it.
 4. Store it as `KOLIDE_WEBHOOK_SECRET`. It is a per-endpoint secret and is used as-is, as UTF-8 bytes: do not hex- or base64-decode it.
 
-Rotating the secret also changes the `X-Kolide-Webhook-Identifier` header, so update your stored secret when you rotate.
+Rotating the secret also changes the `X-Kolide-Webhook-Identifier` header, so update your stored secret, and the Hookdeck source's secret if you use one, as soon as you rotate.
 
 ## Register Your Endpoint
 
@@ -23,7 +23,7 @@ Rotating the secret also changes the `X-Kolide-Webhook-Identifier` header, so up
 
 ## Hookdeck Setup
 
-Hookdeck's `KOLIDE` source type is labelled "1Password Device Trust (Kolide)". It verifies the signature with HMAC, SHA-256, header `authorization`, hex encoding, and posts to your destination. Paste the endpoint's signing secret into the source and use the source URL as the endpoint URL. For local development:
+Hookdeck's `KOLIDE` source type is labelled "1Password Device Trust (Kolide)". It verifies the signature and delivers verified events to your destination. Paste the endpoint's signing secret into the source and use the source URL as the endpoint URL. For local development:
 
 ```bash
 npx hookdeck-cli listen 3000 kolide --path /webhooks/kolide

@@ -7,7 +7,7 @@ import { Webhook } from 'svix';
 export const dynamic = 'force-dynamic';
 
 // Dots delivers through Svix (svix-* headers). Fall back to the Standard Webhooks
-// webhook-* names when svix-id is absent, the same way Hookdeck does. Never mix the two sets.
+// webhook-* names when svix-id is absent. Never mix the two sets.
 function resolveHeaders(headers: Headers) {
   const prefix = headers.get('svix-id') ? 'svix' : 'webhook';
   const id = headers.get(`${prefix}-id`);

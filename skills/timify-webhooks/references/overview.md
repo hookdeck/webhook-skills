@@ -37,21 +37,11 @@ overview.
 
 ## Event Payload Structure
 
-The body is JSON event data. TIMIFY's overview page does not list the field names, so the shape
-below is **illustrative only**. Capture a real delivery (for example with the Hookdeck CLI) and
-adjust the handler to it.
-
-```json
-{
-  "webhook": "Event",
-  "type": "Created",
-  "data": { "id": "evt_123", "start": "2026-10-26T09:00:00Z" }
-}
-```
-
-The examples look for the webhook name under `webhook`, `name` or `resource`, and the type under
-`type` or `action`, normalize case, spaces and punctuation, and acknowledge anything they don't
-recognise with `200`.
+The body is JSON event data. TIMIFY's overview page does not list the field names or show an
+example body, so this skill doesn't describe one. To tell webhooks apart without knowing the
+fields, create a separate subscription with its own Server URL for each webhook scope, as TIMIFY
+suggests. Otherwise capture a real delivery (for example with the Hookdeck CLI) and branch on the
+field it uses. The examples log the top-level fields and acknowledge every request with `200`.
 
 ## Full Event Reference
 

@@ -8,9 +8,9 @@
 
 ## Heads up: debugger events fail verification
 
-Events sent from Lob's webhook debugger are signed with a fixed test secret, so they fail verification. Real deliveries are signed with the webhook's secret.
+Lob signs events sent from its webhook debugger with the literal string `secret`, not the webhook's own secret, so they fail verification against the real one. Real deliveries are signed with the webhook's secret.
 
-Lob's docs say the debugger signs with the literal string `secret`. To check your verification
+To check your verification
 code against debugger events, temporarily set `LOB_WEBHOOK_SECRET=secret`, then switch back to the
 webhook's own secret for real deliveries.
 

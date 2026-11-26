@@ -18,8 +18,9 @@
    request as the `Authorization` header.
 6. Save, and make sure the webhook is enabled.
 
-Paste the HTTP Authorization value exactly as set in 8x8, including any "Bearer " or
-"Basic " prefix. OAuth authentication is not supported.
+Keep the HTTP Authorization value exactly as set in 8x8, including any "Bearer " or
+"Basic " prefix. This skill doesn't cover 8x8's OAuth client-credentials option, where 8x8
+fetches a changing token from your token endpoint.
 
 Store the full value as `EIGHT_X_EIGHT_AUTHORIZATION`. Your handler compares the whole
 `Authorization` header to it; it never strips the prefix or decodes a Basic value.
@@ -45,7 +46,7 @@ Use the printed URL as the webhook URL. For FastAPI, use port `8000`.
 curl -X POST http://localhost:3000/webhooks/8x8 \
   -H "Content-Type: application/json" \
   -H "Authorization: $EIGHT_X_EIGHT_AUTHORIZATION" \
-  -d '{"namespace":"SMS","eventType":"inbound_message_received","description":"SMS inbound message","payload":{"umid":"9e09ac86-bd74-5465-851d-1eb5a5fdbb9a","source":"+6581968289","destination":"+4534735477","body":"Test MO message"}}'
+  -d '{"namespace":"SMS","eventType":"inbound_message_received","description":"SMS inbound message","payload":{"umid":"9e09ac86-bd74-5465-851d-1eb5a5fdbb9a","source":"+6555555501","destination":"+4555555501","body":"Test MO message"}}'
 ```
 
 ## Notes

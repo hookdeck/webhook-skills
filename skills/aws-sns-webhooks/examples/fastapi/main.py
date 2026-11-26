@@ -4,9 +4,9 @@
 
 There is no AWS webhook-verification SDK for Python, so signatures are verified
 manually against AWS's public X.509 certificate using the `cryptography`
-library. The canonical string and field selection mirror the AWS-official
-`sns-validator` (Node), so this handler stays consistent with the Express and
-Next.js examples.
+library. The canonical string and field selection follow AWS's signature docs
+and the AWS-official `sns-validator` (Node) 0.3.6, so this handler stays
+consistent with the Express and Next.js examples.
 """
 import base64
 import json
@@ -30,9 +30,9 @@ app = FastAPI()
 _CERT_HOST = re.compile(r"^sns\.[a-zA-Z0-9\-]{3,}\.amazonaws\.com(\.cn)?$")
 
 # Fixed key order per type; include a key only if present in the message.
-# Mirrors sns-validator: only SubscriptionConfirmation includes Token.
-_SUBSCRIPTION_KEYS = ["Message", "MessageId", "Subject", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type"]
-_DEFAULT_KEYS = ["Message", "MessageId", "Subject", "SubscribeURL", "Timestamp", "TopicArn", "Type"]
+# Both confirmation types sign SubscribeURL and Token; a Notification signs Subject if present.
+_NOTIFICATION_KEYS = ["Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type"]
+_CONFIRMATION_KEYS = ["Message", "MessageId", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type"]
 
 # Cache fetched certificates by URL.
 _cert_cache: dict[str, bytes] = {}
@@ -53,12 +53,12 @@ def confirm_subscription(subscribe_url: str) -> None:
 
 def canonical_string(message: dict) -> bytes:
     """Build the SNS "Key\\nValue\\n" string to sign, in byte-sorted key order."""
-    keys = _SUBSCRIPTION_KEYS if message.get("Type") == "SubscriptionConfirmation" else _DEFAULT_KEYS
+    keys = _NOTIFICATION_KEYS if message.get("Type") == "Notification" else _CONFIRMATION_KEYS
     parts: list[str] = []
     for field in keys:
         value = message.get(field)
         if value is None:
-            continue  # Subject / SubscribeURL included only when present
+            continue  # Subject is included only when present
         parts.append(field)
         parts.append(str(value))
     return ("\n".join(parts) + "\n").encode("utf-8")
@@ -124,7 +124,7 @@ async def sns_webhook(request: Request):
         print("Notification received:", message.get("MessageId"))
         print("Subject:", message.get("Subject"))
         print("Message:", message.get("Message"))
-        # TODO: process the notification (Message is often JSON).
+        # Your code: process the notification (Message is often JSON).
 
     elif message_type == "UnsubscribeConfirmation":
         # The endpoint was unsubscribed. Re-subscribe here if unexpected.

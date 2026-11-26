@@ -37,7 +37,7 @@ official `svix` library; it compares every `v1` entry in constant time.
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
-// Prefer svix-*; fall back to webhook-* when svix-id is absent (as Hookdeck does)
+// Prefer svix-*; fall back to webhook-* when svix-id is absent
 const p = req.headers['svix-id'] ? 'svix' : 'webhook';
 const headers = {
   'svix-id': req.headers[`${p}-id`],

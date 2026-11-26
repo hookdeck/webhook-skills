@@ -15,7 +15,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Crossmint sends svix-* headers; fall back to the Standard Webhooks webhook-* names, as Hookdeck does
+// Crossmint sends svix-* headers; fall back to the Standard Webhooks webhook-* names
 function readSignatureHeaders(headers) {
   const prefix = headers['svix-id'] ? 'svix' : 'webhook';
   return {
@@ -82,7 +82,7 @@ app.post('/webhooks/crossmint', express.raw({ type: '*/*' }), (req, res) => {
     case 'wallets.signer.exported':
       console.log('Wallet signer exported:', event.data);
       break;
-    // Checkout V2 (flat body, no `data`) and V3 (order lifecycle)
+    // Checkout V2 (legacy, flat body, no `data`; Crossmint's docs no longer list it) and V3 (order lifecycle)
     case 'purchase.succeeded':
       console.log('Purchase succeeded:', event.txId, event.walletAddress);
       break;
@@ -124,7 +124,8 @@ app.post('/webhooks/crossmint', express.raw({ type: '*/*' }), (req, res) => {
     case 'credential.creation.failed':
       console.log('Credential creation failed:', event.data?.error ?? event.data);
       break;
-    // Offramp: may arrive out of order, so compare timestamps before overwriting state
+    // Offramp: may arrive out of order. Status only moves forward (pending, active, rejected,
+    // deleted), so ignore an event whose status is behind the one you hold.
     case 'payment_methods.status.updated':
       console.log('Payment method status updated:', event.id, event.timestamp, event.data);
       break;

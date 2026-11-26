@@ -77,7 +77,7 @@ except (InvalidSignature, ValueError):
 ### Key handling
 
 - **Cache the key** for about an hour rather than fetching it on every request.
-  The examples cache it; Hookdeck also caches it for an hour.
+  The examples cache it.
 - **Fail closed.** If the key can't be fetched or parsed, reject the webhook. A
   `503` makes Volume retry later. Never skip verification.
 - **Allow an override.** The examples accept `VOLUME_PUBLIC_KEY` (literal key)

@@ -11,8 +11,7 @@ Hookdeck shows this setup note for its Estuary source:
 
 > Estuary triggers are not signed. Add a secret header to the materialization trigger (or the HTTP Webhook connector) and enter it here.
 
-On the Hookdeck source, enter the **header name** and the **whole header value** (exact string,
-including any `Bearer ` prefix you typed).
+On the Hookdeck source, enter the **header name** and the **header value** (including any `Bearer ` prefix you typed).
 
 ## Add the Secret Header
 
@@ -34,7 +33,7 @@ ESTUARY_WEBHOOK_SECRET=Bearer <random>
 Triggers default to `POST`; `PUT` and `PATCH` are also allowed ("One of: POST, PUT, PATCH").
 The example handlers accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`.
 
-Hookdeck's Estuary source pre-selects `POST` without managing the method, so if your trigger
+Hookdeck's Estuary source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if your trigger
 uses `PUT` or `PATCH`, also allow that method on the Hookdeck source.
 
 ## Local Testing
@@ -51,11 +50,14 @@ Use the printed URL as the trigger `url`. For FastAPI, use port `8000`.
 curl -X POST http://localhost:3000/webhooks/estuary \
   -H "Content-Type: application/json" \
   -H "$ESTUARY_WEBHOOK_HEADER: $ESTUARY_WEBHOOK_SECRET" \
-  -d '{"materialization_name":"acmeCo/orders/to-warehouse","run_id":"run-0001"}'
+  -d '{"materialization":"acmeCo/example/database-views","runId":"2024-01-15T08:30:00.000Z"}'
 ```
 
 ## Rotating the Credential
 
 Because the credential is static and unsigned requests carry no timestamp, rotate it
 immediately if it leaks: change the header value in Estuary and the matching value in your
-receiver (and in Hookdeck).
+receiver (and in Hookdeck). A trigger's `url`, `method` and `headers` are covered by
+Estuary's SOPS integrity check, so changing any of them after the first publication means
+re-entering every secret header value. Accept both values in your receiver until the new
+spec is published.

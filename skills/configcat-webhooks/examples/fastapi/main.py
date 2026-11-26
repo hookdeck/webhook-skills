@@ -42,22 +42,27 @@ def verify_configcat_webhook(
     """Return None when valid, otherwise an error message."""
     if not webhook_id or not timestamp or not signature:
         return "Missing X-ConfigCat-Webhook-ID, -Timestamp or -Signature-V1 header"
-    # The whole header is ONE digest. Two signing keys produce a comma-separated list and fail here.
-    if not SIGNATURE_PATTERN.match(signature):
-        return "Malformed signature"
-    try:
-        received = base64.b64decode(signature, validate=True)
-    except (binascii.Error, ValueError):
-        return "Malformed signature"
-    # Reject non-canonical encodings (stray low bits in the last character): Hookdeck compares base64 exactly
-    if base64.b64encode(received).decode("ascii") != signature:
+    # A comma-separated list, one signature per signing key (two during a key rotation).
+    candidates = []
+    for entry in signature.split(","):
+        entry = entry.strip()
+        if not SIGNATURE_PATTERN.match(entry):
+            continue
+        try:
+            received = base64.b64decode(entry, validate=True)
+        except (binascii.Error, ValueError):
+            continue
+        # Skip non-canonical encodings (stray low bits in the last character); compare base64 exactly
+        if base64.b64encode(received).decode("ascii") == entry:
+            candidates.append(received)
+    if not candidates:
         return "Malformed signature"
 
     expected = base64.b64decode(compute_signature(secret, webhook_id, timestamp, raw_body))
-    if not hmac.compare_digest(received, expected):
+    if not any(hmac.compare_digest(received, expected) for received in candidates):
         return "Invalid signature"
 
-    # Opt-in replay window (off by default: Hookdeck retries and replays keep the original timestamp)
+    # Opt-in replay window, off by default: ConfigCat recommends a check but sets no window
     if tolerance_seconds > 0:
         try:
             sent_at = float(timestamp)
@@ -108,7 +113,7 @@ async def configcat_webhook(request: Request, raw_body: bytes = Depends(verified
 
     webhook_id = request.headers.get("x-configcat-webhook-id")
     print(f"ConfigCat settings changed ({request.method}, webhook {webhook_id}): {body}")
-    # TODO: refresh your ConfigCat client, invalidate caches, notify your team
+    # Refresh your ConfigCat client, invalidate caches or notify your team here.
     # Don't dedupe on X-ConfigCat-Webhook-ID: it is different for every request, including
     # ConfigCat's retries (up to 5). Keep this idempotent, e.g. refresh state rather than apply deltas.
 

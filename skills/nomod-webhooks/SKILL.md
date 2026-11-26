@@ -36,7 +36,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -111,7 +111,7 @@ npx hookdeck-cli listen 3000 nomod --path /webhooks/nomod
 ```
 
 Create the webhook in Settings > Tools & customisations > Apps & APIs > Webhooks (Owners and
-Admins only), pick an integration type and the events, and use the tunnel URL. Nomod sends no
+Admins only), pick Nomod API, Nomod Hosted Checkout or both, choose the events, and use the tunnel URL. Nomod sends no
 challenge. Copy the **Signing secret** into `.env`. See [references/setup.md](references/setup.md).
 
 ## Reference Materials

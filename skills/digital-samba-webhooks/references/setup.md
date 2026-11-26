@@ -2,14 +2,12 @@
 
 ## Prerequisites
 
-- A Digital Samba account with a REST API developer key
+- A Digital Samba account (dashboard access, or a REST API developer key)
 - A publicly reachable HTTPS endpoint (use `npx hookdeck-cli listen 3000 digital-samba --path /webhooks/digital-samba` locally)
 
 ## Choose Your Secret
 
-Webhooks are created and edited through the Digital Samba REST API, not a dashboard. The secret is a value you choose and send as the `authorization_header` property.
-
-Set authorization_header on the webhook through the Digital Samba REST API, then paste the same secret.
+Webhooks are created and edited in the dashboard's Webhooks section or through the REST API. The secret is a value you choose: the **authorisation header** field in the dashboard, or the `authorization_header` property in the API.
 
 1. Generate a long random string, for example `openssl rand -hex 32`.
 2. Store it as `DIGITAL_SAMBA_WEBHOOK_SECRET`. Store just the secret, not `Bearer <secret>`; Digital Samba adds the `Bearer` scheme when it sends the request.
@@ -18,7 +16,9 @@ Set authorization_header on the webhook through the Digital Samba REST API, then
 
 ## Register Your Endpoint
 
-Call `POST /webhooks` on the REST API with your endpoint, the events to receive and the secret:
+In the dashboard, open the [Webhooks section](https://dashboard.digitalsamba.com/webhooks), click **Add webhook**, and enter the URL, the authorisation header and the events.
+
+Or call `POST /webhooks` on the REST API with your endpoint, the events to receive and the secret:
 
 ```bash
 curl -X POST https://api.digitalsamba.com/api/v1/webhooks \
@@ -31,7 +31,7 @@ curl -X POST https://api.digitalsamba.com/api/v1/webhooks \
   }'
 ```
 
-Check the [create webhook reference](https://docs.digitalsamba.com/reference/rest-api/webhooks/create) for the exact request fields. To add or change the secret later, edit the webhook through the API.
+Check the [create webhook reference](https://docs.digitalsamba.com/reference/rest-api/webhooks/create) for the exact request fields. To add or change the secret later, edit the webhook in the dashboard or with `PATCH /api/v1/webhooks/{id}`.
 
 ## Test
 

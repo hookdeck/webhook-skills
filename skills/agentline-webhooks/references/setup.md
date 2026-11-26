@@ -19,12 +19,13 @@ The response contains the **full `secret` once**. Save it as
 own `secret` in the request. Each agent has at most one webhook; POSTing again
 replaces it. (The Python SDK equivalent is `client.webhooks.set(agent_id=..., url=...)`.)
 
-## Hookdeck Setup: Keep the Default Signature Header
+## Match the signature header in Hookdeck
 
-Keep the default `X-Webhook-Signature` header on the AgentLine webhook. AgentLine
-lets you set a custom `signature_header`, but **a custom signature_header isn't
-supported** by Hookdeck's AgentLine source, which only checks `X-Webhook-Signature`.
-Do not set `signature_header` (omit it, or leave it at the default).
+Enter the webhook’s signing secret on your Hookdeck AgentLine source. Leave
+**Signature Header** blank if AgentLine uses its default, `X-Webhook-Signature`.
+If you set `signature_header` to a custom name when creating the webhook, enter
+that name in **Signature Header**. Send a signed test event to confirm verification.
+[AgentLine’s Set Webhook reference](https://docs.agentline.cloud/api-reference/webhooks/set-webhook)
 
 ## Test the Webhook
 

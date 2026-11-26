@@ -14,16 +14,13 @@ notes: >
   hashlib.sha256).hexdigest()' 'Save it, then copy the signing secret you’re shown and store it
   securely.' From the docs (registry summary): `X-SurveyMethods-Signature: sha256=<hex>`, lowercase
   hex HMAC-SHA256 of the raw body keyed with the webhook's secret (the Node, Python and C# samples
-  agree; C# lower-cases explicitly). Each webhook has its own secret. No test vector. SIGNATURE SCHEME
-  (it must match Hookdeck's SURVEYMETHODS source exactly: HMAC controller, algorithm "sha256",
-  header_key "x-surveymethods-signature", encoding "hex"). The X-SurveyMethods-Signature header
-  carries `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser
-  also accepts the bare digest, so accept the value with or without the prefix. The signature is
+  agree; C# lower-cases explicitly). Each webhook has its own secret. No test vector. SIGNATURE SCHEME: HMAC-SHA256, signature in the x-surveymethods-signature header, hex encoded. The X-SurveyMethods-Signature header
+  carries `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Accept the value with or without the prefix. The signature is
   lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
   timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
   exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
   before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  Hex is compared case-insensitively: require exactly 64 hex characters, lowercase
   both sides (or decode both to bytes) before the constant-time compare. Secret: The webhook's signing
   secret, shown once after saving in the dashboard, or returned once in the reply to the API call that
   creates the webhook. Use it as UTF-8 bytes. Env var: SURVEYMETHODS_WEBHOOK_SECRET. Validate the
@@ -37,8 +34,7 @@ notes: >
   `X-SurveyMethods-Event-Type` header repeats it ("The event, e.g. response.completed"). `eventId` is
   the event id, also sent as `X-SurveyMethods-Event-Id`. Documented event types (4):
   response.completed, response.created, survey.created, collector.created. Handle a few common ones
-  and log the rest. Method: POST. Hookdeck's SurveyMethods source manages the method as POST, so the
-  examples handle POST on the webhook route. Express examples must read the raw body with
+  and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

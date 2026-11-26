@@ -63,6 +63,7 @@ function verifyYocoWebhook(rawBody, headers, secret) {
 ```
 
 ```python
+import time
 from standardwebhooks.webhooks import Webhook
 
 if abs(int(time.time()) - int(headers["webhook-timestamp"])) > 180:
@@ -86,10 +87,12 @@ Yoco API events carry `event_type`; Checkout API events carry `type`. Read
 | `order.created` / `order.updated` | Yoco API | An order is opened / changed |
 | `order.completed` / `order.cancelled` | Yoco API | An order is fully paid / cancelled |
 | `item.*`, `item_category.*` | Yoco API | Catalogue items or categories are created, updated, or deleted |
-| `payment.succeeded` / `payment.failed` | Checkout API | A checkout payment succeeds / fails |
+| `payment.succeeded` | Checkout API | A checkout payment succeeds |
 | `refund.succeeded` / `refund.failed` | Checkout API | A refund succeeds / fails |
 
-Checkout API webhooks fire for **every** payment on the account. Match
+`payment.failed` appears in the Checkout payload's `type` enum, but a webhook
+can't subscribe to it, so it isn't delivered. Checkout API webhooks fire for
+**every** payment on the account. Match
 `payload.metadata.checkoutId` to your checkout before fulfilling. See
 [references/overview.md](references/overview.md) for payloads.
 

@@ -23,12 +23,12 @@ function handleEvent(payload: AxiomPayload): void {
   switch (action) {
     case 'Open':
       console.log(`Monitor opened: ${event.title} (${event.monitorID})`);
-      // TODO: page on-call or open an incident (event.body, event.value, event.matchedEvent)
+      // Page on-call or open an incident here (event.body, event.value, event.matchedEvent)
       break;
 
     case 'Closed':
       console.log(`Monitor closed: ${event.title} (${event.monitorID})`);
-      // TODO: resolve the matching incident
+      // Resolve the matching incident here
       break;
 
     default:

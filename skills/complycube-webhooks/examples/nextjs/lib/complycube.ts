@@ -5,7 +5,7 @@ import crypto from 'crypto';
 /**
  * Verify a ComplyCube webhook signature.
  *
- * ComplyCube sends `ComplyCube-Signature: <hex>` (no prefix): the lowercase hex HMAC-SHA256 of the
+ * ComplyCube sends `ComplyCube-Signature: <hex>` (no prefix): the hex HMAC-SHA256 of the
  * raw request body bytes, keyed with the webhook's secret. Nothing else is signed.
  */
 export function verifyComplyCubeSignature(

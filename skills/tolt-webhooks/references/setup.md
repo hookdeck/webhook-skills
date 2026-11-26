@@ -44,6 +44,23 @@ Register the printed URL as the endpoint, then create a partner or a referral li
 trigger `partner.created` or `link.created`. Hookdeck forwards each delivery with the original
 Svix headers, so signature verification works unchanged.
 
+### With the Tolt CLI
+
+`tolt listen` forwards your organization's webhooks to a local URL, re-signed with a local secret
+that it prints; put that in `TOLT_WEBHOOK_SECRET` for your local server. Log in first with an API key
+from **Settings → Integrations → Tolt API**, passing the platform host, because the CLI still defaults
+to the older `api.tolt.com`:
+
+```bash
+npm install -g @tolt/cli
+tolt --api-url https://platform.tolt.com login
+tolt listen --forward-to http://localhost:3000/webhooks/tolt
+tolt trigger commission.created   # in a second terminal; any event type works
+```
+
+Forwarding only runs while `tolt listen` is open. Production deliveries still go to the endpoints in
+your dashboard.
+
 ## Why Does a Replay Fail With "Timestamp too old"?
 
 A replay or retry resends the original `svix-id` and `svix-timestamp`. The `svix` library rejects

@@ -40,29 +40,44 @@ function verifyCryptoProcessingSignature(rawBody, signature, secret) {
 const seen = new Set();
 
 /**
+ * Key for spotting a repeated callback. Invoices send `pending` again for each partial
+ * payment and payment requests send `processing` again for each detected transaction,
+ * so the key includes the `txid`s in `transactions`: a new txid means a new payment.
+ */
+function callbackKey(event) {
+  const id = event.id ?? event.payment_request_id;
+  const txids = (Array.isArray(event.transactions) ? event.transactions : [])
+    .map((tx) => tx && tx.txid)
+    .filter(Boolean)
+    .sort()
+    .join(',');
+  return `${event.type}:${id}:${event.status}:${txids}`;
+}
+
+/**
  * Handle a verified callback, dispatching on the body's `type` field.
- * `status` carries the new state (confirmed, not_confirmed, cancelled, pending, ...).
+ * `status` carries the new state (confirmed, not_confirmed, cancelled, pending, paid, ...).
  */
 function handleCallback(event) {
   switch (event.type) {
     case 'deposit':
       console.log(`Deposit ${event.id} ${event.status}: ${event.currency_received?.amount} ${event.currency_received?.currency}`);
-      // TODO: Credit the user once status is "confirmed"
+      // Your code: credit the user once status is "confirmed"
       break;
 
     case 'withdrawal':
       console.log(`Withdrawal ${event.id} ${event.status} (foreign_id ${event.foreign_id})`);
-      // TODO: Mark the payout as settled or failed
+      // Your code: mark the payout as settled or failed
       break;
 
     case 'exchange':
       console.log(`Exchange ${event.id} ${event.status}: ${event.currency_sent?.currency} -> ${event.currency_received?.currency}`);
-      // TODO: Update the conversion record
+      // Your code: update the conversion record
       break;
 
     case 'payment_request':
       console.log(`Payment request ${event.payment_request_id} ${event.status} (foreign_id ${event.foreign_id})`);
-      // TODO: Fulfil the order once the request is paid
+      // Your code: fulfil the order once the request is paid
       break;
 
     default:
@@ -100,7 +115,7 @@ app.post('/webhooks/cryptoprocessing',
     }
 
     // A duplicate of an already handled callback: answer 201 to stop its retries
-    const key = `${event.type}:${event.id ?? event.payment_request_id}:${event.status}`;
+    const key = callbackKey(event);
     if (seen.has(key)) {
       return res.status(201).json({ received: true, duplicate: true });
     }

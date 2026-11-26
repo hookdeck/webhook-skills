@@ -53,8 +53,7 @@ Consequences that drive the whole handler:
 | `order_id` | `42` | The BaseLinker order identifier. A **string** on the wire. |
 | `state` | `packed` | An opaque state string accompanying the change. |
 
-**These two are the only params actually observed** (in Hookdeck's own Baselinker
-ingestion fixtures). Treat this table as **observed examples — not a documented
+**These two are the only params actually observed**. Treat this table as **observed examples — not a documented
 or exhaustive parameter list**:
 
 - **Do not assume either param is present.** Guard for absence.

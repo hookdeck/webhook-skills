@@ -17,8 +17,8 @@ function safeEqual(a, b) {
 }
 
 // Primary check: Basic Auth credentials embedded in the callback URL
-// (https://user:pass@your-domain.com/webhooks/deepgram), which Deepgram
-// sends as an Authorization: Basic header
+// (https://user:pass@your-domain.com/webhooks/deepgram). Deepgram includes
+// them when it sends the result; they arrive as an Authorization: Basic header
 function verifyBasicAuth(authHeader) {
   const username = process.env.DEEPGRAM_CALLBACK_USERNAME;
   const password = process.env.DEEPGRAM_CALLBACK_PASSWORD;
@@ -36,14 +36,6 @@ const verifyDeepgramWebhook = (req, res, next) => {
     return res.status(401).json({ error: 'Invalid Basic Auth credentials' });
   }
 
-  // Supplementary check: Deepgram does not send dg-token on every callback,
-  // so compare it only when it is present (and an API Key ID is configured)
-  const dgToken = req.headers['dg-token'];
-  const expectedKeyId = process.env.DEEPGRAM_API_KEY_ID;
-  if (dgToken && expectedKeyId && !safeEqual(dgToken, expectedKeyId)) {
-    return res.status(403).json({ error: 'Invalid dg-token' });
-  }
-
   next();
 };
 
@@ -56,6 +48,14 @@ app.post(
     try {
       // Parse the webhook payload
       const payload = JSON.parse(req.body.toString());
+
+      // Optional STT check: if you send extra=callback_secret:VALUE with each
+      // /v1/listen request, Deepgram returns it in metadata.extra.callback_secret.
+      // (dg-token is no longer a supported way to verify callbacks.)
+      const callbackSecret = process.env.DEEPGRAM_CALLBACK_SECRET;
+      if (callbackSecret && !safeEqual(payload.metadata?.extra?.callback_secret, callbackSecret)) {
+        return res.status(401).json({ error: 'Invalid callback secret' });
+      }
 
       // The callback body is the /v1/listen response: { metadata, results }
       const requestId = payload.metadata?.request_id;

@@ -10,8 +10,11 @@ portal only to read the secret key.
 
 ## Get Your Webhook Secret
 
-1. Open the SaladCloud portal and find your webhook secret key (the docs show it in the portal next to the
-   webhook settings).
+1. Copy your organization's webhook secret key from the SaladCloud portal, or read it with
+   `GET /organizations/{organization_name}/webhook-secret-key`
+   ([API reference](https://docs.salad.com/reference/saladcloud-api/organizations/get-webhook-secret-key)).
+   `POST` to the same path replaces it; SaladCloud documents no overlap period, so update every verifier
+   (and your Hookdeck source) when you rotate.
 2. Copy it. It is a **base64 string with no `whsec_` prefix**.
 3. Put it, exactly as shown, in `SALAD_CLOUD_WEBHOOK_SECRET` for your own handler. The
    `standardwebhooks` library accepts the bare value, and also the `whsec_` + secret form.
@@ -24,14 +27,8 @@ validation request is documented, so the endpoint doesn't need a handshake.
 
 ## Configure Hookdeck
 
-Hookdeck's SaladCloud source verifies the Standard Webhooks signature. It base64-decodes a secret only when
-it starts with `whsec_`, and SaladCloud shows the secret without a prefix. When you paste the secret into
-the Hookdeck source, Hookdeck shows this configuration alert, and it applies to you:
-
-> SaladCloud shows the secret without a prefix. Paste it as whsec_ followed by the secret, or verification fails.
-
-So enter `whsec_<secret from the portal>` in Hookdeck. Then point each job's `webhook` field at the
-Hookdeck source URL.
+Paste the bare base64 portal secret into the SaladCloud source. Existing `whsec_`-prefixed values also work.
+Point each job's `webhook` field at the source URL.
 
 ## Local Development
 

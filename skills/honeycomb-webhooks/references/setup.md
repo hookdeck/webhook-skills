@@ -13,10 +13,11 @@
 2. Add an integration, choose **Webhook** as the provider and enter a **Name**.
 3. Enter your **Webhook URL** (e.g. `https://example.com/webhooks/honeycomb`).
 4. Enter a **Shared Secret** and store the same value as `HONEYCOMB_WEBHOOK_SECRET`. The secret is
-   optional in Honeycomb, but without one Honeycomb sends no `X-Honeycomb-Webhook-Token` header,
-   so there is nothing to verify.
-5. Optionally customize the payload (Payload tab), variables and headers (up to 5; the names
-   `Content-Type`, `User-Agent` and `X-Honeycomb-Webhook-Token` are reserved).
+   optional in Honeycomb, but without one the `X-Honeycomb-Webhook-Token` header carries no
+   secret, so there is nothing to verify.
+5. On the **Payload** tab, enable a template for each alert type you use and include a constant
+   `kind` field (see SKILL.md). Optionally add variables (up to 10) and headers (up to 5; the
+   names `Content-Type`, `User-Agent` and `X-Honeycomb-Webhook-Token` are reserved).
 6. Select **Add**.
 
 ## Attach It to Alerts
@@ -33,22 +34,23 @@ webhook with only a Trigger payload can't be used by an SLO Budget Rate Burn Ale
 ## HTTP Method
 
 Honeycomb's docs don't name the HTTP method. The example handlers accept GET, POST, PUT, PATCH
-and DELETE. Hookdeck's Honeycomb source pre-selects POST without managing the method, so if
+and DELETE. Hookdeck's Honeycomb source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if
 Honeycomb uses any other method, allow that method on the source too.
 
 ## Test
 
-Fire a Trigger or burn alert, or replay with curl:
+Use **Test** in the Trigger editor to send a test alert (`.Alert.IsTest` is `true` in it), or
+call the local handler with curl:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/honeycomb \
   -H "Content-Type: application/json" \
   -H "X-Honeycomb-Webhook-Token: $HONEYCOMB_WEBHOOK_SECRET" \
-  -H "X-Honeycomb-Webhook-Delivery-ID: test-1" \
-  -d '{"name":"Slow checkout requests","status":"TRIGGERED"}'
+  -d '{"kind":"trigger","status":"TRIGGERED"}'
 ```
 
-The payload is illustrative; look at a real delivery in your Honeycomb or Hookdeck logs.
+That body is what a custom Trigger template with a `kind` field renders. Check a real delivery in
+your Honeycomb or Hookdeck logs before relying on other fields.
 
 ## Network Notes
 

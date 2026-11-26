@@ -86,7 +86,7 @@ def verify_khipu(raw_body: bytes, signature_header, secret: str) -> bool:
     digest = hmac.new(secret.encode(), timestamp.encode() + b"." + raw_body, hashlib.sha256).digest()
     expected = base64.b64encode(digest)
 
-    # Any s= entry may match (several can be present). Validate the format, then compare the
+    # Any s= entry may match (accept a match on any entry). Validate the format, then compare the
     # strings as bytes in constant time; never decode the received value.
     for sig in signatures:
         sig_bytes = sig.encode()

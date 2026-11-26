@@ -66,7 +66,7 @@ npx hookdeck-cli listen 8000 sap-successfactors --path /webhooks/sap-successfact
 ```
 
 Use the printed URL as the REST API URL in Integration Center. Credentials must arrive with every
-request: Hookdeck never answers with a 401 challenge.
+request.
 
 ## How It Works
 

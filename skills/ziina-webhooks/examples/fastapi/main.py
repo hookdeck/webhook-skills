@@ -53,10 +53,10 @@ async def ziina_webhook(request: Request, x_hmac_signature: str | None = Header(
     event = payload.get("event")
     if event == "payment_intent.status.updated":
         print(f"Payment intent {data.get('id')} is now {status}")
-        # TODO: if status is 'completed', mark the order paid.
+        # Your code: if status is 'completed', mark the order paid.
     elif event == "refund.status.updated":
         print(f"Refund {data.get('id')} is now {status}")
-        # TODO: update the refund state in your system.
+        # Your code: update the refund state in your system.
     else:
         print(f"Unhandled Ziina event: {event}")
 

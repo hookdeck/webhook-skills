@@ -25,7 +25,7 @@ metadata:
 
 ## Setup note
 
-> MICEtribe signs webhooks only when the webhook has a signing secret. Set one on the webhook and paste it here.
+> MICEtribe signs a delivery only when the webhook has a signing secret, so set one on every webhook.
 
 Without a signing secret, deliveries carry no `X-Signature` header and there is nothing to verify.
 
@@ -56,7 +56,7 @@ def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool
     return hmac.compare_digest(bytes.fromhex(signature), expected)
 ```
 
-**Timestamp window (opt-in):** `X-Timestamp` is Unix seconds. MICEtribe lists rejecting old timestamps as optional. The examples do **not** reject old timestamps by default, because Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance. Set `MICETRIBE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to opt in.
+**Timestamp window (opt-in):** `X-Timestamp` is Unix seconds. MICEtribe lists rejecting old timestamps as optional. The examples do **not** reject old timestamps by default, because Hookdeck retries and replays resend the original headers and timestamp. Set `MICETRIBE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to opt in.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -86,7 +86,7 @@ Dispatch on the body's `meta.trigger` field.
 
 ## Delivery and Idempotency
 
-The request is a `POST` with a JSON body. A `2xx` response is success; `3xx` and above, network errors and timeouts (10 seconds) fail. MICEtribe retries up to 5 times, 15 min, 30 min, 3 h, 6 h and 12 h apart (a dispatcher runs every 15 minutes). Process idempotently on `registration_id` + `meta.trigger` + `X-Request-Id`.
+The request is a `POST` with a JSON body. A `2xx` response is success; `3xx` and above, network errors and timeouts (10 seconds) fail. MICEtribe retries up to 5 times, 15 min, 30 min, 3 h, 6 h and 12 h apart (a dispatcher runs every 15 minutes). MICEtribe's docs say to process idempotently on `registration_id` + `meta.trigger` + `X-Request-Id`, which the examples use, but they also describe `X-Request-Id` as unique per delivery attempt. If a retry carries a new one, that key won't catch it, so also keep a hash of the raw body (retries may repeat the same payload) and make writes idempotent.
 
 ## Environment Variables
 

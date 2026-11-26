@@ -1,0 +1,26 @@
+name: gusto
+displayName: Gusto
+docs:
+  webhooks: https://docs.gusto.com/embedded-payroll/docs/webhooks
+  verification: https://docs.gusto.com/embedded-payroll/docs/webhooks
+  events: https://docs.gusto.com/embedded-payroll/docs/webhook-events
+notes: >
+  Gusto Embedded Payroll. Subscriptions in the Developer Portal (Webhook subscriptions tab) or POST
+  /v1/webhook_subscriptions (system access token); they start pending. Gusto POSTs a
+  verification_token to the URL; PUT /v1/webhook_subscriptions/{uuid}/verify with it; GET
+  .../verification_token re-sends it. The token is the HMAC key: X-Gusto-Signature = HMAC-SHA256 of
+  the raw body. The current guide omits the encoding; Gusto's own legacy developer doc
+  (gusto.github.io v1/webhooks/about) says hex digest and its Rails sample uses
+  OpenSSL::HMAC.hexdigest over request.raw_post, no prefix (medium-high confidence; confirm with a
+  live demo event). Examples acknowledge a body with verification_token and no event_type without
+  a signature check (no side effects; token printed only while unset). Body {uuid, event_type,
+  resource_type (Company), resource_uuid, entity_type, entity_uuid, timestamp}; company.provisioned
+  always fires. 2xx within 10 s; up to 16 retries over 3 days, exponential backoff. Hookdeck source
+  type GUSTO (HMAC sha256 hex on x-gusto-signature; enable verification after copying the token
+  from the first request; no timestamp window).
+testScenario:
+  events:
+    - payroll.paid
+    - employee.created
+catalog:
+  summary: Verify Gusto Embedded Payroll webhooks (`X-Gusto-Signature` hex HMAC-SHA256 of the raw body keyed with the subscription's verification_token), handle the verification_token handshake, payroll, employee and company events

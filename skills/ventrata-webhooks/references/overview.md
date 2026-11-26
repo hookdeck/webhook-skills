@@ -45,7 +45,7 @@ API endpoints. When `octo/cardPayments` is active, detailed `cardPayment` payloa
 ```json
 {
   "event": "booking.updated",
-  "webhook": { "id": "webhook_booking_update", "event": "booking.updated", "url": "https://example.com/webhooks/ventrata" },
+  "webhook": { "id": "webhook_booking_update", "event": "booking.updated", "url": "https://www.city-sightseeing.com" },
   "supplier": { "id": "3d6f0a3a-59d4-4b16-a0c5-11d2d8a4e6b7", "name": "City Sightseeing Group" },
   "booking": { "uuid": "89fe0192-ddcd-430a-b285-e1396a4725d2", "status": "ON_HOLD" },
   "diff": [{ "op": "add", "path": "path-example", "was": "was-example", "value": "value-example" }]

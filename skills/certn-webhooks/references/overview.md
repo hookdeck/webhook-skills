@@ -2,46 +2,62 @@
 
 ## What Are Certn Webhooks?
 
-Certn is a background check platform. Its API sends updates as POST requests to the webhook URL you set on the Partner page, as results become available. Secrets and the webhook URL are set at the Partner level: partner resellers use the same webhook and secret across all accounts and sub-accounts.
+Certn runs background checks. CertnCentric, its current platform and API, sends webhooks when a case or one of its checks changes, so you don't have to poll the API. Source: [CertnCentric API docs, Webhooks](https://centric-api-docs.certn.co/#webhooks).
 
-Certn has **no event types**. There is no `type` or `event` field. Each delivery is the applicant (report) object, the same shape you get when you retrieve the results of an application, so you decide what to do from its status fields.
+## The Legacy API Is Gone
 
-## Which Fields Do I Dispatch On?
+Certn deprecated its legacy API (`docs.certn.co/api`) on April 13, 2026 and turned it off on August 5, 2026. Since then legacy requests get `410 Gone` and legacy webhooks send nothing ([deprecation notice](https://docs.certn.co/api/deprecation)). If code still reads a `Certn-Signature` header or an applicant object with `report_status`, it was written for the legacy API. Webhook URLs, API keys, ATS integrations and SSO don't migrate to CertnCentric, so each has to be set up again.
 
-| Field | Values seen in the docs | Meaning |
-|-------|-------------------------|---------|
-| `report_status` | `IN_PROGRESS`, `COMPLETE` | Progress of the whole application order |
-| `result` | `NONE`, `CLEARED` | Application result (score), with a readable `result_label` |
-| `order_status` | `COMPLETE` | Order progress |
-| `check_executions[].status` | `WAITING_ON_CANDIDATE`, `COMPLETE` | Progress of each individual check (`check_name`, for example `criminal_record_check`) |
+## Event Types
 
-Certn documents more values than these (see its [Application and check statuses](https://help.certn.co/hc/en-us/articles/14633780753427) and [Application scores](https://help.certn.co/hc/en-us/articles/25159183963923) articles), so keep a default branch that logs and acknowledges unknown values. The examples handle `COMPLETE` and `IN_PROGRESS`.
+| `event_type` | When |
+|---|---|
+| `CASE_STATUS_CHANGED` | A case's overall status changes |
+| `CHECK_STATUS_CHANGED` | One check on a case changes status |
+| `CASE_REPORT_READY` | A case report you requested is ready to retrieve |
+| `CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED` | Certn generated new input claims for a case (some quickscreen checks only) |
 
-## Payload Structure
+Certn's API spec lists three more values for its events endpoint (`CREDENTIAL_REQUEST_STATUS_CHANGED`, `CREDENTIAL_REQUEST_INVITE_BOUNCED`, `VERIFIER_IS_ACTIVE_CHANGED`), but the Webhooks section doesn't list them. Log and acknowledge any `event_type` you don't handle.
+
+## Payload
+
+Bodies are JSON:
 
 ```json
 {
-  "id": "1ba124f1-d473-44c0-a066-d623b2cb6253",
-  "short_uid": "pmndgAeH",
-  "applicant_type": "Standard",
-  "is_submitted": true,
-  "check_executions": [
-    { "id": "check_exec_SYS5AS3GLcZZpo0i1GfNXQ", "check_name": "criminal_record_check", "status": "COMPLETE" }
-  ],
-  "result": "CLEARED",
-  "result_label": "Cleared",
-  "report_status": "COMPLETE",
-  "order_status": "COMPLETE",
-  "information": { "first_name": "Andrew", "last_name": "Mcleod", "addresses": [] }
+  "created": "2024-06-27T12:00:00Z",
+  "event_id": "1712aea0-77a4-425c-9649-7f544a3de477",
+  "event_type": "CASE_STATUS_CHANGED",
+  "object_id": "2f64d134-1c54-4028-8e8b-9cfa7bd8011c",
+  "object_type": "CASE",
+  "case_status": "CLIENT_ACTION_REQUIRED"
 }
 ```
 
-The real payload is large: it also carries the `request_*` flags for the checks ordered, `created` / `modified` / `last_updated` / `submitted_time` timestamps, `certn_score*` fields, and the applicant's `information` (names, addresses, employers, educations, identity numbers). Treat it as personal data.
+| Field | Meaning |
+|---|---|
+| `created` | When the event occurred (ISO 8601) |
+| `event_id` | Unique ID for the event; deduplicate on it |
+| `event_type` | One of the types above |
+| `object_id` | The case ID for case-scoped events |
+| `object_type` | `CASE` for case-scoped events |
+| `case_status` | The case's rollup status when the webhook is delivered, retries included (for example `IN_PROGRESS`, `CLIENT_ACTION_REQUIRED`, `COMPLETE`) |
+| `triggered_check` | On `CHECK_STATUS_CHANGED` when the event is tied to one check: `id`, `type`, `status` and, when the status is `CLIENT_ACTION_REQUIRED`, `action_required_resolution` |
 
-## Retries
+`action_required_resolution` has an `action_id`, a `summary`, a `step_count` and ordered `steps`. Each step names the API call to make (`http_method`, `path`) and, for the respond step, the body it needs (`body_schema_key`, `body_schema_requirements`). Complete the steps in ascending `step` order.
 
-Certn retries up to three additional times, waiting longer between calls, when your endpoint returns `408`, `500`, `502`, `503`, or `504`. For any other status over 399, it backs off on the first try. Certn generates a new timestamp and signature for each attempt; Hookdeck retries and replays resend the original request, including the original timestamp.
+Certn treats the contract as additive: new keys can appear, and resolution metadata leaves out keys that don't apply. Check that a key exists before you use it.
 
-## Full Reference
+Because `case_status` and `triggered_check.status` reflect the state at delivery, a retried event carries the status at the time of the retry, not at the time of the event.
 
-See [Certn's webhook documentation](https://docs.certn.co/api/guides/use-the-api/webhooks) and the [webhook parameters and example](https://docs.certn.co/api/guides/use-the-api/webhooks/webhook-parameters-and-example).
+## Delivery
+
+- Return `200` within 10 seconds, and process the event in a background job.
+- Failed deliveries are retried with exponential backoff (30s, 90s, 270s and so on) for about two hours. Certn doesn't say which responses count as failures or what happens after the last retry.
+- Retries can deliver events out of order.
+- Each event has a unique `event_id`. Store the ones you've processed.
+- `GET /api/public/events/` returns past events, with a `last_processed_event_id` parameter.
+
+## API Limits That Affect Handlers
+
+The API allows 60 requests per minute and 7,220 per day. A handler that fetches the case on every event can hit that during a burst, so queue the follow-up calls.

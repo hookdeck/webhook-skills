@@ -71,11 +71,12 @@ type; loop over `data`. Dedupe on the `X-Webhook-ID` header. The webhook must ac
 | `course_completion` | A learner completes a course |
 | `course_updated` | A course is updated |
 | `module_complete` | A learner completes a module within a course |
-| `purchase_completion` | A customer completes a purchase of courses on the portal |
+| `purchase_completion` | A customer completes a purchase of courses on the portal. LearnUpon's October 2026 changelog calls the Spree storefront webhook `purchase_complete`, so accept both |
 | `badge_awarded`, `badge_revoked` | A badge is awarded to or removed from a learner |
 | `course_enrollment`, `course_unenrollment` | A learner is enrolled on or unenrolled from a course |
 | `learning_path_enrollment`, `learning_path_updated`, `learning_path_completion` | A learning path enrollment, update or completion |
 | `event_session_creation`, `event_session_updated`, `event_session_canceled` | A live-learning event session is created, updated or cancelled |
+| `event_session_series_created`, `event_session_series_updated`, `event_session_series_canceled` | A live-learning session series is created, updated or cancelled |
 | `learning_journey_enrollment`, `learning_journey_completion`, `learning_journey_blocked`, `learning_journey_deleted`, `learning_journey_archived` | A learning journey enrollment, completion, blocked enrollment, deletion or archive |
 
 ## Delivery

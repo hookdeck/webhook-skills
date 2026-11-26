@@ -53,22 +53,20 @@ function post(
   );
 }
 
-// ILLUSTRATIVE body: Bitculator documents a JSON body but not its fields. Only `test: true` is a
-// documented fact; data.alarm mirrors an item of GET /api/v1/alarms.
+// The alarmTriggered callback example from Bitculator's OpenAPI spec.
 const event = (overrides: Record<string, unknown> = {}) =>
   JSON.stringify({
-    test: true,
+    event: 'alarm.triggered',
+    created_at: '2026-07-03T08:00:00+00:00',
     data: {
       alarm: {
         id: 42,
-        name: 'BTC above 100k',
+        name: 'BTC above 70k',
         coin: { slug: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
         metric: 'rate',
         direction: 'above',
-        target: '100000',
-        notification: 'webhook',
-        status: 'triggered',
-        created_at: '2026-01-15T10:00:00Z',
+        target: '70000.00000000',
+        triggered_at: '2026-07-03T08:00:00+00:00',
       },
     },
     ...overrides,
@@ -80,7 +78,16 @@ describe('Bitculator webhook', () => {
     const res = await post(body, sign(body));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true });
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Test alarm triggered: BTC above 100k BTC above 100000'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('alarm triggered: BTC above 70k BTC above 70000.00000000'));
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('Test alarm'));
+  });
+
+  it('marks a test delivery from data.test', async () => {
+    // A test delivery sends data: { test: true, alarm: null }
+    const body = JSON.stringify({ event: 'alarm.triggered', data: { test: true, alarm: null } });
+    const res = await post(body, sign(body));
+    expect(res.status).toBe(200);
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Test alarm triggered: (unnamed)'));
   });
 
   it('verifies a Buffer body directly and rejects non-ASCII digits in t', () => {
@@ -194,7 +201,7 @@ describe('Bitculator webhook', () => {
 
   it('rejects a tampered body', async () => {
     const body = event();
-    expect((await post(body.replace('100000', '1'), sign(body))).status).toBe(401);
+    expect((await post(body.replace('70000', '1'), sign(body))).status).toBe(401);
   });
 
   it('rejects a signature made with the wrong secret', async () => {

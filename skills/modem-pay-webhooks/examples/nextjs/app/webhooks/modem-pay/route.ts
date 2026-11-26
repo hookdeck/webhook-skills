@@ -34,16 +34,16 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = event.payload;
-  // There is no delivery id: dedupe retries on (event, payload.id), e.g. in a unique DB index.
+  // There is no delivery id: dedupe retries on (event, payload.id, payload.updatedAt), e.g. in a unique DB index.
   const ref = str(payload.id) ?? '(no id)';
 
   switch (event.event) {
     case 'charge.succeeded':
       console.log(`Charge succeeded: ${ref} ${payload.amount} ${str(payload.currency) ?? ''}`.trimEnd());
-      // TODO: mark the order paid (check payload.test_mode before fulfilling)
+      // Your code: mark the order paid (check payload.test_mode before fulfilling)
       break;
-    case 'charge.updated':
-      console.log(`Charge updated: ${ref} status=${str(payload.status) ?? 'unknown'}`);
+    case 'charge.failed':
+      console.log(`Charge failed: ${ref}`);
       break;
     case 'payment_intent.created':
       console.log(`Payment intent created: ${ref}`);

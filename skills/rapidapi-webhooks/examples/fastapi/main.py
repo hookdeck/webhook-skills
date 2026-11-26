@@ -46,33 +46,35 @@ def get_event_name(payload: dict):
 def handle_event(payload: dict) -> None:
     event = get_event_name(payload)
 
+    # RapidAPI's docs list events by display name and don't document the wire spelling.
+    # Match the values a Test event shows before relying on these branches.
     if event == "API Created":
         print("API created")
-        # TODO: sync the new API to your catalog or gateway
+        # Sync the new API to your catalog or gateway
 
     elif event == "API Updated":
         print("API updated")
-        # TODO: refresh the API in your gateway
+        # Refresh the API in your gateway
 
     elif event == "API Deleted":
         print("API deleted")
-        # TODO: remove the API from your gateway
+        # Remove the API from your gateway
 
     elif event == "Subscription Created":
         print("Subscription created")
-        # TODO: sync the new subscription to your CRM or billing system
+        # Sync the new subscription to your CRM or billing system
 
     elif event == "Subscription Updated":
         print("Subscription updated")
-        # TODO: update the subscription downstream
+        # Update the subscription downstream
 
     elif event == "User Created":
         print("User created")
-        # TODO: provision the user in your systems
+        # Provision the user in your systems
 
     elif event == "Billing Plan Updated":
         print("Billing plan updated")
-        # TODO: update plan pricing downstream
+        # Update plan pricing downstream
 
     else:
         print(f"Unhandled event: {event or 'unknown (set RAPIDAPI_EVENT_FIELD)'}")

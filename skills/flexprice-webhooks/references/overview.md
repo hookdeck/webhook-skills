@@ -63,7 +63,7 @@ not from the event name, because messages can arrive out of order. Each object c
 
 The examples handle exactly these events and acknowledge anything else with `200`.
 
-## Full Event List (60 documented)
+## Full Event List (79 documented)
 
 - **Customer:** `customer.created`, `customer.updated`, `customer.deleted`
 - **Subscription:** `subscription.created`, `subscription.draft.created`, `subscription.activated`,
@@ -74,9 +74,12 @@ The examples handle exactly these events and acknowledge anything else with `200
   `subscription.line_item_spend.threshold_recovered`, `subscription.group_spend.threshold_reached`,
   `subscription.group_spend.threshold_recovered`, `subscription.renewal.due`
 - **Invoice:** `invoice.update.finalized`, `invoice.update.payment`, `invoice.update.voided`,
-  `invoice.update`, `invoice.payment.overdue`, `invoice.communication.triggered`
-- **Payment and refund:** `payment.created`, `payment.updated`, `payment.failed`, `payment.success`,
-  `payment.pending`, `refund.created`, `refund.succeeded`, `refund.failed`
+  `invoice.update`, `invoice.payment.overdue`, `invoice.payment.failed`,
+  `invoice.communication.triggered`, plus `invoice.sync.success` and `invoice.sync.failed`, which
+  are only in Flexprice's [webhook OpenAPI spec](https://swagger.flexprice.io/webhooks.json)
+- **Payment and refund:** `payment.created`, `payment.updated`, `payment.failed`,
+  `payment.attempt.failed`, `payment.success`, `payment.pending`, `refund.created`,
+  `refund.succeeded`, `refund.failed`
 - **Credit note:** `credit_note.created`, `credit_note.updated`
 - **Wallet:** `wallet.created`, `wallet.updated`, `wallet.terminated`, `wallet.transaction.created`,
   `wallet.transaction.updated`, `wallet.credit_balance.dropped`, `wallet.credit_balance.recovered`,
@@ -84,8 +87,14 @@ The examples handle exactly these events and acknowledge anything else with `200
 - **Feature and entitlement:** `feature.created`, `feature.updated`, `feature.deleted`,
   `feature.wallet_balance.alert`, `entitlement.created`, `entitlement.updated`,
   `entitlement.deleted`, `entitlement.grant.exhausted`
+- **Commitment and billing terms:** `commitment.created`, `commitment.updated`,
+  `commitment.terminated`, `billing_terms.created`, `billing_terms.updated`,
+  `billing_instalment.created`, `billing_instalment.updated`, `billing_instalment.cancelled`,
+  `billing_instalment.invoiced`
 - **Checkout:** `checkout.session.initiated`, `checkout.session.completed`,
-  `checkout.session.failed`, `checkout.session.expired`
+  `checkout.session.failed`, `checkout.session.expired`, `checkout.session.cancelled`
+- **Mandate (Razorpay saved payment methods):** `mandate.confirmed`, `mandate.rejected`,
+  `mandate.cancelled`, `mandate.setup_attempt_failed`, `mandate.setup_expired`
 - **Usage ingestion:** `event.rejected`
 
 Threshold events come in pairs: `threshold_reached` or `dropped` fires when a value crosses the

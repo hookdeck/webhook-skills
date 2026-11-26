@@ -11,37 +11,39 @@ interface AbsorbWebhook {
 function handleEvent(body: AbsorbWebhook): void {
   const { eventName } = body;
 
-  switch (eventName) {
-    case 'UserCreated':
+  // Absorb's docs show only UserCreated and CertificateAwarded on the wire, so the casing
+  // of the other names is untested. Compare case-insensitively.
+  switch (String(eventName ?? '').toLowerCase()) {
+    case 'usercreated':
       console.log('User created', body);
-      // TODO: GET the new learner from the Absorb Integration API and sync it
+      // GET the new learner from the Absorb Integration API and sync it
       break;
 
-    case 'OnlineCourseActivated':
+    case 'onlinecourseactivated':
       console.log('Online course activated', body);
       break;
 
-    case 'EnrollmentCompletedbyAdmin':
-    case 'EnrollmentCompletedbyLearner':
+    case 'enrollmentcompletedbyadmin':
+    case 'enrollmentcompletedbylearner':
       console.log(`Enrollment completed (${eventName})`, body);
-      // TODO: mark the course complete in your system
+      // Mark the course complete in your system
       break;
 
-    case 'CertificateAwarded':
+    case 'certificateawarded':
       console.log('Certificate awarded', body);
-      // TODO: fetch the certificate and notify the learner
+      // Fetch the certificate and notify the learner
       break;
 
-    case 'CompetencyAwarded':
+    case 'competencyawarded':
       console.log('Competency awarded', body);
       break;
 
-    case 'CourseCreditsAwarded':
+    case 'coursecreditsawarded':
       console.log('Course credits awarded', body);
       break;
 
-    case 'UserEnrolledinCoursebyAdmin':
-    case 'UserEnrolledinCoursebyLearner':
+    case 'userenrolledincoursebyadmin':
+    case 'userenrolledincoursebylearner':
       console.log(`User enrolled in course (${eventName})`, body);
       break;
 

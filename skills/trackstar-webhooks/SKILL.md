@@ -17,8 +17,12 @@ metadata:
 Trackstar uses [Svix](https://www.svix.com/) as its webhook provider, which implements
 Standard Webhooks. Every delivery is an HTTP `POST` with a JSON body and three signature
 headers: `svix-id`, `svix-timestamp`, and `svix-signature`. The event name is the top-level
-`event_type` field. The body also carries `connection_id`, `integration_name`, `data` (the
-created or updated object) and, on `*.updated` events only, `previous_attributes`.
+`event_type` field. The body also carries `connection_id`, `integration_name`, `integration_type`,
+`data` (the created or updated object) and, on updated events, `previous_attributes`.
+
+If an event is too large to send in full, Trackstar sets `data_truncated: true`, leaves only the `id`
+in `data` and adds a `data_url`. Call that URL with your `x-trackstar-api-key` to get a download link
+(valid for 20 minutes) for the full event as it would have been delivered.
 
 ## When to Use This Skill
 
@@ -34,7 +38,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -77,8 +81,9 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-47 events are documented (the list may not be exhaustive). The name is `event_type` in the JSON
-body. The examples handle these:
+68 events are known: 47 have their own page in Trackstar's docs, and 21 more (`erp-*` and
+`connection.sync-job-cancelled`) appear only in Trackstar's OpenAPI spec. The list may not be
+exhaustive. The name is `event_type` in the JSON body. The examples handle these:
 
 | Event | Triggered When |
 |-------|----------------|
@@ -118,7 +123,7 @@ to see it arrive.
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Trackstar webhook concepts, all 47 events, payload shape
+- [references/overview.md](references/overview.md) - Trackstar webhook concepts, all 68 events, payload shape
 - [references/setup.md](references/setup.md) - Register an endpoint, get the secret, transformations, initial-sync behavior
 - [references/verification.md](references/verification.md) - Svix verification details, header fallback, manual verifier, timestamp window
 

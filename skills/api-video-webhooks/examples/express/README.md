@@ -41,7 +41,7 @@ Use the Hookdeck URL as the webhook URL when you create the webhook (dashboard o
 
 ### Trigger events
 
-Upload a video to receive `video.source.recorded` and `video.encoding.quality.completed`, or start a live stream for `live-stream.broadcast.started` / `live-stream.broadcast.ended`.
+Upload a video to receive `video.encoding.quality.completed`, or run a live stream for `live-stream.broadcast.started` and `live-stream.broadcast.ended`, followed by `video.source.recorded` when its recording is queued for encoding.
 
 ## Endpoint
 

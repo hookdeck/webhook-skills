@@ -1,0 +1,24 @@
+name: monnify
+displayName: Monnify
+docs:
+  webhooks: https://developers.monnify.com/docs/integration-tools/webhooks
+  verification: https://developers.monnify.com/docs/integration-tools/webhooks
+  events: https://developers.monnify.com/docs/integration-tools/webhooks
+notes: >
+  Webhook URLs are set per event in the Monnify dashboard. monnify-signature = lowercase hex
+  HMAC-SHA512 of the raw (compact JSON) body keyed with the client secret key as text. The docs'
+  prose says "SHA-512(client secret key + object of request body)", but the JS/PHP/Java samples,
+  the published test vector and Monnify's official .NET library all use HMAC-SHA512. Monnify's
+  sandbox sends no monnify-signature header (per Monnify's .NET library), so sandbox deliveries
+  never verify. Body {eventType, eventData}; SUCCESSFUL_TRANSACTION eventData has product,
+  transactionReference, paymentReference, paidOn, amountPaid, totalPayable, paymentMethod,
+  currency, settlementAmount, paymentStatus, customer, and more. Other events cover disbursements,
+  refunds and settlements. Dedupe on transactionReference. Hookdeck source type MONNIFY (HMAC
+  sha512 hex on monnify-signature; leave verification off for the sandbox; verification optional;
+  no timestamp window).
+testScenario:
+  events:
+    - SUCCESSFUL_TRANSACTION
+    - SUCCESSFUL_REFUND
+catalog:
+  summary: Verify Monnify webhooks (`monnify-signature` lowercase hex HMAC-SHA512 of the raw body keyed with the client secret; the sandbox doesn't sign), handle transaction, disbursement and refund events

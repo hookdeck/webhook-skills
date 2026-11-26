@@ -39,7 +39,7 @@ An illustrative JSON template (yours may differ):
 }
 ```
 
-With **GET** there is no body, and with no body template the request is empty. The example handlers parse JSON if it parses, else treat the body as text, or empty, and log a "settings changed" notification.
+With no body template, the request has no body. The example handlers parse JSON if it parses, else treat the body as text, or empty, and log a "settings changed" notification.
 
 ## Headers
 

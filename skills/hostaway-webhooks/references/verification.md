@@ -26,7 +26,7 @@ A static shared credential authenticates the sender, not the body. There is no s
 
 ## Common Gotchas
 
-- **No 401 challenge:** Hookdeck never sends one (no `WWW-Authenticate` round trip), so credentials must arrive with each request.
+- **No 401 challenge:** there is no `WWW-Authenticate` round trip, so credentials must arrive with each request.
 - **Methods:** the HTTP method isn't documented. Check the credential first for GET, POST, PUT, PATCH and DELETE alike, and allow the method on the Hookdeck source.
 - **Empty or non-JSON bodies:** acknowledge them; don't reject.
 - **Raw body:** with Express use `express.raw({ type: '*/*' })`, authenticate, then parse.

@@ -1,7 +1,7 @@
 # GlobalStack Webhooks - Express Example
 
 Minimal example of receiving GlobalStack webhooks with signature verification using the
-official [`svix`](https://www.npmjs.com/package/svix) library (GlobalStack delivers webhooks through Svix).
+official [`svix`](https://www.npmjs.com/package/svix) library (GlobalStack signs webhooks in the Svix format).
 
 ## Prerequisites
 

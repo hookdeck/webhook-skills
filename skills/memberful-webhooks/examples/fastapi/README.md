@@ -44,7 +44,7 @@ The tests sign payloads with the real algorithm and cover valid, missing, wrong,
 npx hookdeck-cli listen 8000 memberful --path /webhooks/memberful
 ```
 
-Use the printed URL as the endpoint URL when you create the webhook in Memberful. Hookdeck's Memberful source verifies the signature and manages the method as POST.
+Use the printed URL as the endpoint URL when you create the webhook in Memberful. Hookdeck's Memberful source verifies the signature.
 
 ## How It Works
 
@@ -53,5 +53,5 @@ Use the printed URL as the endpoint URL when you create the webhook in Memberful
 1. The raw body bytes are read (`await request.body()`) and the `X-Memberful-Webhook-Signature` header is verified first: exactly 64 hex characters, then a constant-time compare against the hex HMAC-SHA256. Failure returns `401`.
 2. A non-POST request gets `405`.
 3. The body must be a JSON object (`400` if not). Fields are type-checked before use.
-4. The handler dispatches on the top-level `event` field (an assumption: Memberful's docs list event names but never show where the name travels, so confirm against a real delivery) across the 22 documented events. Anything else is logged.
+4. The handler dispatches on the top-level `event` field (Memberful's docs never show where the name travels; Memberful's WordPress plugin reads this field, so confirm with a test delivery) across the 22 documented events. Anything else is logged.
 5. It returns `200 {"received": true}`.

@@ -56,8 +56,7 @@ def verify_magic_hour(raw_body: bytes, headers, secret: str) -> bool:
 ## Optional Timestamp Tolerance
 
 Magic Hour recommends rejecting timestamps outside about 5 minutes. This skill leaves that
-**off by default**: retries and Hookdeck replays resend the original headers, and Hookdeck
-applies no tolerance, so a fixed window rejects legitimate redeliveries. Set
+**off by default**: Magic Hour regenerates the timestamp on each of its own retries, but Hookdeck retries and replays resend the original headers, so a fixed window rejects those redeliveries. Set
 `MAGIC_HOUR_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off) to opt in. The
 examples then require the timestamp to be digits only and within that many seconds of now, in
 either direction. A failure returns `401`. Either way the timestamp is part of the signed

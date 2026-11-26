@@ -26,7 +26,7 @@ type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-sig
 
 /**
  * Read the three signature headers. Axilio sends webhook-*; if webhook-id is
- * absent the svix-* equivalents are used instead (Hookdeck does the same).
+ * absent the svix-* equivalents are used instead.
  */
 function signatureHeaders(headers: Headers): Partial<SignatureHeaders> {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';

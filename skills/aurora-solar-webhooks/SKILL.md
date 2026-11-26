@@ -21,7 +21,7 @@ project or design is created, a job finishes, an agreement changes status. Each 
 string**, built from a URL template you provide. Webhooks are **not signed**, so your endpoint
 authenticates them with a secret header you add to the subscription.
 
-> Set header_auth_key and header_auth_value on the Aurora Solar webhook and enter them here. Webhooks without them send nothing to verify.
+> Always set `header_auth_key` and `header_auth_value` on the Aurora Solar subscription. Aurora's webhook authentication is optional, so a subscription created without it sends no credential to check.
 
 ## When to Use This Skill
 
@@ -83,8 +83,7 @@ https://<hookdeck-url>?event=project_created&project_id=<PROJECT_ID>&source=<SOU
 ```
 
 Aurora fills in the attributes, so the request looks like
-`GET /?event=project_created&project_id=3fa8...&source=api`. Hookdeck's Aurora Solar source
-pre-selects GET without managing the method; the receivers also accept POST for flexibility.
+`GET /?event=project_created&project_id=3fa8...&source=api`. Allow GET on Hookdeck's Aurora Solar source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); the receivers also accept POST for flexibility.
 Respond within 10 seconds; failures (timeout, 3xx/4xx/5xx) are retried 5 more times over 24 hours.
 
 ## Event Types

@@ -29,8 +29,7 @@ header value** as `VELLUM_WEBHOOK_SECRET`, including any `Bearer ` prefix you ty
 ## Hookdeck Source
 
 Create a Hookdeck source of type **Vellum** (`VELLUM`) and give it the same header name and exact
-header value. The source pre-selects POST without managing the method. Vellum's docs don't say
-which HTTP method it uses, so if your sender uses another method, allow it on the source too.
+header value. Vellum's docs don't say which HTTP method it uses, so allow the method your sender uses on the source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

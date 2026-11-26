@@ -140,8 +140,8 @@ before comparing anyway.
 
 **There is no timestamp and no replay window.** No `Cko-Timestamp` header
 exists, and no timestamp is signed. **Do not invent a tolerance check** — you'd
-reject every delivery. Replay protection is deduplication on the event `id`
-(`evt_…`).
+reject every delivery. Replay protection is deduplication on the event `type`
+plus `id` (`evt_…`).
 
 **`timingSafeEqual` throws on length mismatch.** Guard lengths first (or
 `try`/`catch`). An uncaught throw becomes a 500, which Checkout.com retries
@@ -182,7 +182,8 @@ a branch for one.
 }
 ```
 
-- `id` — the **event** id, `evt_…`. This is your idempotency key.
+- `id` — the **event** id, `evt_…`. Deduplicate on `type` plus `id`:
+  Checkout.com's own examples reuse one `evt_…` id across different event types.
 - `type` — a **snake_case** string. There are no dotted names.
 - `version` — the event schema version (e.g. `"1.0.29"`), not an API version.
 - `created_on` **or** `timestamp` — see the gotcha above.
@@ -302,7 +303,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one. Checkout.com's unordered, at-least-once delivery and ~30-hour retry window make these especially relevant:
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle asynchronously third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Key on the `evt_…` event `id`; store for 31+ hours
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Key on `type` plus the `evt_…` event `id`; keep records for the 90-day resend window
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Checkout.com's 8-attempt backoff and the 10-second response budget
 

@@ -111,7 +111,7 @@ app.post('/webhooks/schematic', express.raw({ type: '*/*' }), (req, res) => {
 });
 
 function handleEvent(event, eventId) {
-  // TODO: drop the event if eventId is already in your store (when eventId is set).
+  // Your code: drop the event if eventId is already in your store (when eventId is set).
   const { action, body = {} } = event;
 
   switch (action) {

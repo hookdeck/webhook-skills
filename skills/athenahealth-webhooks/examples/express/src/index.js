@@ -27,7 +27,7 @@ function verifyAthenahealthWebhook(rawBody, signatureHeader, secret) {
 // One handler per notification event (a Bundle can batch several for one topic)
 function handleEvent(topic, event) {
   const focus = event.focus?.reference || event.focus?.identifier?.value;
-  // TODO: dedupe on event.id (delivery is at-least-once), then GET the focus resource
+  // Next: dedupe on event.id (delivery is at-least-once), then GET the focus resource
   switch (topic) {
     case 'Appointment.schedule':
       console.log(`Appointment scheduled: ${focus}`);

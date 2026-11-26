@@ -51,11 +51,12 @@ function verifyFacebookSignature(rawBody, signatureHeader, appSecret) {
  * A POST can batch up to 1000 updates, so handle each entry individually.
  */
 function handleEntry(object, entry) {
-  // Messenger deliveries carry a `messaging` array instead of `changes`.
+  // Messenger (and Page Integrity) deliveries carry a `messaging` array instead of `changes`.
+  // For Messenger, see the messenger-webhooks skill.
   if (Array.isArray(entry.messaging)) {
     for (const event of entry.messaging) {
       console.log(`Messenger message from ${event.sender?.id}:`, event.message?.text);
-      // TODO: Route to your chatbot / support system.
+      // Your code: route to your chatbot or support system.
     }
     return;
   }
@@ -64,32 +65,32 @@ function handleEntry(object, entry) {
     switch (`${object}:${change.field}`) {
       case 'page:feed':
         console.log('Page feed change:', change.value?.item, change.value?.verb);
-        // TODO: Moderate comments, sync posts, reply, etc.
+        // Your code: moderate comments, sync posts or reply.
         break;
 
       case 'page:mention':
         console.log('Page mentioned:', change.value?.post_id);
-        // TODO: Social listening / alerts.
+        // Your code: social listening or alerts.
         break;
 
-      case 'page:messages':
-        console.log('Page message field change:', change.value);
-        // TODO: Handle Messenger message field updates.
+      case 'page:leadgen':
+        console.log('New lead:', change.value?.leadgen_id);
+        // Your code: fetch the lead with the Graph API, then sync it to your CRM.
         break;
 
       case 'instagram:comments':
         console.log('Instagram comment:', change.value?.id);
-        // TODO: Comment moderation / auto-reply.
+        // Your code: comment moderation or auto-reply.
         break;
 
       case 'instagram:mentions':
         console.log('Instagram mention:', change.value?.media_id);
-        // TODO: Engagement tracking.
+        // Your code: engagement tracking.
         break;
 
       case 'user:feed':
         console.log('User feed update:', change.value?.verb);
-        // TODO: Personal timeline sync.
+        // Your code: profile sync.
         break;
 
       default:

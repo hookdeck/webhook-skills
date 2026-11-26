@@ -12,8 +12,8 @@ sends three headers on every POST:
 | `webhook-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix's own header names (`svix-id`, `svix-timestamp`, `svix-signature`) carry the same values.
-Hookdeck's Origami source reads the `webhook-*` headers and falls back to the `svix-*` headers when
-`webhook-id` is absent, and the examples here do the same. The libraries read the `webhook-*`
+The examples read the `webhook-*` headers and fall back to the `svix-*` headers when
+`webhook-id` is absent. The libraries read the `webhook-*`
 names, so the examples hand them the resolved values under those names.
 
 The algorithm:

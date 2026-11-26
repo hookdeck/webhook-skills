@@ -55,7 +55,7 @@ event = Webhook(os.environ["SCALEKIT_WEBHOOK_SECRET"]).verify(
 )
 ```
 
-**Header fallback.** The examples read the `webhook-*` headers and, when `webhook-id` is absent, the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`), exactly as Hookdeck does. They then pass the three values to the library under the `webhook-*` names it expects:
+**Header fallback.** The examples read the `webhook-*` headers and, when `webhook-id` is absent, the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`). They then pass the three values to the library under the `webhook-*` names it expects:
 
 ```javascript
 const prefix = req.get('webhook-id') ? 'webhook' : 'svix';
@@ -70,7 +70,7 @@ const headers = {
 
 The `standardwebhooks` libraries always enforce a fixed **5-minute** timestamp window. The Scalekit docs describe a 5-minute window too. **Hookdeck retries and replays resend the original request, including its original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old.** If you receive Scalekit webhooks through Hookdeck (or replay deliveries later), use this verifier and set `toleranceSeconds` to `null` (no window) or a wider value.
 
-It also accepts any `whsec_` secret and, for a secret without that prefix, uses its raw UTF-8 bytes as the key (as Hookdeck does).
+It also accepts any `whsec_` secret and, for a secret without that prefix, uses its raw UTF-8 bytes as the key.
 
 ```javascript
 const crypto = require('crypto');
@@ -146,4 +146,4 @@ def verify_scalekit(raw_body: bytes, msg_id: str, timestamp: str, signature_head
 | Hookdeck retries or replays fail, first deliveries pass | Library's fixed 5-minute window; use the manual verifier with `null` tolerance |
 | Missing headers | A proxy stripped `webhook-*` headers, or the request isn't from Scalekit |
 
-Review failed deliveries in the endpoint's message log in the Scalekit dashboard (Dashboard > Webhooks) and select **Resend** after you fix the handler.
+Review failed deliveries in the endpoint's message log in the Scalekit dashboard (Developers > Webhooks) and select **Resend** after you fix the handler.

@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// Memos sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Memos sends webhook-* headers; fall back to the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
   // The body is { url, activityType, creator, memo }; the event name is the top-level activityType
   const { activityType, creator } = event;
-  // webhook-id is stable across retries and the body has no event id: use it to deduplicate
+  // The body has no event id: deduplicate on webhook-id
   console.log(`Received Memos webhook ${id}: ${activityType}`);
 
   switch (activityType) {

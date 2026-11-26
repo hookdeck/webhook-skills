@@ -17,7 +17,8 @@ metadata:
 100ms (live video SDK) sends a JSON `POST` to your endpoint when something happens in a room:
 a peer joins or leaves, a session opens or closes, a recording or HLS stream starts or finishes.
 
-100ms webhooks are not signed. Add a secret header to the webhook in the 100ms dashboard and enter it here.
+100ms webhooks are not signed. Add a secret header to the workspace's webhook in the
+**Developer** section of the 100ms dashboard.
 Your endpoint authenticates each request by comparing that header with the value you stored.
 
 ## When to Use This Skill

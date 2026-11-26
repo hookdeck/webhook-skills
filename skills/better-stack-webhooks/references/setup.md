@@ -18,8 +18,7 @@ the webhook sends on every request. Pick one (or configure both and accept eithe
   them in `BETTER_STACK_WEBHOOK_USERNAME` and `BETTER_STACK_WEBHOOK_PASSWORD`.
 
 **Basic auth caveat:** Better Stack's docs don't say whether the Basic credentials are sent
-preemptively on the first request or only after a `401 WWW-Authenticate` challenge. Your endpoint,
-and Hookdeck's Better Stack source, never send that challenge, so if Basic auth deliveries are
+preemptively on the first request or only after a `401 WWW-Authenticate` challenge. Your endpoint never sends that challenge, so if Basic auth deliveries are
 rejected, switch to the custom header.
 
 ## Register Your Endpoint
@@ -75,11 +74,10 @@ methods:
 
 - **Basic auth** (the default): enter the same username and password as the webhook.
 - **Custom header**: enter the header name (placeholder `X-Better-Stack-Secret`) and its value.
-  Hookdeck finds the header case-insensitively and compares the whole value.
 
-The source pre-selects `POST` without managing the method. If the webhook uses another method,
-allow it on the source as well. Hookdeck sources can allow `GET`, `HEAD`, `POST`, `PUT` and
-`PATCH` but not `OPTIONS`, so don't use `options` for a webhook routed through Hookdeck.
+The source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If the webhook uses another method,
+allow it on the source as well. The methods Hookdeck documents for sources don't include
+`OPTIONS`, so don't use `options` for a webhook routed through Hookdeck.
 
 ## Test
 
@@ -89,7 +87,7 @@ Send a request with curl:
 curl -X POST http://localhost:3000/webhooks/better-stack \
   -H "Content-Type: application/json" \
   -H "X-Better-Stack-Secret: $BETTER_STACK_WEBHOOK_SECRET" \
-  -d '{"data":{"id":"1","type":"incident","attributes":{"name":"Tesla.com homepage","cause":"Error 500","started_at":"2026-10-26T10:51:28.151Z","acknowledged_at":"","resolved_at":""}}}'
+  -d '{"data":{"id":"1","type":"incident","attributes":{"name":"Tesla.com homepage","cause":"Error 500","started_at":"2020-10-21T10:51:28.151Z","acknowledged_at":null,"resolved_at":null}}}'
 ```
 
 or with Basic auth: `-u "$BETTER_STACK_WEBHOOK_USERNAME:$BETTER_STACK_WEBHOOK_PASSWORD"`. To test from

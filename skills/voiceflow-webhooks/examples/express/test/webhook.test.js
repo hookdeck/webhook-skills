@@ -87,7 +87,7 @@ describe('Voiceflow webhook handler', () => {
     expect(res.body.error).toBe('Missing required webhook headers');
   });
 
-  test('rejects an unsigned delivery (the project-level session webhook)', async () => {
+  test('rejects an unsigned delivery', async () => {
     const res = await request(app).post('/webhooks/voiceflow').set('Content-Type', 'application/json').send('{"type":"organization.project.created"}');
     expect(res.status).toBe(400);
   });

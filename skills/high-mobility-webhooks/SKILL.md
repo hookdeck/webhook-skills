@@ -25,7 +25,7 @@ metadata:
 
 High Mobility sends `X-HM-Signature-256: sha256=<lowercase hex>`. The digest is HMAC-SHA256 over the **raw request body bytes only** (no timestamp, id or other header is signed), keyed with the webhook secret string's UTF-8 bytes **as-is** (not hex- or base64-decoded). High Mobility has no verification SDK, so verify manually.
 
-Verify only `X-HM-Signature-256`. The deprecated `X-HM-Signature` header (HMAC-SHA1) is still sent for old integrations; ignore it, as Hookdeck's source does.
+Verify only `X-HM-Signature-256`. The deprecated `X-HM-Signature` header (HMAC-SHA1) is still sent for old integrations; ignore it.
 
 ### Verification (Node.js)
 
@@ -68,7 +68,7 @@ Respond **401** when the header is missing or empty, the value is malformed, or 
 
 ## HTTP Methods
 
-High Mobility's docs don't name the HTTP method. Hookdeck's High Mobility source pre-selects POST without managing the method (you can change it), so any other method the sender uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE on the route, verify the signature first for every method, and treat a missing body as zero bytes: a verified GET with no body is acknowledged with `200`, not rejected as invalid JSON.
+High Mobility's docs don't name the HTTP method. Hookdeck's High Mobility source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE on the route, verify the signature first for every method, and treat a missing body as zero bytes: a verified GET with no body is acknowledged with `200`, not rejected as invalid JSON.
 
 ## Common Event Types
 

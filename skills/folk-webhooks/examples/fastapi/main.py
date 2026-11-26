@@ -113,11 +113,15 @@ def handle_event(event: Dict[str, Any]) -> None:
     elif event_type == "object.deleted":
         logger.info("Object deleted: %s (%s)", resource_id, details.get("name"))
 
-    # --- Notes and reminders -------------------------------------------------
+    # --- Notes, tasks and reminders (reminders removed February 13, 2027) ----
     elif event_type in (
         "note.created",
         "note.updated",
         "note.deleted",
+        "task.created",
+        "task.updated",
+        "task.completed",
+        "task.deleted",
         "reminder.created",
         "reminder.updated",
         "reminder.deleted",

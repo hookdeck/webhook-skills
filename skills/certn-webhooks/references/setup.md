@@ -2,25 +2,30 @@
 
 ## Prerequisites
 
-- A Certn account with access to the **Partner** tab
+- A CertnCentric account with access to the Integrations area of the Client Portal
 - A publicly reachable HTTPS endpoint (use the Hookdeck CLI for local development)
+- A handler that answers the `GET` challenge, running before you add the URL
 
-## Register Your Endpoint and Get Your Signing Secret
+## Add Your Webhook URL
 
-All webhook management is on the Partner page:
+1. Start your server, with `GET` and `POST` handlers on the webhook path.
+2. In the CertnCentric Client Portal, open the Integrations area and add the webhook URL.
+3. Certn sends `GET <URL>?challenge=<value>`. Your handler returns `200` with the value as the body within 10 seconds, or Certn disables the webhook.
+4. Copy the signing key Certn provides for the webhook into `CERTN_WEBHOOK_SECRET`. Use it as given, as a UTF-8 string.
 
-1. Open the **Partner** tab.
-2. Enter your webhook URL.
-3. Click **Enable Integration**.
-4. Turn on signed payloads and copy the secret string.
+Certn re-verifies the URL periodically. If a later check fails, Certn disables the webhook and emails you, so keep the `GET` handler deployed for as long as the webhook exists.
 
-**Signing is opt-in: turn on signed payloads in Certn and paste the signing secret into `CERTN_WEBHOOK_SECRET`. Without it, deliveries are unsigned and fail verification.** Use the secret exactly as shown, as a UTF-8 string (no base64 decoding).
+## Regions
 
-Notes from Certn:
+CertnCentric runs separate instances in North America (CA), Europe, Middle East and Africa (UK) and Asia Pacific (AU). API keys and webhooks are per region and aren't copied between them, so add a webhook in each region where you order cases.
 
-- The webhook URL can be changed at any time. The secret string cannot be changed; if it is compromised, contact Certn support.
-- Secrets are set at the Partner level. Partner resellers use the same webhook and secret across all accounts and sub-accounts.
-- Rolling a secret keeps the previous one active for 48 hours, and Certn sends one `v1` signature per active secret.
+## Moving From the Legacy API
+
+Legacy webhook URLs and secrets don't carry over. Add the URL again in CertnCentric, store the new signing key, and replace legacy verification code (`Certn-Signature`, `t=`/`v1=`) with the `X-Signature` check.
+
+## Receiving Through Hookdeck
+
+Create a Certn source in Hookdeck, paste the signing key, and add the source URL in the Certn Client Portal.
 
 ## Local Development
 
@@ -28,12 +33,12 @@ Notes from Certn:
 npx hookdeck-cli listen 3000 certn --path /webhooks/certn
 ```
 
-Use the Hookdeck URL as the webhook URL on the Partner page. For FastAPI use port `8000`.
+Add the Hookdeck URL in the Client Portal. For FastAPI use port `8000`.
 
 ## Testing
 
-Run a check in a demo account and wait for `report_status` to change. Each delivery is the full applicant object, so a handler that logs `id`, `report_status`, and `result` is enough to confirm the setup.
+Certn offers sandbox environments (for example `https://api.sandbox.certn.co` in North America) for developing against the API without check fees. Order a case there and watch for `CASE_STATUS_CHANGED` and `CHECK_STATUS_CHANGED`.
 
 ## Respond Quickly
 
-Return a `2xx` as soon as the signature is verified. Certn retries on `408`, `500`, `502`, `503`, and `504`, so use `400` for a bad signature and do the slow work asynchronously.
+Return `200` within 10 seconds. Verify the signature, record the `event_id`, queue the work and respond.

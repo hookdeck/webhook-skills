@@ -63,18 +63,26 @@ signature before forwarding.
 
 ## Payload and Event Types
 
-Every event shares one envelope: `id`, `type`, `created_at` and `data`. **Dispatch on the
+Every event shares one envelope: `id`, `type`, `created_at` and `data` (plus `installation_id`
+on extension app endpoints). **Dispatch on the
 top-level `type`.** Treat every field as untrusted until you've checked its type.
 
 | `type` | Triggered When |
 |--------|----------------|
+| `organization.join` / `member.created` | A member joins the organization (membership or member shape) |
+| `member.updated` / `member.revoked` | A member's profile changes, or they're removed |
+| `member.login` | A member logs in (`data.member` is an ID string) |
 | `course.created` / `course.updated` | A course is created or updated |
 | `course.join` | A member joins a course |
 | `course.completed` | A member completes a course |
 | `module.created` / `module.updated` | A module is created or updated |
 | `element.created` / `element.updated` / `element.deleted` | An element is created, updated or deleted |
 | `element.completed` | A member completes an element |
-| `member.login` | A member logs in |
+| `xapi.statement.created` | An xAPI statement is recorded |
+| `app.installed` / `app.uninstalled` | Extension app endpoints only: your app is installed or uninstalled |
+
+Every delivery also carries a `teachfloor-idempotency-key` header equal to `id`, stable across
+retries. `*.updated` events add `data.previous_attributes` with the changed keys' old values.
 
 More detail and payload shapes are in [references/overview.md](references/overview.md).
 

@@ -8,7 +8,7 @@ OpenClaw doesn't sign webhook bodies. Automation (cron) webhooks carry a shared 
 > Webhook URLs must not include embedded username/password credentials; use
 > `webhookToken` when the receiver supports bearer authentication.
 
-Your receiver compares the **whole** header value with `Bearer <webhookToken>` using a constant-time comparison. Hookdeck's OpenClaw source takes the bare `webhookToken` in its **Webhook Token** field and accepts the header with or without the `Bearer ` prefix.
+Your receiver compares the **whole** header value with `Bearer <webhookToken>` using a constant-time comparison. In Hookdeck's OpenClaw source, paste the bare `webhookToken` into its **Webhook Token** field.
 
 One `cron.webhookToken` covers every automation webhook on the Gateway, including failure-alert webhooks. OpenClaw sends no `Authorization` header at all when the token isn't set, so set it and reject requests without the header.
 

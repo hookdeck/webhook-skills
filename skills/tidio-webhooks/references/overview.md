@@ -31,7 +31,7 @@ Every body has the same envelope; `content` holds the topic-specific data.
   "topic": "contact.created",
   "version": 1,
   "webhook_id": "7307ac4d-2c74-4d32-b7f9-f7d037ed2ebb",
-  "content": { "id": "147ae37d-43bc-42a6-bc7b-c10d1525a2f7", "email": "john@example.com" }
+  "content": { "id": "147ae37d-43bc-42a6-bc7b-c10d1525a2f7", "email": "email@example.com" }
 }
 ```
 

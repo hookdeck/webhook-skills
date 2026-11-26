@@ -23,7 +23,7 @@ The Generic webhook body is optional and supports three template variables:
 | Variable | Contains |
 |----------|----------|
 | `{{title}}` | Alert title |
-| `{{body}}` | Alert description |
+| `{{body}}` | Alert message (rendered Markdown) |
 | `{{link}}` | Link to the search or chart the alert is attached to |
 
 The examples in this skill use this **illustrative** template (not a vendor-defined schema):

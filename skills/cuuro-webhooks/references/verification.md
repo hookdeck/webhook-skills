@@ -10,7 +10,7 @@ Cuuro webhooks are delivered by Svix (Cuuro doesn't name the headers itself; the
 | `svix-timestamp` | Unix seconds |
 | `svix-signature` | Space-delimited list of `v1,<base64 signature>` entries |
 
-Svix implements Standard Webhooks, whose `webhook-id`, `webhook-timestamp` and `webhook-signature` headers carry the same values. The Svix libraries accept either set of names, and Hookdeck reads the `webhook-*` names when `svix-id` is absent, so the examples do the same.
+Svix implements Standard Webhooks, whose `webhook-id`, `webhook-timestamp` and `webhook-signature` headers carry the same values. The Svix libraries accept either set of names, and the examples read the `webhook-*` names when `svix-id` is absent.
 
 The algorithm:
 

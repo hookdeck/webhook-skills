@@ -49,7 +49,7 @@ function verifyFreemiusSignature(rawBody, signature, secret) {
 
 Python: `hmac.compare_digest(hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest().encode(), signature.lower().encode())`, after checking the header matches `[0-9a-fA-F]{64}`.
 
-Answer `401` for a missing, malformed or wrong signature. There is no timestamp in the signature, so there is no replay window to check. Hookdeck's Freemius source verifies the same signature (HMAC SHA-256, hex, `x-signature`), so the same handler works behind it.
+Answer `401` for a missing, malformed or wrong signature. There is no timestamp in the signature, so there is no replay window to check. Hookdeck's Freemius source verifies the same signature, so the same handler works behind it.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

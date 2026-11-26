@@ -195,14 +195,14 @@ function handleTrackingEvent(payload) {
           JSON.stringify(msg.aftership_estimated_delivery_date) ?? 'unknown'
         }`
       );
-      // TODO: update the promised delivery date, notify the customer of a delay
+      // Your code: update the promised delivery date, notify the customer of a delay
       return;
 
     case 'tracking_pending_time':
       console.log(
         `⏳ Shipment ${msg.tracking_number} (${msg.slug}) has been pending past the configured threshold`
       );
-      // TODO: chase the warehouse, flag the carrier
+      // Your code: chase the warehouse, flag the carrier
       return;
 
     default:
@@ -235,17 +235,17 @@ function handleTrackingStatus(msg, isFirstTag) {
 
     case 'OutForDelivery':
       console.log(`🛵 Out for delivery: ${where}`);
-      // TODO: send the "arriving today" notification
+      // Your code: send the "arriving today" notification
       break;
 
     case 'AttemptFail':
       console.log(`⚠️  Delivery attempt failed for ${where} — ${detail}`);
-      // TODO: prompt the customer to reschedule
+      // Your code: prompt the customer to reschedule
       break;
 
     case 'Delivered':
       console.log(`✅ Delivered: ${where}`);
-      // TODO: mark the order delivered, trigger the review request
+      // Your code: mark the order delivered, trigger the review request
       break;
 
     case 'AvailableForPickup':
@@ -254,7 +254,7 @@ function handleTrackingStatus(msg, isFirstTag) {
 
     case 'Exception':
       console.log(`🚨 Exception on ${where} — ${detail}`);
-      // TODO: open a support ticket
+      // Your code: open a support ticket
       break;
 
     case 'Expired':
@@ -294,7 +294,7 @@ function handleShippingEvent(payload) {
 
     case 'create_a_label':
       console.log(`   label ${data.id} created — ${data.files?.label?.url ?? 'no file URL'}`);
-      // TODO: store the label URL against the order
+      // Your code: store the label URL against the order
       break;
 
     case 'cancel_a_label':
@@ -330,7 +330,7 @@ function handleReturnsEvent(payload) {
 
     case 'return.approved':
       console.log(`   return ${rma} approved (approval_status=${data.approval_status})`);
-      // TODO: issue the return label, notify the shopper
+      // Your code: issue the return label, notify the shopper
       break;
 
     case 'return.rejected':
@@ -339,7 +339,7 @@ function handleReturnsEvent(payload) {
 
     case 'return.resolved':
       console.log(`   return ${rma} resolved`);
-      // TODO: reconcile the refund / exchange / store credit
+      // Your code: reconcile the refund / exchange / store credit
       break;
 
     case 'return.expired':

@@ -17,27 +17,27 @@ function handleEvent(payload: KatanaPayload): void {
   switch (action) {
     case 'sales_order.created':
       console.log(`Sales order created: ${object?.id}`);
-      // TODO: fetch the order from object.href and sync it
+      // Your code: fetch the order from object.href and sync it
       break;
 
     case 'sales_order.delivered':
       console.log(`Sales order delivered: ${object?.id}`);
-      // TODO: send a shipping confirmation
+      // Your code: send a shipping confirmation
       break;
 
     case 'purchase_order.received':
       console.log(`Purchase order received: ${object?.id}`);
-      // TODO: update inbound stock
+      // Your code: update inbound stock
       break;
 
     case 'manufacturing_order.done':
       console.log(`Manufacturing order done: ${object?.id}`);
-      // TODO: update finished-goods inventory
+      // Your code: update finished-goods inventory
       break;
 
-    case 'inventory.product_out_of_stock':
+    case 'current_inventory.product_out_of_stock':
       console.log(`Product out of stock: ${object?.id}`);
-      // TODO: trigger a reorder
+      // Your code: trigger a reorder
       break;
 
     default:

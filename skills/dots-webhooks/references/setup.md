@@ -22,6 +22,10 @@ Dots delivers webhooks through Svix, so you add endpoints in the Svix dashboard:
 8. Optionally enable a rate limit for the endpoint.
 9. Click **Create**, then note the webhook signing secret.
 
+Sandbox and Production Apps have separate Svix endpoints and signing secrets, so add your
+endpoint (and store its secret) in each environment. Sandbox sends the same events as
+Production, including for simulated payout, payment, and deposit outcomes.
+
 Return an HTTP `2xx` within 15 seconds to acknowledge each event. If your framework enables
 CSRF protection by default, disable it for the webhook route.
 

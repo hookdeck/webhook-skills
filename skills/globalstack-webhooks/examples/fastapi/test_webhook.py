@@ -21,7 +21,9 @@ EVENT_TYPES = [
     "conversion.created", "conversion.funds_received", "conversion.processing", "conversion.success", "conversion.failed", "conversion.returned",
     "transfer.processing", "transfer.success", "transfer.failed",
     "deposit.received", "deposit.held", "deposit.confirmed", "deposit.failed",
+    "wallet_transfer.success",
     "kyc.approved", "kyc.rejected",
+    "split.completed", "split.leg_released",
 ]
 
 
@@ -80,7 +82,7 @@ def test_health_check():
 
 
 def test_documented_event_count():
-    assert len(set(EVENT_TYPES)) == 27
+    assert len(set(EVENT_TYPES)) == 30
 
 
 @pytest.mark.parametrize("event_type", EVENT_TYPES)

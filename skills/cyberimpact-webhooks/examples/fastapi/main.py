@@ -46,7 +46,7 @@ def handle_event(payload: dict) -> None:
 
     if event == "automation.webhook.send":
         print(f"Automation webhook for contact {data.get('id')} ({data.get('email')})")
-        # TODO: add/update the contact in your CRM, send an alert, etc.
+        # Add or update the contact in your CRM, send an alert, etc.
 
     else:
         print(f"Unhandled event: {event}")

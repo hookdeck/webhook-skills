@@ -49,37 +49,45 @@ async def customerio_webhook(request: Request):
     # Parse the payload after verification
     payload = json.loads(raw_body)
     event_id = payload.get("event_id")
+    # Customer.io's docs spell the in-app object type both `in_app` and `in-app`: accept both.
     object_type = payload.get("object_type")
+    if object_type == "in-app":
+        object_type = "in_app"
     metric = payload.get("metric")
     data = payload.get("data", {})
 
     # Customer.io has no dotted event name: identify events by object_type + metric.
     print(f"Received {object_type}.{metric} event (event_id: {event_id})")
 
-    # TODO: de-dupe on event_id before processing (Customer.io retries for 7 days)
+    # Your code: de-dupe on event_id before processing (Customer.io retries for 7 days)
 
-    if object_type == "email":
+    if metric == "cio_subscription_preferences_changed":
+        # Carries the triggering channel in object_type, so route it on metric alone.
+        print(f"Subscription preferences changed for customer {data.get('customer_id')}")
+        # Your code: sync topic preferences (data["content"], when Body content is on)
+
+    elif object_type == "email":
         handle_email_metric(metric, data)
 
     elif object_type == "sms":
         print(f"SMS {metric} to {data.get('recipient')}")
-        # TODO: SMS analytics, two-way messaging, etc.
+        # Your code: SMS analytics, two-way messaging, etc.
 
     elif object_type == "push":
         print(f"Push {metric} for customer {data.get('customer_id')}")
-        # TODO: push engagement tracking, etc.
+        # Your code: push engagement tracking, etc.
 
     elif object_type == "in_app":
         print(f"In-app {metric} for customer {data.get('customer_id')}")
-        # TODO: in-app message engagement, etc.
+        # Your code: in-app message engagement, etc.
 
     elif object_type == "customer":
         print(f"Customer {data.get('customer_id')} {metric}")
-        # TODO: sync subscription state to your database, etc.
+        # Your code: sync subscription state to your database, etc.
 
     elif object_type in ("slack", "webhook", "whatsapp"):
         print(f"{object_type} {metric}")
-        # TODO: channel-specific handling
+        # Your code: channel-specific handling
 
     else:
         print(f"Unhandled object_type: {object_type} ({metric})")
@@ -99,7 +107,7 @@ def handle_email_metric(metric: str, data: dict):
         print(f"Email link clicked: {data.get('href')} (link_id: {data.get('link_id')})")
     elif metric == "bounced":
         print(f"Email bounced for {recipient}: {data.get('failure_message')}")
-        # TODO: suppress the address, alert, etc.
+        # Your code: suppress the address, alert, etc.
     elif metric == "spammed":
         print(f"Email marked as spam by {recipient}")
     elif metric == "converted":

@@ -36,14 +36,14 @@ An HTTP/HTTPS subscription "will have a `Pending` status until you confirm it", 
 
 1. In Hookdeck, create a source with the **Scaleway Topics and Events** source type, and connect it to your destination.
 2. Subscribe the Hookdeck source URL to your topic.
-3. When the `SubscriptionConfirmation` arrives, Hookdeck checks its `SubscribeURL` and GETs it. Your destination never sees the confirmation.
+3. When the `SubscriptionConfirmation` arrives, Hookdeck confirms the subscription. Your destination never sees the confirmation.
 4. Refresh the subscription in the Scaleway console: it should show **Confirmed**.
 
-If it's still `Pending`, look in Hookdeck's requests for a rejected request from Scaleway. Hookdeck rejects a confirmation (and answers Scaleway 500) when the `SubscribeURL` isn't `https://sns.mnq.<region>.scaleway.com/` with matching `TopicArn` and `Token`, or when Scaleway doesn't answer the GET with 200. The rejected request keeps its body, so you can copy the `SubscribeURL` from it and confirm by hand (below).
+If it's still `Pending`, find the confirmation request from Scaleway in Hookdeck's requests. It keeps its body, so you can copy the `SubscribeURL` from it and confirm by hand (below).
 
 ### Receiving Directly
 
-The examples confirm automatically: they verify the signature, check that `TopicArn` is one of yours, validate `SubscribeURL` the same way Hookdeck does, and GET it.
+The examples confirm automatically: they verify the signature, check that `TopicArn` is one of yours, validate `SubscribeURL` (see [verification.md](verification.md#subscription-confirmation-url)), and GET it.
 
 ### By Hand
 

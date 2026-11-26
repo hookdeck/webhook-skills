@@ -36,7 +36,7 @@ Turn on HMAC (hmacEnabled) for the Socotra endpoint and leave its tag unset. Wit
 
 | | |
 |---|---|
-| Header | `socotra-signature: t=<unix ms>,v1=<hex>[,v1=<hex>...]` |
+| Header | `socotra-signature: t=<unix ms>,v1=<hex>[,tag=<tag>]` |
 | Algorithm | HMAC-SHA256, lowercase hex |
 | Signed content | the `t` string exactly as sent, `.`, then the **raw body bytes** |
 | Key | the endpoint `secret`, as UTF-8 bytes (not decoded) |
@@ -73,9 +73,9 @@ Python: `hmac.compare_digest(bytes.fromhex(sig), hmac.new(secret.encode(), t.enc
 
 - **Raw body.** Verify the exact bytes before parsing. Express: `express.raw({ type: '*/*' })`; Next.js: `await request.arrayBuffer()`; FastAPI: `await request.body()`.
 - **Use `t` as a string.** Never parse it to a number and re-format it. It is Unix **milliseconds**.
-- **No tag.** A tagged endpoint sends `,tag=<tag>` and signs `{t}.{body}.{tag}`. Hookdeck cannot verify that, so leave the tag unset.
+- **No tag.** A tagged endpoint sends `,tag=<tag>` and signs `{t}.{body}.{tag}`. With a Hookdeck source, leave the tag unset (see the Setup Note).
 - **Timestamp window is off by default.** Hookdeck retries and replays resend the original timestamp, so a fixed window rejects legitimate deliveries. The examples offer an opt-in `SOCOTRA_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) for direct deliveries.
-- **Any HTTP method.** Socotra's docs don't name the method. Hookdeck's Socotra source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE, verify first for every method, and treat a missing body as empty bytes (a verified bodyless request gets `200`).
+- **Any HTTP method.** Socotra's docs don't name the method. If you use Hookdeck, allow the method the sender uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE, verify first for every method, and treat a missing body as empty bytes (a verified bodyless request gets `200`).
 - **Retries are opt-in.** The default failure handling makes no retries; delivery times out after 10 000 ms. Respond quickly and be idempotent.
 
 ## Webhook Events (`type`)

@@ -142,7 +142,7 @@ describe('isValidSubscribeUrl', () => {
     expect(isValidSubscribeUrl(confirmation({ SubscribeURL: u.toString() }))).toBe(false);
   });
 
-  it('accepts the forms Hookdeck accepts: no path, and the default port', () => {
+  it('accepts the allowed forms: no path, and the default port', () => {
     expect(isValidSubscribeUrl(confirmation({ SubscribeURL: SUBSCRIBE_URL.replace('.com/?', '.com?') }))).toBe(true);
     expect(isValidSubscribeUrl(confirmation({ SubscribeURL: SUBSCRIBE_URL.replace('.com/', '.com:443/') }))).toBe(true);
   });

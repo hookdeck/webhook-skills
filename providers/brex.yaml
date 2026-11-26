@@ -1,0 +1,19 @@
+name: brex
+displayName: Brex
+docs:
+  webhooks: https://developer.brex.com/guides/webhooks
+  events: https://developer.brex.com/openapi/webhooks_api/#tag/Webhook-Events
+notes: >
+  Corporate cards, spend and payments. Endpoints are registered with POST /v1/webhooks
+  (one per client_id). Standard Webhooks format: headers Webhook-Id, Webhook-Timestamp,
+  Webhook-Signature (space-separated v1,<base64> entries, two during key rotation);
+  signature = base64 HMAC-SHA256 over "<id>.<timestamp>.<raw body>" keyed with the
+  base64-DECODED secret from GET /v1/webhooks/secrets (bare base64 in the guide, whsec_
+  in the API reference example). Flat payloads keyed by event_type: TRANSFER_PROCESSED,
+  TRANSFER_FAILED, EXPENSE_PAYMENT_UPDATED, USER_UPDATED, REFERRAL_*.
+testScenario:
+  events:
+    - TRANSFER_PROCESSED
+    - TRANSFER_FAILED
+catalog:
+  summary: Verify Brex webhook signatures (`Webhook-Id`, `Webhook-Timestamp`, `Webhook-Signature` with a base64-decoded secret), handle key rotation and events like TRANSFER_PROCESSED, TRANSFER_FAILED, EXPENSE_PAYMENT_UPDATED and USER_UPDATED

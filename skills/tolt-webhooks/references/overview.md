@@ -42,7 +42,7 @@ to commission. There are no delete events. The list may not be exhaustive.
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `partner.created` | A partner joins your program | Welcome email, CRM sync |
-| `partner.updated` | A partner's details change, or they are approved, rejected or suspended | Gate access to partner tools |
+| `partner.updated` | A partner's details change, they are approved, rejected or suspended, or tags are added or removed through the API | Gate access to partner tools |
 | `link.created` | A referral link is created | Register the link in your own system |
 | `link.updated` | A referral link is edited | Keep link records current |
 | `customer.created` | A referred visitor signs up and is bound to a partner | Tag the user as referred |

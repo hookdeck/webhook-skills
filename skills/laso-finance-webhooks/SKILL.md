@@ -35,7 +35,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds when the delivery was signed |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -84,10 +84,10 @@ Every body is the same envelope. The event name is the top-level `type`, which i
 | `notification.withdrawal` | Withdrawals |
 | `notification.card` | Card orders |
 | `notification.giftCard` | Gift card orders |
-| `notification.refund` | Refunds (named in the docs, not described) |
-| `notification.balanceUpdate` | Balance changes (named in the docs, not described) |
+| `notification.refund` | Refunds, such as a refund settling |
+| `notification.balanceUpdate` | Balance changes |
 
-The docs list these eight under "Categories include" without describing each one, so the list is open-ended and the descriptions above are inferred from the names and the docs' examples. The examples handle all eight and ignore other types. There is no per-type selection: one webhook receives every notification. See [references/overview.md](references/overview.md).
+The docs list these eight under "Categories include" without describing each one, so the list is open-ended. The descriptions above are inferred from the names, the webhook docs' examples and the MCP server page's list of what notifies the owner ("a deposit landing, a card issued or declined, a refund or withdrawal settling, a balance change"). The examples handle all eight and ignore other types. There is no per-type selection: one webhook receives every notification. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 

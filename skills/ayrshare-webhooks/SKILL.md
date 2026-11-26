@@ -63,8 +63,7 @@ only after the check, and treat every field of the parsed body as untrusted
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-Hookdeck's Ayrshare source (`AYRSHARE`) verifies the same header: HMAC SHA-256,
-hex, `x-authorization-content-sha256-v2`.
+Hookdeck's Ayrshare source (`AYRSHARE`) verifies the same signature.
 
 ## Common Event Types
 
@@ -75,14 +74,14 @@ Dispatch on the body's top-level `action`. `subAction` refines `messages`,
 |----------|--------|----------------|
 | `scheduled` | `status`, `postIds`, `errors`; `subAction: tikTokPublished` | A scheduled post was processed (success or error); TikTok finished publishing |
 | `social` | `type`: `link`, `unlink`, `refresh` | A social account was linked, unlinked or needs refreshing |
-| `messages` | `subAction`: `messageCreated`, `messageEdited`, `messageRead`, `reactionCreated` | A direct message was received, edited, read or reacted to |
+| `messages` | `subAction`: `messageCreated`, `messageEdited`, `messageRead`, `reactionCreated`, `reactionDeleted` | A direct message was received, edited, read or reacted to |
 | `comments` | `subAction: comment` | A comment was created on connected content |
 | `mentions` | `subAction: mention` | Your Instagram account was mentioned |
 | `batch` | `batchType`, `url`, `userCount` | A batch export of users is ready |
 | `feed` | `data` | A new RSS feed item was found |
 | `automations` | `type`: `automation.triggered`, `automation.completed` | An automation fired or finished |
-| `ads` | `type`: `created`, `spendSynced`, `accountConnected`, `accountDisconnected`, `accountRevoked` | An ad or ad account changed |
-| `demo` | `type`: `upgradeWarning`, `upgrade` | Demo plan limits |
+| `ads` | `type`: `created`, `campaignCreated`, `statusChanged`, `reviewChanged`, `spendSynced`, `accountConnected`, `accountDisconnected`, `accountRevoked` | An ad or ad account changed |
+| `demo` | `type`: `upgradeWarning`, `upgrade` | A Demo User Profile converts in two days, or has converted |
 | `suspended` | `type`: `suspend`, `unsuspend` | Profile suspended or reinstated |
 
 The examples handle `scheduled`, `social`, `messages`, `comments` and `ads`, and
@@ -93,8 +92,10 @@ log the rest.
 Answer `200` within 15 seconds. `408`, `425`, `429`, `5xx`, timeouts and dropped
 connections are retried (up to 9 attempts over about an hour, then roughly 5 min,
 30 min, 2 h and 12 h later); other `4xx` responses are final. Delivery is at least
-once: dedupe on the body's `hookId` and hold claims for 24 hours or more. A retry
-rebuilds the payload, so the bytes (and signature) can differ between attempts.
+once. `hookId` is the same on every retry of a delivery, but a fresh notification of
+the same event arrives with a new `hookId`, so claim `hookId` and a key built from the
+payload (for `messages`, `id` with `subAction`), and hold both for 24 hours or more. A
+retry rebuilds the payload, so the bytes (and signature) can differ between attempts.
 
 ## Environment Variables
 
@@ -137,7 +138,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify signature first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (dedupe on `hookId`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (claim `hookId` and a payload key)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

@@ -118,8 +118,12 @@ def verify_calendly_signature(raw_body: bytes, header: str, signing_key: str,
 - **Timing-safe comparison.** Use `crypto.timingSafeEqual` /
   `hmac.compare_digest` rather than `===`/`==` to avoid timing attacks, and guard
   against buffer length mismatches.
-- **Per-subscription key.** Each webhook subscription has its own signing key. Verify
-  with the key that belongs to the subscription that sent the request.
+- **The right key.** With a personal access token, a subscription is signed with the
+  `signing_key` you set when you created it (one key for all subscriptions, or a unique
+  key each). OAuth 2.0 apps use the single key generated with the app. Verify with the
+  key that belongs to the subscription that sent the request.
+- **Calendly's Node sample re-serialises.** It hashes `JSON.stringify(req.body)`, which
+  only matches when re-serialising gives back the exact bytes sent. Hash the raw body.
 - **Timestamp tolerance.** Reject timestamps older than ~180 seconds to prevent
   replay. Ensure your server clock is roughly in sync (NTP).
 
@@ -129,6 +133,6 @@ def verify_calendly_signature(raw_body: bytes, header: str, signing_key: str,
 |---------|--------------|
 | Always fails, even fresh requests | Signing over parsed/re-serialized JSON instead of the raw body |
 | Fails intermittently after a delay | Timestamp tolerance too tight, or server clock drift |
-| Fails for one subscription only | Using the wrong subscription's signing key |
+| Fails for one subscription only | Using the wrong signing key for that subscription |
 | `timingSafeEqual` throws | Comparing buffers of different lengths — wrap in try/catch and return false |
 | Header is `undefined` | Header name is case-insensitive; read `calendly-webhook-signature` (lowercased by most frameworks) |

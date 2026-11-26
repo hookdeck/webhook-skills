@@ -6,8 +6,9 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Prive documents no topic header or body field, so each webhook subscribes to
-// one topic and gets its own endpoint path. Map path slug -> topic.
+// Every payload is {topic, idempotencyKey, data}, so the body names its topic.
+// Each webhook also subscribes to one topic, so a path per topic works as a
+// second check. Map path slug -> topic.
 const TOPICS = {
   'subscriptions-created': 'subscriptions/created',
   'subscriptions-line-removed': 'subscriptions/line_removed',
@@ -50,42 +51,37 @@ function verifyPriveSignature(rawBody, header, secret) {
 function handleEvent(topic, payload) {
   switch (topic) {
     case 'subscriptions/created':
-      console.log('Subscription created:', payload?.id);
-      // TODO: onboarding, CRM sync, etc.
+      console.log('Subscription created:', payload?.data?.id);
       break;
     case 'subscriptions/line_removed':
-      console.log('Subscription line removed:', payload?.id);
+      console.log('Subscription line removed:', payload?.data?.id);
       break;
     case 'subscriptions/status/updated':
-      console.log('Subscription status updated:', payload?.id);
-      // TODO: handle pause / cancel / reactivate
+      console.log('Subscription status updated:', payload?.data?.id);
       break;
     case 'orders/created':
-      console.log('Order created:', payload?.id);
-      // TODO: sync to OMS, trigger fulfillment
+      console.log('Order created:', payload?.data?.id);
       break;
     case 'billingAttempts/created':
-      console.log('Billing attempt created:', payload?.id);
+      console.log('Billing attempt created:', payload?.data?.id);
       break;
     case 'billingAttempts/success':
-      console.log('Billing attempt succeeded:', payload?.id);
-      // TODO: record revenue
+      console.log('Billing attempt succeeded:', payload?.data?.id);
       break;
     case 'billingAttempts/failed':
-      console.log('Billing attempt failed:', payload?.id);
-      // TODO: dunning, customer outreach
+      console.log('Billing attempt failed:', payload?.data?.id);
       break;
     case 'paymentMethod/updated':
-      console.log('Payment method updated:', payload?.id);
+      console.log('Payment method updated:', payload?.data?.id);
       break;
     case 'subscriptionActivities/created':
-      console.log('Subscription activity created:', payload?.id);
+      console.log('Subscription activity created:', payload?.data?.id);
       break;
     case 'subscription/customAttributes/updated':
-      console.log('Subscription custom attributes updated:', payload?.id);
+      console.log('Subscription custom attributes updated:', payload?.data?.id);
       break;
     default:
-      console.log('Webhook received (topic not identified by path)');
+      console.log('Unhandled topic:', topic);
   }
 }
 
@@ -113,8 +109,12 @@ function receive(topicFor) {
       return res.status(400).send('Invalid JSON');
     }
 
-    // 3. Dispatch on the topic implied by the endpoint path
-    handleEvent(topic, payload);
+    // 3. Dispatch on the body's topic; a per-topic path must agree with it
+    const bodyTopic = payload?.topic;
+    if (topic && bodyTopic && bodyTopic !== topic) {
+      return res.status(400).send('Topic does not match path');
+    }
+    handleEvent(bodyTopic ?? topic, payload);
 
     // Acknowledge quickly; do slow work asynchronously
     res.status(200).send('OK');

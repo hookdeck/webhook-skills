@@ -10,19 +10,9 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 CLIENT_ID = "SANDBOX_5YC47N2ZQHJ004124"
 WEBHOOK_PATH = "/webhooks/alipay"
 
-# Two RSA key pairs: one stands in for Antom (signs inbound notifications), one
-# for the merchant (signs the ack response). SHA256withRSA is the exact
-# algorithm the real provider uses.
+# An RSA key pair stands in for Antom (signs inbound notifications).
+# SHA256withRSA is the algorithm the real provider uses.
 _alipay_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-_merchant_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-
-
-def _pem_private(key):
-    return key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    ).decode("utf-8")
 
 
 def _pem_public(key):
@@ -35,8 +25,6 @@ def _pem_public(key):
 # Env must be set BEFORE importing the app (it reads env at module load).
 os.environ["ALIPAY_CLIENT_ID"] = CLIENT_ID
 os.environ["ALIPAY_PUBLIC_KEY"] = _pem_public(_alipay_key)
-os.environ["ALIPAY_MERCHANT_PRIVATE_KEY"] = _pem_private(_merchant_key)
-os.environ["ALIPAY_KEY_VERSION"] = "1"
 
 import main  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -48,7 +36,8 @@ client = TestClient(main.app)
 def sign_inbound(raw_body: str, client_id=CLIENT_ID, request_time="2026-07-24T10:00:00Z", url_encode=False):
     content = f"POST {WEBHOOK_PATH}\n{client_id}.{request_time}.{raw_body}".encode("utf-8")
     signature = _alipay_key.sign(content, padding.PKCS1v15(), hashes.SHA256())
-    sig_b64url = base64.urlsafe_b64encode(signature).decode("utf-8").rstrip("=")
+    # Antom base64-encodes the signature and URL-encodes it on the wire.
+    sig_b64url = base64.b64encode(signature).decode("utf-8")
     if url_encode:
         sig_b64url = quote(sig_b64url, safe="")
     return {
@@ -92,35 +81,17 @@ def test_tampered_body_returns_401():
     assert res.status_code == 401
 
 
-def test_valid_signature_returns_signed_ack():
+def test_valid_signature_returns_fixed_ack():
     payload = payment_payload()
     headers = sign_inbound(payload)
     res = client.post(WEBHOOK_PATH, content=payload, headers=headers)
 
     assert res.status_code == 200
     assert res.json() == {
-        "result": {"resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "Success"}
+        "result": {"resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "success"}
     }
     assert res.headers.get("client-id") == CLIENT_ID
     assert res.headers.get("response-time")
-    assert res.headers.get("signature", "").startswith("algorithm=RSA256,keyVersion=1,signature=")
-
-
-def test_ack_response_is_verifiable_with_merchant_key():
-    payload = payment_payload()
-    headers = sign_inbound(payload)
-    res = client.post(WEBHOOK_PATH, content=payload, headers=headers)
-
-    response_time = res.headers["response-time"]
-    sig_value = res.headers["signature"].split("signature=", 1)[1]
-    content = f"POST {WEBHOOK_PATH}\n{CLIENT_ID}.{response_time}.{res.text}".encode("utf-8")
-
-    normalized = sig_value.replace("-", "+").replace("_", "/")
-    normalized += "=" * (-len(normalized) % 4)
-    signature = base64.b64decode(normalized)
-
-    # Should not raise — the ack is signed with the merchant private key.
-    _merchant_key.public_key().verify(signature, content, padding.PKCS1v15(), hashes.SHA256())
 
 
 def test_percent_encoded_signature_accepted():
@@ -134,23 +105,22 @@ import pytest  # noqa: E402
 
 
 @pytest.mark.parametrize(
-    "notify_type,extra",
+    "fields",
     [
-        ("PAYMENT_RESULT", {"paymentRequestId": "pay_1"}),
-        ("CAPTURE_RESULT", {"captureRequestId": "cap_1", "captureId": "c_1"}),
-        ("REFUND_RESULT", {"refundRequestId": "ref_1", "refundId": "r_1"}),
-        ("AUTHORIZATION_RESULT", {"authorizationRequestId": "auth_1"}),
-        ("DISPUTE_CREATED", {"disputeId": "dsp_1"}),
-        ("DISPUTE_JUDGED", {"disputeId": "dsp_1"}),
-        ("SOMETHING_ELSE", {}),
+        {"notifyType": "PAYMENT_RESULT", "paymentRequestId": "pay_1"},
+        {"notifyType": "PAYMENT_PENDING", "paymentRequestId": "pay_1"},
+        {"notifyType": "CAPTURE_RESULT", "captureRequestId": "cap_1", "captureId": "c_1"},
+        {"notifyType": "REFUND_RESULT", "refundRequestId": "ref_1", "refundId": "r_1"},
+        {"authorizationNotifyType": "AUTHCODE_CREATED", "authState": "state_1"},
+        {"authorizationNotifyType": "TOKEN_CANCELED"},
+        {"disputeNotificationType": "DISPUTE_CREATED", "disputeId": "dsp_1"},
+        {"disputeNotificationType": "DISPUTE_JUDGED", "disputeId": "dsp_1"},
+        {"notifyType": "SOMETHING_ELSE"},
     ],
 )
-def test_handles_notify_types(notify_type, extra):
-    body = {
-        "notifyType": notify_type,
-        "result": {"resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "success"},
-    }
-    body.update(extra)
+def test_acknowledges_notification_types(fields):
+    body = dict(fields)
+    body["result"] = {"resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "success"}
     payload = json.dumps(body)
     headers = sign_inbound(payload)
     res = client.post(WEBHOOK_PATH, content=payload, headers=headers)

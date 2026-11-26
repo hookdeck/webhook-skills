@@ -43,4 +43,4 @@ To receive real webhooks locally:
 npx hookdeck-cli listen 3000 box --path /webhooks/box
 ```
 
-Use the Hookdeck URL as the `address` when you create the V2 webhook through the Box API (`POST /2.0/webhooks`). Hookdeck's Box source pre-selects POST without managing the method, so allow any other method Box uses on the source.
+Use the Hookdeck URL as the `address` when you create the V2 webhook through the Box API (`POST /2.0/webhooks`).

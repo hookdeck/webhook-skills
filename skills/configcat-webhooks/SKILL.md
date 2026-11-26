@@ -19,21 +19,24 @@ metadata:
 - How do I verify the ConfigCat `X-ConfigCat-Webhook-Signature-V1` header?
 - Why is my ConfigCat webhook signature verification failing?
 - How do I react when a feature flag or setting changes in ConfigCat?
-- Why does my ConfigCat webhook fail with two signing keys, or when it uses GET?
+- How do I handle two signatures during a ConfigCat signing key rotation?
 
 ## Verification (core)
 
-ConfigCat sends `X-ConfigCat-Webhook-ID`, `X-ConfigCat-Webhook-Timestamp` (Unix seconds) and `X-ConfigCat-Webhook-Signature-V1`. The signature is the **standard base64 (padded) HMAC-SHA256** of the webhook ID, the timestamp and the **raw body**, concatenated with **no separators**. The key is the whole signing key (`configcat_whsk_...`) as UTF-8 bytes, not decoded. The body may be empty (GET), then only ID + timestamp are signed.
+ConfigCat sends `X-ConfigCat-Webhook-ID`, `X-ConfigCat-Webhook-Timestamp` (Unix seconds) and `X-ConfigCat-Webhook-Signature-V1`. The signature is the **standard base64 (padded) HMAC-SHA256** of the webhook ID, the timestamp and the **raw body**, concatenated with **no separators**. The key is the whole signing key (`configcat_whsk_...`) as UTF-8 bytes, not decoded. The body may be empty, and then only ID + timestamp are signed. The header is a comma-separated list with one signature per signing key (two during a rotation): accept a match on any entry.
 
 ```javascript
 const crypto = require('crypto');
 
 function verify(rawBody, id, timestamp, signature, secret) {
-  if (!id || !timestamp || !/^[A-Za-z0-9+\/]{43}=$/.test(signature || '')) return false;
+  if (!id || !timestamp || !signature) return false;
   const message = Buffer.concat([Buffer.from(id, 'latin1'), Buffer.from(timestamp, 'latin1'), rawBody]);
   const expected = Buffer.from(crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(message).digest('base64'));
-  const received = Buffer.from(signature);
-  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  // One signature per signing key, comma-separated: accept any match
+  return signature.split(',').map((s) => s.trim()).filter((s) => /^[A-Za-z0-9+\/]{43}=$/.test(s)).some((s) => {
+    const received = Buffer.from(s);
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  });
 }
 ```
 
@@ -41,24 +44,29 @@ function verify(rawBody, id, timestamp, signature, secret) {
 import base64, hashlib, hmac, re
 
 def verify(raw_body: bytes, wid: str, ts: str, signature: str, secret: str) -> bool:
-    if not wid or not ts or not re.fullmatch(r"[A-Za-z0-9+/]{43}=", signature or ""):
+    if not wid or not ts or not signature:
         return False
     message = wid.encode("latin-1") + ts.encode("latin-1") + raw_body
-    digest = hmac.new(secret.encode("utf-8"), message, hashlib.sha256).digest()
-    return hmac.compare_digest(base64.b64encode(digest), signature.encode("ascii"))  # compare the base64 text
+    expected = base64.b64encode(hmac.new(secret.encode("utf-8"), message, hashlib.sha256).digest())
+    # One signature per signing key, comma-separated: accept any match (compare the base64 text)
+    entries = [s.strip() for s in signature.split(",")]
+    return any(
+        re.fullmatch(r"[A-Za-z0-9+/]{43}=", s) and hmac.compare_digest(expected, s.encode("ascii"))
+        for s in entries
+    )
 ```
 
 Verify the **raw bytes** before parsing (never `JSON.parse` then re-serialise). Missing headers, a malformed value or a mismatch is a `401`. The documented vector (secret `configcat_whsk_VN3juirnVh5pNvCKd81RYRYchxUX4j3NykbZG2fAy88=`, body `examplebody`, ID `b616ca659d154a5fb907dd8475792eeb`, timestamp `1669629035`) must produce `Ks3cYsu9Lslfo+hVxNC3oQWnsF9e5d73TI5t94D9DRA=`.
 
-**Timestamp window:** old timestamps are **not** rejected by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance. The examples offer an opt-in `CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
+**Timestamp window:** old timestamps are **not** rejected by default, because ConfigCat recommends a check but sets no window. The examples offer an opt-in `CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Hookdeck Setup Note
 
-Keep a single signing key on the ConfigCat webhook and paste it whole, including the configcat_whsk_ prefix. With two keys, ConfigCat sends two signatures and verification fails. If the webhook uses GET, also allow GET on this source.
+Paste the signing key whole, including the configcat_whsk_ prefix, and update the source's secret as soon as you rotate the key.
 
-Hookdeck's source type is `CONFIGCAT` ("ConfigCat"). It compares the whole header to one signature, as the examples do, so during a key rotation both Hookdeck and the examples reject deliveries until the old key is removed. It pre-selects POST without managing the method, so any other method the sender uses (ConfigCat allows GET or POST) must also be allowed on the source.
+Hookdeck's source type is `CONFIGCAT` ("ConfigCat"). It accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses (ConfigCat allows GET or POST) must also be allowed on the source.
 
 ## Event Types
 
@@ -73,7 +81,7 @@ ConfigCat has no event types. A call means "settings changed" in the Config and 
 | `##ChangeDetails##` | JSON array of `settingKey`, `event`, `details` |
 | `##URL##` | Link to the Config in the dashboard |
 
-The examples accept any body (JSON if it parses, else text, or empty) and treat each call as a config-changed notification. With GET there is no body.
+The examples accept any body (JSON if it parses, else text, or empty) and treat each call as a config-changed notification.
 
 > **For full details**, see [ConfigCat webhooks](https://configcat.com/docs/advanced/notifications-webhooks/).
 

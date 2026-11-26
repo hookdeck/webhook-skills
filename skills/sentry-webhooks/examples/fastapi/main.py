@@ -205,9 +205,10 @@ async def sentry_webhook(
     if not isinstance(event, dict):
         event = {}
 
-    # IDEMPOTENCY KEY: the Request-ID header (per-request uuid4 hex). The body
-    # has NO delivery id, and because the timestamp is not signed a replay
-    # carries a valid signature forever -- dedupe on Request-ID.
+    # REPLAY KEY: the Request-ID header (per-request uuid4 hex). The body has
+    # NO delivery id, and because the timestamp is not signed a replay carries
+    # a valid signature forever -- dedupe on Request-ID to catch it. Sentry
+    # builds a new Request-ID on every retry, so keep handle_event idempotent.
     token = event_token(resource, event.get("action"))
 
     logger.info(
@@ -236,7 +237,8 @@ def _describe_actor(actor: Optional[Dict[str, Any]]) -> str:
 
 def handle_event(token: str, event: Dict[str, Any]) -> None:
     """Dispatch a verified Sentry event by its ``resource.action`` token."""
-    # TODO: check the Request-ID against your store and return early if seen.
+    # Your code: skip a replayed Request-ID, and make each write idempotent,
+    # because a retry from Sentry arrives with a new Request-ID.
 
     # `data` is resource-specific AND customizable via UI components.
     data = event.get("data") or {}

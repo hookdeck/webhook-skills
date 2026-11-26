@@ -23,8 +23,8 @@ def safe_equal(a: bytes, b: bytes) -> bool:
 def verify_notify_request(headers, secret=None) -> bool:
     """GOV.UK Notify does not sign callbacks. It sends `Authorization: Bearer <token>`, where
     the token is the one you set for the callback. The secret is the BARE token; if the
-    configured value itself starts with "Bearer " (any case) that prefix is stripped, as
-    Hookdeck does. The scheme is matched case-insensitively (RFC 9110); the token is never
+    configured value itself starts with "Bearer " (any case) that prefix is stripped.
+    The scheme is matched case-insensitively (RFC 9110); the token is never
     trimmed.
     """
     secret = secret if secret is not None else os.environ.get("GOVUK_NOTIFY_WEBHOOK_SECRET")
@@ -63,15 +63,15 @@ def handle_callback(payload: dict) -> None:
     if kind == "delivery_receipt":
         # status: delivered, permanent-failure, temporary-failure, technical-failure
         print(f"Delivery receipt {payload.get('id')}: {payload.get('status')} ({payload.get('notification_type')})")
-        # TODO: update the notification by payload["reference"] / payload["id"]; retry or alert on failures
+        # Update the notification by payload["reference"] / payload["id"]; retry or alert on failures
 
     elif kind == "received_text":
         print(f"Text message from {payload.get('source_number')}: {payload.get('message')}")
-        # TODO: route the reply (payload["destination_number"], payload["date_received"])
+        # Route the reply (payload["destination_number"], payload["date_received"])
 
     elif kind == "returned_letter":
         print(f"Letter returned: {payload.get('notification_id')}")
-        # TODO: flag the address as bad (payload["reference"], payload["template_name"])
+        # Flag the address as bad (payload["reference"], payload["template_name"])
 
     else:
         print("Unhandled GOV.UK Notify callback shape")

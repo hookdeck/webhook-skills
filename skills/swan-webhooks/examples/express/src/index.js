@@ -38,37 +38,37 @@ function handleEvent(payload) {
   switch (eventType) {
     case 'Transaction.Booked':
       console.log(`Transaction booked: ${resourceId}`);
-      // TODO: fetch the transaction and update your ledger
+      // Your code: fetch the transaction and update your ledger
       break;
 
     case 'Transaction.Pending':
       console.log(`Transaction pending: ${resourceId}`);
-      // TODO: show the transaction as pending
+      // Your code: show the transaction as pending
       break;
 
     case 'Transaction.Rejected':
       console.log(`Transaction rejected: ${resourceId}`);
-      // TODO: notify the account holder
+      // Your code: notify the account holder
       break;
 
     case 'Account.Created':
       console.log(`Account created: ${resourceId}`);
-      // TODO: provision the account in your system
+      // Your code: provision the account in your system
       break;
 
     case 'AccountHolder.Updated':
       console.log(`Account holder updated: ${resourceId}`);
-      // TODO: refresh the account holder's verification status
+      // Your code: refresh the account holder's verification status
       break;
 
     case 'Card.Created':
       console.log(`Card created: ${resourceId}`);
-      // TODO: store the card reference
+      // Your code: store the card reference
       break;
 
     case 'Onboarding.Updated':
       console.log(`Onboarding updated: ${resourceId}`);
-      // TODO: fetch the onboarding and advance your KYC flow
+      // Your code: fetch the onboarding and advance your KYC flow
       break;
 
     default:

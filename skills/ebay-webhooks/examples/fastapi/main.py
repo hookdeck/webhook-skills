@@ -94,7 +94,7 @@ def verify_ebay_signature(raw_body: bytes, signature_header: str | None, config:
     try:
         sig = json.loads(base64.b64decode(signature_header))
     except Exception:
-        return False  # { alg, kid, signature, digest }
+        return False  # decoded JSON carries kid and signature
 
     kid = sig.get("kid")
     signature_b64 = sig.get("signature")
@@ -110,7 +110,7 @@ def verify_ebay_signature(raw_body: bytes, signature_header: str | None, config:
         public_key = load_pem_public_key(pem.encode())
         public_key.verify(
             base64.b64decode(signature_b64),
-            raw_body,  # raw bytes — never re-serialize before verifying
+            raw_body,  # body exactly as received
             ec.ECDSA(hashes.SHA1()),  # eBay signs ECDSA with SHA-1
         )
         return True
@@ -159,10 +159,10 @@ async def ebay_webhook(request: Request):
 
     if topic == "MARKETPLACE_ACCOUNT_DELETION":
         print(f"Account deletion for user: {data.get('userId')} {data.get('username')}")
-        # TODO: delete or anonymize this user's data
+        # Your code: delete or anonymize this user's data
     elif topic == "AUTHORIZATION_REVOCATION":
         print(f"Authorization revoked for user: {data.get('userId')} {data.get('username')}")
-        # TODO: stop API calls for this user and purge stored OAuth tokens
+        # Your code: stop API calls for this user and purge stored OAuth tokens
     elif topic == "ITEM_AVAILABILITY":
         print(f"Item availability changed: {data.get('itemId')}")
     elif topic == "ITEM_PRICE_REVISION":

@@ -24,7 +24,7 @@ export function verifySumsubWebhook(
     return false;
   }
 
-  // An absent alg header means SHA256; an unknown value is rejected
+  // Sumsub always sends the alg header. If it is missing, use SHA256 as Sumsub's C# sample does; reject unknown values
   const algorithm = DIGEST_ALGORITHMS[digestAlg || 'HMAC_SHA256_HEX'];
   if (!algorithm) {
     return false;

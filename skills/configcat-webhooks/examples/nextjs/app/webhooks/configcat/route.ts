@@ -39,7 +39,7 @@ async function handle(request: NextRequest) {
   }
 
   console.log(`ConfigCat settings changed (${request.method}, webhook ${webhookId})`, body);
-  // TODO: refresh your ConfigCat client, invalidate caches, notify your team
+  // Refresh your ConfigCat client, invalidate caches or notify your team here.
   // Don't dedupe on X-ConfigCat-Webhook-ID: it is different for every request, including
   // ConfigCat's retries (up to 5). Keep this idempotent, e.g. refresh state rather than apply deltas.
 

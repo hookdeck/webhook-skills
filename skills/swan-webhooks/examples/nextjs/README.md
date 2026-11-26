@@ -51,7 +51,7 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/swan \
   -H "Content-Type: application/json" \
   -H "x-swan-secret: $SWAN_WEBHOOK_SECRET" \
-  -d '{"eventType":"Transaction.Booked","eventId":"evt_1","eventDate":"2021-08-18T09:35:46.673Z","projectId":"project-id","resourceId":"resource-id"}'
+  -d '{"eventType":"Transaction.Booked","eventId":"$YOUR_EVENT_ID","eventDate":"2021-08-18T09:35:46.673Z","projectId":"$YOUR_PROJECT_ID","resourceId":"$YOUR_RESOURCE_ID"}'
 ```
 
 ## Receive Webhooks Locally

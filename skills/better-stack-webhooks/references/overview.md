@@ -40,33 +40,35 @@ don't recognise.
 
 ## Default Payloads
 
-Incident (`incident_change`):
+Incident (`incident_change`), Better Stack's default template. Each `$VARIABLE` is replaced when the
+webhook fires:
 
 ```json
 {
   "data": {
-    "id": "1",
+    "id": "$INCIDENT_ID",
     "type": "incident",
     "attributes": {
-      "name": "Tesla.com homepage",
-      "url": "https://tesla.com",
-      "http_method": "get",
-      "cause": "Error 500",
-      "started_at": "2026-10-26T10:51:28.151Z",
-      "acknowledged_at": "",
-      "resolved_at": "",
-      "response_content": "",
-      "response_url": "",
-      "screenshot_url": ""
+      "name": "$NAME",
+      "url": "$URL",
+      "http_method": "$HTTP_METHOD",
+      "cause": "$CAUSE",
+      "started_at": "$STARTED_AT",
+      "acknowledged_at": "$ACKNOWLEDGED_AT",
+      "resolved_at": "$RESOLVED_AT",
+      "response_content": "$RESPONSE_CONTENT",
+      "response_url": "$RESPONSE_URL",
+      "screenshot_url": "$SCREENSHOT_URL"
     }
   }
 }
 ```
 
-Unset timestamps may render as `null` or an empty string; treat both as unset. Better Stack's
-comment example, and its note about fetching monitor details from `relationships.monitor`, show a
-`relationships.monitor` field next to `attributes`; the default template listed in the API
-reference doesn't include it, so don't rely on it.
+Better Stack's comment example shows unset timestamps as `null`. The default template quotes them,
+and the docs don't show how an unset one renders there, so treat both `null` and an empty string as
+unset. The comment example, and Better Stack's note about fetching monitor details from
+`relationships.monitor`, show a `relationships.monitor` field next to `attributes`; the default
+template listed in the API reference doesn't include it, so don't rely on it.
 
 Incident comment (`event` is `comment`), abbreviated from the example in Better Stack's API reference:
 
@@ -93,18 +95,19 @@ Monitor (`monitor_change`): `data.id`, `data.type: "monitor"` and `data.attribut
 `sms`, `email`, `team_wait`, `http_method`, `request_timeout`, `recovery_period`, `request_body`,
 `paused_at` and `last_checked_at`.
 
-On-call (`on_call_change`):
+On-call (`on_call_change`), Better Stack's default template. The `_JSON_ARRAY` variables, the
+calendar ID and `$DEFAULT_ON_CALL_CALENDAR` sit outside quotes in the template:
 
 ```json
 {
-  "data": {
-    "message": "Jane Doe is now on call",
-    "emails": ["jane@example.com"],
-    "on_holiday_emails": [],
-    "change": "on_call",
-    "calendar_id": 12,
-    "calendar_name": "Primary on-call",
-    "primary_calendar": true
+  "data":{
+    "message": "$MESSAGE",
+    "emails": $EMAILS_JSON_ARRAY,
+    "on_holiday_emails": $ON_HOLIDAY_EMAILS_JSON_ARRAY,
+    "change": "$CHANGE",
+    "calendar_id": $ON_CALL_CALENDAR_ID,
+    "calendar_name": "$ON_CALL_CALENDAR_NAME",
+    "primary_calendar": $DEFAULT_ON_CALL_CALENDAR
   }
 }
 ```

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
             `${activity.fromAddress} -> ${activity.toAddress} (${activity.hash})`
         );
       }
-      // TODO: credit balances, detect deposits, update accounting, etc.
+      // Your code: credit balances, detect deposits, update accounting, etc.
       break;
 
     // DEPRECATED 2026-08-30: no longer documented by Alchemy and not accepted by the
@@ -67,13 +67,13 @@ export async function POST(request: NextRequest) {
     // keep working; don't wire new integrations to it.
     case 'MINED_TRANSACTION':
       console.log(`Mined tx on ${event?.network}: ${event?.transaction?.hash}`);
-      // TODO: confirm sends, advance order status, unlock features, etc.
+      // Your code: confirm sends, advance order status, unlock features, etc.
       break;
 
     // DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     case 'DROPPED_TRANSACTION':
       console.log(`Dropped tx on ${event?.network}: ${event?.transaction?.hash}`);
-      // TODO: resubmit with higher gas, alert the user, roll back UI, etc.
+      // Your code: resubmit with higher gas, alert the user, roll back UI, etc.
       break;
 
     case 'NFT_ACTIVITY':
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
             `${activity.fromAddress} -> ${activity.toAddress}`
         );
       }
-      // TODO: update marketplace feed, track ownership, mint alerts, etc.
+      // Your code: update marketplace feed, track ownership, mint alerts, etc.
       break;
 
     // DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
@@ -92,12 +92,12 @@ export async function POST(request: NextRequest) {
       console.log(
         `NFT metadata update on ${event?.network}: ${event?.contractAddress} #${event?.tokenId}`
       );
-      // TODO: refresh cached media/attributes, re-index the collection, etc.
+      // Your code: refresh cached media/attributes, re-index the collection, etc.
       break;
 
     case 'GRAPHQL':
       console.log('Custom Webhook (GraphQL) matched:', JSON.stringify(event?.data ?? {}));
-      // TODO: handle your Custom Webhook query results
+      // Your code: handle your Custom Webhook query results
       break;
 
     default:

@@ -50,22 +50,22 @@ def handle_event(event: dict) -> None:
     if event_type == "inbound_message_received":
         sender = p.get("source") or (p.get("user") or {}).get("msisdn")
         print(f"Inbound message {p.get('umid')} from {sender}")
-        # TODO: route the reply to your conversation or support system
+        # Route the reply to your conversation or support system
 
     elif event_type == "outbound_message_status_changed":
         print(f"Message {p.get('umid')}: {(p.get('status') or {}).get('state')}")
-        # TODO: update delivery status (queued, sent, delivered, undelivered, rejected, read)
+        # Update delivery status (queued, sent, delivered, undelivered, rejected, read)
 
     elif event_type == "external_app_message":
         print(f"WhatsApp Business App message {p.get('umid')}")
 
     elif event_type == "short_url_clicked":
         print(f"Short URL clicked: {p.get('shortUrl')} -> {p.get('targetUrl')}")
-        # TODO: record the click against the original SMS (p['umid'])
+        # Record the click against the original SMS (p['umid'])
 
     elif event_type == "template_status_update":
         print(f"Template {(event.get('eventDetails') or {}).get('templateName')} status update")
-        # TODO: sync template approval status
+        # Sync template approval status
 
     elif event_type in (
         "template_category_update",

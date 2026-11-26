@@ -29,7 +29,7 @@ npm run dev
 
 Server runs on http://localhost:3000
 
-The route (`app/webhooks/coassemble/route.ts`) reads the raw bytes with `await request.arrayBuffer()` and verifies `X-Coassemble-Signature` (`sha256=<hex>`): HMAC-SHA256 of `<X-Coassemble-Timestamp>.<raw body>`. A bad signature gets `401`. The timestamp check is off by default because retries and replays keep the original timestamp; set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
+The route (`app/webhooks/coassemble/route.ts`) reads the raw bytes with `await request.arrayBuffer()` and verifies `X-Coassemble-Signature` (`sha256=<hex>`): HMAC-SHA256 of `<X-Coassemble-Timestamp>.<raw body>`. A bad signature gets `401`. The timestamp check is off by default because Coassemble's docs set no window and Hookdeck's retries and replays keep the original timestamp; set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
 
 ## Test
 

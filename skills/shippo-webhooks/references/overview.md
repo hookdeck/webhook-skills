@@ -78,4 +78,4 @@ Headers to note:
 ## Full Event Reference
 
 For the complete reference and sample payloads, see
-[Shippo's webhook documentation](https://docs.goshippo.com/docs/Tracking/Webhooks).
+[Shippo's webhook documentation](https://docs.goshippo.com/tracking/webhooks).

@@ -66,32 +66,32 @@ export async function POST(request: Request) {
   switch (event) {
     case 'TASK.CREATED':
       console.log(`Task created: ${payload.task?.id}`);
-      // TODO: Sync the new task to your system
+      // Sync the new task to your system
       break;
 
     case 'TASK.UPDATED':
       console.log(`Task updated: ${payload.task?.id}`);
-      // TODO: Apply the changes to your mirrored task
+      // Apply the changes to your mirrored task
       break;
 
     case 'TASK.COMPLETED':
       console.log(`Task completed: ${payload.task?.id}`);
-      // TODO: Trigger downstream automation
+      // Trigger downstream automation
       break;
 
     case 'TASK.DELETED':
       console.log(`Task deleted: ${payload.id}`);
-      // TODO: Remove mirrored records
+      // Remove mirrored records
       break;
 
     case 'PROJECT.CREATED':
       console.log(`Project created: ${payload.project?.id}`);
-      // TODO: Provision resources for the project
+      // Provision resources for the project
       break;
 
     case 'COMMENT.CREATED':
       console.log(`Comment created: ${payload.comment?.id}`);
-      // TODO: Forward the comment to chat
+      // Forward the comment to chat
       break;
 
     case 'MILESTONE.COMPLETED':

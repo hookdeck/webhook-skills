@@ -14,11 +14,9 @@ metadata:
 # Rebrandly Webhooks
 
 Rebrandly (branded short links) sends a JSON webhook for link clicks. There are two products:
-enterprise **Clickstream** webhooks, where you give Rebrandly an endpoint URL, an HTTP method
-(POST or PUT) and an authentication header key and value; and the self-serve **Webhooks** feature
-in account settings.
-
-> Rebrandly webhooks are not signed. Add an authentication header to the webhook and enter it here.
+**Clickstream** webhooks, which Rebrandly provisions once Clickstream is enabled on your account
+and you give it an endpoint URL, an HTTP method (POST or PUT) and an authentication header key and
+value; and the self-serve **Webhooks** feature in the Rebrandly app.
 
 Requests are unsigned. You authenticate the sender with a secret header you add yourself.
 
@@ -66,8 +64,7 @@ function verifyRebrandlyRequest(headers, secret = process.env.REBRANDLY_WEBHOOK_
 ## HTTP Methods
 
 Clickstream uses the POST or PUT method you give Rebrandly at setup, so the examples accept GET,
-POST, PUT, PATCH and DELETE on `/webhooks/rebrandly`. Hookdeck's Rebrandly source pre-selects POST
-without managing the method, so any other method the sender uses must also be allowed on the source.
+POST, PUT, PATCH and DELETE on `/webhooks/rebrandly`. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

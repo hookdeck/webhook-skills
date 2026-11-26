@@ -8,29 +8,43 @@ delivery includes:
 
 - An HTTP `POST` to your configured HTTPS URL
 - A JSON payload describing the event
-- Headers carrying a Svix signature, a timestamp, and a unique delivery ID
-  (`svix-signature`, `svix-timestamp`, `svix-id`)
+- Headers carrying a Svix signature, a timestamp, and a unique delivery ID. Huntress's
+  article doesn't name them. Svix's guide uses `svix-signature`, `svix-timestamp` and
+  `svix-id`; a live test delivery (2026-11-18) used `webhook-signature`,
+  `webhook-timestamp` and `webhook-id`. Accept both.
 
-## What Notification Categories Exist?
+## What Notification Categories and Event Types Exist?
 
-Each endpoint subscribes to any of four categories. They are toggles in the Portal,
-not event type strings in the payload.
+Each endpoint subscribes to any of four categories, toggled in the Portal. Each
+category sends event types named in the body's top-level `event_type`, as listed in
+Huntress's [webhook payload reference](https://api.huntress.io/docs) (the "Webhooks"
+source):
 
-| Category | Subscribe when you want |
-|----------|-------------------------|
-| Incident Reports | Incident report notifications |
-| Escalations | Escalation notifications |
-| Platform Actions | Platform action notifications |
-| Account Notices | Account notice notifications |
+| Category | `event_type` values |
+|----------|---------------------|
+| Incident Reports | `incident_report.created`, `incident_report.comment_added`, `incident_report.closed` |
+| Escalations | `escalation.created`, `escalation.updated` (an open Security Advisory's text changed), `escalation.overdue`, `escalation.closed` |
+| Platform Actions | `platform_action.created`, `platform_action.overdue`, `platform_action.closed`, `platform_action.notification` |
+| Account Notices | `account_notice.notification` |
 
 ## What Does the Payload Look Like?
 
-Huntress's article says only that the body is "a JSON payload describing the event".
-It does not document a `type` field, an envelope, or per-category schemas, and the
-category names above are not documented as wire values. Inspect a real delivery
-(**View Delivery Attempts → View → Request Body**, or **Send Test**) before writing
-type-specific handling. The example handlers log the body and report `type` only if
-the body has one.
+Flat JSON with `event_type`, `id`, `account` and `created_at` on every event, in three
+schemas:
+
+- **Incident report events:** `subject`, `summary`, `body`, `severity`, `status`,
+  `organization`, `agent_id`, `platform`, `indicator_counts`, `api_url`, `sent_at`,
+  `closed_at`, `status_updated_at`, `updated_at`, plus `comment` on
+  `incident_report.comment_added`. `account_id` and `organization_id` are still sent
+  but deprecated: read `account` and `organization`.
+- **Escalation and platform action events:** `subject`, `type` (not the event type),
+  `severity`, `status`, `organizations`, `total_organizations_impacted`, `api_url`,
+  `resolved_at`, `updated_at`, plus `message` on the `.overdue` and `.updated` events.
+- **`.notification` events:** `subject` and `body`.
+
+The reference has schemas only, no example bodies. The live **Send Test** body
+(2026-11-18) was `{"event_type":"test.event","message":"Hello World"}`; `test.event`
+isn't in the reference. The example handlers report `event_type` and log the body.
 
 ## How Are Deliveries Signed?
 
@@ -41,12 +55,14 @@ Huntress uses Svix to sign payloads. See
 
 - Verify against the **raw body**, not parsed JSON.
 - Respond fast: verify, enqueue the work, return `200`. Don't process inline.
-- Log delivery IDs (`svix-id`) so you can correlate with the Portal's **View Delivery
+- Log delivery IDs (`webhook-id` or `svix-id`) so you can correlate with the Portal's **View Delivery
   Attempts** page when debugging missed events.
 
 ## Limits
 
 - Up to **5 endpoints** per account.
+- No timeout, retry schedule or ordering guarantee is published. Compare `updated_at`
+  before applying an event, and deduplicate on the delivery ID.
 - Destination URLs must be HTTPS.
 - Configuring webhooks requires the **account admin** role.
 

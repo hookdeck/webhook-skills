@@ -54,7 +54,7 @@ Logic Apps silently drops some headers you set on the action, including `Accept-
 - `202 Accepted` in a **stateful** workflow starts the asynchronous request-reply
   pattern: the action polls your `Location` header until a non-202 response (unless
   **Asynchronous pattern** is turned off). Stateless workflows don't poll.
-- `408`, `429`, `5xx` and connectivity errors are retried by the **Default** retry
+- Timeouts and `408`, `429` and `5xx` responses are retried by the **Default** retry
   policy: up to 4 retries at exponentially increasing intervals. A `Retry-After`
   header on `429` or `202` sets the wait.
 - Other `4xx` (including `401`) fail the action immediately.

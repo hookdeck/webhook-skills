@@ -35,15 +35,13 @@ with the wrong key.
 
 ## Test Collection Events
 
-Events for test collections carry the same types plus a `test_collection` object. While you migrate
-from repositories to collections they are **off**: a single organization-level switch under
-**Settings** > **Organization** > **Webhooks** turns on every collection event at once. It
-disappears after migration, when collection events are simply sent.
+Trunk's Flaky Tests page says every event carries a `test_collection` object with the collection's
+ID and a link to it. The event catalog says repository-scoped `v2.test_case.status_changed` events
+leave it out, so treat it as optional.
 
 ## How Do I Send a Test Event?
 
-The Svix App Portal can send an example event of any type the endpoint subscribes to, signed like a
-real delivery. For real events, open a PR in the merge queue or trigger a flaky-test detection.
+In the endpoint's **Testing** tab, pick an event type under **Send event** and click **Send Example**. For real events, open a PR in the merge queue or trigger a flaky-test detection.
 Delivery attempts, response codes and replays are visible in the portal.
 
 ## Troubleshooting
@@ -52,5 +50,4 @@ Delivery attempts, response codes and replays are visible in the portal.
 |---------|--------------|
 | Every delivery fails verification | The handler verifies a re-serialized body instead of the raw bytes, or the secret belongs to a different endpoint |
 | Only `pull_request.*` events arrive | The endpoint isn't subscribed to the `pull_request_batch.*` family |
-| No collection events arrive | The organization-level collection-events switch is still off |
 | Retries are rejected as "Timestamp too old" | The `svix` library enforces 5 minutes and retries keep the original timestamp: see `verification.md` |

@@ -108,8 +108,8 @@ is an ordinary signed event. (For a public integration the first one is
   `Sentry-Hook-Timestamp` (UNIX **seconds**) is **not part of the signed
   string**, so it is not cryptographically bound — an attacker replaying a
   captured body + signature forges it freely. Real replay protection is
-  deduplication on the **`Request-ID`** header, which is also your idempotency
-  key because the body has no delivery id.
+  deduplication on the **`Request-ID`** header. Sentry generates a new
+  `Request-ID` for each retry attempt, so keep the handler idempotent too.
 - **Acknowledge fast, work async** — a 200 goes out inside Sentry's
   **1-second** budget and `handleEvent` runs afterwards.
 - **`actor.id` is `string | number`** — when Sentry itself acts it sends

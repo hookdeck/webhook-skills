@@ -55,11 +55,13 @@ app.post('/webhooks/fiber-ai',
       return res.status(400).json({ error: 'Invalid JSON' });
     }
 
-    // Fiber AI documents no event-type field or header (one endpoint per event type is the
-    // reliable way to tell events apart). Read `type` defensively if present; job.changed
-    // carries a `profiles` array and is recognised by that shape.
-    const type = typeof event.type === 'string'
-      ? event.type
+    // Fiber AI sends no event type in the body or headers, and a body `type` field means
+    // something else (the saved search type, or PROFILE / COMPANY on batch_live_enrich).
+    // Subscribe one endpoint per event type and name the type in its URL, for example
+    // https://example.com/webhooks/fiber-ai?event=reveal.completed. Only job.changed can be
+    // recognised by shape: it carries a `profiles` array.
+    const type = typeof req.query.event === 'string'
+      ? req.query.event
       : Array.isArray(event.profiles) ? 'job.changed' : 'unknown';
     console.log(`Received Fiber AI webhook: ${type} (${svixId})`);
 
@@ -69,13 +71,13 @@ app.post('/webhooks/fiber-ai',
         break;
       case 'batch_live_enrich.completed':
         // Reports per-outcome counts (completed / failed / not_found / malformed), no `error`
-        console.log('Batch live enrich finished:', { task_id: event.task_id });
+        console.log('Batch live enrich finished:', { job_id: event.job_id, success: event.success });
         break;
       case 'batch_contact_enrich.completed':
         console.log('Batch contact enrich finished:', { task_id: event.task_id, success: event.success });
         break;
       case 'mosaic.completed':
-        console.log('File repair finished:', { task_id: event.task_id, success: event.success });
+        console.log('Mosaic run finished:', { run_id: event.run_id, success: event.success });
         break;
       case 'audience.enrichment_completed':
         console.log('Audience enrichment finished:', { audience_id: event.audience_id, success: event.success });

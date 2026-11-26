@@ -64,11 +64,10 @@ function verifySemaphoreSignature(rawBody, signature, secret) {
 
 ## HTTP Methods
 
-Semaphore's docs don't name the HTTP method of the delivery. The examples therefore accept
-**GET, POST, PUT, PATCH and DELETE** on the webhook route, verify the signature first for every
-method, treat a missing body as zero bytes, and acknowledge a verified empty body with `200`.
-Hookdeck's Semaphore CI source pre-selects POST without managing the method, so if Semaphore uses
-any other method, **also allow that method on the Hookdeck source**.
+Semaphore sends `POST` by default. The notification YAML's optional `action` property can set
+`PUT` or `PATCH` instead ([Notifications YAML reference](https://docs.semaphore.io/reference/notifications-yaml#action-in-webhook)).
+The examples accept those three methods on the webhook route and verify the signature first.
+If you set `action` and use Hookdeck, **allow that method on the Hookdeck source** ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Events
 

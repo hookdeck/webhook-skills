@@ -32,7 +32,7 @@ Set the node's **Send Body** on, **Body Content Type** to **JSON**, and **Specif
 ```json
 {
   "event": "order.created",
-  "id": "{{ $execution.id }}-{{ $itemIndex }}",
+  "id": "order-{{ $json.orderId }}-created",
   "data": {
     "order_id": "{{ $json.orderId }}",
     "email": "{{ $json.email }}"
@@ -43,7 +43,7 @@ Set the node's **Send Body** on, **Body Content Type** to **JSON**, and **Specif
 | Field | Purpose |
 |-------|---------|
 | `event` | Routes the request to a handler. You choose the names. |
-| `id` | Unique per request; use it as an idempotency key if you turn on Retry On Fail. |
+| `id` | Built from the record and the change, so a resent request carries the same key. Dedupe on it: Retry On Fail and Retry execution both resend every item, and a retried execution gets a new `$execution.id`, so don't build `id` from that. |
 | `data` | The item data from earlier nodes. |
 
 ## Example Event Types

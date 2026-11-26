@@ -10,7 +10,7 @@ iSnap follows [Standard Webhooks](https://standardwebhooks.com/). Every request 
 | `webhook-timestamp` | Unix seconds when this attempt was sent. Changes on every attempt |
 | `webhook-signature` | `v1,<base64 signature>` for this attempt |
 
-The `X-iSnap-*` headers are not signed. Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. Hookdeck reads the `webhook-*` names and falls back to the `svix-*` names when `webhook-id` is absent, so the examples do the same and then hand the library the values under the `webhook-*` names it expects.
+The `X-iSnap-*` headers are not signed. Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. The examples read the `webhook-*` names and fall back to the `svix-*` names when `webhook-id` is absent and then hand the library the values under the `webhook-*` names it expects.
 
 The algorithm:
 

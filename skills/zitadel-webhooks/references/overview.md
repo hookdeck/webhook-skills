@@ -21,7 +21,7 @@ Only targets with `payloadType` set to `PAYLOAD_TYPE_JSON` are signed with the `
 | `user.human.added` | A human user is created | Sync users to a CRM, send a welcome email |
 | `session.added` | A session is created | Audit logging, security notifications |
 
-These are event types you can put in an execution's `event` condition. ZITADEL's events reference lists the rest.
+These are event types you can put in an execution's `event` condition (`session.added` comes from ZITADEL's source code rather than its docs). ZITADEL publishes no full list; the admin `ListEventTypes` API (see [Event API](https://zitadel.com/docs/guides/integrate/zitadel-apis/event-api)) returns every event type an instance knows.
 
 ## Event Payload Structure
 
@@ -58,7 +58,8 @@ Treat every field as untrusted, even after the signature checks out: check types
 - Method: `POST`, JSON body.
 - Each target has its own `timeout`.
 - A `restWebhook` target uses only the status code of your response. A status outside 200-299 fails the execution, and interrupts it if the target has `interruptOnError`. An async target ignores both response and status.
-- Retries are not documented. Put Hookdeck in front of the endpoint if you need retries and replay.
+- Retries are not documented, and ZITADEL's [execution worker](https://github.com/zitadel/zitadel/blob/main/internal/execution/worker.go) logs a failed call and moves on rather than retrying. Put Hookdeck in front of the endpoint if you need retries and replay.
+- A `restCall` target's response body is read by ZITADEL (modified request or response, or function output such as `append_claims`), so only `restWebhook` and `restAsync` targets suit a receiver that only acknowledges.
 
 ## Full Event Reference
 

@@ -45,8 +45,7 @@ function parseBasicAuth(header) {
 
 /**
  * HaloPSA webhooks are not signed. With "Basic Authentication" chosen on the webhook, every
- * request carries `Authorization: Basic base64(username:password)`. The credentials must
- * arrive on the first request: Hookdeck never answers with a 401 + WWW-Authenticate challenge.
+ * request carries `Authorization: Basic base64(username:password)`. The credentials must * arrive on the first request.
  */
 function verifyHaloPsaRequest(headers, config = process.env) {
   const username = config.HALO_PSA_WEBHOOK_USERNAME;
@@ -80,18 +79,18 @@ function handleEvent(payload) {
   switch (event) {
     case 'New Ticket Logged':
       console.log(`New ticket logged: ${objectId}`);
-      // TODO: create the ticket in your system
+      // Create the ticket in your system
       break;
 
     case 'Ticket Reassigned':
       console.log(`Ticket reassigned: ${objectId}`);
-      // TODO: notify the new assignee
+      // Notify the new assignee
       break;
 
     case 'Document deleted on a Ticket':
     case 'Document edited on a Ticket':
       console.log(`${event}: ${objectId}`);
-      // TODO: refresh the ticket's attachments
+      // Refresh the ticket's attachments
       break;
 
     default:

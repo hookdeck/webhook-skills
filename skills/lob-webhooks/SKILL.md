@@ -24,11 +24,11 @@ metadata:
 
 ## Setup note
 
-Events sent from Lob's webhook debugger are signed with a fixed test secret, so they fail verification. Real deliveries are signed with the webhook's secret.
+Lob signs events sent from its webhook debugger with the literal string `secret`, not the webhook's own secret, so they fail verification against the real one. Real deliveries are signed with the webhook's secret.
 
 ## Verification (core)
 
-Lob has no webhook SDK, so verify manually. `Lob-Signature` is the bare lowercase **hex**
+Lob's docs give the steps but no verification library, so verify manually. `Lob-Signature` is the bare **hex**
 HMAC-SHA256 digest (no prefix), keyed with the webhook's secret (its UTF-8 bytes, as-is), over
 the **bytes** of: the `Lob-Signature-Timestamp` header value, a literal `.`, then the **raw
 request body**. Never parse and re-serialize the body before verifying.
@@ -59,7 +59,7 @@ content type.
 
 **Timestamp tolerance is off by default.** Lob's step 4 (reject old timestamps, 5 minutes
 recommended) is optional. Hookdeck retries and replays re-send the original headers and
-timestamp, and Hookdeck itself applies no window, so a fixed window would reject legitimate
+timestamp, so a fixed window would reject legitimate
 retries. The examples offer an opt-in `LOB_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
 Deduplicate on the event `id` instead.
 
@@ -86,7 +86,7 @@ or other resource is in the event's `body`. There are 93 event types in all (see
 
 | Header | Description |
 |--------|-------------|
-| `Lob-Signature` | Lowercase hex HMAC-SHA256 digest, no prefix |
+| `Lob-Signature` | Hex HMAC-SHA256 digest, no prefix |
 | `Lob-Signature-Timestamp` | Timestamp that is part of the signed input (unit not documented) |
 
 ## Environment Variables

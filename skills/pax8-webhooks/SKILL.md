@@ -84,12 +84,16 @@ catalog (create calls are rejected for anything not in it).
 | Quote | Quote Pending, Created, Updated, Expired, Deleted, Line Items Added, ... |
 | User | User Created, Deleted, Marked Active, Marked Inactive, Info Updated, ... |
 
-The docs publish these as display names, not wire values. The only topic identifiers they show
-are `SUBSCRIPTION` and `PRODUCT`, and the only action is `CREATE`; the examples assume `INVOICE`,
-`CLIENT`, `QUOTE` and `USER` for the other categories. Check the topic-definitions API for the
-exact topics and actions on your account. The body is not documented (the
-`samplePayload` is elided), so the examples treat any payload as **illustrative** and read
-`topic` and `action` defensively.
+The docs publish these as display names, not wire values. The topic identifiers they print are
+`SUBSCRIPTION`, `INVOICE` and `PRODUCT`, and the actions they print are `CREATE` (on
+`SUBSCRIPTION`) and `CREATED` (on `INVOICE`); the client, quote and user topic strings aren't
+shown. Check the topic-definitions API for the exact topics and actions on your account.
+
+The Webhooks API reference types the body as `WebhookPayload`: `accountId`, `url`,
+`webhookId`, `sentAt`, `webhookTopic` (`id`, `topic`, `filters`) and `payloadData`, the event
+data. Route on `webhookTopic.topic`. What `payloadData` holds per topic isn't documented, and
+Pax8 calls its webhooks a notification system rather than a full state transfer, so fetch the
+current resource from the Pax8 API before acting.
 
 ## Delivery Behavior
 
@@ -99,8 +103,10 @@ exact topics and actions on your account. The body is not documented (the
   back-off as "10 s → 30 s → 60 s", three intervals for two retries, so the exact spacing is unclear
 - One email alert after `errorThreshold` consecutive failures (default 10, max 20)
 - Send a synthetic event with `POST /webhooks/{id}/topics/{topic}/test`
+- The integrator guide says the same event may be delivered more than once in rare cases, and
+  asks for a 2xx within 5 seconds
 
-Answer within 10 seconds and make handlers idempotent, as the docs give no event id.
+Answer within 5 seconds to be safe and make handlers idempotent, as the docs give no event id.
 
 ## Environment Variables
 

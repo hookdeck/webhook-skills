@@ -101,3 +101,4 @@ def verify_metabase_request(headers, username, password) -> bool:
 | 401 only behind a proxy | The proxy strips the `Authorization` header |
 | 413 Payload Too Large | Body exceeds the framework limit (Express `raw` defaults to 100kb) |
 | 400 after authentication | Body isn't a JSON object |
+| Send a test shows "Test failed" | The test posts an empty body; return `200` for it |

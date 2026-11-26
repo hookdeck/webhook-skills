@@ -57,7 +57,7 @@ for a body that isn't a JSON object, and `200` once handled. Read the body raw
   plain HTTP) and rotate the credential if it leaks.
 - The Proxyclick docs don't say whether Basic credentials are sent preemptively, so the
   credentials must arrive on the **first** request. A `401` + `WWW-Authenticate` challenge flow
-  won't work, and it won't work through Hookdeck either, which verifies the request as received.
+  won't work, including through Hookdeck: Event Gateway doesn't prompt for credentials, and a request with wrong ones still gets a 200 and is recorded as failed verification.
 - Compare in constant time. In Python use `hmac.compare_digest` on **bytes** (encode both
   sides); passing `str` raises on non-ASCII input.
 

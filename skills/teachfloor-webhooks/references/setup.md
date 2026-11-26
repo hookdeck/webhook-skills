@@ -19,6 +19,12 @@ Each endpoint has its own signing secret. Open the endpoint and use **Reveal Sig
 then copy it into `TEACHFLOOR_WEBHOOK_SECRET`. Teachfloor signs every request with it and puts
 the result in the `teachfloor-signature` header. Use the secret as-is, as a UTF-8 string.
 
+## Extension Apps
+
+An extension app declares one endpoint in its manifest's `webhook` block instead. Every
+delivery to it is signed with the app's single master secret (**Developers > Apps** > your app >
+**Signing Secret**), and it also receives `app.installed` and `app.uninstalled`.
+
 ## Respond Quickly
 
 Return a `2xx` within 10 seconds. Teachfloor makes 3 attempts in total (10 seconds, then 100

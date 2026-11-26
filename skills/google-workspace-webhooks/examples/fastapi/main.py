@@ -149,7 +149,7 @@ def handle_notification(n: GoogleWorkspaceNotification) -> None:
     elif state == "exists":
         logger.info("Calendar resource changed: %s; run an incremental sync", n.resource_uri)
     elif state == "not_exists":
-        logger.info("Calendar resource no longer exists: %s", n.resource_uri)
+        logger.info("Calendar state not_exists (undocumented): %s — run an incremental sync", n.resource_uri)
 
     # Admin SDK Directory users.watch
     elif state in ("delete", "undelete", "makeAdmin"):

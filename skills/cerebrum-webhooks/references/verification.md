@@ -20,7 +20,7 @@ The request is valid when any `v1,` entry matches. Entries with other versions (
 
 ### The `webhook-*` header fallback
 
-The same three values can arrive as `webhook-id`, `webhook-timestamp` and `webhook-signature`. Hookdeck reads the `svix-*` set and falls back to `webhook-*` when `svix-id` is absent. The examples do the same: they pick one complete set, then hand the three values to the verifier. A delivery signed identically but sent with the other prefix's headers verifies.
+The same three values can arrive as `webhook-id`, `webhook-timestamp` and `webhook-signature`. The examples read the `svix-*` set and fall back to `webhook-*` when `svix-id` is absent. They pick one complete set, then hand the three values to the verifier. A delivery signed identically but sent with the other prefix's headers verifies.
 
 ## Why Does Signature Verification Matter?
 

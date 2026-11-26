@@ -1,6 +1,6 @@
 # Surge Webhooks - FastAPI Example
 
-Minimal example of receiving [Surge](https://docs.surge.app/api-reference/webhooks) webhooks with signature verification. Surge signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the dependency verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal example of receiving [Surge](https://docs.surge.app/api-reference/webhooks) webhooks with signature verification. Surge signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the dependency verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 
@@ -53,5 +53,5 @@ Add the URL the CLI prints as the endpoint on Surge's Webhooks page, then trigge
 - The dependency reads `await request.body()`. The signature covers the exact raw body, so calling `request.json()` before verification breaks it.
 - If `SURGE_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
 - The `standardwebhooks` library always enforces a 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late ones fail. Use the manual verifier in [references/verification.md](../../references/verification.md) to drop or widen the window.
-- Delivery is at-least-once. The handler dedupes on the envelope `id` (falling back to `type` + `data.id`).
+- Delivery is at-least-once. The handler dedupes on the envelope `id`, falling back to `type` + `data.id` only for events that happen once per object (messages, new conversations, calls, recordings, voicemails). Opt-in, opt-out and campaign events can repeat a `data.id`, so their handlers must be idempotent.
 - Return `2xx` quickly (Surge's timeout isn't documented). Enqueue the event and process it asynchronously in production.

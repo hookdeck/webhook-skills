@@ -129,10 +129,10 @@ def handle_event(payload) -> None:
     # A connection's "Custom format" can rename or drop `event`; the default body is event/time/properties.
     if event == "message_send":
         logger.info("Xtremepush message_send event %s", list(properties))
-        # TODO: record that the campaign message was sent to this recipient
+        # Your code: record that the campaign message was sent to this recipient
     elif event == "message_delivery":
         logger.info("Xtremepush message_delivery event %s", list(properties))
-        # TODO: record that the campaign message was delivered
+        # Your code: record that the campaign message was delivered
     else:
         logger.info("Unhandled Xtremepush event: %s", event)
 

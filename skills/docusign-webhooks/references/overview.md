@@ -94,7 +94,7 @@ Recipient data, envelope documents, and tab (field) values are **only included**
 - DocuSign expects an HTTP **2xx** response. Any response `>= 400` (or a timeout) is treated as a failure.
 - Failed deliveries are retried with **exponential backoff** starting at roughly 5 minutes and doubling, for up to **15 days**.
 - Failed messages are listed in the Connect **Failures** log and can be **republished** manually from eSignature Admin or via the API.
-- Because of retries, handlers must be **idempotent** — dedupe on `data.envelopeId` + `event`.
+- Because of retries, handlers must be **idempotent**. The body has no event ID, and `data.envelopeId` + `event` is not unique: every recipient's `recipient-completed` shares it, so include `data.recipientId` for recipient events, and treat repeatable events (`envelope-resent`, `recipient-resent`, `envelope-reminder-sent`) as new each time.
 
 ## Full Event Reference
 

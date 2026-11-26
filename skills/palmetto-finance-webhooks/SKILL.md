@@ -53,27 +53,27 @@ function verifyPalmettoFinanceRequest(
 }
 ```
 
-- Header: `apiKey: <server API key>` by default. Some Palmetto pages call it `api_key`, so the
-  header name is configurable (`PALMETTO_FINANCE_WEBHOOK_HEADER`). Check a real delivery.
+- Header: `apiKey: <server API key>` by default. The registration section of Palmetto's guide
+  says `api_key`, and the API reference's example request carries both `api_key` and `apiKey`
+  with the same value, so the header name is configurable (`PALMETTO_FINANCE_WEBHOOK_HEADER`).
 - Compare the **whole** header value, case-insensitive on the name only. Do not strip or parse a
-  `Bearer ` prefix. This is what Hookdeck's Palmetto Finance source does.
+  `Bearer ` prefix.
 - Check the credential **first, for every HTTP method**, then handle an empty body.
 - Return `401` on a missing or wrong key, `400` for a non-JSON body, `200` once handled.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the key if it leaks.
-- Only the server API key mechanism is covered. Palmetto's **client headers** (`clientId` and
-  `clientSecret`) and **client basic authorization** options are not covered by Hookdeck's
-  Palmetto Finance source, and the examples don't check them.
+- Only the server API key mechanism is covered here. The examples don't check Palmetto's
+  **client headers** (named `clientId` and `clientSecret` in the guide, `client_id` and
+  `client_secret` in the API reference) or **client basic authorization** options.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## HTTP Methods
 
-Each webhook subscription sets its own `httpMethod` (the docs example uses `POST`), so the
+Each webhook subscription sets its own `httpMethod` (`POST` or `PUT` in the API reference), so the
 examples accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on the route and handle an empty body.
-Hookdeck's Palmetto Finance source pre-selects `POST` without managing the method, so any other
-method your subscription uses must also be allowed on the source.
+Any method your subscription uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 
@@ -126,7 +126,7 @@ PALMETTO_FINANCE_WEBHOOK_SECRET=your-server-api-key   # exact, whole header valu
 Use the default server API key authentication. Palmetto shows the key only once, when you register the webhook. Enter apiKey as the header unless your requests show api_key.
 
 In Hookdeck, create a source with type **Palmetto Finance**, enter that header name and the key,
-and leave the method as the pre-selected `POST` unless your subscription uses another method.
+and allow your subscription's method on the source.
 
 ## Local Development
 

@@ -24,6 +24,6 @@ This is not your ReferralHero API key. ReferralHero's code samples name the vari
 
 ## Delivery Behaviour
 
-- Respond `200` with a blank body. Anything else is an error.
-- Failures are retried 3 times over 5 minutes. 10 consecutive bad responses disable the webhook, so re-enable it in the dashboard after fixing your endpoint.
+- Respond `200` with a blank body, as ReferralHero asks. Every non-200 response counts as an error.
+- Failures are retried 3 times over 5 minutes. 10 consecutive bad responses disable the webhook.
 - A webhook belongs to one campaign. Add one per campaign you want to receive events from.

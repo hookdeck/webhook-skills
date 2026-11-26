@@ -18,7 +18,7 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `GOVUK_PAY` source type once it is available in your environment and configure its verification secret. Named sources answer 200 at ingress; a failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures. Hookdeck applies no timestamp tolerance.
+Choose the GOV.UK Pay source type and paste the webhook signing secret as its verification secret. A request with a bad signature is recorded as failed verification and creates no event. A live service needs a `.gov.uk` callback URL, so give the Hookdeck project a [custom domain](https://hookdeck.com/docs/platform/event-gateway-projects#custom-domain) on a `.gov.uk` subdomain your organisation controls. The example receivers themselves return 401 for invalid signatures.
 
 No timestamp is included in the signed message. These examples do not invent an age check from unsigned fields.
 

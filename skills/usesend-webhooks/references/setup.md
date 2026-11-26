@@ -39,7 +39,7 @@ dashboard.
 ## Send a Test Event
 
 Open the webhook in the dashboard and click **Send Test**. The event has type
-`webhook.test` and the body `{"test": true, "webhookId": "...", "sentAt": "..."}`.
+`webhook.test`, and its `data` is `{"test": true, "webhookId": "...", "sentAt": "..."}`.
 
 ## Re-enabling a Webhook
 

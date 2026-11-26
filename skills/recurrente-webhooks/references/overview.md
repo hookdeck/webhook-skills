@@ -14,7 +14,7 @@ Spanish ([guía de webhooks](https://docs.recurrente.com/guias-espanol/comenzar/
 | Signature headers | `svix-id`, `svix-timestamp`, `svix-signature` (Standard Webhooks) |
 | Success | Any `2xx` |
 | Delivery | At-least-once; duplicates are possible. No timeout or ordering guarantee is documented |
-| Filtering | None documented: every endpoint receives every event, and each registered URL gets each event |
+| Filtering | Every endpoint receives every event unless you limit its event types in the Webhooks dashboard |
 
 ## Event Payload Structure
 

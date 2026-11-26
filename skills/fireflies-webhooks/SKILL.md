@@ -14,10 +14,11 @@ metadata:
 
 # Fireflies Webhooks
 
-This skill targets **Webhooks V2**, the current scheme. Fireflies steers new
-webhook creation to V2 and marks the V1 configuration page as deprecated, so
-build new integrations against V2. V1 still works for integrations already on
-it and is documented as a [legacy path](#legacy-webhooks-v1) below.
+This skill targets **Webhooks V2**, the current scheme. V1 is deprecated and
+new V1 webhooks can no longer be saved, so build new integrations against V2.
+Existing V1 webhooks keep delivering, and the `uploadAudio` mutation's
+per-upload `webhook` URL still sends the V1 payload shape, so V1 is documented
+as a [legacy path](#legacy-webhooks-v1) below.
 
 ## When to Use This Skill
 
@@ -30,25 +31,25 @@ it and is documented as a [legacy path](#legacy-webhooks-v1) below.
 
 ## Which Version Am I On?
 
-The two fastest tells are the **`sha256=` prefix** on the signature header and
-the **payload field casing** — V2 is snake_case, V1 is camelCase:
+The fastest tell is the **payload** — V2 has `event` and snake_case fields, V1
+has `eventType` and camelCase fields. Fireflies' migration table gives both the
+same signature header and format:
 
 | | V2 (this skill's default) | V1 (legacy) |
 |---|---|---|
-| Header value | `sha256=<hex>` — **prefixed** | bare hex digest, **no** prefix |
-| Signature header | `X-Hub-Signature` | `x-hub-signature` |
+| Header value | `sha256=<hex>` | `sha256=<hex>` (per Fireflies' migration table) |
+| Signature header | `X-Hub-Signature` | `X-Hub-Signature` |
 | Event field | `event` | `eventType` |
 | Event names | `meeting.transcribed`, `meeting.summarized`, `meeting.bot_joined` | `Transcription completed` |
 | Meeting ID field | `meeting_id` | `meetingId` |
 | Reference field | `client_reference_id` | `clientReferenceId` |
 | Timestamp field | `timestamp` (unix ms) | not sent |
-| Signing secret | **optional** — no header sent when unset | required, 16–32 chars |
+| Signing secret | **optional** — no header sent when unset | viewable, no longer editable |
 | Event selection | subscribe per webhook | none (single event) |
-| Configured at | Webhooks V2 configuration page | Settings > Developer Settings |
-| Response deadline | 2xx within 10s | not documented |
+| Configured at | Webhooks V2 configuration page | Settings > Developer Settings (read-only) |
+| Response deadline | 2xx within 30s (connect within 10s) | not documented |
 
-Header names are case-insensitive, so read them lowercased in both versions. If
-the header value starts with `sha256=`, you are on V2.
+Header names are case-insensitive, so read them lowercased in both versions.
 
 ## Verification (core)
 
@@ -139,12 +140,24 @@ events are delivered.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `event` | string | yes | The event name, e.g. `meeting.transcribed` |
-| `timestamp` | number | yes | Unix timestamp in **milliseconds** |
+| `timestamp` | number | yes | Unix timestamp in **milliseconds** when this delivery was sent; new on every retry |
 | `meeting_id` | string | yes | ID of the meeting — the same value as the transcript ID |
 | `client_reference_id` | string | no | Custom identifier you set at upload, for correlation |
+| `reprocessed_at` | number | no | Only on a resend after the meeting's transcript or summary changed: Unix ms of that change, the same across retries |
 
 The webhook is a notification, not the transcript. After verifying, query the
 Fireflies GraphQL API with `meeting_id` to fetch sentences, summary, and metadata.
+
+## Delivery
+
+- Return a `2xx` within **30 seconds**. A delivery that connects but gets no
+  response in time is marked failed and **not** retried.
+- Connect failures, network errors, `429` and `5xx` are retried up to 5 times,
+  at 30 seconds, 2 minutes, 10 minutes, 30 minutes and 2 hours. Other `4xx`
+  responses are permanent.
+- Each event is sent once per meeting unless **Resend when a meeting's notes
+  change** is on. Deduplicate on `event` + `meeting_id` + `reprocessed_at`
+  (absent on a first delivery), never on `timestamp`.
 
 ## Important Headers
 
@@ -152,8 +165,8 @@ Fireflies GraphQL API with `meeting_id` to fetch sentences, summary, and metadat
 |--------|-------------|
 | `X-Hub-Signature` | `sha256=` + hex HMAC-SHA256 of the raw body. **Omitted entirely when no signing secret is configured.** |
 | `Content-Type` | `application/json` |
-| `User-Agent` | Identifies the sender. A live V2 delivery sent `Fireflies-Webhook/2.0`; the docs' header table still shows `Fireflies-Webhook/1.0`. Do not rely on either value for routing. |
-| `X-Webhook-Delivery-Id` | **Observed but not documented.** A live delivery carried e.g. `test-1784907162698340997`. Useful for logging and idempotency, but treat as best-effort — it is not in the published spec. |
+| `User-Agent` | Identifies the sender, e.g. `Fireflies-Webhook/2.0`. Do not rely on it for routing. |
+| `X-Webhook-Delivery-Id` | **Observed but not documented.** A live test delivery carried one. Useful for logging, but it is not in the published spec and nothing says whether it repeats across retries, so don't key idempotency on it. |
 
 ## Environment Variables
 
@@ -173,47 +186,24 @@ configuration page.
 
 ## Legacy: Webhooks V1
 
-V1 is deprecated for new integrations — Fireflies redirects new webhook creation
-to V2 — but existing V1 webhooks keep delivering. Use this section only when
-maintaining one.
+V1 is deprecated and new V1 webhooks can no longer be saved, but existing V1
+webhooks keep delivering. Use this section only when maintaining one, or when
+handling the `uploadAudio` mutation's per-upload `webhook`, which still sends
+the V1 payload shape.
 
-V1 signs with HMAC-SHA256 and sends a **bare hex digest** in `x-hub-signature`
-with **no `sha256=` prefix**. Compare the whole header value directly; do not
-strip a prefix, because there isn't one.
-
-```javascript
-function verifyFirefliesWebhookV1(rawBody, signatureHeader, secret) {
-  if (!signatureHeader || !secret) return false; // fail closed
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signatureHeader, 'hex'),
-      Buffer.from(expected, 'hex')
-    );
-  } catch {
-    return false;
-  }
-}
-```
-
-> **Unconfirmed detail in V1 — which bytes are signed.** The header name,
-> HMAC-SHA256, hex encoding, and the absence of a `sha256=` prefix are all
-> documented for V1. What the V1 docs do **not** state in prose is whether the
-> digest covers the raw request bytes or a re-serialized `JSON.stringify(body)`
-> — their code sample links to an external Replit that could not be read. Raw
-> body is the default here because it is the safer choice. On your first
-> deliveries, log the raw body alongside the header; if verification fails
-> consistently with a correct secret, try `JSON.stringify(JSON.parse(rawBody))`
-> as the HMAC input before assuming the secret is wrong. **This hedge applies to
-> V1 only** — the V2 docs state plainly that the raw body is signed.
+Fireflies' migration table lists the same signature for V1 as for V2:
+`X-Hub-Signature` with `sha256=<hex>`. Earlier versions of this skill said V1
+sent a bare hex digest. The V1 verifier in
+[references/verification.md](references/verification.md#legacy-webhooks-v1-verification)
+follows the current docs and also accepts a bare digest.
 
 V1 payload and event:
 
 ```json
 {
-  "meetingId": "01HXXXXXXXXXXXXXXXXXXXXXXX",
+  "meetingId": "ASxwZxCstx",
   "eventType": "Transcription completed",
-  "clientReferenceId": "your-optional-upload-reference"
+  "clientReferenceId": "be582c46-4ac9-4565-9ba6-6ab4264496a8"
 }
 ```
 
@@ -221,10 +211,9 @@ V1 payload and event:
 |-------------------|----------------|
 | `Transcription completed` | A meeting has been processed and its transcript is ready |
 
-The V1 secret is a required 16–32 character value set in
-**app.fireflies.ai/settings > Developer Settings**. See
-[references/verification.md](references/verification.md#legacy-webhooks-v1-verification)
-for the full V1 details and gotchas.
+An existing V1 webhook's secret can be viewed, but no longer changed, under
+**Settings → Developer Settings → Webhook → View Configuration**. When you
+migrate, enter it as the V2 **Signing Secret**.
 
 ## Reference Materials
 
@@ -246,7 +235,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing of the same `meeting_id`
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Key on `event` + `meeting_id` + `reprocessed_at`, not `meeting_id` alone
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

@@ -66,21 +66,23 @@ Faundit sends only **two** event types. The `event-type` field names the event; 
 | `event-type` | Triggered when | `data.status` values |
 |--------------|----------------|----------------------|
 | `item-status` | A found/lost item changes status | `contact-missing`, `waiting-response`, `wrong-owner`, `pickup-by-guest`, `left-behind`, `finished`, `shipment-paid`, `pickup-scheduled`, `in-route`, `delivered`, `deleted`, `expired`, `anonymized` |
-| `request-status` | A lost-item request changes status | `registered`, `not-found`, `resolved`, `deleted`, `expired`, `anonymized` |
+| `request-status` | A lost-item request changes status | `registered`, `awaiting-guest-response`, `not-found`, `resolved`, `deleted`, `expired`, `anonymized` |
 
-Payload shape (both events):
+Payload shape (both events), from Faundit's v2 docs:
 
 ```json
 {
   "event-type": "item-status",
   "data": {
-    "id": 12345,
-    "timestamp": "2026-01-15T10:30:00Z",
-    "status": "delivered",
-    "locationID": "loc_abc123"
+    "id": 133378,
+    "timestamp": "2022-08-01T08:48:09.621Z",
+    "status": "shipment-paid",
+    "locationID": "locationID"
   }
 }
 ```
+
+> Faundit's pages don't list exactly the same status codes: `pickup-scheduled`, `deleted` and `awaiting-guest-response` each appear on only one page, and the Webhook Monitoring example prints `waiting-for-response`. Handle unknown statuses without failing.
 
 > **Note (API v2):** Members/`faundit_memberID` were renamed to Locations/`locationID`. Legacy IDs are still accepted.
 

@@ -51,7 +51,7 @@ def verify(raw_body: bytes, signature: str | None, secret: str) -> bool:
     return hmac.compare_digest(signature.encode("ascii"), expected)
 ```
 
-Comparing the Base64 **string** (not just the decoded bytes) matters: a value whose last character carries stray low bits decodes to the same bytes but is not what Mews sends, and Hookdeck's Mews POS source rejects it. Respond `401` for a missing, malformed or mismatching signature.
+Comparing the Base64 **string** (not just the decoded bytes) matters: a value whose last character carries stray low bits decodes to the same bytes but is not what Mews sends. Respond `401` for a missing, malformed or mismatching signature.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -68,7 +68,7 @@ Dispatch on `meta.eventType`. `data.type` is the entity (`bookings`, `orders`, `
 | `order.payments.added` | A payment was added to an order |
 | `product.availability.updated` | A product's availability changed |
 
-> **Full reference**: [Mews POS webhooks](https://docs.mews.com/pos-api/events/webhooks). Retries, timeout and success codes are not documented, and the docs say a message "encapsulates all simultaneous events" without showing a multi-event body, so handlers should return `2xx` quickly and tolerate unknown events.
+> **Full reference**: [Mews POS webhooks](https://docs.mews.com/pos-api/events/webhooks). Retries and timeouts are not documented, and the docs say a message "encapsulates all simultaneous events" without showing a multi-event body, so handlers should return `2xx` quickly and tolerate unknown events.
 
 ## Environment Variables
 

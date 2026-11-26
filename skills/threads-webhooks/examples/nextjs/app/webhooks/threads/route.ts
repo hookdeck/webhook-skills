@@ -41,33 +41,47 @@ interface ThreadsNotification {
   target_id?: string;
   time?: number;
   subscription_id?: string;
-  values?: { field?: string; value?: Record<string, any> };
+  // Documented as one change object; a live publish notification sent an array of them.
+  values?: ThreadsChange | ThreadsChange[];
+}
+
+interface ThreadsChange {
+  field?: string;
+  value?: Record<string, any>;
 }
 
 /**
  * Dispatch one notification. Threads sends a flat object:
- * { app_id, topic, target_id, time, subscription_id, values: { field, value } }
+ * { app_id, topic, target_id, time, subscription_id, values: [{ field, value }] }
+ * Meta's docs show `values` as a single { field, value } object, but a live publish
+ * notification (2026-11-18) sent an array of them, so accept both.
  */
 function handleNotification(notification: ThreadsNotification): void {
-  const field = notification.values?.field;
-  const value = notification.values?.value || {};
+  const values = notification?.values;
+  const changes = Array.isArray(values) ? values : values ? [values] : [];
+  for (const change of changes) handleChange(change);
+}
+
+function handleChange(change: ThreadsChange): void {
+  const field = change?.field;
+  const value = change?.value || {};
 
   switch (field) {
     case 'replies':
       console.log(`Reply ${value.id} by @${value.username} to post ${value.replied_to?.id}`);
-      // TODO: Moderate or respond to the reply.
+      // Your code: Moderate or respond to the reply.
       break;
     case 'mentions':
       console.log(`Mention in post ${value.id} by @${value.username}`);
-      // TODO: Social listening / alerts.
+      // Your code: Social listening / alerts.
       break;
     case 'publish':
       console.log(`Post ${value.id} published by @${value.username}`);
-      // TODO: Sync published posts.
+      // Your code: Sync published posts.
       break;
     case 'delete':
       console.log(`Post ${value.id} deleted at ${value.deleted_at}`);
-      // TODO: Remove the post from your own store.
+      // Your code: Remove the post from your own store.
       break;
     default:
       console.log(`Unhandled Threads field: ${field}`);

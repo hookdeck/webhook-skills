@@ -51,7 +51,7 @@ def verify_violet_signature(raw_body: bytes, header: str | None, secret: str) ->
     return hmac.compare_digest(header.encode("ascii"), base64.b64encode(digest))
 ```
 
-Respond **401** when the header is missing, malformed, or doesn't match. Compare the base64 string exactly: a value whose last character carries stray low bits decodes to the same bytes but is not what Violet sends, and Hookdeck's Violet source rejects it too.
+Respond **401** when the header is missing, malformed, or doesn't match. Compare the base64 string exactly: a value whose last character carries stray low bits decodes to the same bytes but is not what Violet sends.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/) (use `express.raw({ type: '*/*' })` so the exact bytes are verified for any content type)
@@ -60,7 +60,9 @@ Respond **401** when the header is missing, malformed, or doesn't match. Compare
 
 ## Dispatch on `X-Violet-Topic`
 
-The body is the entity itself (a full Order, an Offer, a PayoutAccount, a transfer...) with **no event field**, and all `ORDER_*` events send an Order. Only the `X-Violet-Topic` header names the event, so a request without it can't be classified. Parse the body only after verification, and treat every field as untrusted (check types before reading into it).
+The body is usually the entity itself (a full Order, an Offer, a PayoutAccount, a transfer...) with **no event field**, and all `ORDER_*` events send an Order. Recovery case bodies are the exception and carry `event` and `event_key`. Route on the `X-Violet-Topic` header, which every delivery carries; most requests can't be classified without it.
+
+Violet's docs spell the cancellation topic two ways: `ORDER_CANCELLED` on the events pages and `ORDER_CANCELED` in the API's event enum and the Orders page's `ORDER_UPDATED` text. Accept both. Parse the body only after verification, and treat every field as untrusted (check types before reading into it).
 
 ## Common Event Types (Topics)
 
@@ -72,7 +74,7 @@ The body is the entity itself (a full Order, an Offer, a PayoutAccount, a transf
 | `ORDER_SHIPPED` | Order shipped |
 | `ORDER_DELIVERED` | Order delivered |
 | `ORDER_REFUNDED` | Order refunded |
-| `ORDER_CANCELLED` | Order cancelled |
+| `ORDER_CANCELLED` / `ORDER_CANCELED` | Order cancelled (the docs use both spellings) |
 | `ORDER_FAILED` | Order failed |
 | `MERCHANT_CONNECTED` | Merchant connected to your app |
 | `MERCHANT_DISCONNECTED` | Merchant disconnected |
@@ -81,15 +83,18 @@ The body is the entity itself (a full Order, an Offer, a PayoutAccount, a transf
 | `OFFER_ADDED` / `OFFER_UPDATED` / `OFFER_REMOVED` / `OFFER_DELETED` | Offer availability and changes |
 | `PRODUCT_SYNC_COMPLETED` / `PRODUCT_SYNC_FAILED` | Catalog sync results |
 | `TRANSFER_SENT` / `TRANSFER_FAILED` / `TRANSFER_REVERSED` | Payouts to merchants |
+| `PAYMENT_TRANSACTION_DISPUTE_OPENED` / `ORDER_DISPUTED` | Chargebacks |
 
-> **For the full list of 52 events**, see [references/overview.md](references/overview.md) and the [Violet webhook events docs](https://docs.violet.io/prism/webhooks/events).
+> **For the full list of 56 events**, see [references/overview.md](references/overview.md) and the [Violet webhook events docs](https://docs.violet.io/prism/webhooks/events).
 
 ## Delivery and Retries
 
 - Respond 2XX within **10 seconds**; queue the work and process it afterwards
 - A failed event is retried 10 times with back-off over 24 hours, then marked `FAILED`
 - More than 50 failures in 30 minutes pauses the webhook for 1 hour, then 3 hours, then up to 24 hours; if it still fails after three pauses the webhook is `DISABLED` until you re-activate it
-- `X-Violet-Event-Id` identifies the event: use it for idempotency. `X-Violet-Event-Id-Source` marks a resend
+- Violet's docs name `X-Violet-Event-Id` for idempotency. A resend carries the original ID in `X-Violet-Event-Id-Source`, so dedupe on that when present
+- Recovery case events can be redelivered under a different `X-Violet-Event-Id`: dedupe them on `X-Violet-Recovery-Event-Key` (the body's `event_key`)
+- For recovery case events, Violet treats a 4xx response as final and doesn't retry it. Return a 5xx when you want a retry
 
 ## Environment Variables
 

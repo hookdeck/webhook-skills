@@ -39,32 +39,32 @@ function handleEvent(payload: PalmettoFinancePayload): void {
   switch (event) {
     case 'accountCreated':
       console.log(`${EVENT_LABELS[event]}: ${accountId} (${payload.programType})`);
-      // TODO: create the account in your system (payload.accountReference)
+      // Your code: create the account in your system (payload.accountReference)
       break;
 
     case 'applicationStatus':
       console.log(`${EVENT_LABELS[event]}: ${accountId} application ${payload.applicationId}`);
-      // TODO: update the application record (payload.applicants)
+      // Your code: update the application record (payload.applicants)
       break;
 
     case 'contractSigned':
       console.log(`${EVENT_LABELS[event]}: ${accountId} contract ${payload.contractReference}`);
-      // TODO: mark the contract signed (payload.quoteReference)
+      // Your code: mark the contract signed (payload.quoteReference)
       break;
 
     case 'milestoneAchieved':
       console.log(`${EVENT_LABELS[event]}: ${payload.newMilestone}`);
-      // TODO: advance the project (payload.organizationId)
+      // Your code: advance the project (payload.organizationId)
       break;
 
     case 'quoteCreated':
       console.log(`${EVENT_LABELS[event]}: ${accountId} quote ${payload.quoteId}`);
-      // TODO: store the quote
+      // Your code: store the quote
       break;
 
     case 'documentUploaded':
       console.log(`${EVENT_LABELS[event]}: ${accountId} document ${payload.documentId}`);
-      // TODO: fetch the document
+      // Your code: fetch the document
       break;
 
     default:

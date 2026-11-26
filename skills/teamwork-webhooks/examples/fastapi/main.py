@@ -74,23 +74,23 @@ async def teamwork_webhook(
 
     if event == "TASK.CREATED":
         print(f"Task created: {entity_id('task')}")
-        # TODO: Sync the new task to your system
+        # Sync the new task to your system
     elif event == "TASK.UPDATED":
         print(f"Task updated: {entity_id('task')}")
-        # TODO: Apply the changes to your mirrored task
+        # Apply the changes to your mirrored task
     elif event == "TASK.COMPLETED":
         print(f"Task completed: {entity_id('task')}")
-        # TODO: Trigger downstream automation
+        # Trigger downstream automation
     elif event == "TASK.DELETED":
         # All delete events share the payload { id, projectId, eventCreator }
         print(f"Task deleted: {payload.get('id')}")
-        # TODO: Remove mirrored records
+        # Remove mirrored records
     elif event == "PROJECT.CREATED":
         print(f"Project created: {entity_id('project')}")
-        # TODO: Provision resources for the project
+        # Provision resources for the project
     elif event == "COMMENT.CREATED":
         print(f"Comment created: {entity_id('comment')}")
-        # TODO: Forward the comment to chat
+        # Forward the comment to chat
     elif event == "MILESTONE.COMPLETED":
         print(f"Milestone completed: {entity_id('milestone')}")
     elif event == "TIME.CREATED":

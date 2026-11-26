@@ -66,7 +66,7 @@ MeetGeek has **no event-name field or header**. One webhook URL per user is noti
 | `{"message": "File analyzed successfully", "meeting_id": "<uuid>"}` | `successful-analysis`: fetch the meeting with the Public API using `meeting_id` |
 | `{"message": "File analyzed failed"}` | `failed-analysis`: no `meeting_id` |
 
-Branch on whether `meeting_id` is present. Delivery is up to three POSTs: the second and third are retries sent only when the first is not acknowledged with `200 OK` (no body needed). For team-shared meetings, every team member with view access gets the webhook, so dedupe on `meeting_id` (see idempotency below).
+Branch on whether `meeting_id` is present. Acknowledge with `200 OK` and no response body. Delivery is up to three POSTs: the second and third are retries, sent only when the first is not acknowledged. For team-shared meetings, every team member with view access gets the webhook, so dedupe on `meeting_id` (see idempotency below).
 
 ## Environment Variables
 

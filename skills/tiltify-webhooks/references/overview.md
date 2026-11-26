@@ -61,7 +61,7 @@ Request headers: `Content-Type: application/json`, `User-Agent: Tiltify Outgoing
 
 ## Delivery and Retries
 
-Return a `2xx` to acknowledge. Failed deliveries are retried 12 times (2 s doubling to 512 s, then 900 s; about an hour in all). After the 12th retry the endpoint is deactivated and must be re-enabled in the dashboard or through the API. Because `donation_updated` fires for moderation and refunds as well as new donations, the same donation `data.id` arrives more than once; deduplicate on `meta.id`.
+Return a `2xx` to acknowledge. Failed deliveries are retried 12 times (2 s doubling to 512 s, then 900 s; about an hour in all). After the 12th retry the endpoint is deactivated and must be re-enabled in the dashboard or through the API. Because `donation_updated` fires for moderation and refunds as well as new donations, the same donation `data.id` arrives more than once, so upsert donations on `data.id` rather than adding one per event. Skip a `meta.id` you've already processed, but don't rely on it alone: Tiltify doesn't say whether a retry or a dashboard Resend keeps the same value. Delivery order isn't documented, so compare `meta.generated_at` with what you stored before you overwrite a record.
 
 ## Full Event Reference
 

@@ -66,7 +66,7 @@ function verifyKhipu(rawBody, signatureHeader, secret) {
     .digest('base64');
   const expectedBuf = Buffer.from(expected);
 
-  // Any s= entry may match (several can be present). Validate the format before comparing and
+  // Any s= entry may match (accept a match on any entry). Validate the format before comparing and
   // never decode it: Buffer.from(sig, 'base64') would silently drop bad characters.
   return signatures.some((sig) => {
     if (!/^[A-Za-z0-9+/]{43}=$/.test(sig)) return false;

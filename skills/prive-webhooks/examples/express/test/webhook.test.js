@@ -146,6 +146,26 @@ describe('POST /webhooks/prive/:topic', () => {
     expect(res.status).toBe(404);
   });
 
+  it('returns 400 when the body topic does not match the path', async () => {
+    const payload = JSON.stringify({ topic: 'orders/created', idempotencyKey: 'k1', data: {} });
+    const res = await request(app)
+      .post('/webhooks/prive/billing-attempts-failed')
+      .set('Content-Type', 'application/json')
+      .set('x-prive-hmac-sha256', sign(payload))
+      .send(payload);
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts a body topic on the generic path', async () => {
+    const payload = JSON.stringify({ topic: 'billingAttempts/failed', idempotencyKey: 'k2', data: { id: 'ba_1' } });
+    const res = await request(app)
+      .post('/webhooks/prive')
+      .set('Content-Type', 'application/json')
+      .set('x-prive-hmac-sha256', sign(payload))
+      .send(payload);
+    expect(res.status).toBe(200);
+  });
+
   it('returns 401 for a bad signature on a topic path', async () => {
     const res = await request(app)
       .post('/webhooks/prive/billing-attempts-failed')

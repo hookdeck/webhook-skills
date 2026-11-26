@@ -77,8 +77,8 @@ def verify_celcoin_auth(authorization, username, password) -> bool:
 
 ## Common Gotchas
 
-- **Check the credential first, for every method.** Celcoin's docs don't name the HTTP method, so the examples accept GET, POST, PUT, PATCH and DELETE and authenticate before looking at the body. Hookdeck's Celcoin source pre-selects POST without managing the method, so allow any other method on the source too.
-- **No 401 challenge.** Hookdeck never sends one (no `WWW-Authenticate` round trip), so the header must arrive with each request. Don't build a flow that depends on a challenge.
+- **Check the credential first, for every method.** Celcoin's docs don't name the HTTP method, so the examples accept GET, POST, PUT, PATCH and DELETE and authenticate before looking at the body. Hookdeck's Celcoin source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method on the source too.
+- **No 401 challenge.** There is no `WWW-Authenticate` round trip, so the header must arrive with each request. Don't build a flow that depends on a challenge.
 - **Split on the first colon.** The password may contain `:`; the username can't.
 - **Strict base64.** Accept only the base64 alphabet and decode strictly, so valid credentials followed by junk are rejected. The scheme name (`Basic`) is case-insensitive.
 - **Evaluate both comparisons.** Don't short-circuit between the username and the password.

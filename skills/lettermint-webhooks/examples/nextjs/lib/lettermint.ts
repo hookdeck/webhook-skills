@@ -42,7 +42,7 @@ export function verifyLettermintWebhook(
   const signatures = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!t) return false;
 
-  // Retries (and Hookdeck's replays) carry the original `t`, so the window is opt-in.
+  // Deliveries Hookdeck retries or replays carry the original `t`, so the window is opt-in.
   if (toleranceSeconds > 0) {
     if (!/^\d+$/.test(t) || Math.abs(nowSeconds - Number(t)) > toleranceSeconds) return false;
   }
@@ -54,7 +54,7 @@ export function verifyLettermintWebhook(
     .update(rawBody)
     .digest();
 
-  // Any v1 may match (several appear during key rotation). Validate length and alphabet before
+  // Any v1 may match (Lettermint's SDKs accept any matching v1). Validate length and alphabet before
   // decoding: Buffer.from(x, 'hex') silently drops bad characters.
   return signatures.some(
     (sig) => /^[0-9a-fA-F]{64}$/.test(sig) && crypto.timingSafeEqual(Buffer.from(sig, 'hex'), expected)

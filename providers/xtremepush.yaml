@@ -14,7 +14,7 @@ notes: >
   timestamp window by default (Hookdeck retries and replays resend the original t); opt-in
   XTREMEPUSH_WEBHOOK_TOLERANCE_SECONDS. Events: dispatch on top-level `event` (default body event, time,
   properties; custom formats may rename it): message_send, message_delivery. The HTTP method isn't
-  documented and Hookdeck's source pre-selects POST without managing it, so examples accept
+  documented, so examples accept
   GET/POST/PUT/PATCH/DELETE. Delivery must respond within 5 s; no retry policy documented.
   Hookdeck setup (say this verbatim in SKILL.md and setup.md): Choose the Signed Payload auth type on the
   Xtremepush webhook and paste its Webhook Secret Key. Other auth types are unsigned and fail verification.

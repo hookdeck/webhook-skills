@@ -78,7 +78,7 @@ def verify_tanium_request(headers, secret=None, header_name=None) -> bool:
 - **Fail closed.** If `TANIUM_WEBHOOK_SECRET` is unset, reject everything.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths; in Python encode both sides to bytes for `compare_digest`.
-- **Other auth modes aren't covered.** Basic Authentication and OAuth2 Client Credentials are not
+- **Other auth modes aren't covered.** Basic Authentication and IBM Cloud IAM - API Key are not
   supported by Hookdeck's Tanium source or these examples.
 
 ## Debugging Verification Failures
@@ -89,4 +89,4 @@ def verify_tanium_request(headers, secret=None, header_name=None) -> bool:
 | 401 only with a prefix | The env value omits (or adds) the `Bearer ` prefix typed in Tanium |
 | 401 only behind a proxy | The proxy strips or renames the header (common with `Authorization`) |
 | 404/405 on delivery | The destination uses a method other than `POST` and the route or Hookdeck source allows only `POST` |
-| 400 after authentication | Body is not valid JSON object/array |
+| 400 after authentication | Body is not a valid JSON object or array: select **Generate Document** in the connection's JSON format |

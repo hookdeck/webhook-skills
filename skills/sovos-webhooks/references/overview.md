@@ -36,12 +36,15 @@ The event is identified by the top-level `eventType` field. Events are chosen
 per ERP system (`systemId`) on the Sovos side, as `statusEvent` values in the
 `events` configuration. You cannot add or filter events in the Svix portal.
 
-| Event | Triggered When | Common Use Cases |
-|-------|----------------|------------------|
-| `document.received` | A document notification is produced during processing (the documented webhook payload example) | Record the new status against the ERP document, fetch `contentUrl` |
-| `document.completed` | A document reaches the end of its lifecycle | Mark the invoice final, archive legal attachments |
-| `workflow.completed` | A document's processing workflow completes | Close out the ERP task, download `Legal` / `LegalResponse` attachments |
-| `system.error` | Sovos hit a system error processing the document | Alert, flag the document for resubmission |
+| Name | Where Sovos shows it |
+|------|----------------------|
+| `document.received` | `eventType` in the webhook payload example, the only delivered value shown |
+| `workflow.completed` | `statusEvent` in the configuration request sample, with `Legal` and `LegalResponse` attachments |
+| `system.error` | `statusEvent` in the configuration request and response samples |
+| `document.completed` | `statusEvent` in the configuration response sample |
+
+Sovos doesn't describe what triggers each event, and doesn't say whether a
+delivery's `eventType` uses the same spelling as the `statusEvent` you configure.
 
 Note on naming: Sovos's configuration sample *sends* `workflow.completed` but the
 sample *response* echoes `document.completed`. Both names appear in the docs, so

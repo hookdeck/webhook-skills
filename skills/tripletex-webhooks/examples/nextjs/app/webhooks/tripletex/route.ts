@@ -23,27 +23,27 @@ function handleEvent(payload: TripletexPayload): void {
   switch (event) {
     case 'invoice.charged':
       console.log(`Invoice charged: ${id}`);
-      // TODO: sync the invoice (payload.value is the invoice DTO)
+      // Sync the invoice (payload.value is the invoice DTO)
       return;
 
     case 'notification.sent':
       console.log(`Notification sent: ${id}`);
-      // TODO: surface the notification to the employee
+      // Surface the notification to the employee
       return;
 
     case 'voucherstatus.ready':
       console.log(`Voucher ready for processing: ${id}`);
-      // TODO: fetch the voucher from the voucher reception
+      // Fetch the voucher from the voucher reception
       return;
 
     case 'closegroup.create':
       console.log(`Close group created: ${id}`);
-      // TODO: store payload.value postings; fires on automatic closes (e.g. OCR matching) too
+      // Store payload.value postings; fires on automatic closes (e.g. OCR matching) too
       return;
 
     case 'closegroup.delete':
       console.log(`Close group deleted: ${id}`);
-      // TODO: value is null; reopen the postings you stored from closegroup.create
+      // Value is null; reopen the postings you stored from closegroup.create
       return;
   }
 
@@ -51,10 +51,10 @@ function handleEvent(payload: TripletexPayload): void {
   if (CRUD_OBJECTS.includes(object) && CRUD_VERBS.includes(verb)) {
     if (verb === 'delete') {
       console.log(`${object} deleted: ${id}`); // value is null, only the id is sent
-      // TODO: remove the local copy of the object
+      // Remove the local copy of the object
     } else {
       console.log(`${object} ${verb}d: ${id}`);
-      // TODO: upsert value (the DTO), ignoring versions older than the stored one
+      // Upsert value (the DTO), ignoring versions older than the stored one
     }
     return;
   }

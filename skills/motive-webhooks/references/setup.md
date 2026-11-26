@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- A Motive fleet account with API access
+- A Motive fleet account with API access, or a partner app in Motive's developer portal
 - A publicly reachable HTTPS endpoint (use `npx hookdeck-cli listen 3000 motive --path /webhooks/motive` while developing)
 
 ## Get Your Signing Secret
@@ -11,7 +11,7 @@ Every webhook has a **secret**. You choose it when creating the webhook: it must
 
 ## Register Your Endpoint
 
-Webhooks are managed through the Motive API ("Create a new company webhook", `POST`). Per the API reference, the body takes:
+Webhooks are managed through the Motive API ("Create a new company webhook", `POST /v1/company_webhooks`). Per the API reference, these are passed as query parameters:
 
 | Field | Description |
 |-------|-------------|
@@ -21,17 +21,31 @@ Webhooks are managed through the Motive API ("Create a new company webhook", `PO
 | `actions` | Array of action names, e.g. `["vehicle_location_updated", "fault_code_opened", "fault_code_closed"]` |
 | `enabled` | Whether the webhook is enabled |
 
-The same API lists, fetches, and updates webhooks, lists past webhook requests, and can trigger a specific webhook. See [Create a new company webhook](https://developer.gomotive.com/reference/create-a-new-company-webhook).
+The same API lists, fetches, and updates webhooks, lists past webhook requests, and can trigger a specific webhook. See [Create a new company webhook](https://developer-docs.gomotive.com/reference/create-a-new-company-webhook).
 
 Limits: one active webhook per action and URL, and at most two active webhooks per action.
 
+Partner (OAuth) apps can also add webhooks in Motive's developer portal. Its URL field only accepts hosts whose top-level domain is 2 to 5 letters, so it rejects `https://hkdk.events/...`. For a Hookdeck source, enter `https://events.hookdeck.com/e/` followed by the part of the source URL after `hkdk.events/` instead (the same source, under a URL the portal accepts).
+
 ## The Activation Test Request
 
-When you enable a webhook, change its URL, or change its shared secret, Motive sends a **test request** and only enables the webhook if your endpoint answers **200 or 201**. The test payload is always `[vehicle_location_updated]`, which is **not valid JSON** (the action name is unquoted). So:
+When you enable a webhook, change its URL, or change its shared secret, Motive sends a **test request** and only enables the webhook if your endpoint answers **200 or 201**.
 
-- Verify the signature first, then answer 200 without requiring the body to parse as JSON.
-- Do not return 400 for unparseable bodies on this path. The examples in this skill return 200 with `ignored: true` for bodies that don't parse.
-- Motive's docs don't say whether the test request carries `X-KT-Webhook-Signature`. If activation fails with a 403 from your endpoint, check the request in your logs and confirm the secret matches.
+Motive's docs print the test payload as `[vehicle_location_updated]`, which looks like invalid JSON, but a live test (2026-11-18) showed a normal, signed request:
+
+```http
+POST /webhooks/motive HTTP/1.1
+Content-Type: application/json
+User-Agent: Ruby
+X-KT-Webhook-Signature: <hex HMAC-SHA1 of the body>
+
+["vehicle_location_updated","fault_code_closed"]
+```
+
+The body is a JSON **array of the webhook's actions**, not an event object. So:
+
+- Verify the signature first, then answer 200 to an array body without processing it. The examples in this skill do that.
+- Don't treat a JSON parse error as the test request. The examples still answer 200 to a signed body that doesn't parse, without processing it.
 
 Your endpoint must also respond within 3 seconds.
 

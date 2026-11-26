@@ -13,8 +13,7 @@ Authorization: Bearer pk_1312323123131231
 
 The header name is chosen by you, so the examples read it from
 `PEOPLE_DATA_LABS_WEBHOOK_HEADER` (default `Authorization`) and compare it with
-`PEOPLE_DATA_LABS_WEBHOOK_SECRET`. This matches Hookdeck's People Data Labs source (header name
-plus exact whole value).
+`PEOPLE_DATA_LABS_WEBHOOK_SECRET`.
 
 **What this does and doesn't give you:** a static shared credential authenticates the sender, not
 the body, and gives no replay protection (no signature, no timestamp). A captured request can be

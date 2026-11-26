@@ -12,18 +12,16 @@ notes: >
   replayed through the webhook-events API. Remote says: 'When you receive a webhook request from
   Remote, it includes 2 custom HTTP headers: 1. `X-Remote-Timestamp` 2. `X-Remote-Signature`' 'message
   = raw_request_body + ":" + timestamp' 'with SHA256 as the hash function. The signature included in
-  the `X-Remote-Signature` header is Base 16 encoded.' SIGNATURE SCHEME (it must match Hookdeck's
-  REMOTE_COM source exactly: HMAC controller, algorithm sha256, header x-remote-signature, encoding
-  hex, signed_content_template "{body}:{header:x-remote-timestamp}"). The X-Remote-Signature header
+  the `X-Remote-Signature` header is Base 16 encoded.' SIGNATURE SCHEME: HMAC-SHA256, header x-remote-signature, hex encoding, signed content '{body}:{header:x-remote-timestamp}'. The X-Remote-Signature header
   carries the bare lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed
   with the secret, over: the raw request body bytes, then a literal ":", then the X-Remote-Timestamp
-  header value. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
+  header value. Build the signed message as BYTES: literal
   separators as UTF-8, header values as the exact header string encoded latin1 (Node
   Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
   re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
   decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
   The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Compare the WHOLE header value as one digest
   (no list splitting, no prefix parsing). Secret: the callback's `signing_key`, returned by POST
   /v1/webhook-callbacks (there is no dashboard field), used as UTF-8. Env var: REMOTE_WEBHOOK_SECRET.
@@ -33,7 +31,7 @@ notes: >
   Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
   Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
   NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
-  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  timestamp, so a fixed window would reject legitimate
   retries. Offer an opt-in tolerance (an env var such as REMOTE_WEBHOOK_TOLERANCE_SECONDS, unset or 0
   = off) and say so in SKILL.md and verification.md (X-Remote-Timestamp is Unix MILLISECONDS). Body
   FIRST, then a COLON, then the timestamp. Remote treats a 4xx or 5xx as delivered (never retried);
@@ -45,11 +43,10 @@ notes: >
   company.eor_hiring.verification_completed, company.manager_created, company.manager_updated,
   company.manager_deleted, company.owner_changed, company.partner_offboarded,
   company.pricing_plan.updated, contract.termination_date_reached (and 98 more). Handle a few common
-  ones and log the rest. Method: POST. Hookdeck's Remote source manages the method as POST, so the
-  examples handle POST on the webhook route. Express examples must read the raw body with
+  ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
-  PUBLISHED TEST VECTOR (verified against Hookdeck's template): the vendor's docs give a worked
+  PUBLISHED TEST VECTOR: the vendor's docs give a worked
   example, saved verbatim as JSON (secret, body string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/remote.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

@@ -65,23 +65,23 @@ def handle_event(event: dict) -> None:
 
     if event_type == "USER.CREATED":
         print(f"User created (event {event_id})")
-        # TODO: provision the user in your system
+        # provision the user in your system
 
     elif event_type == "USER.UPDATED":
         print(f"User updated (event {event_id})")
-        # TODO: sync the changed attributes
+        # sync the changed attributes
 
     elif event_type == "USER.DELETED":
         print(f"User deleted (event {event_id})")
-        # TODO: deprovision the user
+        # deprovision the user
 
     elif event_type == "AUTHENTICATION.CREATED":
         print(f"Authentication recorded for {actor or 'unknown actor'} (event {event_id})")
-        # TODO: record the sign-in
+        # record the sign-in
 
     elif event_type == "PASSWORD.RESET":
         print(f"Password reset (event {event_id})")
-        # TODO: notify the user
+        # notify the user
 
     else:
         print(f"Unhandled event: {event_type} (id: {event_id})")

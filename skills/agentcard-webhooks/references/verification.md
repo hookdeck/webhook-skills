@@ -13,7 +13,7 @@ AgentCard-Signature: t=1757264400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0
 - Key: the endpoint's **whole** secret string, including `whsec_`, as UTF-8
 - Signed message: `"<t>.<raw request body>"`
 
-A legacy `X-AgentCard-Signature: sha256=…` header signs the body alone. Hookdeck uses `AgentCard-Signature`, and the examples verify only that header; the legacy header is not used.
+A legacy `X-AgentCard-Signature: sha256=…` header signs the body alone. The examples verify only `AgentCard-Signature`; the legacy header is not used.
 
 ## This Is Not Standard Webhooks
 

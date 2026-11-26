@@ -11,8 +11,8 @@ specification. Each request carries three headers:
 | `webhook-timestamp` | Unix timestamp in seconds when the event was sent |
 | `webhook-signature` | One or more space-separated `v1,<base64 signature>` entries |
 
-Hookdeck's Surge source reads `webhook-*` and falls back to the `svix-*` header names (`svix-id`,
-`svix-timestamp`, `svix-signature`) when `webhook-id` is absent, and the examples here do the same.
+The examples here read `webhook-*` and fall back to the `svix-*` header names (`svix-id`,
+`svix-timestamp`, `svix-signature`) when `webhook-id` is absent.
 
 The algorithm:
 
@@ -81,7 +81,7 @@ deduplicating on the envelope `id`.
 
 ## Manual Verification (configurable timestamp window)
 
-Surge secrets start with `whsec_`, and the key is the base64-decoded remainder. As in Hookdeck's source, a
+Surge secrets start with `whsec_`, and the key is the base64-decoded remainder. A
 secret without that prefix is used as its raw UTF-8 bytes.
 
 ```javascript
@@ -153,7 +153,8 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Rotation.** Several secrets can be live at once, so the header may hold several `v1,` entries.
 - **Deprecated header.** Earlier versions sent `surge-signature`. Read `webhook-signature` instead.
 - **Dedupe on the envelope `id`** when present (some of Surge's examples omit it, so the examples fall
-  back to `type` + `data.id`). The docs describe `webhook-id` as per delivery attempt, so don't rely on it.
+  back to `type` + `data.id` for events that happen once per object, and rely on idempotent handlers
+  for opt-ins, opt-outs and campaign events, which can repeat a `data.id`). The docs describe `webhook-id` as per delivery attempt, so don't rely on it.
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures

@@ -1,6 +1,6 @@
 # Scalekit Webhooks - Next.js Example
 
-Minimal example of receiving [Scalekit](https://scalekit.com) webhooks with signature verification. Scalekit signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead, as Hookdeck does.
+Minimal example of receiving [Scalekit](https://scalekit.com) webhooks with signature verification. Scalekit signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ Minimal example of receiving [Scalekit](https://scalekit.com) webhooks with sign
    cp .env.example .env
    ```
 
-3. Put your endpoint's signing secret in `SCALEKIT_WEBHOOK_SECRET`. Copy it from **Dashboard > Webhooks > any endpoint** (see [setup](../../references/setup.md)).
+3. Put your endpoint's signing secret in `SCALEKIT_WEBHOOK_SECRET`. Copy it from **Developers > Webhooks > your endpoint** (see [setup](../../references/setup.md)).
 
 ## Run
 
@@ -43,7 +43,7 @@ The tests sign payloads the way Scalekit does (`base64(HMAC-SHA256(base64decode(
 npx hookdeck-cli listen 3000 scalekit --path /webhooks/scalekit
 ```
 
-Register the printed URL as an endpoint in **Dashboard > Webhooks**, subscribe to events such as `organization.directory.user_created`, then trigger one (or **Resend** a message from the endpoint's message log).
+Register the printed URL as an endpoint in **Developers > Webhooks**, subscribe to events such as `organization.directory.user_created`, then trigger one (or **Resend** a message from the endpoint's message log).
 
 ## Notes
 

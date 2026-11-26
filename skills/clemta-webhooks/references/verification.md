@@ -10,7 +10,7 @@ Clemta follows the [Standard Webhooks](https://www.standardwebhooks.com) specifi
 | `webhook-timestamp` | Unix seconds of the attempt |
 | `webhook-signature` | Space-delimited list of `v1,<base64>` (HMAC) and `v1a,<base64>` (Ed25519) entries |
 
-Clemta also sends the same three values as `Clemta-Webhook-Id`, `Clemta-Webhook-Timestamp` and `Clemta-Webhook-Signature`. Hookdeck reads the `webhook-*` names and falls back to `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent, so the examples do the same.
+Clemta also sends the same three values as `Clemta-Webhook-Id`, `Clemta-Webhook-Timestamp` and `Clemta-Webhook-Signature`. The examples read the `webhook-*` names and fall back to `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent.
 
 The algorithm:
 
@@ -110,7 +110,7 @@ def verify_clemta(raw_body: bytes, msg_id: str, timestamp: str, signature_header
 
 ## Verifying Without a Shared Secret (`v1a`)
 
-Every delivery from an endpoint that has a keypair also carries a `v1a,<base64>` Ed25519 signature over the same `{id}.{timestamp}.{body}` string. Verify it with the endpoint's `public_key` (`whpk_...`, base64-decoded after the prefix) if the verifying service shouldn't hold a secret that can also sign. Clemta's documentation shows a Node `crypto.verify` example. The `standardwebhooks` library and Hookdeck's Clemta source use the `v1` HMAC only and skip `v1a`. Endpoints created before asymmetric signing shipped sign `v1` only.
+Every delivery from an endpoint that has a keypair also carries a `v1a,<base64>` Ed25519 signature over the same `{id}.{timestamp}.{body}` string. Verify it with the endpoint's `public_key` (`whpk_...`, base64-decoded after the prefix) if the verifying service shouldn't hold a secret that can also sign. Clemta's documentation shows a Node `crypto.verify` example. The `standardwebhooks` library uses the `v1` HMAC only and skips `v1a`. Endpoints created before asymmetric signing shipped sign `v1` only.
 
 ## Common Gotchas
 

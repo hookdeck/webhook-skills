@@ -98,6 +98,8 @@ Sending events use the `event` field (note `soft bounce` contains a space):
 **Audit Log** webhooks (Enterprise only) send `activity_log.*` types such as
 `activity_log.user.login` and `activity_log.user.updated`, with `description`,
 `actor`, optional `resource` and `changes`, and no `event_id`.
+Inbound Email webhooks send `inbound.message_received` for each new message in an
+inbound inbox, signed the same way.
 
 Full list and fields: [references/overview.md](references/overview.md).
 

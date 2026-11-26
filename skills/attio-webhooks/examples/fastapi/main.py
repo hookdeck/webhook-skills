@@ -64,43 +64,43 @@ def handle_event(event: dict) -> None:
 
     if event_type == "record.created":
         logger.info("Record created: %s (object %s)", ids.get("record_id"), ids.get("object_id"))
-        # TODO: Sync the new record to your system
+        # Sync the new record to your system
 
     elif event_type == "record.updated":
         logger.info("Record updated: %s (attribute %s)", ids.get("record_id"), ids.get("attribute_id"))
-        # TODO: Fetch the record and sync the changed attribute
+        # Fetch the record and sync the changed attribute
 
     elif event_type == "record.deleted":
         logger.info("Record deleted: %s", ids.get("record_id"))
-        # TODO: Remove the record downstream
+        # Remove the record downstream
 
     elif event_type == "record.merged":
         logger.info("Record %s merged into %s", event.get("duplicate_record_id"), ids.get("record_id"))
-        # TODO: Re-point references to the merged record
+        # Re-point references to the merged record
 
     elif event_type == "list-entry.created":
         logger.info("List entry created: %s in list %s", ids.get("entry_id"), ids.get("list_id"))
-        # TODO: Start pipeline automation
+        # Start pipeline automation
 
     elif event_type == "list-entry.updated":
         logger.info("List entry updated: %s (attribute %s)", ids.get("entry_id"), ids.get("attribute_id"))
-        # TODO: React to stage/status changes
+        # React to stage/status changes
 
     elif event_type == "list-entry.deleted":
         logger.info("List entry deleted: %s from list %s", ids.get("entry_id"), ids.get("list_id"))
-        # TODO: Clean up pipeline state
+        # Clean up pipeline state
 
     elif event_type == "note.created":
         logger.info("Note created: %s on record %s", ids.get("note_id"), event.get("parent_record_id"))
-        # TODO: Mirror the note
+        # Mirror the note
 
     elif event_type == "task.created":
         logger.info("Task created: %s", ids.get("task_id"))
-        # TODO: Create a ticket or reminder
+        # Create a ticket or reminder
 
     elif event_type == "comment.created":
         logger.info("Comment created: %s in thread %s", ids.get("comment_id"), event.get("thread_id"))
-        # TODO: Notify a channel
+        # Notify a channel
 
     else:
         logger.info("Unhandled Attio event: %s", event_type)

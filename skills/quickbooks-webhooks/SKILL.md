@@ -4,8 +4,8 @@ description: >
   Receive and verify QuickBooks Online (Intuit) webhooks. Use when setting up
   QuickBooks webhook handlers, debugging intuit-signature verification with the
   Verifier Token, migrating from the legacy eventNotifications payload to the
-  CloudEvents format, or handling accounting events like qbo.invoice.created.v1,
-  qbo.customer.updated.v1, and qbo.customer.merged.v1.
+  CloudEvents format, or handling accounting events like qbo.account.created.v1,
+  qbo.salesreceipt.updated.v1, and qbo.customer.merged.v1.
 license: MIT
 metadata:
   author: hookdeck
@@ -20,12 +20,12 @@ metadata:
 - How do I receive QuickBooks Online webhooks?
 - How do I verify the `intuit-signature` header with my Verifier Token?
 - Why is my QuickBooks webhook signature verification failing?
-- How do I handle the new CloudEvents payload (`qbo.invoice.created.v1`) and the legacy `eventNotifications` payload?
+- How do I handle the new CloudEvents payload (`qbo.account.created.v1`) and the legacy `eventNotifications` payload?
 - How do I process QuickBooks webhooks for multiple companies (realm IDs) in one notification?
 
 ## Verification (core)
 
-Intuit signs the **raw** request body with HMAC-SHA256 keyed on your app's **Verifier Token**, base64-encodes the digest, and sends it in the `intuit-signature` header. There is no timestamp in the signed content. Read the raw body **before** JSON parsing and compare timing-safe. Intuit's SDKs have no webhook-verification helper, so verify manually.
+Intuit signs the **raw** request body with HMAC-SHA256 keyed on your app's **Verifier Token**, base64-encodes the digest, and sends it in the `intuit-signature` header. There is no timestamp in the signed content, and the scheme is identical for both payload formats (CloudEvents deliveries also send `intuit-signature-algorithm: HMAC-SHA256` and an `intuit-signature-id`, which you don't need to verify). Read the raw body **before** JSON parsing and compare timing-safe. Intuit's Java SDK has `WebhooksService.verifyPayload`; in other languages, verify manually.
 
 Node:
 
@@ -64,7 +64,9 @@ def verify_quickbooks_signature(raw_body: bytes, signature: str, verifier_token:
 
 ## Payload Structure
 
-QuickBooks webhooks use the **CloudEvents** format: a JSON **array** of events, which can cover several companies (realm IDs) in one delivery. Payloads are thin. Fetch the full record from the Accounting API using `intuitentityid` and `intuitaccountid`.
+Intuit sends one of two formats, chosen **per app** by the **Enable cloud event payload format** toggle on the app's Webhooks page in the Intuit Developer portal. It was off by default on a test app checked in November 2026, so don't assume either format. Both carry the same `intuit-signature`.
+
+**CloudEvents** (toggle on): `Content-Type: application/cloudevents-batch+json` and `intuit-notification-schema-version: 2.0` in a November 2026 test delivery, and a body that is a JSON **array** of events, which can cover several companies (realm IDs) in one delivery. Treat the body as an array even when it holds one event. Payloads are thin: fetch the full record from the Accounting API using `intuitentityid` and `intuitaccountid`.
 
 ```json
 [
@@ -72,9 +74,9 @@ QuickBooks webhooks use the **CloudEvents** format: a JSON **array** of events, 
     "specversion": "1.0",
     "id": "88cd52aa-33b6-4351-9aa4-47572edbd068",
     "source": "intuit.dsnBgbseACLLRZNxo2dfc4evmEJdxde58xeeYcZliOU=",
-    "type": "qbo.invoice.created.v1",
+    "type": "qbo.account.created.v1",
     "datacontenttype": "application/json",
-    "time": "2026-09-10T21:31:25Z",
+    "time": "2025-09-10T21:31:25.179851517Z",
     "intuitentityid": "1234",
     "intuitaccountid": "310687",
     "data": {}
@@ -82,24 +84,26 @@ QuickBooks webhooks use the **CloudEvents** format: a JSON **array** of events, 
 ]
 ```
 
-Apps built before the 2026 migration got the **legacy** object shape `{"eventNotifications":[{"realmId", "dataChangeEvent":{"entities":[{"name","id","operation","lastUpdated"}]}}]}`. The examples normalize both shapes into one event list, and the same signature check covers both.
+**Legacy** (toggle off): `Content-Type: application/json` and `intuit-notification-schema-version: 1.0` in a November 2026 test delivery, and a JSON **object**:
+
+```json
+{"eventNotifications":[{"realmId":"310687","dataChangeEvent":{"entities":[{"id":"1234","operation":"Create","name":"Account","lastUpdated":"2026-11-18T16:08:22.702Z"}]}}]}
+```
+
+The legacy format has no type string: the entity `name` plus `operation` identify the event. The examples normalize both shapes into one event list, and the same signature check covers both.
 
 ## Common Event Types
 
-`type` is `qbo.{entitytype}.{event}.v1`, with the entity name in lowercase.
+`type` has the format `qbo.<entity>.<operation>.v1`, all lowercase, with multi-word entities run together (`qbo.salesreceipt.updated.v1`). Intuit's docs print only four type strings, listed below, but the Developer portal's **Send test events** picker lists 105, covering every entity and operation in [overview.md](references/overview.md):
 
 | Event type | Triggered When |
 |------------|----------------|
-| `qbo.invoice.created.v1` | An invoice is created |
-| `qbo.invoice.updated.v1` | An invoice is changed |
-| `qbo.payment.created.v1` | A customer payment is recorded |
-| `qbo.customer.created.v1` | A customer is created |
-| `qbo.customer.updated.v1` | A customer is changed |
+| `qbo.account.created.v1` | An account is created |
 | `qbo.customer.merged.v1` | Two customers are merged (`data.deletedid` holds the removed ID) |
 | `qbo.salesreceipt.updated.v1` | A sales receipt is changed |
 | `qbo.employee.created.v1` | An employee is created |
 
-Supported operations per entity are Create, Update, Delete, Merge, Void and Emailed, depending on the entity (see [overview.md](references/overview.md)). The examples dispatch on the `{event}` segment (`created`, `updated`, `deleted`, `merged`, `voided`, `emailed`) so every entity is covered.
+The operation segment is one of `created`, `updated`, `deleted`, `merged`, `void` (not `voided`) or `emailed`, depending on the entity. The examples handle `created`, `updated`, `deleted` and `merged` by name and send `void`, `emailed` and anything new to a default branch that re-fetches the record.
 
 ## Environment Variables
 

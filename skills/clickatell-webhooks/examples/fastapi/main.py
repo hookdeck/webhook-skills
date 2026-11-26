@@ -38,53 +38,53 @@ async def require_clickatell_header(request: Request) -> None:
 # One handler per event kind: the name of the key inside `event`. Each value is a list.
 def handle_message_status_update(e: dict) -> None:
     print(f"Message {e.get('messageId')} status: {e.get('status')} ({e.get('statusCode')})")
-    # TODO: update delivery state; events can repeat or arrive out of order (use e["timestamp"])
+    # Your code: update delivery state; events can repeat or arrive out of order (use e["timestamp"])
 
 
 def handle_message_fallback(e: dict) -> None:
     print(f"Message {e.get('messageId')} fallback: {e.get('status')}")
-    # TODO: record the channel fallback
+    # Your code: record the channel fallback
 
 
 def handle_status_is_typing(e: dict) -> None:
     print(f"{e.get('from')} is typing")
-    # TODO: show a typing indicator
+    # Your code: show a typing indicator
 
 
 def handle_mo_text(e: dict) -> None:
     print(f"Text from {e.get('from')}: {e.get('content')}")
-    # TODO: route to your bot or inbox
+    # Your code: route to your bot or inbox
 
 
 def handle_mo_media(e: dict) -> None:
     files = e.get("files") or [{}]
     print(f"Media from {e.get('from')}: {e.get('contentType') or files[0].get('contentType')}")
-    # TODO: download e["files"][]["downloadUrl"] and store it
+    # Your code: download e["files"][]["downloadUrl"] and store it
 
 
 def handle_mo_location(e: dict) -> None:
     print(f"Location from {e.get('from')}: {e.get('locationName')}")
-    # TODO: use e["latitute"] / e["longitude"] (the docs spell it "latitute")
+    # Your code: use e["latitude"] (the schema also lists a misspelled e["latitute"]) and e["longitude"]
 
 
 def handle_mo_contacts(e: dict) -> None:
     print(f"Contacts from {e.get('from')}: {len(e.get('contacts') or [])}")
-    # TODO: import e["contacts"]
+    # Your code: import e["contacts"]
 
 
 def handle_mo_suggested_response(e: dict) -> None:
     print(f"Suggested response from {e.get('from')}: {e.get('postbackData')}")
-    # TODO: continue the flow using e["postbackData"]
+    # Your code: continue the flow using e["postbackData"]
 
 
 def handle_mo_list_picker_response(e: dict) -> None:
     print(f"List selection from {e.get('from')}")
-    # TODO: continue the flow using e["selectedItems"]
+    # Your code: continue the flow using e["selectedItems"]
 
 
 def handle_mo_button_response(e: dict) -> None:
     print(f"Button response from {e.get('from')}")
-    # TODO: continue the flow using e["selectedItem"]
+    # Your code: continue the flow using e["selectedItem"]
 
 
 HANDLERS = {

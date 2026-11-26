@@ -10,7 +10,7 @@ function handleEvent(event: BitdefenderEvent): void {
   switch (event.module) {
     case 'av':
       console.log(`Antimalware: ${event.malware_name} on ${event.computer_name} (${event.final_status})`);
-      // TODO: raise an alert or open a ticket for the detection
+      // Raise an alert or open a ticket for the detection
       break;
 
     case 'aph':

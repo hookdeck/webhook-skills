@@ -33,17 +33,17 @@ function handleEvent(event) {
   switch (event.eventType) {
     case 'fs:add_file':
       console.log(`File added: ${event.data?.targetPath}`);
-      // TODO: sync the new file or version
+      // Sync the new file or version
       break;
 
     case 'fs:delete_file':
       console.log(`File deleted: ${event.data?.targetPath}`);
-      // TODO: remove the file from your cache
+      // Remove the file from your cache
       break;
 
     case 'fs:move_file':
       console.log(`File moved: ${event.data?.sourcePath} -> ${event.data?.targetPath}`);
-      // TODO: update stored paths
+      // Update stored paths
       break;
 
     case 'fs:add_folder':

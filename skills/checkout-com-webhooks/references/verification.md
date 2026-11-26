@@ -186,7 +186,7 @@ encoding.
 No `Cko-Timestamp` header exists and no timestamp is signed. **Do not invent a
 tolerance check** — there is nothing to check it against, and copying a
 Stripe-style `t=` parse will reject every delivery. Replay protection is
-deduplication on the event `id` (`evt_…`).
+deduplication on the event `type` plus `id` (`evt_…`).
 
 Concretely: a byte-for-byte replay of a genuine delivery carries a genuinely
 valid signature. Only idempotency stops it being processed twice.
@@ -283,4 +283,4 @@ your server hashes is not the body that arrived — look at your middleware.
 - [ ] **No** timestamp/replay tolerance check
 - [ ] Also compare the `Authorization` header when you configured one
 - [ ] Fail closed when the signature key is unset
-- [ ] Deduplicate on the event `id` (`evt_…`) for at least 31 hours
+- [ ] Deduplicate on the event `type` plus `id` (`evt_…`), keeping records for the 90-day resend window

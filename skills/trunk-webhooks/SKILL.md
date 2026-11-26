@@ -4,7 +4,7 @@ description: >
   Receive and verify Trunk webhooks (trunk.io Merge Queue and Flaky Tests, delivered via Svix).
   Use when setting up Trunk webhook handlers, debugging svix-signature verification, or handling
   events like pull_request.merged, pull_request_batch.pending_failure, v2.test_case.status_changed,
-  and test_case.investigation_completed.
+  and v2.test_case.quarantining_setting_changed.
 license: MIT
 metadata:
   author: hookdeck
@@ -15,13 +15,15 @@ metadata:
 # Trunk Webhooks
 
 Trunk ([trunk.io](https://trunk.io/)) is CI developer tooling: **Merge Queue** emits `pull_request.*`
-and `pull_request_batch.*` lifecycle events, and **Flaky Tests** emits `test_case.*` status, monitor,
-quarantine and AI-investigation events. Webhooks are delivered by [Svix](https://docs.svix.com/) and
+and `pull_request_batch.*` lifecycle events, and **Flaky Tests** emits test status, monitor and
+quarantine events. Webhooks are delivered by [Svix](https://docs.svix.com/) and
 signed per [Standard Webhooks](https://www.standardwebhooks.com/) with the `svix-*` header names:
 `svix-id`, `svix-timestamp`, and `svix-signature`. The JSON body is flat: a top-level `type` and
 `timestamp` plus the resource fields (Merge Queue: `action`, `status`, `pr_number`, `repository`;
-Flaky Tests: `test_case`, `repository`, `monitor` / `triggered_by`). Collection events add
-`test_collection`. The body has no event id (use `svix-id`).
+Flaky Tests: `test_case`, `repository`, `monitor` / `triggered_by`, `test_collection`). The body
+has no event id (use `svix-id`). Trunk's own
+[route-flaky-tests recipe](https://docs.trunk.io/flaky-tests/recipes/route-flaky-tests-to-owners)
+verifies with the `svix` library and these three headers.
 
 ## When to Use This Skill
 
@@ -37,7 +39,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -81,7 +83,7 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-20 events are documented (the list may not be exhaustive). The name is the top-level `type` in the
+17 events are documented (the list may not be exhaustive). The name is the top-level `type` in the
 JSON body, and the examples handle all of them:
 
 | Event | Triggered When |
@@ -92,11 +94,13 @@ JSON body, and the examples handle all of them:
 | `pull_request.failed` | A PR was kicked out of the queue |
 | `pull_request.pending_failure` / `.canceled` | A PR has a pending failure / was canceled |
 | `pull_request_batch.queued` / `.submitted` / `.testing` / `.merged` / `.failed` / `.canceled` / `.pending_failure` | Same lifecycle for a batch of PRs tested together. Subscribe to this family separately |
-| `v2.test_case.status_changed` | A test changes status (for example becomes flaky), triggered by a monitor |
-| `test_case.status_changed` | The original event, being phased out in favor of the v2 event |
+| `v2.test_case.status_changed` | A test changes status between `HEALTHY`, `FLAKY` and `BROKEN`, triggered by a monitor |
 | `test_case.monitor_status_changed` | A monitor activates or resolves for a test case |
-| `test_case.quarantining_setting_changed` / `v2.test_case.quarantining_setting_changed` | A quarantine setting is manually overridden to `ALWAYS_QUARANTINE` or `NEVER_QUARANTINE` (not on auto-quarantine) |
-| `test_case.investigation_completed` | An AI flaky-test analysis finishes (beta) |
+| `v2.test_case.quarantining_setting_changed` | Someone sets a manual `ALWAYS_QUARANTINE` or `NEVER_QUARANTINE` override (not on auto-quarantine) |
+
+The catalog listed `test_case.status_changed`, `test_case.quarantining_setting_changed` and
+`test_case.investigation_completed` until November 2026. They're no longer documented, so the
+examples don't route them; anything unknown still gets a `200`.
 
 See [references/overview.md](references/overview.md) for payload shapes and delivery notes.
 

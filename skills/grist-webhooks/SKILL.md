@@ -2,7 +2,7 @@
 name: grist-webhooks
 description: >
   Receive and authenticate Grist document webhooks. Use when setting up a Grist
-  webhook endpoint (Document settings > Webhooks), checking the static
+  webhook endpoint (Document Settings > API > Manage Webhooks), checking the static
   Authorization header, debugging 401s, or handling the JSON array of added or
   updated rows Grist sends for the add and update event types.
 license: MIT

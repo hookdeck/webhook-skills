@@ -8,7 +8,11 @@
 
 ## Register Your Endpoint
 
-Webhooks are created per shop through the REST API:
+Webhooks are created per shop. In the Belco dashboard, open Settings (the gear icon), then
+Developers > Webhooks, choose the shop, add a webhook, enter its URL, tick its events and save
+([Belco help center](https://www.belco.nl/helpdocs/webhooks-toevoegen/), in Dutch).
+
+Or create one through the REST API:
 
 ```bash
 curl -X POST https://api.belco.io/v1/webhooks \
@@ -30,16 +34,16 @@ The API also lets you list, retrieve, update, activate, deactivate and delete we
 
 ## Get Your Signing Secret
 
-Every webhook has its own unique secret, returned as the `secret` property of the Webhook object in
-the create and retrieve responses. Store it as `BELCO_WEBHOOK_SECRET`. Belco does not document a
-secret format, rotation or a dashboard location, so treat the value as an opaque string and use it
-as-is (UTF-8 bytes).
+Every webhook has its own unique secret. The dashboard shows it on the webhook's overview, and the
+API returns it as the `secret` property of the Webhook object. Store it as `BELCO_WEBHOOK_SECRET`.
+Belco does not document a secret format or rotation, so treat the value as an opaque string and use
+it as-is (UTF-8 bytes).
 
 ## Setup with Hookdeck
 
 Create a Hookdeck source with the **Belco** type and paste the webhook's `secret` into the source's
-webhook verification settings. Then register the Hookdeck source URL as the webhook `url` in the
-call above.
+webhook verification settings. Then register the Hookdeck source URL as the webhook URL, in the
+dashboard or the call above.
 
 ## If Your Webhook Stops Delivering
 

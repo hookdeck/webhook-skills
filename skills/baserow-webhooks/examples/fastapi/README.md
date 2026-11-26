@@ -66,7 +66,7 @@ npx hookdeck-cli listen 8000 baserow --path /webhooks/baserow
 ```
 
 Put the printed URL in the Baserow webhook. If your webhook uses a method other than POST, also
-allow it on the Hookdeck Baserow source (it pre-selects POST).
+allow it on the Hookdeck Baserow source (it accepts only the methods you allow).
 
 ## How It Works
 

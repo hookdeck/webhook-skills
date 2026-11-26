@@ -89,7 +89,7 @@ function handleEvent(evt) {
   switch (evt.event) {
     case 'delivery':
       console.log(`Delivered ${evt.message_id} to ${evt.email}`);
-      // TODO: mark message delivered
+      // Mark the message delivered in your database.
       break;
     case 'open':
       console.log(`Opened by ${evt.email} (${evt.ip})`);
@@ -99,19 +99,19 @@ function handleEvent(evt) {
       break;
     case 'unsubscribe':
       console.log(`Unsubscribe from ${evt.email}`);
-      // TODO: update consent
+      // Record the opt-out against this address.
       break;
     case 'spam':
       console.log(`SPAM complaint from ${evt.email}`);
-      // TODO: suppress immediately
+      // Suppress the address straight away.
       break;
     case 'soft bounce':
       console.log(`Soft bounce for ${evt.email}: ${evt.response_code} ${evt.bounce_category}`);
-      // TODO: Mailtrap retries; count repeated soft bounces
+      // Mailtrap retries a soft bounce; count repeats before suppressing.
       break;
     case 'bounce':
       console.log(`Hard bounce for ${evt.email}: ${evt.response_code} ${evt.bounce_category}`);
-      // TODO: suppress this address
+      // Add the address to your suppression list.
       break;
     case 'suspension':
       console.log(`Message suspended for ${evt.email}: ${evt.reason}`);

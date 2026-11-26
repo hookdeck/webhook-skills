@@ -29,7 +29,7 @@ The type is in the body's `typeWebhook` field:
 | `outgoingAPIMessageReceived` | A message is sent via the API | Logging/auditing API sends |
 | `outgoingMessageStatus` | A sent message changes status | Delivery/read receipts, retrying `failed` sends |
 | `stateInstanceChanged` | The instance authorization state changes | Alerting when an instance is `notAuthorized` or `blocked` |
-| `statusInstanceChanged` | The instance socket state changes | Monitoring `online` / `offline` |
+| `statusInstanceChanged` | The instance socket state changes (deprecated, temporarily not working) | Monitoring `online` / `offline` |
 | `incomingCall` | A call comes in | Missed-call auto-replies |
 
 Other documented types: `outgoingCall`, `deviceInfo`, `incomingBlock`,

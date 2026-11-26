@@ -78,7 +78,7 @@ Envelope: `{ "id": "evt_...", "event": "...", "created_at": "...", "data": { "me
 |--------|-------------|
 | `x-anarlog-signature` | `sha256=<hex>` HMAC-SHA256 of the raw body, keyed with the whole `whsec_...` secret |
 | `x-anarlog-event` | Event name |
-| `x-anarlog-delivery` | Unique delivery ID (use for idempotency, with the payload `id`) |
+| `x-anarlog-delivery` | Unique delivery ID. Deduplicate on the payload `id`, which Anarlog says to store so retries are processed once |
 | `x-anarlog-timestamp` | Unix seconds. Not signed; informational only |
 
 Deliveries time out after 10 seconds and retry after 5 and 30 seconds. Return `200` quickly and do the work asynchronously. Deliveries only run while the Anarlog desktop app is open; events that occur while it is closed are dropped, not queued.

@@ -54,18 +54,18 @@ function verifyHostawayRequest(headers, user = process.env.HOSTAWAY_WEBHOOK_USER
 - Missing or malformed header, or a mismatch: return `401`. Check the credential first, for every HTTP method, before reading the body.
 - Compare the username and the password each in constant time. Node: `crypto.timingSafeEqual` on equal-length buffers (SHA-256 digests here). Python: `hmac.compare_digest` on **bytes** (encode both sides; `str` raises on non-ASCII). Decode strictly (`validate=True` in Python) so valid credentials followed by junk are rejected.
 - **A static shared credential authenticates the sender, not the body.** There is no signature and no timestamp, so it gives no replay protection. Use HTTPS only, and rotate the login and password in Hostaway if they leak.
-- **Hookdeck never sends a 401 challenge** (no `WWW-Authenticate` round trip), so the credentials must arrive with every request. Don't rely on the sender retrying with credentials after a challenge.
+- **No 401 challenge** (no `WWW-Authenticate` round trip), so the credentials must arrive with every request. Don't rely on the sender retrying with credentials after a challenge.
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, and parse it only after the check.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## HTTP Methods and Body
 
-Hostaway's docs don't name the HTTP method or the body format. The examples therefore accept **GET, POST, PUT, PATCH and DELETE** on the webhook route (Express `app.all`, a Next.js handler per method, FastAPI `api_route`), check the credential first for every method, and handle an empty body. Hookdeck's Hostaway source pre-selects POST without managing the method, so **any other method the sender uses must also be allowed on the source**.
+Hostaway's docs don't name the HTTP method or the body format. The examples therefore accept **GET, POST, PUT, PATCH and DELETE** on the webhook route (Express `app.all`, a Next.js handler per method, FastAPI `api_route`), check the credential first for every method, and handle an empty body. Hookdeck's Hostaway source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so **any other method the sender uses must also be allowed on the source**.
 
 ## Event Types
 
-The unified webhook payload is not documented field by field, so treat the payload below as **illustrative** and read the event name defensively (`event`, `eventType`, or `object` + `action`), logging unknown shapes.
+Hostaway doesn't document the unified webhook body or which field carries the event name. Make a test direct booking under **Reservations**, capture the request, and route on the field you find there. Until then, log the top-level keys of any body you can't route. The API changelog says unified webhooks carry the Reservation object, and the help article says each request includes `listingMapId`.
 
 | Event | Sent When |
 |-------|-----------|
@@ -75,11 +75,7 @@ The unified webhook payload is not documented field by field, so treat the paylo
 | `task.created` | A task is created |
 | `task.updated` | A task changes |
 
-```json
-{ "event": "reservation.created", "data": { "id": 1001, "listingMapId": 2002, "guestName": "Jane Doe", "status": "new" } }
-```
-
-Hostaway times out after 20 seconds and retries transient failures up to 3 times, so acknowledge quickly and process idempotently. Only ports 80 and 443 are reachable.
+Hostaway times out after 20 seconds and retries transient failures (connection errors, `5xx`, `429`) up to 3 times within about an hour; other `4xx` responses are not retried. Events can arrive out of order and more than once, so acknowledge quickly and process idempotently. Only ports 80 and 443 are accepted.
 
 ## Environment Variables
 

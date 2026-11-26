@@ -8,8 +8,8 @@ It is **not** Svix and **not** Standard Webhooks — so do not reach for
 
 | Header | Example | Purpose |
 |--------|---------|---------|
-| `X-Ascend-Signature` | `t=1696200697,v1=5257a869e7...` | Unix timestamp + hex HMAC |
-| `X-Ascend-Request-Timestamp` | `1696200697` | The same Unix timestamp (redundant) |
+| `X-Ascend-Signature` | `t=1657323346,v1=c159a974c8...` | Unix timestamp + hex HMAC |
+| `X-Ascend-Request-Timestamp` | `1657323346` | The same Unix timestamp, which is signed |
 
 To verify:
 
@@ -21,9 +21,10 @@ To verify:
    hex-encode it.
 4. **Compare** the computed value to `v1` using a **constant-time** comparison.
 
-The timestamp used for signing is the `t` value inside `X-Ascend-Signature`
-(this is the value cryptographically bound to the signature). The separate
-`X-Ascend-Request-Timestamp` header carries the same value for convenience.
+Ascend's docs read the timestamp from the `X-Ascend-Request-Timestamp` header
+and rebuild the whole header as `t=<that timestamp>,v1=<hmac>` before comparing,
+so the `t` value inside `X-Ascend-Signature` is the same timestamp. Reading `t`
+from the signature header, as these examples do, signs the same string.
 
 ## There Is No Official SDK
 

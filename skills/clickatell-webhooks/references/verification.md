@@ -15,8 +15,7 @@ If you name the header `Authorization`, Clickatell sends only your custom value 
 Auth credentials for that URL. Compare the whole value, including any `Bearer ` prefix you typed;
 do not strip or parse it.
 
-Hookdeck's Clickatell source works the same way (header name plus exact whole header value) and
-covers One API callbacks only: "Covers One API callbacks only. Add a Custom Security Header to the callback URL." Basic Auth alone and legacy SMS Gateway callbacks are not covered.
+Hookdeck's Clickatell source checks the same header and covers One API callbacks only: "Covers One API callbacks only. Add a Custom Security Header to the callback URL." Basic Auth alone and legacy SMS Gateway callbacks are not covered.
 
 ## What Does This Protect Against?
 
@@ -26,7 +25,8 @@ the header with a different body. Mitigate:
 
 - Serve the endpoint over HTTPS only
 - Rotate the header value in the portal if it leaks
-- Deduplicate on `messageId` (retries already cause duplicates)
+- Deduplicate replies on `messageId`, and status events on the kind, `messageId` and `status`
+  (retries already cause duplicates)
 - Keep the value out of logs
 
 ## Implementation

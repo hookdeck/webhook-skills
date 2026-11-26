@@ -11,7 +11,7 @@ notes: >
   shared_secret used as raw UTF-8 bytes (1-100 chars, random by default; NOT whsec_, NOT base64).
   Increase's Ruby sample: OpenSSL::HMAC.digest('SHA256', signing_secret, signed_payload). So verify
   manually: do NOT use the standardwebhooks library with the secret as-is (it base64-decodes the
-  key). Hookdeck's Increase source uses a non-whsec_ secret as UTF-8 bytes too; say to use the
+  key). Say to use the
   secret Increase generates or one that doesn't start with whsec_. Hookdeck retries and replays
   resend the original timestamp, so a 5-minute window rejects late retries: the timestamp freshness
   check must be opt-in via INCREASE_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the

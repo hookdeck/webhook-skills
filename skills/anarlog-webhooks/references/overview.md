@@ -48,7 +48,7 @@ Meeting events include the note, summaries, participants, action items, and the 
 
 ## Delivery and Retries
 
-Meeting event deliveries time out after 10 seconds. Failed attempts retry after 5 and 30 seconds. A `webhook.test` request makes one attempt. Store each payload `id` (or `x-anarlog-delivery`) so retries are processed once.
+Meeting event deliveries time out after 10 seconds. Failed attempts retry after 5 and 30 seconds. A `webhook.test` request makes one attempt. Store each payload `id` so retries are processed once.
 
 ## Full Event Reference
 

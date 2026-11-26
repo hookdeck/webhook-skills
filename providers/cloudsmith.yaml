@@ -13,15 +13,14 @@ notes: >
   header' 'you can use the Secret Header and Secret Value fields. These are values that will be sent
   with every webhook sent' From the docs (registry summary): `X-Cloudsmith-Signature: <hex>` = hex
   HMAC-SHA1(HMAC Signature Key, raw body). Bare value. The docs page names HMAC-SHA1 but not the
-  encoding; the API's OpenAPI `signature_key` says hex digest. SIGNATURE SCHEME (it must match
-  Hookdeck's CLOUDSMITH source exactly: HMAC controller, algorithm "sha1", header_key
-  "x-cloudsmith-signature", encoding "hex"). The X-Cloudsmith-Signature header carries the bare
+  encoding; the API's OpenAPI `signature_key` says hex digest. SIGNATURE SCHEME (algorithm sha1, header
+  x-cloudsmith-signature, encoding hex). The X-Cloudsmith-Signature header carries the bare
   lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
   prefix parsing). The signature is lowercase hex HMAC-SHA1, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   40 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: The webhook's HMAC Signature Key, provided or noted at creation; it can be replaced later
   but not read back. Use it as UTF-8 bytes. Env var: CLOUDSMITH_WEBHOOK_SECRET. Validate the
@@ -41,7 +40,7 @@ notes: >
   for the JSON Object format. Documented event types (11): ping, package.created, package.deleted,
   package.failed, package.quarantined, package.released, package.restored, package.security_scanned,
   package.synced, package.syncing, package.tags_updated. Handle a few common ones and log the rest.
-  Method: POST. Hookdeck's Cloudsmith source manages the method as POST, so the examples handle POST
+  Method: POST. The examples handle POST
   on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so
   any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
   FastAPI: await request.body()); parse the body only after the check. Documented sample payloads

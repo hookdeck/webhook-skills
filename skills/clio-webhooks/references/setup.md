@@ -99,8 +99,8 @@ curl -X PUT https://app.clio.com/api/v4/webhooks/1234/activate \
 ## Step 3: Verify Event Signatures
 
 Every event delivery includes an `X-Hook-Signature` header — the HMAC-SHA256
-digest of the raw body, keyed with the shared secret. Clio's docs do not say
-whether that digest is hex- or base64-encoded, so accept both. See
+digest of the raw body, keyed with the shared secret. Clio's examples encode
+it as lowercase hex (`hexdigest`). See
 [verification.md](verification.md).
 
 ## Step 4: Renew Before Expiry
@@ -131,13 +131,15 @@ curl -X DELETE https://app.clio.com/api/v4/webhooks/1234.json \
 
 ## Local Testing
 
-Use the Hookdeck CLI to forward Clio webhooks to your local server (no account
-required — it creates a guest account on first run):
+Create a Clio source in Hookdeck Event Gateway and forward it to your local
+server with the Hookdeck CLI, where `clio` is the source's name:
 
 ```bash
-npx hookdeck-cli listen 3000 clio --path /webhooks/clio
+hookdeck listen 3000 clio --path /webhooks/clio
 ```
 
-Point your webhook's `url` at the Hookdeck URL the CLI prints, then create the
-webhook. Hookdeck will forward both the handshake and event deliveries to your
-local handler and let you inspect and replay them.
+Point your webhook's `url` at the source URL, then create the webhook. Event
+Gateway answers the `X-Hook-Secret` handshake itself and doesn't forward it, so
+read the secret with `GET /api/v4/webhooks/:id.json?fields=shared_secret`.
+Event deliveries are forwarded to your local handler, where you can inspect and
+replay them.

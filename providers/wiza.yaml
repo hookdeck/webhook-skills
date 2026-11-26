@@ -8,8 +8,7 @@ notes: >
   API key.' It is not a body signature: the value is the lowercase hex SHA-256 of the Wiza API key
   and is the same on every request. The examples read WIZA_API_KEY, compute sha256(api_key) as
   lowercase hex, and compare it to the whole x-auth-key value in constant time (header name
-  case-insensitive). Missing header or mismatch: 401. Hookdeck's Wiza source compares the whole
-  x-auth-key value to its configured key, so in Hookdeck the user enters the lowercase hex SHA-256
+  case-insensitive). Missing header or mismatch: 401. In Hookdeck the user enters the lowercase hex SHA-256
   hash of the API key, not the API key itself; show a one-liner to compute it (e.g. printf %s
   "$WIZA_API_KEY" | sha256sum, or node -e). Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses

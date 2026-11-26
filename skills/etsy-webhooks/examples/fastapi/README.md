@@ -1,6 +1,6 @@
 # Etsy Webhooks - FastAPI Example
 
-Minimal example of receiving Etsy webhooks with signature verification. Etsy follows the Standard Webhooks spec and has no Python SDK, so this example verifies the signature manually inside a FastAPI dependency.
+Minimal example of receiving Etsy webhooks with signature verification. Etsy's signatures use the Standard Webhooks construction and has no Python SDK, so this example verifies the signature manually inside a FastAPI dependency.
 
 ## Prerequisites
 

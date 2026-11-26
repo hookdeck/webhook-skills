@@ -60,8 +60,8 @@ curl -X POST http://localhost:8000/webhooks/nexthink \
 npx hookdeck-cli listen 8000 nexthink --path /webhooks/nexthink
 ```
 
-Use the printed URL as the connector credential's URL. Hookdeck's Nexthink source pre-selects
-POST without managing the method: allow PUT or PATCH on the source if your webhook uses them.
+Use the printed URL as the connector credential's URL. Allow the method your webhook
+uses on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 
@@ -72,5 +72,5 @@ POST without managing the method: allow PUT or PATCH on the source if your webho
 2. The raw body is read, so any content type works. An empty body is fine; a non-empty body must
    be valid JSON (`400` otherwise).
 3. Nexthink adds no event field. The example dispatches on `event` from an illustrative payload
-   template (`alert triggered`, `alert recovered`) that you write yourself.
+   template (`alert triggered`, `high priority alert`) that you write yourself.
 4. It returns `200 {"received": true}`.

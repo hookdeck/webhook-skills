@@ -1,11 +1,11 @@
 # Certn Webhooks - Express Example
 
-Minimal example of receiving Certn webhooks with `Certn-Signature` verification.
+Minimal example of receiving CertnCentric webhooks: the `GET` challenge echo and `X-Signature` verification.
 
 ## Prerequisites
 
 - Node.js 18+
-- Certn account with webhooks enabled on the Partner page, and signed payloads turned on so you have the signing secret
+- A CertnCentric account with access to the Integrations area of the Client Portal
 
 ## Setup
 
@@ -19,7 +19,7 @@ Minimal example of receiving Certn webhooks with `Certn-Signature` verification.
    cp .env.example .env
    ```
 
-3. Add the signing secret to `.env` (`CERTN_WEBHOOK_SECRET`). Signing is opt-in: without it Certn sends unsigned deliveries, which fail verification.
+3. Add the signing key Certn shows when you create the webhook to `.env` (`CERTN_WEBHOOK_SECRET`).
 
 ## Run
 
@@ -29,7 +29,7 @@ npm start
 
 Server runs on http://localhost:3000
 
-The handler reads the raw body with `express.raw({ type: '*/*' })`, verifies `Certn-Signature` (`t=<unix seconds>, v1=<hex HMAC-SHA256 of "<t>.<request body>">`, accepting any of several `v1` values), then dispatches on the applicant object's `report_status` (for example `COMPLETE`). Certn has no event types. The timestamp check is off by default because retries and replays keep the original timestamp; set `CERTN_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
+`GET /webhooks/certn?challenge=...` returns the challenge as a plain-text body, which is how Certn checks the URL when you add it and again periodically. `POST /webhooks/certn` reads the raw body with `express.raw({ type: '*/*' })`, checks `X-Signature` (hex HMAC-SHA256 of the raw body), then dispatches on `event_type`: `CASE_STATUS_CHANGED`, `CHECK_STATUS_CHANGED`, `CASE_REPORT_READY` and `CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED`.
 
 ## Test
 
@@ -43,4 +43,4 @@ To receive real webhooks locally:
 npx hookdeck-cli listen 3000 certn --path /webhooks/certn
 ```
 
-Use the Hookdeck URL as the webhook URL on the Certn Partner page, then click Enable Integration.
+Add the Hookdeck URL as a webhook URL in the Integrations area of the Certn Client Portal.

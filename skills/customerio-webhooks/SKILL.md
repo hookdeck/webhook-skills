@@ -25,10 +25,13 @@ metadata:
 ## How Customer.io Webhooks Are Different
 
 - **No single event-name string.** Each POST is **one** event object. Identify it by the
-  `object_type` (`customer`, `email`, `push`, `sms`, `in_app`, `slack`, `webhook`, `whatsapp`)
+  `object_type` (`customer`, `email`, `push`, `web_push`, `sms`, `in_app`, `inbox`, `slack`, `webhook`, `whatsapp`)
   **plus** the `metric` (`sent`, `delivered`, `opened`, `clicked`, `bounced`, `dropped`,
   `spammed`, `failed`, `converted`, `unsubscribed`, …). There is no `email.opened` field — you
   build that pair yourself from `object_type` + `metric`.
+  Two exceptions: `cio_subscription_preferences_changed` arrives as the `metric` with the triggering
+  channel in `object_type`, so match it on `metric` alone; and the docs spell the in-app type both
+  `in_app` and `in-app`, so normalise before comparing.
 - **Custom signature scheme (not Standard Webhooks).** The signed string is
   `v0:<X-CIO-Timestamp>:<raw body>`, HMAC-SHA256, **hex** digest. There are no
   `webhook-id` / `webhook-signature` headers.

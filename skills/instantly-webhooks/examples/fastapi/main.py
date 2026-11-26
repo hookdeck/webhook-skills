@@ -83,7 +83,7 @@ async def instantly_webhook(request: Request):
 
 
 def handle_event(payload: dict) -> None:
-    # TODO: check idempotency_key(payload) against your store and return if seen.
+    # Check idempotency_key(payload) against your store and return if seen.
     event_type = payload.get("event_type")
     lead = payload.get("lead_email") or "unknown lead"
     campaign = payload.get("campaign_name") or payload.get("campaign_id")

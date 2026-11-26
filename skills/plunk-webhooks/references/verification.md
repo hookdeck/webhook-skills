@@ -76,7 +76,7 @@ def verify_plunk_request(headers, secret=None, header_name=None) -> bool:
 |---------|--------------|
 | 401 on every request | `PLUNK_WEBHOOK_SECRET` unset, or `PLUNK_WEBHOOK_HEADER` doesn't match the header name on the step |
 | 401 only when `Bearer ` is involved | The env var holds the token without the `Bearer ` prefix typed in Plunk, or the reverse |
-| Non-POST requests never arrive | The Hookdeck source only allows `POST`; allow the step's method on the source |
+| Non-POST requests never arrive | The step's method isn't allowed on the Hookdeck source; allow it there |
 | 401 with a `{{...}}` in the value | A variable was used in the secret; Plunk sends the interpolated value, which changes |
 | 401 only behind a proxy | The proxy strips or renames the secret header |
 | 400 after authentication | Body isn't valid JSON (a custom body may not be JSON-shaped as you expect) |

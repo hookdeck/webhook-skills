@@ -2,13 +2,16 @@
 # https://github.com/hookdeck/webhook-skills
 """Sent (sent.dm) webhook receiver for FastAPI.
 
-Sent signs webhooks Standard Webhooks / Svix style, but on X-Webhook-* names:
-  X-Webhook-ID         UUID of the webhook configuration (the SAME on every
-                       event, so it is signed but is NOT a dedupe key)
-  X-Webhook-Timestamp  Unix seconds at which this attempt was signed
-  X-Webhook-Signature  "v1,<base64 HMAC-SHA256>" (space-delimited if several)
-  X-Webhook-Event-ID   the event's own UUID, identical on every attempt
-Signed content: f"{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw_body}"
+Sent signs webhooks with the Standard Webhooks scheme. Version 2 webhooks (the
+default) send the standard headers; version 1 webhooks use X-Webhook-* names:
+  webhook-id / X-Webhook-ID   signed id. v2: the message id, the same on every
+                              attempt (the dedupe key). v1: the webhook
+                              configuration's UUID, NOT a dedupe key
+  webhook-timestamp / X-Webhook-Timestamp  Unix seconds this attempt was signed
+  webhook-signature / X-Webhook-Signature  "v1,<base64 HMAC-SHA256>", space-
+                              delimited if several
+  X-Webhook-Event-ID          v1 only: the event's UUID, the same on every attempt
+Signed content: f"{id}.{timestamp}.{raw_body}"
 Key: base64-decode of the signing secret after its `whsec_` prefix.
 """
 
@@ -34,15 +37,16 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="Sent Webhook Handler")
 
 # In-memory dedupe for the demo. Use Redis or your database in production.
-# Sent delivers at-least-once; X-Webhook-Event-ID is the same on every attempt.
+# Sent delivers at-least-once; webhook-id (v2) or X-Webhook-Event-ID (v1) is the
+# same on every attempt.
 processed_event_ids: set = set()
 
 
 def verify_sent_webhook(raw_body: bytes, headers: Dict[str, str], secret: str) -> Dict[str, Any]:
     """Verify a Sent delivery with the Standard Webhooks library.
 
-    The library reads webhook-* header names, so Sent's x-webhook-* headers are
-    mapped onto them by the caller. It rejects timestamps more than 5 minutes
+    The library reads webhook-* header names: version 2 sends those, and the
+    caller passes version 1's x-webhook-* headers under the same names. It rejects timestamps more than 5 minutes
     off, recomputes the HMAC over the raw body, and compares in constant time
     against every `v1,` entry. Raises WebhookVerificationError on failure.
     """
@@ -57,10 +61,11 @@ async def verified_sent_event(request: Request) -> Dict[str, Any]:
         logger.error("SENT_WEBHOOK_SECRET is not set; rejecting delivery")
         raise HTTPException(status_code=503, detail="no signing secret configured")
 
+    # Version 2 header names first, then version 1's X-Webhook-* names.
     headers = {
-        "webhook-id": request.headers.get("x-webhook-id"),
-        "webhook-timestamp": request.headers.get("x-webhook-timestamp"),
-        "webhook-signature": request.headers.get("x-webhook-signature"),
+        f"webhook-{name}": request.headers.get(f"webhook-{name}")
+        or request.headers.get(f"x-webhook-{name}")
+        for name in ("id", "timestamp", "signature")
     }
     if not all(headers.values()):
         raise HTTPException(status_code=400, detail="missing signature headers")
@@ -106,21 +111,22 @@ def handle_event(event: Dict[str, Any]) -> None:
     elif event_type == "channel.activated":
         logger.info("Channel activated: %s sender %s", payload.get("channel"), payload.get("sender_value"))
     else:
-        # Sent documents 38 event types and adds more over time. Acknowledge the rest.
+        # Sent documents 39 event types and adds more over time. Acknowledge the rest.
         logger.info("Unhandled Sent event: %s", event_type)
 
 
 @app.post("/webhooks/sent-dm")
 async def sent_webhook(request: Request, event: Dict[str, Any] = Depends(verified_sent_event)):
-    # Dedupe on the event's own id, NOT x-webhook-id (that is the webhook's id).
-    event_id = request.headers.get("x-webhook-event-id")
+    # Dedupe on webhook-id (v2) or x-webhook-event-id (v1), NOT v1's x-webhook-id
+    # (that is the webhook's id).
+    event_id = request.headers.get("webhook-id") or request.headers.get("x-webhook-event-id")
     if event_id and event_id in processed_event_ids:
         return {"received": True, "duplicate": True}
 
     try:
-        # Sent waits up to 30 s by default (5-120 s per webhook) for a 2xx, and
-        # disables a webhook after 10 consecutive failures. In production,
-        # enqueue the event here and process it asynchronously.
+        # Sent turns off a webhook that keeps failing (version 1: after 10
+        # consecutive failed events). In production, enqueue the event here and
+        # process it asynchronously.
         handle_event(event)
         if event_id:
             processed_event_ids.add(event_id)

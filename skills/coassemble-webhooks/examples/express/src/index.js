@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 3000;
 // The signature is HMAC-SHA256 (hex) of "<X-Coassemble-Timestamp>.<raw body>" keyed with the webhook secret.
 // https://developers.coassemble.com/webhooks
 
-// Optional replay window in seconds. Off by default (0): retries and replays, including
-// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Optional replay window in seconds. Off by default (0): Coassemble's docs set no window, and
+// Hookdeck's retries and replays carry the original timestamp, so a window would reject late redeliveries.
 // Set COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 // treated as 0, with a warning.
 let warnedInvalidTolerance = false;
@@ -78,7 +78,7 @@ app.post('/webhooks/coassemble', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid payload');
   }
 
-    // Dedupe on the X-Coassemble-Delivery header: retries and replays keep the same delivery ID
+  // Dedupe on the X-Coassemble-Delivery header: retry attempts keep the same delivery ID
   const data = payload.data || {};
   const tracking = data.tracking || {};
   const course = data.course || {};
@@ -101,10 +101,10 @@ app.post('/webhooks/coassemble', express.raw({ type: '*/*' }), (req, res) => {
       console.log(`${tracking.identifier} completed "${course.title}" in ${tracking.totalTime}s`);
       break;
     case 'quiz.completed':
-      console.log(`Quiz passed (delivery ${payload.id})`);
+      console.log(`Quiz passed (event ${payload.id})`);
       break;
     case 'quiz.failed':
-      console.log(`Quiz failed (delivery ${payload.id})`);
+      console.log(`Quiz failed (event ${payload.id})`);
       break;
     case 'migration.progress':
       console.log(`Migration batch ${data.id}: "${data.item?.title}" ${data.item?.status}`);

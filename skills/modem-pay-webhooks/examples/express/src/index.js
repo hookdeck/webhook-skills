@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 //   x-modem-signature: <hex>
 // <hex> = HMAC-SHA512 of the request body, keyed with the webhook secret (Developers > Webhooks in
 // the Modem Pay dashboard) used as-is. There is no timestamp and no prefix such as "sha512=".
-// https://docs.modempay.com/documentation/core/webhooks#webhook-security-and-signature-validation
+// https://docs.modempay.com/documentation/core/webhooks#verify-the-signature
 //
 // Hash the RAW body bytes. Modem Pay's own snippets hash JSON.stringify(req.body), which only works
 // while re-serialising reproduces the exact bytes that were sent; the raw body always does.
@@ -56,16 +56,16 @@ app.post('/webhooks/modem-pay', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   const { payload } = event;
-  // There is no delivery id: dedupe retries on (event, payload.id), e.g. in a unique DB index.
+  // There is no delivery id: dedupe retries on (event, payload.id, payload.updatedAt), e.g. in a unique DB index.
   const ref = str(payload.id) ?? '(no id)';
 
   switch (event.event) {
     case 'charge.succeeded':
       console.log(`Charge succeeded: ${ref} ${payload.amount} ${str(payload.currency) ?? ''}`.trimEnd());
-      // TODO: mark the order paid (check payload.test_mode before fulfilling)
+      // Your code: mark the order paid (check payload.test_mode before fulfilling)
       break;
-    case 'charge.updated':
-      console.log(`Charge updated: ${ref} status=${str(payload.status) ?? 'unknown'}`);
+    case 'charge.failed':
+      console.log(`Charge failed: ${ref}`);
       break;
     case 'payment_intent.created':
       console.log(`Payment intent created: ${ref}`);

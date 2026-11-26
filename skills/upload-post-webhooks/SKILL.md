@@ -5,7 +5,8 @@ description: >
   publishing to many social networks). Use when setting up an Upload-Post
   webhook handler, debugging X-Upload-Post-Signature verification, or handling
   upload_completed, social_account_connected, social_account_disconnected,
-  social_account_reauth_required, dm_received and comment_received events.
+  social_account_reauth_required, dm_received, telegram_update and
+  comment_received events.
   The signature is a hex HMAC-SHA256 over the X-Upload-Post-Timestamp header,
   a dot, and the raw body. It is not Standard Webhooks.
 license: MIT
@@ -17,7 +18,7 @@ metadata:
 
 # Upload-Post Webhooks
 
-Upload-Post (upload-post.com) is an API for publishing content to many social networks. Its webhooks report upload results and social-account connection changes, plus opt-in Instagram DMs and comments (Instagram, TikTok, LinkedIn Company Pages).
+Upload-Post (upload-post.com) is an API for publishing content to many social networks. Its webhooks report upload results and social-account connection changes, plus opt-in DMs (Instagram, Bluesky, Telegram), comments (Instagram, TikTok, LinkedIn Company Pages) and raw Telegram bot updates.
 
 ## When to Use This Skill
 
@@ -69,7 +70,7 @@ def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool
 
 A missing or empty header, a malformed value or a mismatch is a `401`. In Express use `express.raw({ type: '*/*' })`, in Next.js `await request.arrayBuffer()`, in FastAPI `await request.body()`, and parse the JSON only after the check passes.
 
-**Timestamp window (opt-in):** the examples do not reject old timestamps by default. Hookdeck retries and replays resend the original headers, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Set `UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to reject deliveries whose `X-Upload-Post-Timestamp` is further than that many seconds from now.
+**Timestamp window (opt-in):** the examples do not reject old timestamps by default. Hookdeck retries and replays resend the original headers, so a fixed window would reject legitimate retries. Set `UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to reject deliveries whose `X-Upload-Post-Timestamp` is further than that many seconds from now.
 
 Deliveries made before a secret existed carry no signature header and fail verification.
 
@@ -85,7 +86,8 @@ Dispatch on the body's `event` field. The examples handle these and log the rest
 | `social_account_connected` | A social account was connected to a profile |
 | `social_account_disconnected` | A social account was disconnected (`reason` included) |
 | `social_account_reauth_required` | A connected account needs to be re-authorized |
-| `dm_received` | An Instagram DM arrived (opt-in) |
+| `dm_received` | A DM arrived on Instagram, Bluesky or your Telegram bot (opt-in) |
+| `telegram_update` | Any raw update your Telegram bot received, such as a button press (opt-in) |
 | `comment_received` | A comment arrived on a connected Instagram, TikTok or LinkedIn Company Page account (opt-in; Threads rolling out) |
 
 > **For payload fields**, see [Upload-Post webhooks](https://docs.upload-post.com/api/webhooks)
@@ -97,10 +99,12 @@ Dispatch on the body's `event` field. The examples handle these and log the rest
 | `X-Upload-Post-Signature` | `sha256=<hex>` HMAC-SHA256, sent when a `webhook_secret` is set |
 | `X-Upload-Post-Timestamp` | Unix time (seconds) when the request was signed; part of the signed content |
 | `X-Upload-Post-Event` | Event name (same as the body's `event`) |
+| `X-Upload-Post-Delivery` | Delivery id, the same on every retry of that delivery; deduplicate on it |
+| `X-Upload-Post-Attempt` | `1` for the first send, `2` to `6` for retries |
 
 ## Delivery
 
-One attempt per event with a 10 s timeout. A refused connection or non-2xx response loses the event, and after 5 consecutive failures the channel pauses for 30 minutes. Respond quickly and process asynchronously.
+At least once, with up to 6 attempts over about 8.5 hours. A timeout (15 s in total), connection error, `5xx`, `408` or `429` is retried; any other `4xx` is final, and a `3xx` counts as delivered. After 5 consecutive failures the webhook pauses for 30 minutes and queues events until it resumes. `telegram_update` is never retried. Deduplicate on `X-Upload-Post-Delivery`, respond `2xx` within 10 seconds and process asynchronously.
 
 ## Environment Variables
 

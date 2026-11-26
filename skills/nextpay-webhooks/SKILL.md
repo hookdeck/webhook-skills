@@ -35,7 +35,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -78,7 +78,10 @@ widened. Deduplicate on `svix-id` (or the event `id`) instead of relying on the 
 
 ## Common Event Types
 
-16 events are documented (the list may not be exhaustive). The examples handle all of these:
+16 events are listed on NextPay's Understanding Webhooks page (the list may not be exhaustive). The
+examples handle all of these. The API reference's Create Webhook `events` enum also lists unprefixed
+`payment_intent.created`, `.succeeded`, `.failed`, `.canceled` and `.expired`, with no documented body
+shape, and doesn't list `v2.payment_intent.canceled`. Log one before writing a parser for them.
 
 | Event | Body shape | Triggered When |
 |-------|-----------|----------------|

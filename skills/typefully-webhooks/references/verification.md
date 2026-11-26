@@ -41,12 +41,12 @@ Before decoding the signature, check its format: strip a leading `sha256=` (a ba
 
 ## Replay Protection
 
-Typefully says to verify the timestamp is recent but gives no window. The examples **don't check it by default**: Hookdeck's retries and replays carry the original `X-Typefully-Timestamp`, and Typefully doesn't document whether its own retries (up to an hour later) send a new timestamp or the original one, so a fixed window could reject legitimate redeliveries. To opt in, set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); the timestamp is Unix seconds. A value that isn't a whole number is treated as `0`, with a warning. Use `data.id` plus the event for idempotency (see webhook-handler-patterns).
+Typefully says to verify the timestamp is recent but gives no window. The examples **don't check it by default**: Hookdeck's retries and replays carry the original `X-Typefully-Timestamp`, and Typefully doesn't document whether its own retries (up to an hour later) send a new timestamp or the original one, so a fixed window could reject legitimate redeliveries. To opt in, set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); the timestamp is Unix seconds. A value that isn't a whole number is treated as `0`, with a warning. Payloads carry no event ID, and one draft can produce several deliveries of the same event (`draft.tags_changed`, `draft.status_changed`), so `data.id` plus the event isn't a safe dedupe key: make handlers idempotent instead (upsert the draft by `data.id`, and run one-off side effects once per state, such as once per `data.id` and `data.published_at` for `draft.published`). See webhook-handler-patterns.
 
 ## Common Gotchas
 
 - **Raw body:** the signature covers the exact bytes. Typefully sends compact JSON with sorted keys, but don't rely on that: don't parse or re-serialize before verifying (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`).
-- **Header values:** use the timestamp header exactly as received, never trimmed or reformatted. Hookdeck's TYPEFULLY source builds the same message with the header value as latin1 bytes.
+- **Header values:** use the timestamp header exactly as received, never trimmed or reformatted.
 - **Prefix:** the signature header is `sha256=<hex>`; strip the prefix before hex-decoding.
 - **Status codes:** return `401` for a missing, empty, malformed or mismatched signature or timestamp, and `500` if the secret isn't configured.
 - **Disabled webhooks:** 100 consecutive failures disable the webhook. A bug in verification can cause that.

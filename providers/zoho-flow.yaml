@@ -1,0 +1,27 @@
+name: zoho-flow
+displayName: Zoho Flow
+docs:
+  webhooks: https://help.zoho.com/portal/en/kb/flow/user-guide/create-a-flow/webhook/articles/outgoing-webhooks
+  verification: https://help.zoho.com/portal/en/kb/flow/user-guide/create-a-flow/webhook/articles/outgoing-webhooks
+notes: >
+  Zoho Flow's Send Webhook action (Builder > Logic > Webhooks), i.e. outgoing webhooks from a
+  flow, not Flow's incoming webhook trigger. No signature: requests are unsigned. Authenticate with
+  a secret header: either an auth profile of type API Key (Settings > Auth Profiles; Parameter Name
+  = header name, API Key Placement = header) used through a connection (Settings > Connections),
+  or No Authentication plus a header Param Name/Param Value on the action. The key must go in a
+  header, not the body or query, for a header check (and Hookdeck) to see it. Methods
+  GET/PUT/POST/PATCH/DELETE, user-chosen Content-Type (typically JSON). Examples accept all five
+  methods, read ZOHO_FLOW_WEBHOOK_HEADER (default X-Webhook-Secret) and ZOHO_FLOW_WEBHOOK_SECRET
+  (exact whole value), compare in constant time, 401 on mismatch, 500 when unconfigured, and use
+  query parameters as the payload when the body is empty. Body is user-defined, so payloads are
+  illustrative; Flow adds no event field or delivery ID. Save then Test sends a real request.
+  Flow's auto rerun (help article on rerunning failed flows) retries failed actions on internal
+  errors and 408/409/429/500/503/504, at 5 min then 10 min, 30 min, 1, 3, 6, 12 and 24 h (8 in all),
+  resuming from the failed action; it doesn't name Send Webhook, so hedge. Timeout is not documented.
+  Hookdeck source type ZOHO_FLOW (API_KEY, header name + value, verification optional).
+testScenario:
+  events:
+    - 'Send Webhook action from a form-submission flow (illustrative JSON body)'
+    - 'Send Webhook action from a deal-won flow (illustrative JSON body)'
+catalog:
+  summary: 'Authenticate Zoho Flow Send Webhook requests (unsigned: an API Key auth profile or header placed in a header, compared in full in constant time), handle the JSON bodies your flows send'

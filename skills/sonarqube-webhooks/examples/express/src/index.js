@@ -35,12 +35,12 @@ function handleAnalysis(payload) {
   switch (payload.qualityGate?.status) {
     case 'OK':
       console.log(`Quality gate passed for ${project} (task ${payload.taskId})`);
-      // TODO: Promote the build, post a success message
+      // Your code: Promote the build, post a success message
       break;
 
     case 'ERROR':
       console.log(`Quality gate failed for ${project} (task ${payload.taskId})`);
-      // TODO: Block the deploy, notify the owner (see qualityGate.conditions)
+      // Your code: Block the deploy, notify the owner (see qualityGate.conditions)
       break;
 
     default:

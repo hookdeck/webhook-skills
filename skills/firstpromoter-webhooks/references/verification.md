@@ -2,16 +2,17 @@
 
 ## How Does FirstPromoter Authenticate Webhooks?
 
-It doesn't sign them. Webhooks v2 subscriptions accept a `headers` object, "custom HTTP headers
+Its webhook docs describe no signature. Webhooks v2 subscriptions accept a `headers` object, "custom HTTP headers
 to include on every request. Useful for API keys or authorization tokens your endpoint
 requires." You add a secret header and your endpoint checks it.
 
-Covers Webhooks v2 only: add a custom header to the subscription and enter it here. Legacy webhooks cannot send custom headers.
+This covers Webhooks v2 only. Legacy webhooks can't send custom headers, so they carry nothing to check.
 
-There is no HMAC, timestamp or prefix convention. The header name is yours
+The docs give no HMAC, timestamp or prefix convention. (The Admin API spec says creating a
+subscription returns a generated `secret_key`, but no page documents a signature header or
+algorithm, so there is nothing to verify against it.) The header name is yours
 (`FIRSTPROMOTER_WEBHOOK_HEADER`, default `Authorization`) and the expected value is the exact,
-whole header value (`FIRSTPROMOTER_WEBHOOK_SECRET`), including any `Bearer ` you typed. This is
-how Hookdeck's FirstPromoter source works too (header name plus exact whole header value).
+whole header value (`FIRSTPROMOTER_WEBHOOK_SECRET`), including any `Bearer ` you typed. Hookdeck's FirstPromoter source checks the same header.
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
 > protection** (no signature, no timestamp). Anyone who captures one request can replay it.

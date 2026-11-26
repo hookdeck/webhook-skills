@@ -17,7 +17,7 @@ metadata:
 Katana MRP (katanamrp.com) is a cloud manufacturing ERP. You register webhooks through the public API
 (`POST /webhooks` with `url` and `subscribed_events`), and each webhook gets its **own signing token**,
 returned in the `token` field of the create response. Every delivery carries an `x-sha2-signature`
-header: the lowercase **hex** HMAC-SHA256 of the **raw request body**, keyed with that token.
+header: the **hex** HMAC-SHA256 of the **raw request body**, keyed with that token.
 
 ## When to Use This Skill
 
@@ -52,8 +52,7 @@ function verifyKatanaSignature(rawBody, signature, secret = process.env.KATANA_W
 - No timestamp is signed, so there is no replay window to check. Deduplicate on the event instead.
 - **The HTTP method is not documented.** Katana's docs don't name it, so accept GET, POST, PUT, PATCH and
   DELETE, verify first for every method, and treat a missing body as empty bytes.
-- **Hookdeck:** Hookdeck's Katana MRP source (type `KATANA`) pre-selects POST without managing the method,
-  so any other method Katana uses must also be allowed on the source.
+- **Hookdeck:** Hookdeck's Katana MRP source (type `KATANA`) accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method Katana uses must also be allowed on the source.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -69,7 +68,7 @@ No header names the event. `object` holds only `id`, `status` and `href`, so fet
 | `purchase_order.received` | A purchase order is fully received |
 | `purchase_order.partially_received` | Part of a purchase order is received |
 | `manufacturing_order.done` | A manufacturing order is completed |
-| `inventory.product_out_of_stock` | A product runs out of stock |
+| `current_inventory.product_out_of_stock` | A product's stock falls below its optimal level |
 
 The handlers deal with these and log the rest. See [references/overview.md](references/overview.md) for the full list.
 

@@ -42,7 +42,7 @@ function handleEvent(kind, payload) {
       for (const check of Array.isArray(applicant.background_checks) ? applicant.background_checks : []) {
         console.log(`  Background check ${check.id || ''} status: ${check.status}`);
       }
-      // TODO: sync the stage change or background-check result to your system
+      // Your code: sync the stage change or background-check result to your system
       break;
     }
 
@@ -51,7 +51,7 @@ function handleEvent(kind, payload) {
       for (const check of payload.data_collection_checks || []) {
         console.log(`  Document check ${check.id}: ${check.status}`);
       }
-      // TODO: activate/deactivate the worker, or fetch approved documents
+      // Your code: activate/deactivate the worker, or fetch approved documents
       break;
 
     default:

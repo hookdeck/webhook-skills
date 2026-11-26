@@ -26,7 +26,7 @@ Prive is a subscription app for Shopify merchants, now part of **Recurly Commerc
 
 ## Verification (core)
 
-Prive signs the **raw request body** with HMAC-SHA256, keyed with the secret token Prive gives the merchant, and sends the digest in `x-prive-hmac-sha256` as a **bare base64 string** (Shopify-style, no prefix). Prive's Node sample passes `'hex'` as a third argument to `update()`, which Node ignores, so the digest is base64, not hex. There is no timestamp. Compare in constant time, without decoding the header.
+Prive signs the **raw request body** with HMAC-SHA256, keyed with the merchant's signing key (`webhookSigningKey`, issued by Recurly Support), and sends the digest in `x-prive-hmac-sha256` as a **bare base64 string** (Shopify-style, no prefix). Prive's Node sample passes `'hex'` as a third argument to `update()`, which Node ignores, so the digest is base64, not hex. There is no timestamp. Compare in constant time, without decoding the header.
 
 Node:
 
@@ -78,18 +78,20 @@ Each Prive webhook subscribes to **one topic**, chosen when the webhook is creat
 | `subscriptionActivities/created` | A subscription activity was created |
 | `subscription/customAttributes/updated` | A subscription's custom attributes were updated |
 
-No topic header or body field is documented. Create **one webhook per topic, each with its own endpoint path** (for example `/webhooks/prive/billing-attempts-failed`), or one Hookdeck connection per topic, and dispatch on the path. The examples map those paths to topics.
+The Recurly Commerce API's topic list also has `freeTrial/started` and `freeTrial/ended`, with no description or example yet.
+
+Every payload is JSON shaped `{topic, idempotencyKey, data}` ([Recurly Commerce webhooks](https://docs.recurly.com/recurly-commerce/docs/webhooks)). Dispatch on `topic`, and deduplicate on `idempotencyKey`, which Recurly includes for detecting duplicate deliveries. Respond with a `2xx` within 5 seconds: anything else counts as a failed delivery. The examples also accept one path per topic (for example `/webhooks/prive/billing-attempts-failed`) and reject a body whose `topic` doesn't match the path.
 
 ## Setup
 
-1. Prive (now Recurly Commerce) provides the secret token. Ask Prive support for it if you don't have it.
+1. Recurly Support (`support@recurly.com`) issues the per-merchant signing key; merchants can't generate it, and nothing is delivered until it's configured. There's no rotation procedure: a new key is a hard cutover.
 2. Create a webhook per topic with the Prive create-webhook endpoint, pointing at your endpoint URL.
 3. With Hookdeck, create a Prive source and give it the same secret token as its signing secret, then add one connection per topic. See [references/setup.md](references/setup.md).
 
 ## Environment Variables
 
 ```bash
-PRIVE_WEBHOOK_SECRET=your_prive_secret_token   # Provided by Prive; ask Prive support if you don't have it
+PRIVE_WEBHOOK_SECRET=your_webhook_signing_key   # Issued by Recurly Support (support@recurly.com)
 ```
 
 ## Local Development

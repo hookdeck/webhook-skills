@@ -14,7 +14,7 @@ Signature = `base64(HMAC-SHA256(key, "{webhook-id}.{webhook-timestamp}.{raw body
 
 ## What Is the HMAC Key?
 
-Webiny 6.5.0's signer does this with the admin-entered secret before calling `standardwebhooks`:
+Webiny 6.5.2's signer does this with the secret before calling `standardwebhooks`:
 
 ```js
 if (secret.startsWith("whsec_")) return secret;
@@ -22,7 +22,7 @@ const encoded = Buffer.from(secret).toString("base64");
 return `whsec_${encoded}`;
 ```
 
-The library then base64-decodes the part after `whsec_`, so the key is the secret's **raw UTF-8 bytes**. If you hand the original secret to the `standardwebhooks` or `svix` library yourself, it base64-decodes the free text instead, and every signature fails (or, worse, a few secrets decode to garbage without an error). The docs do not state the secret format; this comes from the signer source.
+The library then base64-decodes the part after `whsec_`, so for a plain-text secret the key is its **raw UTF-8 bytes**, and a secret that already starts with `whsec_` (as the 6.4.13 admin's generate action produces) is decoded as base64. If you hand the original secret to the `standardwebhooks` or `svix` library yourself, it base64-decodes the free text instead, and every signature fails (or, worse, a few secrets decode to garbage without an error). The docs do not state the secret format; this comes from the signer source.
 
 ## How Do I Verify Manually?
 
@@ -59,7 +59,7 @@ Python:
 expected = base64.b64encode(
     hmac.new(key, f"{msg_id}.{ts}.".encode() + raw_body, hashlib.sha256).digest()
 )
-# Compare the base64 text, as Hookdeck does, so a malformed entry simply doesn't match
+# Compare the base64 text, so a malformed entry simply doesn't match
 ok = any(
     v == "v1" and hmac.compare_digest(s.encode(), expected)
     for v, _, s in (e.partition(",") for e in signature.split(" "))
@@ -68,14 +68,14 @@ ok = any(
 
 ## Why Not Use the Webiny SDK or the standardwebhooks Library?
 
-`createVerifyWebhookPayload` from `@webiny/sdk/webhooks` is the documented verifier for Node.js and works if you already use the SDK. It uses the standardwebhooks library underneath, which enforces a 5-minute timestamp window by default, so replays from Hookdeck or the Webiny admin with an old timestamp are likely to be rejected. The examples here use a dependency-free verifier that works in any language, matches Hookdeck's Webiny source, and has no timestamp window unless you set `WEBINY_WEBHOOK_TOLERANCE_SECONDS`.
+`createVerifyWebhookPayload` from `@webiny/sdk/webhooks` is the documented verifier for Node.js and works if you already use the SDK. It uses the standardwebhooks library underneath, which enforces a 5-minute timestamp window by default, so a delivery replayed later with its original timestamp is likely to be rejected. The examples here use a dependency-free verifier that works in any language and has no timestamp window unless you set `WEBINY_WEBHOOK_TOLERANCE_SECONDS`.
 
 ## Common Gotchas
 
 - **Raw body.** Verify the exact bytes. In Express use `express.raw({ type: '*/*' })` so any content type works; parse JSON afterwards.
-- **Secret format.** Free text used as raw UTF-8 bytes, not base64. Paste it exactly as entered.
+- **Secret format.** Plain text is used as raw UTF-8 bytes, not base64; a `whsec_` value is decoded as base64. Paste it exactly as Webiny shows it.
 - **Empty secret.** If neither the webhook nor Webhook settings has a secret, Webiny signs with an empty key. Set one. Handlers must reject an empty key rather than verify against it.
-- **svix-\* headers.** If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead (Hookdeck does the same).
+- **svix-\* headers.** If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead.
 - **Multiple signatures.** Try every `v1,` entry and ignore other versions such as `v1a`.
 - **Timestamps.** Require a plain positive integer. Do not enforce a window by default: retries and replays resend the original timestamp.
 - **Status codes.** A `4xx` is not retried by Webiny and marks the delivery as delivered in its log, so check your own logs for rejections.

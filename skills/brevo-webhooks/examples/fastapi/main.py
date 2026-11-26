@@ -26,9 +26,9 @@ def verify_brevo_auth(
     Brevo does NOT sign webhook payloads (no HMAC/signature header). Instead the
     webhook is created with one of:
       - Basic auth: credentials in the notify URL (https://user:pass@host/...),
-        which Brevo sends as `Authorization: Basic base64(user:pass)`
+        expected as `Authorization: Basic base64(user:pass)` (Brevo does not name the header)
       - Bearer token: `"auth": {"type": "bearer", "token": "..."}` on the
-        webhook, sent as `Authorization: Bearer <token>`
+        webhook, expected as `Authorization: Bearer <token>` (Brevo does not name the header)
     Either configured method is accepted; credentials are compared timing-safe.
     """
     if not authorization:
@@ -80,26 +80,26 @@ def handle_brevo_event(event: Dict[str, Any]) -> None:
         print(f"Sent to {email} ({event.get('message-id')})")
     elif event_type == "delivered":
         print(f"Delivered to {email}")
-        # TODO: Mark message as delivered
+        # Mark message as delivered
     elif event_type in ("opened", "unique_opened", "proxy_open", "unique_proxy_open"):
         print(f"{event_type} by {email}")
-        # TODO: Track engagement (proxy_open = opened via a privacy proxy, e.g. Apple MPP)
+        # Track engagement (proxy_open = opened via a privacy proxy)
     elif event_type == "click":
         print(f"Click by {email}: {event.get('link') or event.get('URL')}")
     elif event_type in ("hard_bounce", "invalid_email", "blocked"):
         print(f"{event_type} for {email}: {event.get('reason', '')}")
-        # TODO: Suppress the address
+        # Suppress the address
     elif event_type in ("soft_bounce", "deferred", "error"):
         print(f"{event_type} for {email}: {event.get('reason', '')}")
     elif event_type == "spam":
         print(f"Spam complaint from {email}")
-        # TODO: Unsubscribe / suppress the address
+        # Unsubscribe / suppress the address
     elif event_type in ("unsubscribed", "unsubscribe"):  # transactional / marketing
         print(f"Unsubscribed: {email}")
-        # TODO: Update subscription preferences
+        # Update subscription preferences
     elif event_type in ("list_addition", "contact_updated", "contact_deleted"):
         print(f"Contact event {event_type}: {email}")
-        # TODO: Sync contact to your system
+        # Sync contact to your system
     else:
         print(f"Unhandled Brevo event: {event_type or event.get('msg_status') or 'unknown'}")
 
@@ -109,7 +109,7 @@ async def handle_brevo_webhook(
     payload: Union[List[Dict[str, Any]], Dict[str, Any]] = Body(...),
 ):
     """Receive Brevo webhook events (no body signature, so JSON parsing is fine)."""
-    # Batched webhooks (`batched: true`) deliver an array; normal ones a single object
+    # Brevo does not document the batched (`batched: true`) body, so accept an array or a single object
     events = payload if isinstance(payload, list) else [payload]
 
     for event in events:

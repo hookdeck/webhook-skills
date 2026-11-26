@@ -35,7 +35,7 @@ function handleEvent(payload) {
   switch (event) {
     case 'automation.webhook.send':
       console.log(`Automation webhook for contact ${data.id} (${data.email})`);
-      // TODO: add/update the contact in your CRM, send an alert, etc.
+      // Add or update the contact in your CRM, send an alert, etc.
       break;
 
     default:

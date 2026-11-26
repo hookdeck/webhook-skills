@@ -28,7 +28,7 @@ def verify_kolide(raw_body: bytes, authorization: Optional[str], secret: str) ->
     if not secret or authorization is None:
         return False
     received = authorization.strip()
-    # Exactly 64 hex chars (ASCII only), compared case-insensitively like Hookdeck does
+    # Exactly 64 hex chars (ASCII only), compared case-insensitively
     if not _HEX_64.fullmatch(received):
         return False
     expected = hmac.new(

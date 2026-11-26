@@ -34,7 +34,10 @@ The documented delivery types share these fields:
 
 Plus the event object: `conversation` and `message` (message events),
 `contact` (`contact.created`), or `optOut` (the phone number and account for
-`contact.opted_out` / `contact.opted_in`).
+`contact.opted_out` / `contact.opted_in`), per TextUs's `WebhookDelivery`,
+`ContactWebhookDelivery` and `OptOutWebhookDelivery` types. TextUs publishes
+example bodies for four events only, and nothing for `phone_call.completed`,
+so log real deliveries before relying on fields you haven't seen.
 
 For message events TextUs provides an identification field you can use to
 detect duplicates.

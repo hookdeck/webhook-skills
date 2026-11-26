@@ -28,15 +28,16 @@ The signed content is `` `${timestamp}.${rawBody}` `` — the timestamp, a liter
 then the **raw** request body (do not `JSON.parse` before verifying). Courier has no
 webhook-verification SDK, so verify manually and compare in constant time.
 
-Courier does not document whether `t` is in seconds or milliseconds, so normalize it
-before the staleness comparison instead of assuming a unit. The 5-minute tolerance
-below is this skill's default, not a window Courier publishes — tune it to your needs.
+Courier documents `t` as a millisecond timestamp. The code below also accepts a
+seconds value, defensively. The 5-minute tolerance below is this skill's default, not a
+window Courier publishes, and Courier doesn't say whether a retry is re-signed with a new
+`t`, so tune it to your needs.
 
 ```javascript
 const crypto = require('crypto');
 
-// The unit of `t` is not documented. A ~10-digit value is seconds, a ~13-digit
-// value is milliseconds — normalize to ms either way.
+// Courier documents `t` in milliseconds. A ~10-digit value would be seconds, so
+// normalize to ms either way.
 function toMillis(timestamp) {
   const value = Number(timestamp);
   if (!Number.isFinite(value)) return NaN;
@@ -92,19 +93,25 @@ Dispatch on the top-level `type`, then read event details from `data`.
 | Event | Triggered When |
 |-------|----------------|
 | `message:updated` | A message's delivery status changes (carries status + timestamps in `data`) |
-| `notification:submitted` | A notification is submitted for sending |
-| `notification:submission_canceled` | A submitted notification is canceled |
-| `notification:published` | A notification template is published |
-| `audiences:updated` | An audience definition is updated |
-| `audiences:user:matched` | A user starts matching an audience |
-| `audiences:user:unmatched` | A user stops matching an audience |
-| `audiences:calculated` | An audience membership recalculation completes |
+| `notification:submitted` | A template is submitted for review and isn't published yet |
+| `notification:submission_canceled` | A pending template submission is canceled |
+| `notification:published` | A template is published |
+| `audiences:created` | An audience is created |
+| `audiences:updated` | An audience's definition changes |
+| `audiences:deleted` | An audience is deleted |
+| `audiences:calculated` | Courier finishes recalculating an audience's membership |
+| `audiences:user:matched` | A user starts matching an audience's filter |
+| `audiences:user:unmatched` | A user stops matching an audience's filter |
+| `preferences:user:updated` | A user changes a subscription preference for a topic |
+
+Every destination receives every event type; there is no per-destination event
+selection, so ignore the types you don't handle.
 
 > **Note:** Courier does **not** emit per-status events (there is no `message:delivered`,
 > `message:opened`, or `message:clicked`). A single `message:updated` event carries the
 > current status and timestamps inside `data`.
 
-> **For the full event reference**, see [Courier Outbound Webhooks](https://www.courier.com/docs/platform/workspaces/outbound-webhooks).
+> **For the full event reference**, see [Courier webhook event types](https://www.courier.com/docs/monitor/webhooks/events).
 
 ## Environment Variables
 

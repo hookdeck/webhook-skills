@@ -43,7 +43,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -107,6 +107,10 @@ and the examples handle all of them:
 | `account.status_changed` | An account's status changes (e.g. `ready`, `suspended`, `archived`) |
 | `account.details_changed` | An account's details (bank or wallet details, routing) change |
 | `transfer.state_changed` | A v3 transfer changes public state (`awaiting_funds`, `processing`, `action_required`, `completed`, `failed`, `canceled`) |
+
+The `POST /v3/webhooks` events enum also accepts `api.deprecation` (version sunset notices) and
+`transfer.created`, which Swipelux says is still delivered in the legacy v1 payload shape: treat it as
+a hint and refetch the transfer. Neither has a published example.
 
 Delivery is at least once: duplicates, delays and reordering are normal. Persist the envelope `id`,
 return `2xx`, then refetch the resource named by `resource.type` and `resource.id` before acting.

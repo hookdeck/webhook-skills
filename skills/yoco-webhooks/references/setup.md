@@ -58,7 +58,7 @@ curl -X POST https://payments.yoco.com/api/webhooks \
 
 The `201` response returns `id`, `mode` (`live` or `test`, depending on the key you used), and a `secret` (`whsec_...`) that is **shown only once**.
 
-- You can't choose events. All payment and refund events for the account are sent.
+- Without `events`, the webhook receives `payment.succeeded`, `refund.succeeded` and `refund.failed`. Pass `events` to receive only some of them, and change them later with `PATCH /api/webhooks/{id}`. The webhook keeps its secret.
 - There's a limit of 5 webhooks per account, and Yoco recommends registering only one. Remove extras with `DELETE /api/webhooks/{id}` (`GET /api/webhooks` lists them).
 - There's no rotate endpoint. If you lose the secret, delete the webhook and register a new one.
 

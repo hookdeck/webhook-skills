@@ -77,7 +77,7 @@ def verify_rootfi(raw_body: bytes, header: str, secret: str) -> bool:
 
 ### Timestamp window: off by default
 
-RootFi's docs suggest rejecting timestamps more than about 300 seconds old. **Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries.** The examples therefore skip the freshness check unless you set `ROOTFI_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds; unset or `0` = off). Dedupe on `X-RootFi-Webhook-Delivery-Id` instead. [references/verification.md](references/verification.md) shows where the window goes.
+RootFi's docs suggest rejecting timestamps more than about 300 seconds old. **Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries.** The examples therefore skip the freshness check unless you set `ROOTFI_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds; unset or `0` = off). Dedupe on `X-RootFi-Webhook-Delivery-Id` instead. [references/verification.md](references/verification.md) shows where the window goes.
 
 ## Setup with Hookdeck
 

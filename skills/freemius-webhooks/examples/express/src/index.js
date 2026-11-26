@@ -36,25 +36,25 @@ function handleEvent(event) {
     case 'license.activated':
     case 'license.created':
       console.log(`License event ${event.type} (${id}); objects: ${objects.join(', ') || 'none'}`);
-      // TODO: Provision or unlock the product for this license
+      // Your code: Provision or unlock the product for this license
       break;
     case 'license.cancelled':
       console.log(`License cancelled (${id})`);
-      // TODO: Revoke access
+      // Your code: Revoke access
       break;
     case 'subscription.created':
     case 'subscription.cancelled':
       console.log(`Subscription event ${event.type} (${id})`);
-      // TODO: Sync subscription state
+      // Your code: Sync subscription state
       break;
     case 'payment.created':
     case 'payment.refund':
       console.log(`Payment event ${event.type} (${id})`);
-      // TODO: Record the payment or refund
+      // Your code: Record the payment or refund
       break;
     case 'user.created':
       console.log(`New user (${id})`);
-      // TODO: Create the customer record
+      // Your code: Create the customer record
       break;
     default:
       // Freemius lists ~150 event types and may add more at any time: log and acknowledge

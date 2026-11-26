@@ -79,16 +79,16 @@ async def taskrabbit_webhook(
 
     if event_name == "project.completed":
         print(f"Project completed: {project_uuid} ({event.get('agreement_external_reference')})")
-        # TODO: mark the order fulfilled in your system
+        # Mark the order fulfilled in your system
     elif event_name == "project.canceled":
         print(f"Project canceled: {project_uuid} reason={event.get('cancellation_reason')}")
-        # TODO: release the order / notify the customer
+        # Release the order / notify the customer
     elif event_name == "project.rescheduled":
         print(
             f"Project rescheduled: {project_uuid} "
             f"{event.get('previous_start_time')} -> {event.get('new_start_time')}"
         )
-        # TODO: update the scheduled start time
+        # Update the scheduled start time
     else:
         print(f"Unhandled event type: {event_name}")
 

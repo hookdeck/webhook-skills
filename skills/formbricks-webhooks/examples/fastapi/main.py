@@ -19,7 +19,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Formbricks sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """Formbricks sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),
@@ -71,7 +71,7 @@ async def formbricks_webhook(request: Request):
     elif event_type == "responseFinished":
         print(f"Response finished: {data.get('id')} survey {data.get('surveyId')}")
     else:
-        # The documented list may not be exhaustive: ignore what you don't need
+        # Test Endpoint sends {"event":"testEndpoint"}: answer 200 and ignore anything else
         print(f"Unhandled event type: {event_type}")
 
     return {"received": True, "event": event_type}

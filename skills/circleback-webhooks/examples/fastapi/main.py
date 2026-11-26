@@ -49,7 +49,7 @@ def handle_meeting(meeting: dict) -> None:
     if meeting.get("transcript"):
         logger.info("Transcript: %d segments", len(meeting["transcript"]))
 
-    # TODO: Sync notes to your CRM, post the summary to Slack, create tasks, etc.
+    # Your logic goes here: sync notes to your CRM, post the summary to Slack, create tasks, etc.
     # Deduplicate on meeting["id"]: Circleback sends no delivery ID header.
 
 

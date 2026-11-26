@@ -68,7 +68,7 @@ def require_celcoin_auth(authorization: Optional[str] = Header(None)) -> None:
         print("Set CELCOIN_WEBHOOK_USERNAME and CELCOIN_WEBHOOK_PASSWORD")
         raise HTTPException(status_code=500, detail="Webhook authentication not configured")
 
-    # Hookdeck never sends a 401 challenge, so the header must be present on each request.
+    # There is no 401 challenge round trip, so the header must be present on each request.
     if not verify_celcoin_auth(authorization, username, password):
         raise HTTPException(status_code=401, detail="Invalid or missing Basic credentials")
 
@@ -82,37 +82,37 @@ def handle_celcoin_event(payload: Dict[str, Any]) -> None:
 
     if entity == "pix-payment-out":
         print(f"Pix payment out {status}", event_id)
-        # TODO: mark the Pix transfer as settled (CONFIRMED) or failed (ERROR)
+        # Your code: mark the Pix transfer as settled (CONFIRMED) or failed (ERROR)
     elif entity == "pix-payment-in":
         print(f"Pix payment in {status}", event_id)
-        # TODO: credit the customer for the received Pix
+        # Your code: credit the customer for the received Pix
     elif entity == "pix-reversal-out":
         print(f"Pix reversal out {status}", event_id)
-        # TODO: record the refund you issued
+        # Your code: record the refund you issued
     elif entity == "pix-reversal-in":
         print(f"Pix reversal in {status}", event_id)
-        # TODO: reconcile the refund received for a Pix-out
+        # Your code: reconcile the refund received for a Pix-out
     elif entity == "internal-transfer-in":
         print(f"Internal transfer in {status}", event_id)
-        # TODO: credit the receiving account
+        # Your code: credit the receiving account
     elif entity == "internal-transfer-out":
         print(f"Internal transfer out {status}", event_id)
-        # TODO: confirm the debit
+        # Your code: confirm the debit
     elif entity == "spb-transfer-out":
         print(f"TED out {status}", event_id)
-        # TODO: confirm the TED (on ERROR see payload["error"])
+        # Your code: confirm the TED (on ERROR see payload["error"])
     elif entity == "spb-transfer-in":
         print(f"TED in {status}", event_id)
-        # TODO: credit the received TED
+        # Your code: credit the received TED
     elif entity == "onboarding-create":
         print(f"Onboarding account created {status}")
-        # TODO: store the new account details
+        # Your code: store the new account details
     elif entity == "onboarding-proposal":
         print(f"Onboarding proposal result {status}")
-        # TODO: continue or stop the onboarding journey (proposal Approved or Reproved)
+        # Your code: continue or stop the onboarding journey (proposal Approved or Reproved)
     elif entity == "kyc":
         print(f"KYC result {status}")
-        # TODO: update the account's compliance state
+        # Your code: update the account's compliance state
     else:
         print(f"Unhandled Celcoin entity: {entity}")
 

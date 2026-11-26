@@ -6,7 +6,7 @@ Flux CD is the CNCF GitOps toolkit for Kubernetes. Its notification-controller f
 
 Only the `generic-hmac` type signs requests (`X-Signature`). Plain `generic` sends no signature.
 
-Delivery: one POST per Event that the Alert selects (by event source and severity). The Provider docs do not describe retries.
+Delivery: one POST per Event that the Alert selects (by event source, severity and the optional `inclusionList` / `exclusionList` regexes on the message). The Provider docs do not describe retries. According to the [notification-controller code](https://github.com/fluxcd/notification-controller/blob/main/internal/notifier/client.go), a failed request is retried up to 4 times, 2 to 30 seconds apart, on connection errors, `429` and most `5xx` responses, all inside the Provider's `.spec.timeout` (15 seconds by default, per the [Provider type](https://github.com/fluxcd/notification-controller/blob/main/api/v1beta3/provider_types.go)). Any response outside `2xx` fails the send; the controller then logs it and records a warning event on the Alert, and the event isn't sent again. Flux's [Events docs](https://fluxcd.io/flux/components/notification/events/) say notification-controller rate limits duplicate events (same object, message and metadata) for 5 minutes by default.
 
 ## Event Types
 

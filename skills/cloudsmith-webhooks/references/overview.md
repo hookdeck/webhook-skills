@@ -10,15 +10,15 @@ The event is the body's `meta.event_id`. There is no event-name header.
 
 | Event (`meta.event_id`) | Triggered When | Common Use Cases |
 |-------------------------|----------------|------------------|
-| `ping` | The test action on the webhook | Connectivity check |
+| `ping` | A webhook is created, or the test action on it | Connectivity check |
 | `package.created` | A package is uploaded | Audit trail, CI hand-off |
 | `package.syncing` | A package starts syncing | Progress tracking |
 | `package.synced` | A package is fully synchronised | Trigger deployments |
-| `package.security_scanned` | A security scan finishes | Fetch results, gate releases |
+| `package.security_scanned` | A security scan finishes (deprecated; sent until March 31, 2027) | Fetch results, gate releases |
 | `package.quarantined` | A package is quarantined | Alert the owning team |
-| `package.failed` | A package fails to sync | Failure alerts |
-| `package.released` | A package is released | Promote downstream |
-| `package.restored` | A package is restored | Re-sync mirrors |
+| `package.failed` | A package fails to process | Failure alerts |
+| `package.released` | A package is released from quarantine | Promote downstream |
+| `package.restored` | A package is restored after deletion | Re-sync mirrors |
 | `package.tags_updated` | A package's tags change | Track `latest` moves |
 | `package.deleted` | A package is deleted | Remove mirrored records |
 

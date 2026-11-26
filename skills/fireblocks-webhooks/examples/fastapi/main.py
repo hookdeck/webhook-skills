@@ -99,18 +99,18 @@ async def fireblocks_webhook(
 
     if event_type == "transaction.created":
         print(f"Transaction created: {data.get('id') or event.get('resourceId')}")
-        # TODO: record the pending transaction
+        # Your code: record the pending transaction
     elif event_type == "transaction.status.updated":
         print(
             f"Transaction status updated: {data.get('id') or event.get('resourceId')} "
             f"-> {data.get('status')}"
         )
-        # TODO: update settlement state; credit balances on COMPLETED
+        # Your code: update settlement state; credit balances on COMPLETED
     elif event_type == "transaction.approval_status.updated":
         print(
             f"Transaction approval status updated: {data.get('id') or event.get('resourceId')}"
         )
-        # TODO: notify approvers / gate release of funds
+        # Your code: notify approvers / gate release of funds
     else:
         print(f"Unhandled event type: {event_type}")
 

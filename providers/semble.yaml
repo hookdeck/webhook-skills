@@ -8,7 +8,7 @@ notes: >
   Semble (practice management / EHR). Header X-Webhook-Signature: 't=<unix seconds>,v1=<hex>';
   X-Webhook-Timestamp carries the same t. v1 is lowercase hex HMAC-SHA256 over '<t>.<raw body>' keyed
   with the webhook secret as UTF-8 (returned by the createWebhook GraphQL mutation). Sign with the t
-  from X-Webhook-Signature (that is what Hookdeck verifies), not the separate header. t=<ts>,v1=<hex>
+  from X-Webhook-Signature, not the separate header. t=<ts>,v1=<hex>
   header: split on ',' and trim each part (allow a space after the comma), take t and every v1
   (several are sent during secret rotation) and accept if any v1 matches; reject a header with no t or
   no v1. Compare in constant time: in Node, check the received value is exactly 64 hex chars

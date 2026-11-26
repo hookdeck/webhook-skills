@@ -6,11 +6,11 @@ Helcim signs every webhook with HMAC-SHA256 using your `verifierToken` and follo
 
 | Header | Contents |
 |--------|----------|
-| `webhook-id` | Message ID (stable across retries; your idempotency key) |
+| `webhook-id` | Message ID (Helcim doesn't say whether retries reuse it) |
 | `webhook-timestamp` | Unix seconds when the message was sent |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries (usually one) |
 
-Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. Hookdeck reads the `webhook-*` names and falls back to the `svix-*` names when `webhook-id` is absent, so the examples do the same and then hand the library the values under the `webhook-*` names it expects.
+Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. The examples read the `webhook-*` names and fall back to the `svix-*` names when `webhook-id` is absent and then hand the library the values under the `webhook-*` names it expects.
 
 The algorithm:
 
@@ -60,9 +60,9 @@ except Exception:  # WebhookVerificationError, or ValueError for a malformed sig
 
 ## Why Do Hookdeck Retries and Replays Fail the SDK Check?
 
-The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Helcim documents no window of its own. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`, so one more than 5 minutes after the first delivery is rejected as "Message timestamp too old" even though the signature is valid. Helcim's own schedule waits up to 10 hours between attempts, so this also bites when Helcim retries into a handler that has been down.
+The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Helcim documents no window of its own. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`, so one more than 5 minutes after the first delivery is rejected as "Message timestamp too old" even though the signature is valid. Helcim's own schedule waits up to 10 hours between attempts; its docs don't say whether a retry is re-signed with a new timestamp.
 
-If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating on `webhook-id`.
+If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay protection then comes from idempotent handlers: key `cardTransaction` work on the card transaction `id`.
 
 ## Manual Verification (configurable timestamp window)
 
@@ -121,7 +121,7 @@ Call it with the values resolved from the `webhook-*` or `svix-*` headers, and r
 
 - **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order. Use `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()` (FastAPI).
 - **Decode the token.** The HMAC key is the base64-decoded bytes of the `verifierToken`, not the literal string. Helcim's Node sample uses `new Buffer(verifierToken, "base64")`, which is deprecated: use `Buffer.from`.
-- **Hookdeck needs `whsec_`.** Hookdeck decodes only `whsec_` secrets, so paste the token there as `whsec_` followed by the token: "Paste your verifierToken as whsec_ followed by the token, or verification fails."
+- **Hookdeck needs `whsec_`.** Paste the token there as `whsec_` followed by the token: "Paste your verifierToken as whsec_ followed by the token, or verification fails."
 - **Multiple signatures.** Split `webhook-signature` on spaces and accept any matching `v1,` entry. Don't compare the whole header.
 - **Fixed 5-minute window in the library.** See the Hookdeck section above.
 - **Header names.** Frameworks lower-case them; read `webhook-id`, then fall back to `svix-id`.

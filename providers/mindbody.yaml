@@ -1,0 +1,27 @@
+name: mindbody
+displayName: Mindbody
+docs:
+  webhooks: https://developers.mindbodyonline.com/WebhooksDocumentation
+  verification: https://developers.mindbodyonline.com/WebhooksDocumentation
+  events: https://developers.mindbodyonline.com/WebhooksDocumentation
+notes: >
+  Webhooks API subscriptions are API-only: POST
+  https://mb-api.mindbodyonline.com/push/api/v1/subscriptions (API-Key and User-Agent headers;
+  eventIds, eventSchemaVersion 1, referenceId, webhookUrl) creates a PendingActivation
+  subscription and returns messageSignatureKey once; PATCH .../subscriptions/{id} with
+  {"Status":"Active"} activates it. Needs approved live access (403 developerAccountNotActive
+  otherwise) and a linked business. Mindbody sends HEAD to the webhookUrl on create (and per the
+  PATCH error table on PATCH); it must return 2xx in time or the call fails with
+  invalidWebhookURLNoResponse (400, 14000014). No bypass. Deliveries are POSTs with
+  X-Mindbody-Signature = "sha256=" + base64 HMAC-SHA256 of the raw body keyed with
+  messageSignatureKey as UTF-8 text (it looks like base64 but is not decoded). Envelope
+  {messageId, eventId, eventSchemaVersion, eventInstanceOriginationDateTime, transactionKey?,
+  eventData}. Not exactly-once, not ordered; no 2xx in 10 s -> resend every 15 minutes for 3
+  hours; repeated failure can deactivate the subscription. Hookdeck source type MINDBODY (HMAC
+  sha256 base64 on x-mindbody-signature; key pasted as-is; the source answers the HEAD check).
+testScenario:
+  events:
+    - classRosterBooking.created
+    - client.created
+catalog:
+  summary: Verify Mindbody webhooks (`X-Mindbody-Signature` "sha256=" + base64 HMAC-SHA256 of the raw body keyed with messageSignatureKey), answer the HEAD check on subscription create, handle booking, appointment, client and sale events

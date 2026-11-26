@@ -51,17 +51,17 @@ async def anarlog_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event = payload.get("event") if isinstance(payload, dict) else None
-    # Use payload["id"] (or the x-anarlog-delivery header) to dedupe retries
+    # Use payload["id"] to dedupe retries: Anarlog says to store it so retries are processed once
     data = (payload.get("data") if isinstance(payload, dict) else None) or {}
     meeting = data.get("meeting") or {}
 
     if event == "meeting.completed":
         print(f"Meeting completed: {meeting.get('title')} ({meeting.get('id')})")
-        # TODO: Archive the transcript, create a CRM activity, notify a channel
+        # Your logic here: archive the transcript, create a CRM activity, notify a channel
 
     elif event == "note.enhanced":
         print(f"Summary generated for {meeting.get('title')}: {len(meeting.get('action_items') or [])} action items")
-        # TODO: Post the summary, create tasks from action items
+        # Your logic here: post the summary, create tasks from action items
 
     elif event == "webhook.test":
         print("Received webhook.test from Anarlog")

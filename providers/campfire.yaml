@@ -11,8 +11,7 @@ notes: >
   Campfire-Webhook-Signature-v1 carries the bare lowercase hex HMAC-SHA256 (no prefix) of
   "{Campfire-Webhook-Request-Timestamp}:{raw request body}" (a colon, not a dot), keyed with the
   webhook's 50-character signing secret (`token`) used as UTF-8 text. Timestamp header is Unix
-  seconds. Hookdeck's CAMPFIRE source: HMAC, sha256, hex, signed_content_template
-  "{header:campfire-webhook-request-timestamp}:{body}". Build the signed message as bytes (header
+  seconds. Scheme: HMAC-SHA256, hex, signed content "{campfire-webhook-request-timestamp header}:{raw body}". Build the signed message as bytes (header
   latin1, raw body untouched); validate 64 hex characters before decoding; constant-time compare;
   missing or invalid signature returns 401. No timestamp window by default (Hookdeck retries and
   replays resend the original timestamp); offer opt-in CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS. Dispatch

@@ -17,21 +17,18 @@ Bunny Stream signs each webhook with **HMAC-SHA256**:
 X-BunnyStream-Signature = hex( HMAC_SHA256( key = ReadOnlyApiKey, message = rawBody ) )
 ```
 
-Two additional informational headers may accompany the signature. **These are
-unconfirmed** — they appeared in a single fetch only and may or may not be
-present on real deliveries. Treat them as observed-once metadata and do not rely
-on them:
+Each signed request also carries two headers naming the scheme:
 
 | Header | Value | Purpose |
 |--------|-------|---------|
-| `X-BunnyStream-Signature-Version` (unconfirmed) | `v1` | Signature scheme version |
-| `X-BunnyStream-Signature-Algorithm` (unconfirmed) | `hmac-sha256` | Algorithm identifier |
+| `X-BunnyStream-Signature-Version` | `v1` | Signature scheme version |
+| `X-BunnyStream-Signature-Algorithm` | `hmac-sha256` | Algorithm identifier |
 
-You verify against `X-BunnyStream-Signature`; the other two, if present, are metadata.
+Bunny's validation steps check both values before computing the digest, then compare against `X-BunnyStream-Signature`.
 
-> **Not Standard Webhooks.** There are no `webhook-id` / `webhook-timestamp` / `webhook-signature` headers and no timestamp in the signed content.
+> **Not Standard Webhooks.** There are no `webhook-id` / `webhook-timestamp` / `webhook-signature` headers. The URL, method and headers aren't signed; the body, including its `EventId` and `Timestamp` fields, is.
 >
-> **Not the same as Bunny's platform webhooks.** Bunny's general-platform webhooks use **HMAC-SHA1** and the `x-bunny-signature` header. Bunny **Stream** uses **HMAC-SHA256** and `X-BunnyStream-Signature`. Do not mix the two schemes.
+> **Not Bunny (bunny.com).** That's an unrelated billing platform with its own webhook scheme. Bunny Stream is bunny.net's video product.
 
 ## Implementation
 

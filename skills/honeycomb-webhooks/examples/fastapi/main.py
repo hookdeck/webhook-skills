@@ -4,7 +4,6 @@ import hashlib
 import hmac
 import json
 import os
-import re
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -46,34 +45,32 @@ async def require_honeycomb_secret(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing X-Honeycomb-Webhook-Token")
 
 
+KINDS = ("trigger", "budget_rate", "exhaustion_time", "anomaly")
+
+
 def classify_alert(payload: dict) -> str:
-    """Honeycomb doesn't document the default payload field by field, and a webhook can use a
-    custom JSON template per alert type, so classify by the fields present. Illustrative only.
+    """Honeycomb sends no event-type field or header, and doesn't document the standard payload
+    field by field. Enable a custom payload template for each alert type and put a constant
+    "kind" field in each one (see SKILL.md). Anything else is classed as unknown.
     """
-    keys = list(payload.keys())
-    if any(re.search(r"^slo|burn|budget|exhaustion", k, re.I) for k in keys):
-        return "slo_burn_alert"
-    if any(re.search(r"anomal", k, re.I) for k in keys):
-        return "anomaly"
-    if any(re.search(r"^trigger|^threshold|^result", k, re.I) for k in keys):
-        return "trigger"
-    return "unknown"
+    kind = payload.get("kind")
+    return kind if kind in KINDS else "unknown"
 
 
 def handle_alert(payload: dict) -> None:
     kind = classify_alert(payload)
 
     if kind == "trigger":
-        print(f"Trigger alert: {payload.get('name') or payload.get('trigger_id') or '(unnamed)'}")
-        # TODO: page on-call or open an incident
+        print(f"Trigger alert: {payload.get('status')} {payload.get('summary') or ''}")
+        # Page on-call or open an incident here.
 
-    elif kind == "slo_burn_alert":
-        print(f"SLO burn alert: {payload.get('slo_name') or payload.get('name') or '(unnamed)'}")
-        # TODO: escalate before the error budget runs out
+    elif kind in ("budget_rate", "exhaustion_time"):
+        print(f"SLO burn alert ({kind}): {payload.get('status')} {payload.get('summary') or ''}")
+        # Escalate before the error budget runs out here.
 
     elif kind == "anomaly":
-        print("Anomaly detection alert")
-        # TODO: open an investigation
+        print(f"Anomaly Detection alert: {payload.get('status')} {payload.get('summary') or ''}")
+        # Open an investigation here.
 
     else:
         print(f"Unrecognised Honeycomb payload (keys: {', '.join(payload.keys())})")

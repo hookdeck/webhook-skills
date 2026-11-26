@@ -19,9 +19,8 @@ WEBHOOK_SECRET = os.environ.get("COURIER_WEBHOOK_SECRET", "")
 def to_millis(timestamp: str):
     """Normalize the `t` value from courier-signature to milliseconds.
 
-    Courier does not document whether `t` is epoch seconds or milliseconds.
-    Assuming the wrong unit rejects every delivery, so detect it from the
-    magnitude: a ~10-digit value is seconds, a ~13-digit value is already
+    Courier documents `t` as a millisecond timestamp. As a safeguard, a
+    ~10-digit value is treated as seconds and a ~13-digit value as
     milliseconds. Only the staleness check needs this - the HMAC always covers
     the `t` string exactly as received.
 
@@ -99,38 +98,38 @@ async def courier_webhook(request: Request):
 
     if event_type == "message:updated":
         # Courier does NOT emit per-status events - status lives in `data`.
-        # The set of status values is not documented; log what you receive
-        # before branching on specific ones.
+        # Statuses: ENQUEUED, SENT, DELIVERED, OPENED, CLICKED, UNROUTABLE,
+        # UNDELIVERABLE. Keep a fallback for values you don't recognize.
         print(f"Message updated: {data.get('id')} status={data.get('status')}")
-        # TODO: Sync delivery status, retry, analytics, etc.
+        # Your code: Sync delivery status, retry, analytics, etc.
 
     elif event_type == "notification:submitted":
         print(f"Notification submitted: {data.get('id')}")
-        # TODO: Record send in flight, audit trail, etc.
+        # Your code: Record send in flight, audit trail, etc.
 
     elif event_type == "notification:submission_canceled":
         print(f"Notification submission canceled: {data.get('id')}")
-        # TODO: Reconcile canceled send, etc.
+        # Your code: Reconcile canceled send, etc.
 
     elif event_type == "notification:published":
         print(f"Notification published: {data.get('id')}")
-        # TODO: Invalidate template cache, sync versions, etc.
+        # Your code: Invalidate template cache, sync versions, etc.
 
     elif event_type == "audiences:updated":
         print(f"Audience updated: {data.get('id')}")
-        # TODO: Sync segment definition, etc.
+        # Your code: Sync segment definition, etc.
 
     elif event_type == "audiences:user:matched":
         print(f"User matched audience: {data.get('audience_id')} {data.get('user_id')}")
-        # TODO: Trigger onboarding, tag user, etc.
+        # Your code: Trigger onboarding, tag user, etc.
 
     elif event_type == "audiences:user:unmatched":
         print(f"User unmatched audience: {data.get('audience_id')} {data.get('user_id')}")
-        # TODO: Revoke access, update CRM, etc.
+        # Your code: Revoke access, update CRM, etc.
 
     elif event_type == "audiences:calculated":
         print(f"Audience calculated: {data.get('audience_id')}")
-        # TODO: Kick off downstream jobs, etc.
+        # Your code: Kick off downstream jobs, etc.
 
     else:
         print(f"Unhandled event type: {event_type}")

@@ -62,57 +62,57 @@ app.post('/webhooks/attentive',
     switch (type) {
       case 'sms.subscribed':
         console.log('SMS opt-in:', subscriber?.phone);
-        // TODO: Sync opt-in state, trigger welcome flow, etc.
+        // Your code: Sync opt-in state, trigger welcome flow, etc.
         break;
 
       case 'sms.unsubscribed':
         console.log('SMS opt-out:', subscriber?.phone);
-        // TODO: Suppress sends, update CRM consent, etc.
+        // Your code: Suppress sends, update CRM consent, etc.
         break;
 
       case 'sms.sent':
         console.log('SMS sent to:', subscriber?.phone);
-        // TODO: Delivery logging, analytics, etc.
+        // Your code: Delivery logging, analytics, etc.
         break;
 
       case 'sms.inbound_message':
         console.log('Inbound SMS from:', subscriber?.phone);
-        // TODO: Support routing, keyword automations, etc.
+        // Your code: Support routing, keyword automations, etc.
         break;
 
       case 'sms.message_link_click':
         console.log('SMS link click:', subscriber?.phone);
-        // TODO: Attribution, engagement scoring, etc.
+        // Your code: Attribution, engagement scoring, etc.
         break;
 
       case 'email.subscribed':
         console.log('Email opt-in:', subscriber?.email);
-        // TODO: Sync opt-in state, etc.
+        // Your code: Sync opt-in state, etc.
         break;
 
       case 'email.unsubscribed':
         console.log('Email opt-out:', subscriber?.email);
-        // TODO: Suppress sends, update consent, etc.
+        // Your code: Suppress sends, update consent, etc.
         break;
 
       case 'email.sent':
         console.log('Email sent to:', subscriber?.email);
-        // TODO: Delivery logging, etc.
+        // Your code: Delivery logging, etc.
         break;
 
       case 'email.opened':
         console.log('Email opened by:', subscriber?.email);
-        // TODO: Engagement scoring, re-targeting, etc.
+        // Your code: Engagement scoring, re-targeting, etc.
         break;
 
       case 'email.message_link_click':
         console.log('Email link click:', subscriber?.email);
-        // TODO: Attribution, engagement scoring, etc.
+        // Your code: Attribution, engagement scoring, etc.
         break;
 
       case 'custom_attribute.set':
         console.log('Custom attribute set for:', subscriber?.phone || subscriber?.email);
-        // TODO: Sync enriched data to your systems, etc.
+        // Your code: Sync enriched data to your systems, etc.
         break;
 
       default:

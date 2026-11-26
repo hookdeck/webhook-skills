@@ -13,7 +13,7 @@ The secret is optional in Pulumi and you choose it yourself (for example a rando
 
 ## Register Your Endpoint
 
-1. In Pulumi Cloud, open the webhooks settings for your organization (or a single stack) and create a webhook.
+1. In Pulumi Cloud, open **Settings** > **Integrations** > **Webhooks** for your organization, a stack's **Settings** > **Webhooks**, or an ESC environment's **Webhooks** tab, and select **Create webhook**.
 2. Use the generic JSON webhook, the one that takes a shared secret and sends the payloads described in [overview.md](overview.md).
 3. Enter your endpoint URL and the shared secret.
 4. Select the events to receive. Useful ones: stack updates (succeeded and failed), deployments, drift detection and policy violations.

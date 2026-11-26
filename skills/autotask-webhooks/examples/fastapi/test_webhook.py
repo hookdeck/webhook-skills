@@ -64,10 +64,10 @@ class TestEndpoint:
         assert post(TICKET_CREATE, {"X-Hook-Signature": sign(TICKET_CREATE)}).status_code == 200
 
     @pytest.mark.parametrize("entity,action", [
-        ("Company", "Update"),
+        ("Account", "Update"),
         ("Contact", "Delete"),
         ("TicketNote", "Create"),
-        ("Company", "Deactivated"),
+        ("Account", "Deactivated"),
         ("ConfigurationItem", "Create"),
     ])
     def test_other_events(self, entity, action):

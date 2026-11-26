@@ -12,7 +12,7 @@ payment plans and PSP (payment service provider) transactions. Each delivery is 
 {
   "event": {
     "event_name": "invoice_created",
-    "context": { "id": 1, "resource_type": "invoice", "invoice_number": "2011-1", "amount_open": "1000", "currency_code": "EUR", "debtor": { "name": "Noa Jacobs" } },
+    "context": { "id": 1, "resource_type": "invoice", "invoice_number": "2011-1", "amount_open": "1000", "currency_code": "EUR", "debtor": { "id": 1, "debtor_code": "1" } },
     "event_time": "2018-06-05T09:48:55.314159Z"
   }
 }
@@ -89,10 +89,10 @@ what it is (`invoice`, `credit_case`, `bundled_reminder`, ...). Most contexts ca
 
 ## Delivery and Retries
 
-- Respond `200` within 10 seconds. Anything else is a failed attempt.
-- Up to 10 attempts at increasing intervals; frequent failures deactivate the webhook and Payt emails you. Failed requests can be retried manually from the webhook's settings page.
+- Any `2xx` within 10 seconds counts as delivered. A timeout or any other status is a failed attempt.
+- Up to 10 retries at increasing intervals, spread over roughly 4 days and 16 hours. Frequent failures deactivate the webhook and Payt emails the webhook's developer addresses; you reactivate it yourself. While the webhook is active, failed requests can be retried manually from its settings page.
 - Events are sent asynchronously, so order is not guaranteed: `invoice_closed` can arrive before `invoice_created`.
-- Events can be delivered more than once; Payt says every event has a unique ID to track whether it was already received, but the documented bodies don't show where it is, so key on `event_name`, `context.id` and `event_time` if you need a fallback.
+- Events can be delivered more than once. The `X-PAYT-DELIVERY` header (a UUID) stays the same when a delivery is retried, so Payt says to use it to detect duplicates. Don't key on `event_time`: Payt says simultaneous events most likely share a timestamp, and one action can send several `invoice_payment_created` events for the same invoice.
 - If an event references an object you don't have yet, Payt suggests answering `404` so the event is retried later.
 
 ## Full Event Reference

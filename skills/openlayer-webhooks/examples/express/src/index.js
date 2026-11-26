@@ -12,7 +12,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Openlayer sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Openlayer sends webhook-* headers; fall back to the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers) {
   const prefix = headers['webhook-id'] ? 'webhook' : 'svix';
   return {

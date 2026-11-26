@@ -12,9 +12,8 @@ carries three headers:
 | `webhook-timestamp` | Unix timestamp in seconds when the webhook was sent |
 | `webhook-signature` | One or more space-separated `v1,<base64 signature>` entries |
 
-SaladCloud's guide shows the `svix` library, which implements the same scheme. Hookdeck's SaladCloud source
-reads `webhook-*` and falls back to the `svix-*` header names (`svix-id`, `svix-timestamp`,
-`svix-signature`) when `webhook-id` is absent, and the examples here do the same.
+SaladCloud's guide shows the `svix` library, which implements the same scheme. The examples here read `webhook-*` and fall back to the `svix-*` header names (`svix-id`, `svix-timestamp`,
+`svix-signature`) when `webhook-id` is absent.
 
 The algorithm:
 
@@ -147,9 +146,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
   (Next.js), or `await request.body()` (FastAPI).
 - **Decode the secret.** The HMAC key is the base64-decoded bytes, not the literal string. SaladCloud's
   secret has no `whsec_` prefix, and the library handles that.
-- **Hookdeck needs `whsec_`.** Hookdeck uses a secret without that prefix as raw bytes. Paste
-  `whsec_` + the portal secret into the Hookdeck source: "SaladCloud shows the secret without a prefix.
-  Paste it as whsec_ followed by the secret, or verification fails."
+- **Hookdeck source setup.** Paste the portal secret as shown. Existing `whsec_`-prefixed values also work.
 - **Multiple signatures.** Split `webhook-signature` on spaces and accept any matching `v1,` entry. Don't
   compare the whole header.
 - **Fixed 5-minute window in the libraries.** See the Hookdeck section above.
@@ -161,7 +158,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 | Symptom | Likely cause |
 |---------|--------------|
 | Every request fails with "Invalid signature" | Wrong secret, or the body was parsed/re-serialized before verification |
-| Fails in Hookdeck only | Source secret pasted without the `whsec_` prefix |
+| Fails in Hookdeck only | Check the source uses the current webhook secret from the job’s organization |
 | "Missing signature headers" | A proxy dropped the `webhook-*` headers |
 | Fails only after deploys or proxies | A proxy or middleware rewrote the body |
 | "Message timestamp too old" on retries or replays | The library's fixed 5-minute window; use the manual verifier |

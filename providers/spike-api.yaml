@@ -13,16 +13,14 @@ notes: >
   as-is using a shared secret key. You can retrieve this key from the admin console.' 'if (signature
   !== hmac.digest("hex"))' From the docs (registry summary): hex(HMAC-SHA256(shared key, raw body)),
   the whole header value, no prefix (the Go, JavaScript and PHP samples all compare the bare hex
-  digest). SIGNATURE SCHEME (it must match Hookdeck's SPIKE_API source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-body-signature", encoding "hex"). The x-body-signature header
+  digest). SIGNATURE SCHEME: HMAC-SHA256, signature in the x-body-signature header, hex encoded. The x-body-signature header
   carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no
   list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the
   secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
   signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
-  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
-  constant-time compare. Secret: A shared HMAC key retrieved from the admin console. Use it as UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: the application's Webhook Signature Key from the admin console (not the separate HMAC Key used for user authentication). Use it as UTF-8
   bytes. Env var: SPIKE_API_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
   length and alphabet), then compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
@@ -31,8 +29,7 @@ notes: >
   value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
   one from unsigned headers or body fields. Events: the body is a JSON ARRAY of events, each with its
   own `event_type` (record_change, provider_integration_created, provider_integration_deleted); one
-  delivery can batch several. Loop over every element. Method: POST. Hookdeck's Spike API source
-  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  delivery can batch several. Loop over every element. Method: POST. The examples handle POST on the webhook route. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
   are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
   only after the check. Documented sample payloads (each JSON file's `body` is the payload as the

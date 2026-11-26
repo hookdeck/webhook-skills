@@ -10,8 +10,7 @@ notes: >
   payload signature. Verify the shared token with a constant-time compare (crypto.timingSafeEqual /
   hmac.compare_digest, hashing both sides or checking lengths first), like the batch 1 n8n, zapier
   and brevo skills. Do NOT use the optional 'Authorization: Bearer' token from the webhook
-  integration settings; Hookdeck's Honeybadger source checks Honeybadger-Token, not the bearer
-  token, so the skill should match. Payload has an event field: occurred, assigned, commented,
+  integration settings; The skill uses Honeybadger-Token, not the bearer token. Payload has an event field: occurred, assigned, commented,
   resolved, down, up, check_in_missing, deployed and others; check the docs. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:

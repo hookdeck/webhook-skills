@@ -39,11 +39,11 @@ def handle_event(body: dict) -> None:
     if event_type == "course.join":
         print("Member joined course", {"member": as_dict(data.get("member")).get("id"),
                                        "course": as_dict(data.get("course")).get("id")})
-        # TODO: provision access or add the member to your CRM
+        # Your code: provision access or add the member to your CRM
 
     elif event_type == "course.completed":
         print("Course completed", {"member": as_dict(data.get("member")).get("id"), "data": data.get("id")})
-        # TODO: issue a credential or notify the learner
+        # Your code: issue a credential or notify the learner
 
     elif event_type in ("course.created", "course.updated"):
         print(f"Course event ({event_type})", data.get("id"))
@@ -58,10 +58,11 @@ def handle_event(body: dict) -> None:
         print("Element completed", {"member": as_dict(data.get("member")).get("id"),
                                     "element": as_dict(data.get("context")).get("id"),
                                     "passed": data.get("passed")})
-        # TODO: update progress tracking
+        # Your code: update progress tracking
 
     elif event_type == "member.login":
-        print("Member logged in", as_dict(data.get("member")).get("id", data.get("id")))
+        # data is a login activity; data["member"] is the member's id string.
+        print("Member logged in", {"member": data.get("member"), "at": data.get("logged_in_at")})
 
     else:
         print(f"Unhandled event: {event_type}")

@@ -75,5 +75,5 @@ curl -X POST http://localhost:3000/webhooks/green-api \
    value built from `GREEN_API_WEBHOOK_URL_TOKEN` using a constant-time
    compare. It returns `401` on a mismatch or missing header.
 3. It dispatches on `typeWebhook` (`lib/green-api.ts`; the route is `app/webhooks/green-api/route.ts`) and returns `200`.
-   GREEN-API retries non-2xx responses every minute for up to 24 hours, so keep
-   handlers idempotent.
+   GREEN-API makes delivery attempts at a 1-minute interval and guarantees
+   delivery within 24 hours, so keep handlers idempotent.

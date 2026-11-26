@@ -14,7 +14,7 @@ fetching the resource by that id to read its current state.
 
 ## What Are the Common Event Types?
 
-Dots documents these 12 events (the list may not be exhaustive):
+Dots documents these 14 events (the list may not be exhaustive):
 
 | Event | Triggered When | Id fields | Common Use Cases |
 |-------|----------------|-----------|------------------|
@@ -23,6 +23,8 @@ Dots documents these 12 events (the list may not be exhaustive):
 | `flow.updated` | A flow was updated | `flow_id` | Track a user's progress through a flow |
 | `dispute.updated` | A dispute was updated | `dispute_id` | Alert on new or resolved disputes |
 | `payout_request.updated` | A payout request changed status | `payout_request_id` | Update payout status in your system |
+| `payout_batch.created` | A payout batch was created | `payout_batch_id` | Start tracking a new batch |
+| `payout_batch.updated` | A payout batch changed status | `payout_batch_id` | Fetch the batch results for each item's transfer |
 | `organization.updated` | An organization was updated | `organization_id` | Sync organization settings |
 | `app.updated` | An app was updated | `app_id` | Sync app settings |
 | `transfer.updated` | A transfer was updated | `transfer_id` | Track settlement and failures |

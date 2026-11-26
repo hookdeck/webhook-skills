@@ -33,8 +33,8 @@ credential chosen with `authInfo.authType` (`AuthenticationTypeV2`):
 | `authType` | What Rubrik sends | Use it? |
 |------------|-------------------|---------|
 | `CUSTOM_HEADER` | `<headerKey>: <headerValue>` (you choose both) | **Recommended** |
-| `BEARER` | `Authorization: Bearer <token>` | Yes |
-| `BASIC` | `Authorization: Basic base64(username:password)` | Yes |
+| `BEARER` | A bearer token, presumably `Authorization: Bearer <token>` (Rubrik's docs don't show the header) | Yes |
+| `BASIC` | A username/password pair, presumably `Authorization: Basic base64(username:password)` (not shown either) | Yes |
 | `OAUTH2` | Bearer token Rubrik mints from your IdP (client credentials) | Needs JWT validation; not covered |
 | `URL` | Token embedded in the webhook URL | Avoid: URLs end up in logs |
 
@@ -105,10 +105,10 @@ There is no single `event.type` string. Route on `class` and `status`:
 
 | Field | Values (from Rubrik's docs) | Use |
 |-------|----------------------------|-----|
-| `custom_details.status` | `Failure`, `Success`, `PARTIAL_SUCCESS`, `Warning`, `Canceled`, `Canceling`, `Running`, `Queued`, `Info`, `TaskFailure`, `TaskSuccess` | Main dispatch: backup failed vs succeeded |
-| `class` | `Backup`, `Anomaly`, `Recovery`, `Archive`, `Replication`, `Index`, `Classification`, ... | Which kind of activity |
+| `custom_details.status` | Final: `Success`, `Failure`, `PartialSuccess`, `Canceled`. In progress: `Running`, `Queued`, `Canceling`, `TaskSuccess`, `TaskFailure`, `Info`, `Warning` | Act only on final outcomes |
+| `class` | `Backup` in Rubrik's example. `ActivityTypeEnum` spells the rest (`Anomaly`, `Recovery`, `LOG_BACKUP`, ...), but no webhook example confirms them | Which kind of activity |
 | `custom_details.type` | `Event` (audit webhooks carry audit fields instead) | Event vs audit |
-| `severity` | e.g. `critical` (Rubrik severities: Critical, Warning, Info) | Paging thresholds |
+| `severity` | `critical`, `warning` or `info` | Decide what needs attention: a critical ransomware detection arrives with status `Success` |
 | `custom_details.eventName` | e.g. `Snapshot.BackupFailed` | Fine-grained, treat as opaque |
 
 Subscriptions filter on `EventType` enum values (`BACKUP`, `ANOMALY`, `RECOVERY`, ...) and

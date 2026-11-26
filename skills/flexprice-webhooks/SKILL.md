@@ -45,7 +45,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -88,7 +88,8 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-60 events are documented. The name is `event_type` in the JSON body. The examples handle these:
+79 events are documented: 77 in Flexprice's event catalog and two more (`invoice.sync.success`,
+`invoice.sync.failed`) only in its webhook OpenAPI spec. The name is `event_type` in the JSON body. The examples handle these:
 
 | Event | Triggered When |
 |-------|----------------|

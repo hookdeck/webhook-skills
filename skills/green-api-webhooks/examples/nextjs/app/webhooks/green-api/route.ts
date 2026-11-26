@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     handleNotification(body);
   } catch (err) {
     console.error('Error handling notification:', err);
-    // Non-2xx makes GREEN-API retry in a minute.
+    // GREEN-API's docs don't say which status codes count as delivered.
     return NextResponse.json({ error: 'Processing error' }, { status: 500 });
   }
 

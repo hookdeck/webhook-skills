@@ -82,7 +82,7 @@ describe('Fireflies Signature Verification (V2)', () => {
     expect(verifyFirefliesWebhook(payload, signature, 'wrong_secret')).toBe(false);
   });
 
-  it('should reject a bare hex digest with no sha256= prefix (V1 style)', () => {
+  it('should reject a bare hex digest with no sha256= prefix', () => {
     const payload = JSON.stringify({ meeting_id: 'abc' });
     const bareHex = crypto.createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex');
 

@@ -45,24 +45,24 @@ def handle_event(payload: dict) -> None:
 
     if name == "budget_exported_to_accounting":
         print(f"Budget synced ({subject}): {record_id}")
-        # TODO: create budget lines in the accounting system (data["items"])
+        # Create budget lines in the accounting system (data["items"])
 
     elif name == "budget_change_exported_to_accounting":
         print(f"Budget change synced ({subject}): {record_id}")
-        # TODO: post the reallocation between cost codes (data["items"])
+        # Post the reallocation between cost codes (data["items"])
 
     elif name == "contract_exported_to_accounting":
         print(f"Contract synced ({subject}): {record_id}")
-        # TODO: create the commitment (data["accounting_company_custom_id"], data["items"])
+        # Create the commitment (data["accounting_company_custom_id"], data["items"])
 
     elif name == "contract_change_exported_to_accounting":
         print(f"Contract change synced ({subject}): {record_id}")
-        # TODO: amend the commitment
+        # Amend the commitment
 
     elif name == "invoice_exported_to_accounting":
         invoice_number = data.get("invoice_number") if isinstance(data, dict) else None
         print(f"Invoice synced ({subject}): {invoice_number}")
-        # TODO: create the vendor bill (data["gross_value"], data["items"])
+        # Create the vendor bill (data["gross_value"], data["items"])
 
     else:
         print(f"Unhandled event: {name}")

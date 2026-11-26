@@ -51,8 +51,7 @@ def parse_basic_auth(header: Optional[str]) -> Optional[tuple[str, str]]:
 def verify_halo_psa_request(headers, config=os.environ) -> bool:
     """HaloPSA webhooks are not signed. With "Basic Authentication" chosen on the
     webhook, every request carries `Authorization: Basic base64(username:password)`.
-    The credentials must arrive on the first request: Hookdeck never answers with a
-    401 + WWW-Authenticate challenge."""
+    The credentials must arrive on the first request."""
     username = config.get("HALO_PSA_WEBHOOK_USERNAME")
     password = config.get("HALO_PSA_WEBHOOK_PASSWORD")
     if not username or not password:
@@ -89,15 +88,15 @@ def handle_event(payload: dict) -> None:
 
     if event == "New Ticket Logged":
         print(f"New ticket logged: {object_id}")
-        # TODO: create the ticket in your system
+        # Create the ticket in your system
 
     elif event == "Ticket Reassigned":
         print(f"Ticket reassigned: {object_id}")
-        # TODO: notify the new assignee
+        # Notify the new assignee
 
     elif event in ("Document deleted on a Ticket", "Document edited on a Ticket"):
         print(f"{event}: {object_id}")
-        # TODO: refresh the ticket's attachments
+        # Refresh the ticket's attachments
 
     else:
         print(f"Unhandled event: {event} (object: {object_id})")

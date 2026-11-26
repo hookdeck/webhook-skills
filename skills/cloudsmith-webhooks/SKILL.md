@@ -67,15 +67,15 @@ Dispatch on the body's `meta.event_id`. The event is not in a header.
 
 | `meta.event_id` | Triggered when |
 |-----------------|----------------|
-| `ping` | You send a test from the webhook's page |
+| `ping` | A webhook is created, or you send a test from its page |
 | `package.created` | A package is uploaded |
 | `package.syncing` | A package starts syncing |
 | `package.synced` | A package is fully synchronised and ready |
-| `package.security_scanned` | A security scan finishes |
+| `package.security_scanned` | A security scan finishes (deprecated; sent until March 31, 2027) |
 | `package.quarantined` | A package is quarantined |
-| `package.failed` | A package fails to sync |
-| `package.released` | A package is released |
-| `package.restored` | A package is restored |
+| `package.failed` | A package fails to process |
+| `package.released` | A package is released from quarantine |
+| `package.restored` | A package is restored after deletion |
 | `package.tags_updated` | A package's tags change |
 | `package.deleted` | A package is deleted |
 

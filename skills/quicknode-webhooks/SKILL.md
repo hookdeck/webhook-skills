@@ -61,7 +61,7 @@ def verify(raw_body: bytes, headers, secret: str) -> bool:
 
 ### Timestamp tolerance is opt-in
 
-Do **not** reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself. The examples offer an opt-in `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples only parse it when you opt in. Storing `X-QN-Nonce` skips exact repeats (Hookdeck retries and replays resend it), but Quicknode doesn't document whether its own retries keep the nonce, so also key idempotency on block number or hash and transaction hash.
+Do **not** reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp. The examples offer an opt-in `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples only parse it when you opt in. Storing `X-QN-Nonce` skips exact repeats (Hookdeck retries and replays resend it), but Quicknode doesn't document whether its own retries keep the nonce, so also key idempotency on block number or hash and transaction hash.
 
 > **For complete handlers with route wiring, payload dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -70,7 +70,7 @@ Do **not** reject old timestamps by default: Hookdeck retries and replays resend
 
 ## Payloads (no event types)
 
-Quicknode has **no event type field or header**. Each stream or webhook delivers its filter's output: blocks, transactions, logs or matched events. The examples dispatch on payload **shape** using clearly labelled illustrative payloads: a Streams batch with `data` and `metadata`, or a Webhooks array of matched transactions. Check your own stream's dataset or webhook filter for the real shape.
+Quicknode has **no event type field or header**. Each stream or webhook delivers its filter's output: blocks, transactions, logs or matched events. The examples dispatch on payload **shape** using clearly labelled illustrative payloads: a Streams batch with `data` and `metadata` (Quicknode's documented envelope), or any array body. Quicknode documents no Webhooks payload shape, so check the dashboard's test output for your own stream or webhook. Streams deliveries also carry metadata headers such as `Stream-Id` and `Stream-Dataset`.
 
 ## Important Headers
 

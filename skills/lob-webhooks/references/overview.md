@@ -10,7 +10,7 @@ self mailers, letters, checks, addresses, and bank accounts, including USPS trac
 - Webhooks are created per environment. Test-environment webhooks fire for events from your Test API key, Live for your Live key.
 - Tracking events (for example `postcard.in_transit`) only exist in the Live environment. To exercise them against your server, use the dashboard's webhook debugger.
 - Events are sent as soon as they are available but **not in real time**; occasional delays happen. Use `tracking_events[].time` for the USPS timestamp.
-- Subscribing to a later tracking event can deliver earlier ones too (for example `postcard.processed_for_delivery` arrives with the earlier `in_local_area`, `in_transit`, and `mailed` tracking events).
+- Lob's docs say a `postcard.processed_for_delivery` event comes with the earlier tracking events, such as `postcard.in_local_area`, `postcard.in_transit` and `postcard.mailed`.
 
 ## Common Event Types
 

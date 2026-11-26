@@ -69,57 +69,57 @@ function handleEvent(payload) {
   switch (entity) {
     case 'pix-payment-out':
       console.log(`Pix payment out ${status}`, body?.id);
-      // TODO: mark the Pix transfer as settled (CONFIRMED) or failed (ERROR)
+      // Your code: mark the Pix transfer as settled (CONFIRMED) or failed (ERROR)
       break;
 
     case 'pix-payment-in':
       console.log(`Pix payment in ${status}`, body?.id);
-      // TODO: credit the customer for the received Pix
+      // Your code: credit the customer for the received Pix
       break;
 
     case 'pix-reversal-out':
       console.log(`Pix reversal out ${status}`, body?.id);
-      // TODO: record the refund you issued
+      // Your code: record the refund you issued
       break;
 
     case 'pix-reversal-in':
       console.log(`Pix reversal in ${status}`, body?.id);
-      // TODO: reconcile the refund received for a Pix-out
+      // Your code: reconcile the refund received for a Pix-out
       break;
 
     case 'internal-transfer-in':
       console.log(`Internal transfer in ${status}`, body?.id);
-      // TODO: credit the receiving account
+      // Your code: credit the receiving account
       break;
 
     case 'internal-transfer-out':
       console.log(`Internal transfer out ${status}`, body?.id);
-      // TODO: confirm the debit
+      // Your code: confirm the debit
       break;
 
     case 'spb-transfer-out':
       console.log(`TED out ${status}`, body?.id);
-      // TODO: confirm the TED (on ERROR see payload.error)
+      // Your code: confirm the TED (on ERROR see payload.error)
       break;
 
     case 'spb-transfer-in':
       console.log(`TED in ${status}`, body?.id);
-      // TODO: credit the received TED
+      // Your code: credit the received TED
       break;
 
     case 'onboarding-create':
       console.log(`Onboarding account created ${status}`);
-      // TODO: store the new account details
+      // Your code: store the new account details
       break;
 
     case 'onboarding-proposal':
       console.log(`Onboarding proposal result ${status}`);
-      // TODO: continue or stop the onboarding journey (proposal Approved or Reproved)
+      // Your code: continue or stop the onboarding journey (proposal Approved or Reproved)
       break;
 
     case 'kyc':
       console.log(`KYC result ${status}`);
-      // TODO: update the account's compliance state
+      // Your code: update the account's compliance state
       break;
 
     default:
@@ -134,7 +134,7 @@ app.all('/webhooks/celcoin', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Webhook authentication not configured' });
   }
 
-  // Credential first, for every method. Hookdeck never sends a 401 challenge, so the
+  // Credential first, for every method. There is no 401 challenge round trip, so the
   // Authorization header must be present on each request.
   if (!verifyCelcoinAuth(req.headers.authorization)) {
     return res.status(401).json({ error: 'Invalid or missing Basic credentials' });

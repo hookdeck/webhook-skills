@@ -53,7 +53,7 @@ Pass bytes to `hmac.compare_digest`: it raises `TypeError` on a non-ASCII `str`.
 - **Key encoding.** Don't hex- or base64-decode the signing key.
 - **Case.** Hex is compared case-insensitively; lowercase both sides (or compare decoded bytes).
 - **No replay window.** No timestamp is signed, so don't invent one from unsigned headers or body fields. Dedupe on the transaction, refund or booking id instead.
-- **Test deliveries** (`X-Felloh-Test: true`) are signed with the real key. Verify them like any other.
+- **Test deliveries** (`X-Felloh-Test: true`) are signed with the real key. Verify them like any other, then discard them as Felloh advises.
 - **Edit proxies.** Anything that changes the body (re-encoding, compression middleware that rewrites it) invalidates the signature.
 
 ## How Do I Debug Verification Failures?
@@ -66,4 +66,4 @@ Pass bytes to `hmac.compare_digest`: it raises `TypeError` on a non-ASCII `str`.
 | `TypeError` in Python | `str` passed to `compare_digest`; encode both sides to bytes |
 | Endpoint never receives anything | URL not public, or non-2xx earlier: check the delivery log (kept 30 days) |
 
-Hookdeck's Felloh source verifies the same signature (HMAC, SHA-256, header `x-signature`, hex), so a request that fails there will fail in your handler too.
+Hookdeck's Felloh source verifies the same signature, so a request that fails there will fail in your handler too.

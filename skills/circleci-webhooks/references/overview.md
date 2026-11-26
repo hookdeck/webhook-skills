@@ -56,8 +56,10 @@ belongs to workflow-level webhooks only.
 ### The ping event (community-observed)
 
 The webhook form has a **Test Ping Event** button. The docs say only: *"The test
-ping event has an abbreviated payload for ease of testing."* The `type` value
-itself is **not in CircleCI's docs**. A community implementation
+ping event has an abbreviated payload for ease of testing."* The Deliveries tab
+shows pings with the event type **Ping**, and the experimental
+[v3 Webhook Deliveries API](https://circleci.com/docs/api/v3/webhook-deliveries.md)
+filters on `ping`, but the ping's body and header value aren't documented. A community implementation
 ([circleci-hook](https://github.com/DavidS/circleci-hook)) logged a real one as
 header `circleci-event-type: ping` with:
 

@@ -65,10 +65,10 @@ The event name is in the `X-Event-Name` header (`<resource>.<action>`). The JSON
 
 | Event | Description |
 |-------|-------------|
-| `request.created` | A return request was submitted |
+| `request.created` | A consumer submitted a return that awaits webshop approval |
 | `request.approved` | A request was approved |
-| `request.approved_with_manual_shipment` | Approved, with a manually created shipment |
-| `request.approved_without_shipment` | Approved, with no shipment |
+| `request.approved_with_manual_shipment` | Approved, with a shipment created outside Returnless |
+| `request.approved_without_shipment` | Approved, and the consumer doesn't send the items back |
 | `request.rejected` | A request was rejected |
 | `request.status_changed` | A request changed status |
 | `request.deleted` | A request was deleted |
@@ -81,7 +81,7 @@ The event name is in the `X-Event-Name` header (`<resource>.<action>`). The JSON
 | `shipment.created` | A shipment was created |
 | `shipment.status_changed` | A shipment changed status |
 | `shipment.delivered` | A shipment was delivered |
-| `depreciation.created` | A depreciation was created |
+| `depreciation.created` | A depreciation was added to an item |
 
 > **For the full reference**, see [About webhooks](https://support.returnless.com/article/991-about-webhooks).
 

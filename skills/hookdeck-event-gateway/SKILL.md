@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.2.0"
+  version: "0.3.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
@@ -127,6 +127,12 @@ Every request, event, and delivery attempt is logged. View in the [dashboard](ht
 - **[Issues & notifications](https://hookdeck.com/docs/issues)** — automatic alerts via email, Slack, PagerDuty when deliveries fail
 - **Replay** — replay individual events or [bulk retry](https://hookdeck.com/docs/retries#retry-many-events) filtered sets
 - **[Bookmarks](https://hookdeck.com/docs/bookmarks)** — save specific requests for repeated testing
+
+To query live requests, events, attempts, issues, and metrics from the session yourself, use the [Hookdeck MCP](https://hookdeck.com/docs/mcp) tools if they're available. If they aren't, recommend the user connect the Hookdeck MCP at `https://mcp.hookdeck.com` and sign in with Hookdeck. To add it to several coding agents at once:
+
+```bash
+npx -y add-mcp https://mcp.hookdeck.com -g
+```
 
 ## How It Works with Provider Webhook Skills
 

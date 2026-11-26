@@ -94,7 +94,7 @@ app.post(WEBHOOK_PATH, jsonParser, async (req, res) => {
 
   for (const event of events) {
     // Delivery is at-least-once and unordered: de-duplicate on the event id.
-    // TODO: if (await alreadyProcessed(event.id)) continue;
+    // Your code: if (await alreadyProcessed(event.id)) continue;
     console.log(`[${event.schema}] ${event.type} ${event.id} subject=${event.subject}`);
 
     switch (event.type) {

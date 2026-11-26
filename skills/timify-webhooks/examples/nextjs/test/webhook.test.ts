@@ -5,22 +5,6 @@ import { verifyTimifyRequest } from '../lib/verify-timify';
 
 const SECRET = 'Bearer test_timify_secret_0123456789';
 
-// Webhook names and types from TIMIFY's scope table (Sync webhooks are not supported).
-const WEBHOOKS: [string, string][] = [
-  ['Customers', 'Created'], ['Customers', 'Updated'], ['Customers', 'Deleted'],
-  ['Event', 'Created'], ['Event', 'Updated'], ['Event', 'Deleted'],
-  ['Events', 'Deleted'],
-  ['Services', 'Created'], ['Services', 'Updated'], ['Services', 'Deleted'],
-  ['Resource', 'Created'], ['Resource', 'Updated'], ['Resource', 'Deleted'],
-  ['Company', 'Created'], ['Company', 'Updated'], ['Company', 'Deleted'],
-  ['Manager', 'Created'], ['Manager', 'Updated'], ['Manager', 'Deleted'],
-  ['Enterprise', 'Updated'],
-  ['Customer Fields', 'Created'], ['Customer Fields', 'Updated'], ['Customer Fields', 'Deleted'],
-  ['Shift', 'Created'], ['Shift', 'Updated'], ['Shift', 'Deleted'],
-  ['Notification', 'Created'],
-  ['Service Groups', 'Created'], ['Service Groups', 'Updated'], ['Service Groups', 'Deleted'],
-];
-
 beforeAll(() => {
   process.env.TIMIFY_WEBHOOK_SECRET = SECRET;
   delete process.env.TIMIFY_WEBHOOK_HEADER; // default: Authorization
@@ -120,13 +104,11 @@ describe('POST /webhooks/timify', () => {
   });
 
   describe('Event handling', () => {
-    it.each(WEBHOOKS)('handles %s %s', async (webhook, type) => {
+    it('logs the top-level fields', async () => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await POST(
-        makeRequest({ Authorization: SECRET }, JSON.stringify(samplePayload(webhook, type)))
-      );
+      const res = await POST(makeRequest({ Authorization: SECRET }));
       expect(res.status).toBe(200);
-      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(false);
+      expect(spy.mock.calls.some(([m]) => String(m).startsWith('TIMIFY webhook received'))).toBe(true);
       spy.mockRestore();
     });
 

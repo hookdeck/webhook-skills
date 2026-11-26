@@ -111,7 +111,7 @@ async def cronofy_webhook(
     #    automatically -- a slow handler doesn't drop one event, it kills the channel.
     #
     #    Cronofy has no replay protection (only the body is signed), so handling must
-    #    be idempotent -- key on channel_id + changes_since, or upsert downstream.
+    #    be idempotent -- upsert the downstream Read Events sync on event_uid.
     background_tasks.add_task(handle_notification, notification_type, notification, channel)
 
     return {"received": True}
@@ -142,22 +142,22 @@ def handle_notification(
         # Fires when Cronofy NEXT tries to access the profile, not at the moment the
         # user revoked access. State: UserInfo ["cronofy.data"]["profiles"].
         print(f"🔌 Calendar profile disconnected (channel={channel_id})")
-        # TODO: prompt the user to reauthorize; pause syncs for that profile.
+        # Your code: prompt the user to reauthorize; pause syncs for that profile.
 
     elif notification_type == "conferencing_profile_disconnected":
         # State: UserInfo ["cronofy.data"]["conferencing_profiles"].
         print(f"🎥 Conferencing profile disconnected (channel={channel_id})")
-        # TODO: prompt reconnect before creating meetings with conferencing.
+        # Your code: prompt reconnect before creating meetings with conferencing.
 
     elif notification_type == "profile_initial_sync_completed":
         # NOT sent if the initial sync completed before this channel existed.
         print(f"✅ Initial calendar sync completed (channel={channel_id})")
-        # TODO: run a full read now that the calendar data is complete.
+        # Your code: run a full read now that the calendar data is complete.
 
     elif notification_type == "gdpr_requested":
         # The account invoked their right to be forgotten.
         print(f"🗑️  GDPR erasure requested (channel={channel_id})")
-        # TODO: delete this account's data on your side.
+        # Your code: delete this account's data on your side.
 
     else:
         # Cronofy: "your code should be tolerant of others, by ignoring them, so if
@@ -187,7 +187,7 @@ def handle_change(changes_since: Optional[str], channel: Dict[str, Any]) -> None
     if calendar_ids:
         print(f"   restricted to calendars: {', '.join(calendar_ids)}")
 
-    # TODO: replace with a real, authenticated, paginated read:
+    # Your code: replace with a real, authenticated, paginated read:
     #
     #   async with httpx.AsyncClient() as client:
     #       response = await client.get(

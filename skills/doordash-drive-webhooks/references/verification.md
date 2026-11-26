@@ -81,7 +81,7 @@ def safe_equal(a: str, b: str) -> bool:
 - **Retries**: DoorDash resends anything other than `200 OK` (3 attempts), including your `401`s.
 - **One endpoint per environment**: Sandbox and Production are configured separately; use a
   credential for each.
-- **Hookdeck**: a Hookdeck DoorDash Drive source compares the same whole `Authorization` value.
+- **Hookdeck**: a Hookdeck DoorDash Drive source checks the same header.
 
 ## Debugging 401s
 

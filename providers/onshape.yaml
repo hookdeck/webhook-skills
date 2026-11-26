@@ -11,13 +11,11 @@ notes: >
   settings. Delivery (from the docs): No timeout or retry policy is documented (see gaps). Onshape
   says: 'Signature = <Base64<HMAC256-digest<<timestamp header value>.<webhook payload>>>'
   'X-onshape-webhook-signature-primary - Present if the primary signature key is specified in the
-  company settings' SIGNATURE SCHEME (it must match Hookdeck's ONSHAPE source exactly: HMAC
-  controller, algorithm sha256, header x-onshape-webhook-signature-primary, encoding base64,
-  signed_content_template "{header:x-onshape-webhook-timestamp}.{body}"). The
+  company settings' SIGNATURE SCHEME: The
   X-onshape-webhook-signature-primary header carries the bare standard base64 (padded) digest, no
   prefix. The signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over: the
   X-onshape-webhook-timestamp header value, then a literal ".", then the raw request body bytes. Build
-  the signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8,
+  the signed message as BYTES: literal separators as UTF-8,
   header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
   value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
   as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
@@ -32,17 +30,15 @@ notes: >
   an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
   (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
   malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
-  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
-  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
   var such as ONSHAPE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
   verification.md (X-onshape-webhook-timestamp). Verify X-onshape-webhook-signature-primary ONLY,
-  against the primary key, exactly as Hookdeck's Onshape source does; do not fall back to the
+  against the primary key; do not fall back to the
   -secondary header. Registration sends a trial notification (onshape.common.lifecycle.statechange /
   webhook.register) that only needs an HTTP 200. Webhook basic auth is a separate option, not covered.
   Events: dispatch on the body's `event` (e.g. onshape.model.lifecycle.changed,
   onshape.model.translation.complete, onshape.document.lifecycle.created, onshape.revision.created,
-  onshape.comment.create; 48 in all). Method: POST. Hookdeck's Onshape source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  onshape.comment.create; 48 in all). Method: POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

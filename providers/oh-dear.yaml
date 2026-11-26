@@ -1,8 +1,8 @@
 name: oh-dear
 displayName: "Oh Dear"
 docs:
-  webhooks: https://ohdear.app/docs/integrations/webhooks
-  verification: https://ohdear.app/docs/integrations/webhooks
+  webhooks: https://ohdear.app/docs/tools-and-sdks/webhooks
+  verification: https://ohdear.app/docs/tools-and-sdks/webhooks
 notes: >
   Oh Dear (ohdear.app), website and application monitoring (uptime, certificates, broken links, DNS,
   scheduled tasks, application health, Lighthouse, AI checks). A team adds a webhook URL in its
@@ -14,15 +14,14 @@ notes: >
   $secret);' 'The $payload is the body of the POST request, which will be a JSON representation of the
   event.' 'The $secret is the one you can find on your team notifications settings page' From the docs
   (registry summary): hex(HMAC-SHA256(team signing secret, raw body)) (PHP hash_hmac's default
-  lowercase hex), the whole header value. SIGNATURE SCHEME (it must match Hookdeck's OH_DEAR source
-  exactly: HMAC controller, algorithm "sha256", header_key "ohdear-signature", encoding "hex"). The
+  lowercase hex), the whole header value. SIGNATURE SCHEME: The
   ohdear-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
   value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: One signing secret per team, shown
   in the team's notification settings. Use it as UTF-8 bytes. Env var: OH_DEAR_WEBHOOK_SECRET.
   Validate the signature's format before decoding it (exact length and alphabet), then compare in
@@ -45,7 +44,7 @@ notes: >
   performanceThresholdExceededNotification, performanceThresholdRecoveredNotification,
   performanceDeltaExceededNotification, brokenLinksFoundNotification, brokenLinksFixedNotification,
   mixedContentFoundNotification, mixedContentFixedNotification (and 23 more). Handle a few common ones
-  and log the rest. Method: POST. Hookdeck's Oh Dear source manages the method as POST, so the
+  and log the rest. Method: POST, so the
   examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

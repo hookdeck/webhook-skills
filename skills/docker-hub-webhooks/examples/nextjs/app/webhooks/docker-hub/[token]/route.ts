@@ -303,7 +303,7 @@ export async function POST(
   //    `after()` so the acknowledgement isn't delayed — retry policy and
   //    timeout are undocumented, so acknowledge fast and dedupe on
   //    repo_name + tag + pushed_at.
-  //    TODO: replace the log with your own processing, and deploy by DIGEST
+  //    Your code: replace the log with your own processing, and deploy by DIGEST
   //    rather than by tag.
   try {
     const record = await confirmTag(parsed.repoName, parsed.tag);

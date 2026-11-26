@@ -53,8 +53,8 @@ apply are omitted.
 {
   "Knowledge base name": "Document360 2.0",
   "Event": "Extension token deleted",
-  "User": "Matt Sterling",
-  "User email": "matt.sterling@document360.co",
+  "User": "Example User",
+  "User email": "user@example.com",
   "Logged on (UTC)": "09/12/2025 06:47:10",
   "Extension": "MAKE"
 }

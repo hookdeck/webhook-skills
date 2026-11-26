@@ -20,7 +20,7 @@ function handleEvent(payload: ArgylePayload): void {
     case 'accounts.removed':
     case 'accounts.updated':
       console.log(`Account event ${event}: account ${payload.data?.account}, user ${payload.data?.user}`);
-      // TODO: update the connection state for payload.data.account
+      // Your code: update the connection state for payload.data.account
       break;
 
     case 'gigs.added':
@@ -29,19 +29,19 @@ function handleEvent(payload: ArgylePayload): void {
     case 'gigs.partially_synced':
     case 'gigs.fully_synced':
       console.log(`Gig event ${event}:`, JSON.stringify(payload.data));
-      // TODO: fetch the changed gigs by id from the Argyle API
+      // Your code: fetch the changed gigs by id from the Argyle API
       break;
 
     case 'identities.added':
     case 'identities.updated':
       console.log(`Identity event ${event}:`, JSON.stringify(payload.data));
-      // TODO: fetch the identity by id and refresh your records
+      // Your code: fetch the identity by id and refresh your records
       break;
 
     case 'items.updated':
     case 'items.removed':
       console.log(`Item event ${event}:`, JSON.stringify(payload.data));
-      // TODO: refresh your list of supported employers and platforms
+      // Your code: refresh your list of supported employers and platforms
       break;
 
     default:

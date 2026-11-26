@@ -59,12 +59,12 @@ app.post('/webhooks/flux-cd',
     switch (severity) {
       case 'error':
         console.log(`Flux error on ${target}: ${reason} - ${message}`);
-        // TODO: Page on-call, open an incident, etc. (e.g. reason ValidationFailed, ReconciliationFailed)
+        // Your code: page on-call, open an incident, etc. (e.g. reason ValidationFailed, ReconciliationFailed)
         break;
 
       case 'info':
         console.log(`Flux info on ${target}: ${reason} - ${message}`);
-        // TODO: Record deploys, notify a channel, etc. (e.g. reason ReconciliationSucceeded)
+        // Your code: record deploys, notify a channel, etc. (e.g. reason ReconciliationSucceeded)
         break;
 
       default:

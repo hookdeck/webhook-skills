@@ -29,22 +29,22 @@ function handleEvent(event) {
   switch (event.type) {
     case 'processingAccount.status.changed':
       console.log(`Processing account ${event.data?.processingAccountId} status: ${event.data?.status}`);
-      // TODO: update onboarding state
+      // Update onboarding state
       break;
 
     case 'processingAccount.riskStatus.changed':
       console.log(`Processing account ${event.data?.processingAccountId} risk status: ${event.data?.riskStatus}`);
-      // TODO: alert risk and support teams
+      // Alert risk and support teams
       break;
 
     case 'processingAccount.signature.signed':
       console.log(`Processing account ${event.data?.processingAccountId} signed: ${event.data?.signed}`);
-      // TODO: continue onboarding
+      // Continue onboarding
       break;
 
     case 'terminalOrder.status.changed':
       console.log(`Terminal order status changed: ${JSON.stringify(event.data)}`);
-      // TODO: update fulfilment status
+      // Update fulfilment status
       break;
 
     default:

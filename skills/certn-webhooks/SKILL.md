@@ -1,29 +1,47 @@
 ---
 name: certn-webhooks
 description: >
-  Receive and verify Certn webhooks. Use when setting up Certn background check
-  webhook handlers, debugging Certn-Signature verification, or handling applicant
-  report updates dispatched on report_status (IN_PROGRESS, COMPLETE) and result.
+  Receive and verify Certn (CertnCentric) webhooks. Use when setting up Certn
+  background check webhook handlers, answering Certn's GET challenge, debugging
+  X-Signature verification, or handling CASE_STATUS_CHANGED, CHECK_STATUS_CHANGED,
+  CASE_REPORT_READY and CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED events.
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.2.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
 # Certn Webhooks
 
+These are CertnCentric webhooks. Certn's legacy API (`docs.certn.co/api`, the `Certn-Signature` header and applicant-object payloads) stopped working on August 5, 2026, and its webhooks no longer send anything. Webhook URLs don't migrate: set them up again in CertnCentric.
+
 ## When to Use This Skill
 
 - How do I receive Certn webhooks?
-- How do I verify the `Certn-Signature` header?
-- How do I handle Certn applicant report updates when there is no event type in the body?
-- Why does Certn send unsigned webhooks, and why does verification fail?
-- Why is my Certn webhook signature verification failing?
+- How do I pass Certn's endpoint verification (the `GET ?challenge=` request)?
+- How do I verify the `X-Signature` header?
+- Why did Certn disable my webhook?
+- How do I handle `CHECK_STATUS_CHANGED` when a check needs client action?
 
 ## Essential Code (USE THIS)
 
-Signing is opt-in. When enabled, every Certn delivery carries `Certn-Signature: t=<unix seconds>, v1=<hex>[, v1=<hex>]` on one line, with a space after each comma. Each `v1` is the HMAC-SHA256 (hex) of `"<t>.<request body as text>"`, keyed with the signing secret as a UTF-8 string. Several `v1` values are sent while a rolled secret is still active (48 hours), so accept the request if **any** `v1` matches. Ignore schemes other than `v1`.
+Certn checks your URL before it sends events, and keeps checking it:
+
+1. **Endpoint verification (required).** When you add the URL, Certn sends `GET <your URL>?challenge=<value>`. Return `200` with the challenge value as the body within 10 seconds. Certn re-verifies periodically; if a check fails, it disables the webhook and emails you.
+2. **Signature (recommended).** Every event is a `POST` with an `X-Signature` header: the lowercase hex HMAC-SHA256 of the raw request body, keyed with the signing key Certn gives you when you create the webhook. There's no timestamp or prefix.
+
+### Challenge (Node.js / Express)
+
+```javascript
+app.get('/webhooks/certn', (req, res) => {
+  const { challenge } = req.query;
+  if (typeof challenge !== 'string') return res.status(400).send('Missing challenge');
+  res.status(200)
+    .set({ 'Content-Type': 'text/plain', 'X-Content-Type-Options': 'nosniff' })
+    .send(challenge);
+});
+```
 
 ### Verification (Node.js)
 
@@ -31,79 +49,64 @@ Signing is opt-in. When enabled, every Certn delivery carries `Certn-Signature: 
 const crypto = require('crypto');
 
 // rawBody: Buffer of the exact request bytes (express.raw({ type: '*/*' }), not express.json)
-function verifyCertn(rawBody, signatureHeader, secret) {
-  if (!secret || !signatureHeader) return false;
-  let t; const v1 = [];
-  for (const part of signatureHeader.split(',')) {
-    const [k, ...rest] = part.trim().split('=');
-    if (k.trim() === 't') t = rest.join('=').trim();
-    else if (k.trim() === 'v1') v1.push(rest.join('=').trim());
-  }
-  if (!t || !/^\d+$/.test(t) || v1.length === 0) return false;
-  // Optional replay window, off by default: retries and replays keep the original timestamp
-  const expected = Buffer.from(crypto.createHmac('sha256', secret)
-    .update(`${t}.`).update(rawBody).digest('hex'));
-  // exactly 64 hex chars first, then equal-length constant-time compare
-  return v1.some((s) => /^[0-9a-f]{64}$/i.test(s) &&
-    crypto.timingSafeEqual(Buffer.from(s.toLowerCase()), expected));
+function verifyCertn(rawBody, signature, secret) {
+  if (!secret || typeof signature !== 'string') return false;
+  if (!/^[0-9a-f]{64}$/i.test(signature)) return false; // 64 hex chars before comparing
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature.toLowerCase()), Buffer.from(expected));
 }
 ```
 
 ### Verification (Python)
 
 ```python
-import hashlib, hmac
+import hashlib, hmac, re
 
-def verify_certn(raw_body: bytes, signature_header: str, secret: str) -> bool:
-    if not secret or not signature_header:
+def verify_certn(raw_body: bytes, signature, secret: str) -> bool:
+    if not secret or not signature or not re.fullmatch(r"[0-9a-fA-F]{64}", signature):
         return False
-    t, v1 = None, []
-    for part in signature_header.split(","):
-        k, sep, v = part.strip().partition("=")
-        if sep and k.strip() == "t":
-            t = v.strip()
-        elif sep and k.strip() == "v1":
-            v1.append(v.strip())
-    if not t or not (t.isascii() and t.isdigit()) or not v1:
-        return False
-    expected = hmac.new(secret.encode(), t.encode() + b"." + raw_body, hashlib.sha256).hexdigest().encode()
-    # bytes on both sides: a non-ASCII header gives a failed match (400), not a TypeError (500)
-    return any(hmac.compare_digest(s.lower().encode(), expected) for s in v1)
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(signature.lower().encode(), expected.encode())
 ```
+
+Run the signature check on `POST` only. Certn doesn't say the challenge `GET` is signed, and middleware that rejects it gets the webhook disabled.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-### Timestamp window: off by default
+## Events
 
-Certn suggests rejecting old timestamps. **Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late retries.** The examples therefore skip the freshness check unless you set `CERTN_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (default `0` = off). Use the applicant `id` plus `report_status` for idempotency instead. [references/verification.md](references/verification.md) shows exactly where the window can be dropped or widened.
+The body's `event_type` names the event. Every documented event is about a case: `object_type` is `CASE`, `object_id` is the case ID, and `case_status` is the case's rollup status at the time of delivery (retries included).
+
+| `event_type` | When |
+|---|---|
+| `CASE_STATUS_CHANGED` | A case's overall status changes |
+| `CHECK_STATUS_CHANGED` | One check changes status; `triggered_check` has its `id`, `type` and `status` |
+| `CASE_REPORT_READY` | A case report you requested is ready to retrieve |
+| `CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED` | Certn generated new input claims for a case (some quickscreen checks only) |
+
+When `triggered_check.status` is `CLIENT_ACTION_REQUIRED`, `triggered_check.action_required_resolution` lists the API calls that resolve the check. Follow `steps[]` in ascending `step` order. Certn adds keys over time and omits ones that don't apply, so check for a key before you use it. See [references/overview.md](references/overview.md).
+
+## Delivery
+
+- Return `200` within 10 seconds and do slow work in a background job.
+- Failed deliveries are retried with exponential backoff (30s, 90s, 270s and so on) for about two hours.
+- Retries can deliver events out of order. Compare `created`, or fetch the case from the API, before you overwrite newer state.
+- Deduplicate on `event_id`.
 
 ## Setup
 
-Signing is opt-in: turn on signed payloads in Certn and paste the signing secret. Without it, deliveries are unsigned and fail verification. In Certn, open the **Partner** tab, enter your webhook URL, click **Enable Integration**, and copy the secret string (it can't be changed later; contact Certn support if it is compromised). See [references/setup.md](references/setup.md).
-
-## Dispatch on `report_status`
-
-Certn has **no event types**. It POSTs the applicant (report) object as results become available, so dispatch on its status fields:
-
-| Field | Values seen in the docs | Meaning |
-|-------|-------------------------|---------|
-| `report_status` | `IN_PROGRESS`, `COMPLETE` | Progress of the whole application order |
-| `result` / `result_label` | `NONE`, `CLEARED` | Application result (score) |
-| `check_executions[].status` | `WAITING_ON_CANDIDATE`, `COMPLETE` | Progress of each individual check |
-
-The body also has `id`, `short_uid`, `applicant_type`, `order_status`, `certn_score`, and an `information` object with the applicant's details. See [references/overview.md](references/overview.md).
+In the CertnCentric Client Portal, open the Integrations area and add your webhook URL. Have the `GET` handler running first, because Certn sends the challenge straight away. Copy the signing key into `CERTN_WEBHOOK_SECRET`. Webhook configurations are per region (CA, UK, AU), so add one in each region you order cases in. When you receive Certn webhooks through Hookdeck, create a Certn source and paste the signing key. See [references/setup.md](references/setup.md).
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
-| `Certn-Signature` | `t=<unix seconds>, v1=<hex HMAC-SHA256>[, v1=<hex>]`; one line, several `v1` during a secret roll |
+| `X-Signature` | Lowercase hex HMAC-SHA256 of the raw body, keyed with the webhook's signing key |
 
 ## Environment Variables
 
 ```bash
-CERTN_WEBHOOK_SECRET=your_certn_signing_secret   # secret string from the Certn Partner page
-CERTN_TIMESTAMP_TOLERANCE_SECONDS=0              # optional; a positive value opts in to the replay window
+CERTN_WEBHOOK_SECRET=your_certn_signing_key   # shown when you create the webhook in the Client Portal
 ```
 
 ## Local Development
@@ -115,9 +118,9 @@ npx hookdeck-cli listen 3000 certn --path /webhooks/certn
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Certn webhook concepts, statuses, payload
-- [references/setup.md](references/setup.md) - Enabling webhooks and signing on the Partner page
-- [references/verification.md](references/verification.md) - Signature details, the timestamp window, and debugging
+- [references/overview.md](references/overview.md) - CertnCentric webhook events, payload fields, delivery and the legacy API's retirement
+- [references/setup.md](references/setup.md) - Adding the webhook URL, the signing key, regions and testing
+- [references/verification.md](references/verification.md) - The challenge, the signature, and debugging failures
 
 ## Attribution
 
@@ -139,14 +142,12 @@ We recommend installing the [webhook-handler-patterns](https://github.com/hookde
 
 ## Related Skills
 
+- [dropbox-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/dropbox-webhooks) - Dropbox webhooks (`GET` challenge echo, hex HMAC-SHA256 of the raw body)
 - [onfido-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/onfido-webhooks) - Onfido identity verification webhooks
 - [persona-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/persona-webhooks) - Persona identity verification webhooks
 - [veriff-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/veriff-webhooks) - Veriff identity verification webhooks
 - [sumsub-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/sumsub-webhooks) - Sumsub KYC and verification webhooks
 - [workable-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/workable-webhooks) - Workable recruiting webhooks
 - [ashby-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/ashby-webhooks) - Ashby applicant tracking webhooks
-- [mercury-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/mercury-webhooks) - Mercury webhooks (`t=...,v1=...` HMAC-SHA256, opt-in replay window)
-- [stripe-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/stripe-webhooks) - Stripe webhooks (`t=...,v1=...` HMAC-SHA256 with timestamp)
-- [tailscale-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/tailscale-webhooks) - Tailscale webhooks (`t=...,v1=...`, opt-in replay window)
 - [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) - Handler sequence, idempotency, error handling, retry logic
 - [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) - Webhook infrastructure that replaces your queue — guaranteed delivery, automatic retries, replay, rate limiting, and observability for your webhook handlers

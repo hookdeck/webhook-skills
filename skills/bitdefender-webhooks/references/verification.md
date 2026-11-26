@@ -2,7 +2,7 @@
 
 ## How It Works
 
-Bitdefender's jsonRPC push service **does not sign the body with a key you hold**. The
+Bitdefender's jsonRPC push service **does not sign the body with an HMAC**. The
 credential is the `Authorization` header:
 
 ```
@@ -15,12 +15,12 @@ authenticate in the third-party server" and is sent verbatim. Points that cause 
 - Paste the authorization value exactly as set in GravityZone, including any "Bearer " or
   "Basic " prefix. Compare the **whole header value** to `BITDEFENDER_AUTHORIZATION`.
 - Do not strip, parse or base64-decode the prefix, even for `Basic`.
-- The header is `Authorization` (Hookdeck's Bitdefender source compares it the same way).
+- The header is `Authorization` (Hookdeck's Bitdefender source checks it too).
 
 ## What a Static Credential Does Not Give You
 
 A static shared credential authenticates the sender, not the body, and gives no replay
-protection (no signature, no timestamp). Anyone who captures one request can replay it or
+protection (no HMAC, no timestamp). Anyone who captures one request can replay it or
 send different bodies with the same header. Mitigate:
 
 - Serve the endpoint over HTTPS only (GravityZone requires TLS 1.2+).

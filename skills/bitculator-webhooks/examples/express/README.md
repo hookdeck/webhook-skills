@@ -31,7 +31,7 @@ Server runs on http://localhost:3000
 
 The handler reads the raw body with `express.raw({ type: '*/*' })` and checks `v1` = HMAC-SHA256 (hex) of `<t>.<raw body>`. Failures return 401. The timestamp window is off by default (`BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` unset or `0`); set `300` to match Bitculator's own example when Bitculator calls you directly. Behind Hookdeck leave it off: retries and replays resend the original timestamp.
 
-After verifying, the handler routes on the `X-Bitculator-Event` header (not signed, so it is read only after the signature check; `alarm.triggered` when absent) and acknowledges and skips unknown events. Bitculator POSTs JSON but doesn't document the body's fields, so the handler depends on no body field: a non-JSON body is acknowledged and logged, and `test: true` marks a test delivery.
+After verifying, the handler routes on the `X-Bitculator-Event` header (not signed, so it is read only after the signature check; `alarm.triggered` when absent) and acknowledges and skips unknown events. The body follows the `alarmTriggered` callback in Bitculator's OpenAPI spec (`event`, `created_at`, `data.alarm`). The handler still checks each field's type, acknowledges and logs a non-JSON body, and treats `data.test: true` as a test delivery.
 
 ## Test
 

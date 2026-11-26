@@ -76,12 +76,12 @@ The chain check (leaf → intermediate → self-signed root, each a CA, each in 
 |--|--|--|
 | `SubscriptionConfirmation` | Hookdeck confirms it for you and doesn't forward it | Verify it, check `SubscribeURL`, then GET it |
 | `Notification` / `UnsubscribeConfirmation` | Forwarded unchanged (body and headers) | Delivered to you |
-| Signature | **Not** checked by Hookdeck for this source type | Not checked by anyone else |
+| Signature | Verify it in your handler | Verify it in your handler |
 | What your handler must do | Verify the signature, pin topics, process `Notification` | All of the left column, plus confirmation |
 
-How Hookdeck confirms: a `POST` with header `x-amz-sns-message-type: SubscriptionConfirmation` is parsed, and Hookdeck checks that `TopicArn` is `arn:scw:sns:fr-par|nl-ams:…` and `SubscribeURL` is exactly `https://sns.mnq.<same region>.scaleway.com/` with one `Action=ConfirmSubscription` and that message's `TopicArn` and `Token`. It then GETs the URL (no redirects, 5 s timeout). On HTTP 200 it answers Scaleway 200. If the URL fails those checks or Scaleway doesn't answer 200, Hookdeck answers Scaleway 500 and records the request as rejected without forwarding it; the subscription normally stays `Pending`, and you can confirm it by hand with the `SubscribeURL` from that request. The source accepts only `POST`.
+If Hookdeck can't confirm the subscription, it normally stays `Pending`, and you can confirm it by hand with the `SubscribeURL` from the confirmation request shown in Hookdeck.
 
-Because Hookdeck doesn't verify Scaleway's signature on this source, anyone who knows the source URL can post to it. Keep verifying in your handler. Signatures cover the envelope, not the transport, so they still verify after Hookdeck forwards, retries or replays a message.
+Keep verifying the signature in your handler. Signatures cover the envelope, not the transport, so they still verify after Hookdeck forwards, retries or replays a message.
 
 ## Message Types
 
@@ -91,11 +91,11 @@ Because Hookdeck doesn't verify Scaleway's signature on this source, anyone who 
 | `Notification` | A message is published to the topic | Log and acknowledge; dedupe on `MessageId` |
 | `UnsubscribeConfirmation` | SNS sends this when a subscription is deleted; Scaleway's docs don't say whether it does | Acknowledge |
 
-Route on the signed body `Type`, not on the `x-amz-sns-message-type` header (Hookdeck uses that header to spot confirmations, but Scaleway doesn't document headers and the header isn't signed). `Message` is whatever the publisher sent: try to parse it as JSON, and check types before reading into it.
+Route on the signed body `Type`, not on the `x-amz-sns-message-type` header (Scaleway doesn't document headers, and the header isn't signed). `Message` is whatever the publisher sent: try to parse it as JSON, and check types before reading into it.
 
 ## Delivery, Retries and Duplicates
 
-- Standard topics are "at-least-once": "it is possible under rare circumstances that the same message may be received more than once." Deduplicate on `MessageId`. FIFO topics preserve order without duplicates.
+- Standard topics are "at-least-once": "it is possible under rare circumstances that the same message may be received more than once." Deduplicate on `MessageId`. HTTP/S subscriptions are only available on Standard topics (Scaleway lists FIFO topics as supporting Queues subscriptions), so an HTTP endpoint never gets FIFO ordering or deduplication.
 - Scaleway doesn't support `DeliveryPolicy` and doesn't document a retry schedule, timeout, source IPs or `Content-Type` (AWS SNS sends `text/plain`). The examples read the raw body for any content type and answer quickly.
 - There's no timestamp window by default. Hookdeck retries and replays resend the original envelope, `Timestamp` included. Set `SCALEWAY_SNS_MAX_AGE_SECONDS` to opt in when Scaleway calls you directly.
 

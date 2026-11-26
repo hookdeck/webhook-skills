@@ -6,20 +6,20 @@ docs:
 notes: >
   Logto (logto.io), an open-source identity and auth platform (cloud and self-hosted). Webhooks are
   configured in Logto Console > Webhooks and fire on user flows, Management/Experience API data
-  mutations and security exceptions. Delivery (from the docs): Retries, timeout and success codes are
-  not on the surveyed pages. Logto's docs say: 'Extract the signature from the logto-signature-sha-256
+  mutations and security exceptions. Delivery (from the docs): respond 200 straight away; a response of 500 or
+  above is retried up to three times, and every attempt carries the same `deliveryId` (unique per
+  webhook and event), so deduplicate on it. No timeout length or retry interval is documented. Logto's docs say: 'Extract the signature from the logto-signature-sha-256
   header of the webhook request.' 'Logto uses an HMAC hex digest to compute the signature.' 'const
   hmac = createHmac('sha256', signingKey); hmac.update(rawBody); const signature =
   hmac.digest('hex');' From the docs (registry summary): `logto-signature-sha-256: <hex>` = hex
-  HMAC-SHA256(signing key, raw body). Bare value, no prefix, no timestamp. SIGNATURE SCHEME (it must
-  match Hookdeck's LOGTO source exactly: HMAC controller, algorithm "sha256", header_key
-  "logto-signature-sha-256", encoding "hex"). The logto-signature-sha-256 header carries the bare
+  HMAC-SHA256(signing key, raw body). Bare value, no prefix, no timestamp. SIGNATURE SCHEME (algorithm sha256, header
+  logto-signature-sha-256, encoding hex). The logto-signature-sha-256 header carries the bare
   lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
   prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: The per-webhook signing key from the webhook details page in Logto Console. Use it as UTF-8
   bytes. Env var: LOGTO_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
@@ -36,7 +36,7 @@ notes: >
   PostResetPassword, User.Created, User.Deleted, User.Data.Updated, User.SuspensionStatus.Updated,
   Role.Created, Role.Deleted, Role.Data.Updated, Role.Scopes.Updated, Scope.Created, Scope.Deleted,
   Scope.Data.Updated (and 16 more). Handle a few common ones and log the rest. Method: POST.
-  Hookdeck's Logto source manages the method as POST, so the examples handle POST on the webhook
+  The examples handle POST on the webhook
   route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. Documented sample payloads (each JSON file's

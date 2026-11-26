@@ -3,8 +3,8 @@ name: modem-pay-webhooks
 description: >
   Receive and verify Modem Pay webhooks. Use when setting up Modem Pay webhook
   handlers, debugging x-modem-signature (HMAC-SHA512) verification, or handling
-  charge, payment intent, customer and transfer events from the Modem Pay
-  payment gateway.
+  charge, payment intent, payout (transfer), customer and invoice events from
+  the Modem Pay payment gateway.
 license: MIT
 metadata:
   author: hookdeck
@@ -26,7 +26,7 @@ metadata:
 
 Modem Pay sends `x-modem-signature: <hex>`: the hex HMAC-SHA512 (128 characters, no `sha512=` prefix) of the request body, keyed with your webhook secret used as-is. There is no timestamp in the scheme.
 
-**Hash the raw body bytes.** Modem Pay's own snippets hash re-serialised JSON (`JSON.stringify(req.body)` in Node, `json.dumps(request.json)` in Flask). That only works while re-serialising reproduces the exact bytes that were sent, and the Flask version uses different separators from `JSON.stringify`. The raw body is what was signed, and it's what Hookdeck's Modem Pay source checks.
+**Hash the raw body bytes.** Modem Pay's docs say the signature covers the "exact request body" and warn against parsing the JSON and turning it back into a string, which changes spacing or key order. The raw body is what was signed, and it's what Hookdeck's Modem Pay source checks.
 
 ### Verification (Node.js)
 
@@ -56,7 +56,9 @@ def verify_modem_pay(raw_body: bytes, header, secret: str) -> bool:
     return hmac.compare_digest(header.strip().lower().encode(), expected)  # bytes, never str
 ```
 
-Hex is compared case-insensitively, as Hookdeck does. The examples answer **401** when the header is missing or empty, malformed, or doesn't match. Modem Pay's snippets answer 400; either works, because Modem Pay retries any non-2xx response.
+Hex is compared case-insensitively. The examples answer **401** when the header is missing or empty, malformed, or doesn't match. Modem Pay's snippets answer 400; either works, because Modem Pay retries any non-2xx response.
+
+Payments created with a `callback_url` send their events to that URL instead of your webhook, signed with a different key: the lowercase hex SHA-256 of your secret API key. See [references/verification.md](references/verification.md).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -70,20 +72,20 @@ Hex is compared case-insensitively, as Hookdeck does. The examples answer **401*
 }
 ```
 
-Modem Pay's docs say: "The event type is provided in the event field, while the main data is within the payload." Verify first, then check that the body is an object, `event` is a string and `payload` is an object before reading into them.
+Every webhook has two fields: `event`, the name of what happened, and `payload`, the object it happened to. Verify first, then check that the body is an object, `event` is a string and `payload` is an object before reading into them.
 
 ## Common Event Types
 
 | Event | Description |
 |-------|-------------|
-| `charge.succeeded` | A payment completed |
-| `charge.created` / `charge.updated` | A charge was created or changed |
-| `charge.cancelled` / `charge.expired` | A charge was cancelled or expired |
-| `payment_intent.created` / `payment_intent.cancelled` / `payment_intent.expired` | Payment intent lifecycle |
+| `charge.succeeded` | The money is in; fulfil the order on this one |
+| `charge.created` / `charge.failed` / `charge.cancelled` / `charge.refunded` | Rest of the payment lifecycle |
+| `payment_intent.created` / `.cancelled` / `.expired` / `.restored` | Payment intent lifecycle |
+| `transfer.succeeded` / `.failed` / `.reversed` / `.flagged` / `.queued` / `.cancelled` | Payout lifecycle |
 | `customer.created` / `customer.updated` / `customer.deleted` | Customer lifecycle |
-| `transfer.succeeded` / `transfer.failed` / `transfer.cancelled` / `transfer.reversed` / `transfer.flagged` | Payout (transfer) lifecycle |
+| `invoice.created` / `.updated` / `.deleted` / `.overdue` | Invoice lifecycle (`invoice.overdue` is live mode only) |
 
-This is the list on Modem Pay's webhooks page. The CLI page's `modempay trigger` list also includes `charge.failed`. The examples handle `charge.succeeded`, `charge.updated`, `payment_intent.created`, `customer.created`, `transfer.succeeded` and `transfer.failed`, and acknowledge (200) anything else. See [references/overview.md](references/overview.md).
+This is the list on Modem Pay's webhooks page. Its invoice pages also name `paymentrequest.success` for a paid invoice. The examples handle `charge.succeeded`, `charge.failed`, `payment_intent.created`, `customer.created`, `transfer.succeeded` and `transfer.failed`, and acknowledge (200) anything else. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 
@@ -95,9 +97,9 @@ Modem Pay's docs don't name a Content-Type or any other header, so the examples 
 
 ## Delivery, Retries and Duplicates
 
-Modem Pay says: "If your server fails to acknowledge a webhook event with a 200 OK HTTP response, Modem Pay will retry the delivery up to 3 times, with each retry spaced 10 minutes apart." Timeouts, network errors and non-2xx responses count as failures. Answer 200 quickly and do slow work in a background job.
+If your endpoint doesn't reply with a 2xx, or times out, Modem Pay tries again up to 3 more times, 10 minutes apart. Every delivery and your server's response is listed under Developers > Webhooks > Events, where you can resend any event by hand. Answer 200 quickly and do slow work in a background job.
 
-The body has no event or delivery ID, and `payload.id` is the charge's (or customer's, or transfer's) own ID. To make retries harmless, deduplicate on `(event, payload.id)`. That's our suggestion, not a key Modem Pay documents. The request timeout and source IPs aren't documented either.
+The body has no event or delivery ID. Modem Pay says `payload.id` stays the same across retries, but it's the charge's (or customer's, or transfer's) own ID, so two different `customer.updated` events share it. Deduplicate on `(event, payload.id, payload.updatedAt)`, which is our suggestion, not a key Modem Pay documents, and make side effects safe to run twice: before marking an order paid, check it isn't already paid. The request timeout and source IPs aren't documented.
 
 ## Environment Variables
 
@@ -105,7 +107,7 @@ The body has no event or delivery ID, and `payload.id` is the charge's (or custo
 MODEM_PAY_WEBHOOK_SECRET=your_modem_pay_webhook_secret   # Developers > Webhooks; use as-is
 ```
 
-Modem Pay's own snippets call it `MODEM_WEBHOOK_SECRET` or `MODEM_PAY_SECRET_HASH`; it's the same value. In test mode use the secret that `modempay listen` prints: test and live secrets differ.
+Modem Pay's own snippets call it `MODEMPAY_WEBHOOK_SECRET`; it's the same value. Test and live webhooks have different secrets, and saving the webhook URL (or turning a disabled webhook back on) creates a new one. While `modempay listen` runs, use the secret it shows.
 
 ## Local Development
 
@@ -116,7 +118,7 @@ npx hookdeck-cli listen 3000 modem-pay --path /webhooks/modem-pay
 
 ## Using Hookdeck
 
-Hookdeck has a **Modem Pay** source type. Give it your webhook secret and Hookdeck's source verifies `x-modem-signature` (hex HMAC-SHA512 of the raw body) on every request and accepts only `POST`. Hookdeck forwards the original body and headers, so your handler can keep verifying `x-modem-signature` with the same secret. Hookdeck retries and replays send the same signed body, and there's no timestamp, so they verify too.
+Hookdeck has a **Modem Pay** source type. Give it your webhook secret and Hookdeck's source verifies the signature on every request. Saving the Hookdeck URL in Modem Pay creates a new secret, so copy the secret after you save the URL. Hookdeck forwards the original body and headers, so your handler can keep verifying `x-modem-signature` with the same secret. Hookdeck retries and replays send the same signed body, and there's no timestamp, so they verify too.
 
 ## Reference Materials
 

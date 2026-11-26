@@ -31,27 +31,27 @@ function handleEvent(event) {
   switch (event.action) {
     case 'CREATED_A_CONTRACTOR':
       console.log(`Tutor created: ${subject.id} (${subject.email})`);
-      // TODO: onboard the tutor in your system
+      // Your code: onboard the tutor in your system
       break;
 
     case 'CHANGED_CONTRACTOR_STATUS':
       console.log(`Tutor status changed: ${subject.id} -> ${subject.status}`);
-      // TODO: sync the tutor's status
+      // Your code: sync the tutor's status
       break;
 
     case 'CLIENT_ENQUIRY':
       console.log(`Client enquiry from: ${subject.id}`);
-      // TODO: create a lead
+      // Your code: create a lead
       break;
 
     case 'CREATED_AN_APPOINTMENT':
       console.log(`Lesson created: ${subject.id}`);
-      // TODO: sync to your calendar
+      // Your code: sync to your calendar
       break;
 
     case 'RAISED_INVOICE':
       console.log(`Invoice raised: ${subject.id}`);
-      // TODO: push to accounting
+      // Your code: push to accounting
       break;
 
     default:

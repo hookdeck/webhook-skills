@@ -94,15 +94,15 @@ function handleItemStatus(data) {
   switch (data.status) {
     case 'pickup-scheduled':
       console.log(`Item ${data.id} pickup scheduled`);
-      // TODO: notify the owner, prepare fulfillment
+      // Your code: notify the owner, prepare fulfillment
       break;
     case 'in-route':
       console.log(`Item ${data.id} is in route`);
-      // TODO: update tracking
+      // Your code: update tracking
       break;
     case 'delivered':
       console.log(`Item ${data.id} delivered`);
-      // TODO: mark return complete, close the loop with the owner
+      // Your code: close the case with the owner
       break;
     case 'finished':
       console.log(`Item ${data.id} finished`);
@@ -117,17 +117,18 @@ function handleItemStatus(data) {
 
 /**
  * Handle a request-status event. data.status is one of:
- * registered, not-found, resolved, deleted, expired, anonymized
+ * registered, awaiting-guest-response, not-found, resolved, deleted,
+ * expired, anonymized
  */
 function handleRequestStatus(data) {
   switch (data.status) {
     case 'registered':
       console.log(`Request ${data.id} registered`);
-      // TODO: acknowledge the lost-item claim
+      // Your code: acknowledge the lost-item claim
       break;
     case 'resolved':
       console.log(`Request ${data.id} resolved`);
-      // TODO: notify the customer their item was matched
+      // Your code: notify the customer their item was matched
       break;
     case 'not-found':
       console.log(`Request ${data.id} not found`);

@@ -71,9 +71,11 @@ the credential (set a new `lesson_completed_callback_authorization`) if it leaks
 | `lesson completed` | A learner completes a lesson (delivered to `lesson_completed_callback_url`) |
 
 There is no event-type field to switch on: every delivery to the callback URL is a lesson
-completion. Lessonly's API reference doesn't document the payload, so the JSON body in this
-skill's examples (`lesson_id`, `user_id`, `completed_at`) is **illustrative**. Capture a real
-delivery (the Hookdeck CLI makes that easy) before depending on field names.
+completion. Lessonly's [Reporting Webhook](https://intercom.help/lessonly/en/articles/3828587-reporting-webhook)
+article says it is a JSON `POST` with the learner (`user`: `id`, `name`, `email`, custom fields),
+the `lesson` (`id`, `title`, `retake_score`), `score_percent`, `started_at`, `completed_at`,
+`assigned_at` and `report_card_url`. A failed `POST` is retried up to three times, five minutes
+apart. There is no event ID, so dedupe on `user.id`, `lesson.id` and `completed_at`.
 
 ## Setup Note (Hookdeck)
 
@@ -97,7 +99,7 @@ No account required. Use the printed URL as `lesson_completed_callback_url`.
 
 ## Resources
 
-- [references/overview.md](references/overview.md) - The lesson-completed callback and its (illustrative) payload
+- [references/overview.md](references/overview.md) - The lesson-completed callback, its payload and retries
 - [references/setup.md](references/setup.md) - Configuring the callback with the company settings API
 - [references/verification.md](references/verification.md) - Authorization check in Node, Python and Next.js, gotchas
 - [examples/](examples/) - Runnable Express, Next.js and FastAPI handlers with tests
@@ -116,7 +118,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Dedupe on learner and lesson, since there is no event ID
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Dedupe on learner, lesson and completion time, since there is no event ID
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

@@ -1,6 +1,6 @@
 # Sent Webhooks - Express Example
 
-Minimal example of receiving [Sent](https://sent.dm) (sent.dm) webhooks with signature verification. Sent signs deliveries Standard Webhooks / Svix style but on `X-Webhook-*` header names, so the handler maps `x-webhook-id`, `x-webhook-timestamp` and `x-webhook-signature` onto the names the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package reads.
+Minimal example of receiving [Sent](https://sent.dm) (sent.dm) webhooks with signature verification. Sent signs deliveries with the Standard Webhooks scheme: version 2 webhooks (the default) send `webhook-id`, `webhook-timestamp` and `webhook-signature`, and version 1 webhooks send `x-webhook-id`, `x-webhook-timestamp` and `x-webhook-signature`. The handler reads version 2's headers first, falls back to version 1's, and passes them under the names the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package reads.
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/sent-dm`
 npm test
 ```
 
-The tests sign payloads the way Sent does (`v1,` + `base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw body}"))`). They cover tampered bodies, stale timestamps, multiple signatures, another webhook's secret, non-JSON content types, dedupe on `X-Webhook-Event-ID`, and the fail-closed path when no secret is configured.
+The tests sign payloads the way a version 1 Sent webhook does (`v1,` + `base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw body}"))`). Version 2 signs the same string built from `webhook-id` and `webhook-timestamp`. They cover tampered bodies, stale timestamps, multiple signatures, another webhook's secret, non-JSON content types, dedupe on `X-Webhook-Event-ID`, and the fail-closed path when no secret is configured.
 
 ## Receive real webhooks locally
 
@@ -51,5 +51,5 @@ Register the printed URL as the endpoint of a Sent webhook, then use **Test Webh
 - The route uses `express.raw({ type: '*/*' })`. The signature covers the exact raw body bytes, and this verifies any content type. `express.json()` before verification breaks it.
 - Missing headers return `400`, a bad signature or stale timestamp `401`, no configured secret `503` (the response contract in Sent's receiver guide).
 - The library enforces a fixed 5-minute timestamp window. Sent signs each retry when it sends it, so Sent's own retries pass. Hookdeck retries and replays resend the original timestamp, so behind Hookdeck use the manual verifier in [references/verification.md](../../references/verification.md) with the window widened or off.
-- Dedupe on `X-Webhook-Event-ID`. `X-Webhook-ID` is the webhook's id and is identical on every event.
-- Acknowledge fast. A `2xx` is due within the webhook's timeout (default 30 s) and 10 consecutive failures disable the webhook.
+- Dedupe on `webhook-id` (version 2) or `X-Webhook-Event-ID` (version 1). Version 1's `X-Webhook-ID` is the webhook's id and is identical on every event.
+- Acknowledge fast. A version 1 webhook waits for its timeout (default 30 s) and is disabled after 10 consecutive failed events; a version 2 webhook is turned off when every delivery keeps failing for an hour after an event runs out of retries.

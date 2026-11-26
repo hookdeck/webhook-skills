@@ -104,4 +104,4 @@ days via `expires_at`. Renew before expiry by updating `expires_at`. See
 ## Full Event Reference
 
 For the complete list of models and events, see
-[Clio's Webhooks documentation](https://docs.developers.clio.com/api-reference/#tag/Webhooks).
+[Clio's Webhooks documentation](https://docs.developers.clio.com/guides/clio-manage/webhooks/).

@@ -61,7 +61,7 @@ function verifyConvox(rawBody, header, secret) {
 
 Missing or empty header, malformed value, or no matching `v1`: respond `401`. Verify first, then parse the JSON.
 
-**Timestamp window is opt-in.** Convox's own samples reject deliveries more than 5 minutes old, but Hookdeck retries and replays resend the original `t`, and Hookdeck applies no tolerance itself, so a fixed window rejects legitimate redeliveries. The examples skip the check by default. Set `CONVOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds) to turn it on; unset or `0` means off. The signature has no nonce, so for replay protection dedupe on `data.tick_id` + `action`.
+**Timestamp window is opt-in.** Convox's own samples reject deliveries more than 5 minutes old, but Hookdeck retries and replays resend the original `t`, so a fixed window rejects legitimate redeliveries. The examples skip the check by default. Set `CONVOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds) to turn it on; unset or `0` means off. The signature has no nonce, so for replay protection dedupe on `data.tick_id` + `action`.
 
 The Python version and more detail are in [references/verification.md](references/verification.md).
 

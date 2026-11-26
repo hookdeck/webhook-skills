@@ -26,8 +26,9 @@ metadata:
 Commerce Layer signs the **raw** request body with **HMAC-SHA256** keyed on the
 webhook's `shared_secret` and sends the digest as **base64** in the
 `X-CommerceLayer-Signature` header. The triggering topic is in `X-CommerceLayer-Topic`.
-The `shared_secret` is returned once, in the response when you create the webhook
-(`POST /api/webhooks`) — it is **not** the same as your API credentials.
+Each webhook gets its own `shared_secret` when it is created; it is returned in the webhook
+object, including the create response (`POST /api/webhooks`). It is **not** the same as your
+API credentials. Update the webhook with `_regenerate_shared_secret: true` to replace it.
 
 > **Read the raw body, NOT the parsed one.** Re-serializing parsed JSON changes bytes
 > (key order, whitespace) and breaks the signature. Commerce Layer has no SDK verify

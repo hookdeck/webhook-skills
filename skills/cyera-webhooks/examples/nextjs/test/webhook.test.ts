@@ -57,6 +57,22 @@ const READINESS_CHECK: Record<string, any> = {
   answers: ['Yes', 'No'],
 };
 
+const IDENTIFIERS: Record<string, any> = {
+  request_type: 'identifiers',
+  integration_name: 'Webhook Integration',
+  integration_kind: 'webhook',
+  topic: 'identifiers:create',
+  identifiers: { email: [{ email: 'john@example.com' }] },
+  webhook_callback_url: 'https://acme.privacy.cyera.io/api/v2/webhooks/callback',
+  privacy_request_id: '4b7a02e2-361e-4957-9d69-b381e3f47758',
+  integration_id: '7efa58a8-9b7d-4faf-8082-5f7f7f407db7',
+  results_token: '9f2c1e4a7b6d4c0f8a31b5d2e7c94a10',
+  webhook_request_id: '3aa32ca6-e60d-4b71-981a-d1ba258fd712',
+};
+// Reminders reuse the create body with a ":reminder" topic and expect 200.
+const ACCESS_REMINDER = { ...ACCESS, topic: 'privacy_request:reminder' };
+const OPT_OUT_REMINDER = { ...OPT_OUT, topic: 'opt_out:reminder' };
+
 const nowSeconds = () => String(Math.floor(Date.now() / 1000));
 
 // Same algorithm as Cyera: base64(HMAC-SHA256(secret, timestamp + ":" + body)).
@@ -106,6 +122,9 @@ describe('Cyera webhook route', () => {
       ['opt_out', OPT_OUT, 201],
       ['health_check', HEALTH_CHECK, 200],
       ['readiness_check', READINESS_CHECK, 200],
+      ['identifiers', IDENTIFIERS, 200],
+      ['access reminder', ACCESS_REMINDER, 200],
+      ['opt_out reminder', OPT_OUT_REMINDER, 200],
     ])('accepts a signed %s request', async (_name, payload, status) => {
       expect((await post(payload)).status).toBe(status);
     });

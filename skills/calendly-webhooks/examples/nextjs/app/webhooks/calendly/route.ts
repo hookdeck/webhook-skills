@@ -74,22 +74,22 @@ export async function POST(request: NextRequest) {
   switch (event.event) {
     case 'invitee.created':
       console.log('Invitee scheduled:', event.payload?.email);
-      // TODO: Create CRM record, send confirmation, provision resources, etc.
+      // Your code: Create CRM record, send confirmation, provision resources, etc.
       break;
 
     case 'invitee.canceled':
       console.log('Invitee canceled:', event.payload?.email);
-      // TODO: Free up availability, trigger win-back flow, update CRM, etc.
+      // Your code: Free up availability, trigger win-back flow, update CRM, etc.
       break;
 
     case 'invitee_no_show.created':
-      console.log('Invitee marked as no-show:', event.payload?.invitee);
-      // TODO: Flag account, send follow-up, adjust scoring, etc.
+      console.log('Invitee marked as no-show:', event.payload?.uri);
+      // Your code: Flag account, send follow-up, adjust scoring, etc.
       break;
 
     case 'routing_form_submission.created':
       console.log('Routing form submitted:', event.payload?.uri);
-      // TODO: Qualify/route leads, sync to marketing tools, etc.
+      // Your code: Qualify/route leads, sync to marketing tools, etc.
       break;
 
     default:

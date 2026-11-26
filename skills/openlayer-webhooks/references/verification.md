@@ -10,7 +10,7 @@ Openlayer follows [Standard Webhooks](https://standardwebhooks.com/). Each reque
 | `webhook-timestamp` | Unix timestamp in seconds of the delivery attempt |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries, usually one |
 
-Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. Hookdeck reads the `webhook-*` names and falls back to the `svix-*` names when `webhook-id` is absent, so the examples do the same and then hand the library the values under the `webhook-*` names it expects.
+Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. The examples read the `webhook-*` names and fall back to the `svix-*` names when `webhook-id` is absent, then hand the library the values under the `webhook-*` names it expects.
 
 The algorithm:
 
@@ -62,7 +62,7 @@ Openlayer documents no SDK of its own for this; it points to the Standard Webhoo
 
 ## Why Do Hookdeck Retries and Replays Fail the SDK Check?
 
-The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`. A retry or replay more than 5 minutes after the first delivery is rejected as "Message timestamp too old", even though the signature is valid. Openlayer's last retry comes about 30 minutes after the first attempt, so this matters when a handler has been down.
+The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`. A retry or replay more than 5 minutes after the first delivery is rejected as "Message timestamp too old", even though the signature is valid. Openlayer's last retry comes about 35 minutes after the first attempt (delays of about 5 seconds, 5 minutes and 30 minutes), so this matters when a handler has been down.
 
 If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating on `webhook-id`.
 

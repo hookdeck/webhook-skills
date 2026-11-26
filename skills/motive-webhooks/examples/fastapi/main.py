@@ -34,43 +34,43 @@ def handle_motive_event(event: dict) -> None:
 
     if action == "vehicle_location_updated":
         print(f"Vehicle {event.get('vehicle_number')} at {event.get('lat')},{event.get('lon')}")
-        # TODO: Update live map / ETA
+        # Your code: Update live map / ETA
 
     elif action == "vehicle_location_received":
         print(f"Location received for vehicle {event.get('vehicle_id')}")
-        # TODO: Append to location history
+        # Your code: Append to location history
 
     elif action == "vehicle_upserted":
         print(f"Vehicle {event.get('id')} {event.get('trigger', 'upserted')}")
-        # TODO: Sync the vehicle roster
+        # Your code: Sync the vehicle roster
 
     elif action == "fault_code_opened":
         print(f"Fault {event.get('code_label')} opened on vehicle {vehicle.get('number')}")
-        # TODO: Create a maintenance ticket
+        # Your code: Create a maintenance ticket
 
     elif action == "fault_code_closed":
         print(f"Fault {event.get('code_label')} closed on vehicle {vehicle.get('number')}")
-        # TODO: Close the maintenance ticket
+        # Your code: Close the maintenance ticket
 
     elif action == "user_upserted":
         print(f"User {event.get('id')} ({event.get('role')}) {event.get('trigger')}")
-        # TODO: Sync drivers and admins
+        # Your code: Sync drivers and admins
 
     elif action == "inspection_report_upserted":
         print(f"Inspection report {event.get('id')} upserted")
-        # TODO: Route defects to maintenance
+        # Your code: Route defects to maintenance
 
     elif action == "hos_violation_upserted":
         print(f"HOS violation {event.get('id')} upserted")
-        # TODO: Alert dispatch / compliance
+        # Your code: Alert dispatch / compliance
 
     elif action in ("vehicle_geofence_event", "asset_geofence_event"):
         print(f"Geofence event: {action}")
-        # TODO: Track arrivals and departures
+        # Your code: Track arrivals and departures
 
     elif action == "engine_toggle_event":
         print("Engine toggle event")
-        # TODO: Update usage and idling reports
+        # Your code: Update usage and idling reports
 
     elif action in (
         "speeding_event_created",
@@ -79,15 +79,15 @@ def handle_motive_event(event: dict) -> None:
         "driver_performance_event_updated",
     ):
         print(f"Safety event: {action} ({event.get('id')})")
-        # TODO: Queue driver coaching
+        # Your code: Queue driver coaching
 
     elif action == "user_duty_status_updated":
         print("Driver duty status updated")
-        # TODO: Sync timecards
+        # Your code: Sync timecards
 
     elif action == "form_entry_upserted":
         print(f"Form entry {event.get('id')} upserted")
-        # TODO: Update dispatch workflow
+        # Your code: Update dispatch workflow
 
     elif action in (
         "vehicle_gateway_disconnected",
@@ -95,7 +95,7 @@ def handle_motive_event(event: dict) -> None:
         "dashcam_disconnected",
     ):
         print(f"Device event: {action} ({event.get('id')})")
-        # TODO: Alert on device health
+        # Your code: Alert on device health
 
     else:
         print(f"Unhandled Motive action: {action}")
@@ -119,11 +119,13 @@ async def motive_webhook(request: Request):
     try:
         event = json.loads(raw_body)
     except ValueError:
-        # The activation test request body ([vehicle_location_updated]) is not valid JSON.
-        # Answer 200 so Motive can enable the webhook.
+        # Not JSON. Answer 200 without processing it. (Motive's docs print the activation test
+        # body as [vehicle_location_updated], but the real one is a JSON array, handled below.)
         return {"received": True, "ignored": True}
 
-    # Motive sends no event ID header: de-duplicate on action + payload id
+    # The activation test request is a JSON array of the webhook's actions, e.g.
+    # ["vehicle_location_updated","fault_code_closed"]: acknowledge it without dispatching.
+    # Motive sends no event ID header: de-duplicate on action + payload id + a changing timestamp
     if isinstance(event, dict):
         handle_motive_event(event)
 

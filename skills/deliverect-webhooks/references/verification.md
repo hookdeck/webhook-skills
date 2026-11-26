@@ -54,7 +54,7 @@ def verify_deliverect_signature(raw_body: bytes, signature, secret) -> bool:
     return hmac.compare_digest(bytes.fromhex(signature), expected)  # bytes, never str
 ```
 
-Hex is accepted case-insensitively (as Hookdeck does): the format check requires exactly 64 hex
+Hex is accepted case-insensitively: the format check requires exactly 64 hex
 characters, then both sides are compared as bytes in constant time.
 
 ## Common Gotchas

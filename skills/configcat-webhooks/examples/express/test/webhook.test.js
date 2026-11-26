@@ -5,7 +5,7 @@ process.env.CONFIGCAT_WEBHOOK_SECRET = SECRET;
 
 const { app, computeSignature, verifyConfigCatWebhook } = require('../src/index');
 
-// Published vector from ConfigCat's docs (also verified against Hookdeck's CONFIGCAT source)
+// Published vector from ConfigCat's docs
 const VECTOR = {
   body: 'examplebody',
   id: 'b616ca659d154a5fb907dd8475792eeb',
@@ -120,9 +120,20 @@ describe('POST /webhooks/configcat', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects two comma-separated signatures (single key only)', async () => {
+  it('accepts two comma-separated signatures when either matches (key rotation)', async () => {
+    for (const order of ['first', 'second']) {
+      const headers = sign('{}');
+      const valid = headers['x-configcat-webhook-signature-v1'];
+      headers['x-configcat-webhook-signature-v1'] = order === 'first' ? `${valid},${VECTOR.signature}` : `${VECTOR.signature},${valid}`;
+      const res = await request(app).post('/webhooks/configcat').set('content-type', 'application/json').set(headers).send('{}');
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it('rejects a signature list where no entry matches', async () => {
     const headers = sign('{}');
-    headers['x-configcat-webhook-signature-v1'] = `${headers['x-configcat-webhook-signature-v1']},${VECTOR.signature}`;
+    const other = computeSignature('configcat_whsk_other', 'wh-1', headers['x-configcat-webhook-timestamp'], Buffer.from('{}'));
+    headers['x-configcat-webhook-signature-v1'] = `${other},${VECTOR.signature}`;
     const res = await request(app).post('/webhooks/configcat').set('content-type', 'application/json').set(headers).send('{}');
     expect(res.status).toBe(401);
   });

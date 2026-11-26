@@ -102,7 +102,7 @@ async def dealhub_webhook(request: Request):
 
 
 def handle_event(payload: Any) -> None:
-    # TODO: check payload["event_info"]["event_id"] against your store and return if seen.
+    # Idempotency: check payload["event_info"]["event_id"] against your store and return if seen.
     name = event_name(payload)
 
     # --- Quote entity events -------------------------------------------------

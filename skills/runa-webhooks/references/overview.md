@@ -3,7 +3,7 @@
 ## What Are Runa Webhooks?
 
 [Runa](https://runa.io) is a payouts network for gift cards, prepaid cards and push-to-card.
-Webhooks push order completion and product-catalog changes to an HTTPS endpoint you add in the
+Webhooks push order outcomes, fraud-blocked payout links and product-catalog changes to an HTTPS endpoint you add in the
 Svix webhook portal, so you don't have to poll the Orders or Products APIs. Runa delivers them
 through Svix, and every delivery is signed (see [verification.md](verification.md)).
 
@@ -18,54 +18,65 @@ through Svix, and every delivery is signed (see [verification.md](verification.m
 
 ## Common Event Types
 
-Runa documents two event types. Each endpoint subscribes to **exactly one** of them in the
-portal, so add one endpoint per event type you want.
+Runa documents five event types. Its webhooks page says each endpoint subscribes to a single
+event type in the portal; its November 2026 changelog says the new events can be added to an
+existing endpoint's event types.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `order.completion` | An order has finished processing, whether it completed or failed | Fulfil async orders, record order data, alert on failures |
+| `order.completed` | An order finishes processing successfully | Fulfil async orders, record order data |
+| `order.failed` | An order fails, with a `reason` of `fraud` or `generic` | Alert on failures, handle fraud blocks |
+| `payout.blocked` | Runa's fraud checks block a recipient from redeeming a payout link | Tell the recipient, contact Runa with the `assessment_id` |
+| `order.completion` | An order has finished processing, whether it completed or failed (older; Runa recommends the two order events above for new integrations) | Fulfil async orders, alert on failures |
 | `product.update` | A product in the catalog is added, updated or removed (one event per product) | Enable or disable products, refresh pricing and denominations |
 
 The list may not be exhaustive; check the
-[webhooks reference](https://docs.runa.io/reference/webhooks) for additions.
+[webhooks reference](https://developer.runa.io/reference/webhooks) for additions.
 
 ## Event Payload Structure
 
-Payloads are **bare resources**: there is no envelope and **no field names the event**. The
-endpoint URL identifies the event, and the examples tell the two apart by shape.
+`order.completed`, `order.failed` and `payout.blocked` use the Standard Webhooks envelope: the
+event name is in `type`, the time in `timestamp` and the details in `data`. `order.completion`
+and `product.update` are **bare resources** with no envelope and no field naming the event.
+
+### order.failed
+
+Runa's printed example:
+
+```json
+{
+  "type": "order.failed",
+  "timestamp": "2024-01-03T14:25:07Z",
+  "data": {
+    "id": "O-01HK7VK8C3WM1MQ916GEXJGQ6P",
+    "status": "FAILED",
+    "reason": "fraud"
+  }
+}
+```
+
+### order.completed
+
+`data` holds the order in the same shape as the completed `order.completion` body. Runa prints
+no whole example.
+
+### payout.blocked
+
+`data` holds `order_item_id`, `order_id`, `assessment_id` (quote it when you contact Runa) and
+`cancelled`. When `cancelled` is `false`, the link is still active but its redemptions keep
+being blocked.
 
 ### order.completion
 
 The `status` field selects the payload. It tells you the outcome of the order, not which event
-this is.
-
-`status: "COMPLETED"` carries the order summary:
-
-```json
-{
-  "id": "ord_12345",
-  "status": "COMPLETED",
-  "created_at": "2025-08-26T18:39:20.000000+00:00",
-  "completed_at": "2025-08-26T18:39:27.006833+00:00",
-  "payment_method": { "type": "ACCOUNT_BALANCE", "currency": "USD" },
-  "currency": "USD",
-  "total_price": "10.00",
-  "total_discount": "1.00"
-}
-```
-
-`status: "FAILED"` carries only the order id:
-
-```json
-{ "id": "ord_67890", "status": "FAILED" }
-```
-
-Look the order up through the Orders API for anything beyond that. The example shapes above are
-abbreviated from the OpenAPI schema (`OrderSummary` requires `id`, `status`, `created_at`,
-`payment_method`, `currency`, `total_price` and `total_discount`; `completed_at` and
-`description` are optional).
+this is. `status: "COMPLETED"` carries the order summary (the OpenAPI `OrderSummary` requires
+`id`, `status`, `created_at`, `payment_method`, `currency`, `total_price` and
+`total_discount`). `status: "FAILED"` carries only `id` and `status`. Runa prints no whole
+example of either; look the order up through the Orders API for anything beyond that.
 
 ### product.update
+
+From Runa's [Real-time catalog updates](https://developer.runa.io/features/realtime-product-updates) guide:
 
 ```json
 {
@@ -114,7 +125,7 @@ What to do with the changes:
 - **Don't rely on order.** Store the `timestamp` per `product_code` and discard `product.update`
   events older than the last one you received.
 - **Deduplicate side effects.** Svix retries and manual resends repeat a message with the same
-  `svix-id`. Key order handling on the order `id` plus `status`.
+  `svix-id`. Key order handling on the order `id` plus the event.
 - **Acknowledge unknown payloads with `200`.** Otherwise Svix keeps retrying them.
 - **Respond within 15 seconds.** Queue slow work and return `200` straight away.
 - **Recover from downtime.** Resend a single message from the portal, or use **Options > Recover
@@ -122,6 +133,9 @@ What to do with the changes:
 
 ## Full Reference
 
-See Runa's [webhooks](https://docs.runa.io/reference/webhooks) page, plus the
-[order.completion](https://developer.runa.io/reference/2024-02-05/webhook/order.completion.md) and
-[product.update](https://developer.runa.io/reference/2024-02-05/webhook/product.update.md) references.
+See Runa's [webhooks](https://developer.runa.io/reference/webhooks) page, plus the
+[order.completed](https://developer.runa.io/reference/2024-02-05/webhook/order.completed),
+[order.failed](https://developer.runa.io/reference/2024-02-05/webhook/order.failed),
+[payout.blocked](https://developer.runa.io/reference/2024-02-05/webhook/payout.blocked),
+[order.completion](https://developer.runa.io/reference/2024-02-05/webhook/order.completion) and
+[product.update](https://developer.runa.io/reference/2024-02-05/webhook/product.update) references.

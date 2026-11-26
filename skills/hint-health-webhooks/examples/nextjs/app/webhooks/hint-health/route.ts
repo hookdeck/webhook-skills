@@ -28,41 +28,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // The event name is the top-level "type" field; "object" is the affected record
+  // The event name is the top-level "type" field; "object" is the affected record.
+  // Patient objects hold health data, so log the record id, not the object.
   const type = typeof event.type === 'string' ? event.type : undefined;
   const object = isObject(event.object) ? event.object : undefined;
   const id = typeof event.id === 'string' ? event.id : undefined;
 
   switch (type) {
     case 'patient.created':
-      console.log('Patient created:', id, object);
+      console.log('Patient created:', id, object?.id);
       break;
     case 'patient.updated':
-      console.log('Patient updated:', id, object);
+      console.log('Patient updated:', id, object?.id);
       break;
     case 'patient.destroyed':
-      console.log('Patient destroyed:', id, object);
+      console.log('Patient destroyed:', id, object?.id);
       break;
     case 'patient.inactive':
-      console.log('Patient inactive:', id, object);
+      console.log('Patient inactive:', id, object?.id);
       break;
     case 'membership.created':
-      console.log('Membership created:', id, object);
+      console.log('Membership created:', id, object?.id);
       break;
     case 'membership.updated':
-      console.log('Membership updated:', id, object);
+      console.log('Membership updated:', id, object?.id);
       break;
     case 'membership.destroyed':
-      console.log('Membership destroyed:', id, object);
+      console.log('Membership destroyed:', id, object?.id);
       break;
     case 'practitioner.created':
-      console.log('Practitioner created:', id, object);
+      console.log('Practitioner created:', id, object?.id);
       break;
     case 'practitioner.updated':
-      console.log('Practitioner updated:', id, object);
+      console.log('Practitioner updated:', id, object?.id);
       break;
     case 'practitioner.destroyed':
-      console.log('Practitioner destroyed:', id, object);
+      console.log('Practitioner destroyed:', id, object?.id);
       break;
     default:
       console.log('Unhandled event type:', type);

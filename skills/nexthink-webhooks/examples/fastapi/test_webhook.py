@@ -14,7 +14,7 @@ client = TestClient(app)
 
 # Illustrative template: Nexthink adds no event field; "event" is chosen by the template author
 TRIGGERED = {"event": "alert triggered", "monitor": "High CPU (illustrative)"}
-RECOVERED = {"event": "alert recovered", "monitor": "High CPU (illustrative)"}
+HIGH_PRIORITY = {"event": "high priority alert", "monitor": "High CPU (illustrative)"}
 
 
 def send(method="POST", body=None, headers=None, content_type="application/json"):
@@ -35,7 +35,7 @@ class TestNexthinkWebhook:
 
     @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
     def test_accepts_post_put_patch(self, method):
-        res = send(method, json.dumps(RECOVERED), {"Authorization": AUTH})
+        res = send(method, json.dumps(HIGH_PRIORITY), {"Authorization": AUTH})
         assert res.status_code == 200
 
     def test_rejects_missing_header(self):

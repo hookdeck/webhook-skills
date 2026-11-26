@@ -16,7 +16,7 @@ Pleo's docs say to verify "the webhook signature and the timestamp" but don't sp
 - **Signed content:** `{webhook-id}.{webhook-timestamp}.{raw request body}`
 - **Key:** the subscription secret (`whsec_...`) with the `whsec_` prefix removed, then **base64-decoded**
 - **Comparison:** constant-time, against each `v1,` entry in `webhook-signature` (several can be present, for example during key rotation)
-- **Timestamp:** reject messages whose timestamp is more than ~5 minutes from now
+- **Timestamp:** Pleo gives no tolerance; the Standard Webhooks library rejects messages more than 5 minutes from now by default
 
 ## SDK Verification (recommended)
 

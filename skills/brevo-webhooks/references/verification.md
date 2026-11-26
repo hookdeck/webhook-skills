@@ -18,7 +18,9 @@ Use at least one credential method and, where you can, the IP allowlist.
 ### Basic auth
 
 Create the webhook with `https://username:password@your-domain.com/webhooks/brevo`.
-Brevo sends the credentials as a standard header:
+Brevo's docs don't name the header the credentials arrive in. HTTP clients
+conventionally send URL credentials as a Basic header, so expect this and confirm
+it with one test delivery:
 
 ```
 Authorization: Basic base64(username:password)
@@ -29,7 +31,8 @@ both parts timing-safe.
 
 ### Bearer token
 
-Create the webhook with `"auth": {"type": "bearer", "token": "<token>"}`. Brevo sends:
+Create the webhook with `"auth": {"type": "bearer", "token": "<token>"}`. Brevo's
+docs don't name the header either; expect this and confirm it with one test delivery:
 
 ```
 Authorization: Bearer <token>
@@ -111,7 +114,7 @@ is no signature to verify. The examples use the code above directly.
 - **Proxies stripping `Authorization`.** Some proxies and serverless platforms
   drop or rewrite the header. Use a custom header if that happens.
 - **Raw body.** Because there's no body signature, normal JSON parsing is fine.
-  Accept both an object and an array (batched webhooks).
+  Brevo doesn't document the batched body, so accept both an object and an array.
 
 ## Debugging Verification Failures
 

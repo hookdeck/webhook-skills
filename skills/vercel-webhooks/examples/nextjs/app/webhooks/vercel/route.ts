@@ -87,8 +87,8 @@ export async function POST(request: NextRequest) {
           id: event.payload.deployment?.id,
           name: event.payload.deployment?.name,
           url: event.payload.deployment?.url,
-          project: event.payload.project?.name,
-          team: event.payload.team?.name,
+          project: event.payload.project?.id,
+          team: event.payload.team?.id,
           commit: event.payload.deployment?.meta?.githubCommitRef,
           message: event.payload.deployment?.meta?.githubCommitMessage,
         });
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
           id: event.payload.deployment?.id,
           name: event.payload.deployment?.name,
           url: event.payload.deployment?.url,
-          duration: event.payload.deployment?.duration,
+          target: event.payload.target,
         });
         // You could trigger post-deployment tasks here
         break;
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         console.error('Deployment failed:', {
           id: event.payload.deployment?.id,
           name: event.payload.deployment?.name,
-          error: event.payload.deployment?.error,
+          url: event.payload.deployment?.url,
         });
         // You could send alerts here
         break;
@@ -133,7 +133,6 @@ export async function POST(request: NextRequest) {
           id: event.payload.deployment?.id,
           name: event.payload.deployment?.name,
           url: event.payload.deployment?.url,
-          target: event.payload.deployment?.target,
         });
         // Could trigger cache clearing or feature flag updates
         break;
@@ -142,7 +141,6 @@ export async function POST(request: NextRequest) {
         console.log('Project created:', {
           id: event.payload.project?.id,
           name: event.payload.project?.name,
-          framework: event.payload.project?.framework,
         });
         break;
 
@@ -157,7 +155,7 @@ export async function POST(request: NextRequest) {
       case 'project.renamed':
         console.log('Project renamed:', {
           id: event.payload.project?.id,
-          oldName: event.payload.project?.oldName,
+          oldName: event.payload.previousName,
           newName: event.payload.project?.name,
         });
         // Update external references
@@ -166,24 +164,15 @@ export async function POST(request: NextRequest) {
       case 'domain.created':
         console.log('Domain created:', {
           domain: event.payload.domain?.name,
-          project: event.payload.project?.name,
+          delegated: event.payload.domain?.delegated,
         });
         break;
 
       case 'integration-configuration.removed':
         console.log('Integration removed:', {
           id: event.payload.configuration?.id,
-          integration: event.payload.integration?.name,
+          projectSelection: event.payload.configuration?.projectSelection,
         });
-        break;
-
-      case 'attack.detected':
-        console.warn('Attack detected:', {
-          type: event.payload.attack?.type,
-          action: event.payload.attack?.action,
-          ip: event.payload.attack?.ip,
-        });
-        // Security alerting
         break;
 
       default:

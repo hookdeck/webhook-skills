@@ -119,7 +119,20 @@ export async function POST(request: Request) {
       console.log('KYC approved:', event.event_object_id, object.customer?.tier);
       break;
     case 'kyc.rejected':
-      console.log('KYC rejected:', event.event_object_id, object.failure_reason);
+      // The reason is inside the verification block
+      console.log('KYC rejected:', event.event_object_id, object.verification?.failure_reason);
+      break;
+    case 'wallet_transfer.success':
+      // A move between two of your own wallets; the first and only event is terminal
+      console.log('Wallet transfer committed:', event.event_object_id);
+      break;
+    case 'split.completed':
+      // Once per payment: the split is final (completed) or did not apply (skipped)
+      console.log('Split completed:', event.event_object_id, object.split?.status);
+      break;
+    case 'split.leg_released':
+      // A share held for its recipient's limit was released and credited
+      console.log('Split share released:', event.event_object_id, object.transaction_id);
       break;
     default:
       // Return 200 for events you don't handle, or GlobalStack keeps retrying them

@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------------
 // Sahha signs every delivery with:
-//   X-Signature   lowercase hex HMAC-SHA256 of the raw request body (no prefix)
+//   X-Signature   hex HMAC-SHA256 of the raw request body (no prefix)
 //   X-Event-Type  e.g. ScoreCreatedIntegrationEvent
 //   X-External-Id the profile's external identifier in your system
 // The key is the Dashboard secret as UTF-8 bytes. Only the body is signed, so

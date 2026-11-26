@@ -11,7 +11,7 @@ const inbound = {
   namespace: 'SMS',
   eventType: 'inbound_message_received',
   description: 'SMS inbound message',
-  payload: { umid: '9e09ac86-bd74-5465-851d-1eb5a5fdbb9a', source: '+6581968289', destination: '+4534735477', body: 'Test MO message' },
+  payload: { umid: '9e09ac86-bd74-5465-851d-1eb5a5fdbb9a', source: '+6555555501', destination: '+4555555501', body: 'Test MO message' },
 };
 const receipt = {
   namespace: 'SMS',

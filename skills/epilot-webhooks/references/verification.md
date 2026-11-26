@@ -43,11 +43,11 @@ epilot's own docs sample passes only the `v1` entry (`split(" ")[1]`), which ass
 
 ### What if webhook-id is missing?
 
-Read the `webhook-*` headers, and when `webhook-id` is absent fall back to `svix-id`, `svix-timestamp` and `svix-signature`, as Hookdeck does. Then hand the three values to the library under the `webhook-*` names it expects. Every example does this and tests it.
+Read the `webhook-*` headers, and when `webhook-id` is absent fall back to `svix-id`, `svix-timestamp` and `svix-signature`. Then hand the three values to the library under the `webhook-*` names it expects. Every example does this and tests it.
 
 ## Manual Verification (no timestamp window, or a wider one)
 
-The library always enforces a fixed 5-minute window. epilot retries (up to 5 hours) and Hookdeck replays resend the original timestamp, so they fail after 5 minutes. This verifier lets you set `windowSeconds` to a larger value or `null` to skip the check. It requires the timestamp to be a plain positive integer, tries every `v1,` entry, skips `v1a`, and compares in constant time after a length check.
+The library always enforces a fixed 5-minute window. epilot's retries run up to 5 hours, its docs don't say whether a retry is signed again, and a replayed or queued request can arrive more than 5 minutes after signing, so the library can reject it. This verifier lets you set `windowSeconds` to a larger value or `null` to skip the check. It requires the timestamp to be a plain positive integer, tries every `v1,` entry, skips `v1a`, and compares in constant time after a length check.
 
 ```javascript
 const crypto = require('crypto');

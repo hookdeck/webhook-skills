@@ -8,7 +8,7 @@ handshake with a verify token, then POSTs signed with `X-Hub-Signature-256`).
 
 ## Common Event Types
 
-| Field (`values.field`) | Topic | Triggered When | Required permissions |
+| Field (`values[].field`) | Topic | Triggered When | Required permissions |
 |------------------------|-------|----------------|----------------------|
 | `replies` | `moderate` | A reply is posted on a Threads media owned by the installing user | `threads_basic`, `threads_read_replies` |
 | `delete` | `moderate` | A post is deleted by the authenticated user | `threads_basic`, `threads_delete` |
@@ -28,8 +28,9 @@ the Threads samples):
 | `time` | Unix time the notification was sent |
 | `subscription_id` | Subscription ID for the user |
 | `has_uid_field` | Boolean shown in the samples |
-| `values.field` | The event: `replies`, `mentions`, `publish` or `delete` |
-| `values.value` | The media object (`id`, `username`, `text`, `media_type`, `permalink`, `shortcode`, `timestamp`; `deleted_at` and `owner` for `delete`) |
+| `values` | The change. Meta's docs show one `{ field, value }` object; a live `publish` notification (2026-11-18) sent an array of them. Handle both |
+| `values[].field` | The event: `replies`, `mentions`, `publish` or `delete` |
+| `values[].value` | The media object (`id`, `username`, `text`, `media_type`, `permalink`, `shortcode`, `timestamp`; `deleted_at` and `owner` for `delete`) |
 
 ```json
 {
@@ -39,16 +40,18 @@ the Threads samples):
   "time": 1723226877,
   "subscription_id": "234567",
   "has_uid_field": false,
-  "values": {
-    "field": "publish",
-    "value": {
-      "id": "8901234",
-      "media_type": "TEXT_POST",
-      "permalink": "https://www.threads.com/@test_username/post/Pp",
-      "timestamp": "2024-08-07T10:33:16+0000",
-      "username": "test_username"
+  "values": [
+    {
+      "field": "publish",
+      "value": {
+        "id": "8901234",
+        "media_type": "TEXT_POST",
+        "permalink": "https://www.threads.com/@test_username/post/Pp",
+        "timestamp": "2024-08-07T10:33:16+0000",
+        "username": "test_username"
+      }
     }
-  }
+  ]
 }
 ```
 

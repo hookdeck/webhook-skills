@@ -11,8 +11,8 @@ Versive signs every delivery per Standard Webhooks, with Svix's header names:
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Versive source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+carry the same values. The examples here read the `svix-*` headers and fall back to
+the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 
@@ -140,14 +140,14 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDKs.** See the Hookdeck section above.
-- **One secret per endpoint.** Versive support hands it over when the destination is provisioned. Versive's docs say to "reject stale timestamps" without giving a number; the SDK's 5 minutes is the usual choice.
+- **One secret per endpoint.** Copy it from the endpoint in the webhooks portal, and update it everywhere you verify as soon as you rotate it there. Versive's docs say to "reject stale timestamps" without giving a number; the SDK's 5 minutes is the usual choice.
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Every request fails with "Invalid signature" | Wrong secret (ask Versive support to confirm the endpoint's secret), or the body was parsed/re-serialized before verification |
+| Every request fails with "Invalid signature" | Wrong secret (copy it again from that endpoint in the webhooks portal; each endpoint has its own), or the body was parsed/re-serialized before verification |
 | "Missing required webhook headers" | A proxy dropped the `svix-*` headers, or the request didn't come from Versive |
 | Fails only after deploys or proxies | A proxy or middleware rewrote the body |
 | "Timestamp too old" on retries or replays | The SDK's fixed 5-minute window; use the manual verifier |

@@ -7,7 +7,7 @@ Aurora Solar webhooks are **unsigned GET requests with no body**; the event data
 query string. The handler checks the header first (constant-time, whole value, case-insensitive
 header name), then reads the query parameters. The route is an `@app.get` (and `@app.post`) with a header-check dependency.
 
-> Set header_auth_key and header_auth_value on the Aurora Solar webhook and enter them here. Webhooks without them send nothing to verify.
+> Always set `header_auth_key` and `header_auth_value` on the Aurora Solar subscription. Aurora's webhook authentication is optional, so a subscription created without it sends no credential to check.
 
 ## Prerequisites
 
@@ -63,8 +63,7 @@ npx hookdeck-cli listen 8000 aurora-solar --path /webhooks/aurora-solar
 ```
 
 Use the printed URL, with a static event in the template, as the subscription's `url_template`:
-`https://<hookdeck-url>?event=project_created&project_id=<PROJECT_ID>`. Hookdeck's Aurora Solar
-source pre-selects GET without managing the method.
+`https://<hookdeck-url>?event=project_created&project_id=<PROJECT_ID>`. Allow GET on Hookdeck's Aurora Solar source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

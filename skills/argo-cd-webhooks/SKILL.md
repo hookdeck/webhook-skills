@@ -33,8 +33,7 @@ your template renders. You authenticate a request with a header you add to the w
 
 Argo CD webhooks are not signed. Add a secret header to the webhook service (service.webhook.<name>.headers in argocd-notifications-cm) and enter it here. Argo CD sends GET unless the notification template sets a method, so GET and POST are both allowed.
 
-Hookdeck's Argo CD source pre-selects GET and POST without managing the method, so if a
-template uses PUT or PATCH, allow that method on the source too. `basicAuth` on the Argo CD
+Hookdeck's Argo CD source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)): allow GET and POST, and PUT or PATCH if a template uses them. `basicAuth` on the Argo CD
 service sends `Authorization: Basic <base64(username:password)>` on every request; to use it, enter
 header name `Authorization` and the full `Basic <base64>` value.
 

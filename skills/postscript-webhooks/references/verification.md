@@ -23,7 +23,7 @@ tampered body carries the same header. So:
 - Guard the token: the docs describe it as fixed and document no way to rotate it. For a secret
   you control, add an optional `headers` object when creating the subscription; Postscript sends
   those key:value pairs as headers on every callback.
-- Make handling idempotent. Payloads have no documented event id. `webhook_id` appears to be the subscription's id (same UUID form as the subscription `id`), so it repeats across events: don't dedupe on it. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
+- Make handling idempotent. Payloads have no documented event id. Postscript doesn't say what `webhook_id` identifies, and it has the same UUID form as a subscription's `id`, so don't dedupe on it alone. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
 
 ## Implementation
 

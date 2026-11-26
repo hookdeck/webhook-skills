@@ -122,8 +122,5 @@ class TestOtherMethods:
         assert res.status_code == 200
 
     @pytest.mark.parametrize("method", ["GET", "DELETE"])
-    def test_empty_body_verified_over_zero_bytes(self, method):
-        assert client.request(method, URL, headers={SIG: sign(b"")}).status_code == 200
-
-    def test_unsigned_get_is_401(self):
-        assert client.get(URL).status_code == 401
+    def test_other_methods_are_405(self, method):
+        assert client.request(method, URL, headers={SIG: sign(b"")}).status_code == 405

@@ -3,8 +3,8 @@ name: payrix-pro-webhooks
 description: >
   Receive and authenticate Payrix Pro webhooks (Worldpay's payment facilitation platform,
   not Payrix Payments). Use when setting up a Payrix Pro webhook endpoint, checking the
-  Header Name and Header Value on a webhook action, debugging 401s, or handling transaction
-  and merchant alerts.
+  Header Name and Header Value on a webhook action, debugging 401s, or handling merchant
+  onboarding and other alerts.
 license: MIT
 metadata:
   author: hookdeck
@@ -67,8 +67,7 @@ function verifyPayrixProRequest(
 
 Payrix's docs don't name the HTTP method, and each action has its own format (Content-Type)
 setting. The examples therefore accept GET, POST, PUT, PATCH and DELETE, check the credential
-first, and handle an empty body. Hookdeck's Payrix Pro source pre-selects POST without managing
-the method, so any other method the sender uses must also be allowed on the source.
+first, and handle an empty body. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 The body isn't documented either. The examples parse JSON when the content type says so and
 otherwise keep the raw text. Express reads the raw body with `express.raw({ type: '*/*' })` and
@@ -76,14 +75,10 @@ parses only after the credential check.
 
 ## Alerts
 
-No event names are documented; the payload shape depends on the alert and the action's format
-setting. The examples use clearly labelled illustrative payloads, for example a transaction alert:
-
-```json
-{ "alert": "transaction", "transaction": { "id": "t1_txn_example", "total": 1500 } }
-```
-
-Dispatch on the fields your own alerts actually send.
+No event names are documented: each trigger is a Resource and an Event picked from portal
+dropdowns, and the payload shape depends on the trigger and the action's format setting. Give each
+webhook a single trigger and its own endpoint URL, capture a delivery before you write the parser,
+and dispatch on the fields your own triggers actually send.
 
 ## Environment Variables
 

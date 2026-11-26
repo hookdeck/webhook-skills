@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   //    doing it inline.
   //
   //    Cronofy has no replay protection (only the body is signed), so handling must be
-  //    idempotent — key on channel_id + changes_since, or upsert downstream.
+  //    idempotent — upsert the downstream Read Events sync on event_uid.
   try {
     handleNotification(type, notification, channel);
   } catch (err) {
@@ -137,25 +137,25 @@ function handleNotification(
       // Fires when Cronofy NEXT tries to access the profile, not at the moment the
       // user revoked access. State: UserInfo ["cronofy.data"]["profiles"].
       console.log(`🔌 Calendar profile disconnected (channel=${channel.channel_id})`);
-      // TODO: prompt the user to reauthorize; pause syncs for that profile.
+      // Your code: prompt the user to reauthorize; pause syncs for that profile.
       break;
 
     case 'conferencing_profile_disconnected':
       // State: UserInfo ["cronofy.data"]["conferencing_profiles"].
       console.log(`🎥 Conferencing profile disconnected (channel=${channel.channel_id})`);
-      // TODO: prompt reconnect before creating meetings with conferencing.
+      // Your code: prompt reconnect before creating meetings with conferencing.
       break;
 
     case 'profile_initial_sync_completed':
       // NOT sent if the initial sync completed before this channel existed.
       console.log(`✅ Initial calendar sync completed (channel=${channel.channel_id})`);
-      // TODO: run a full read now that the calendar data is complete.
+      // Your code: run a full read now that the calendar data is complete.
       break;
 
     case 'gdpr_requested':
       // The account invoked their right to be forgotten.
       console.log(`🗑️  GDPR erasure requested (channel=${channel.channel_id})`);
-      // TODO: delete this account's data on your side.
+      // Your code: delete this account's data on your side.
       break;
 
     default:
@@ -188,7 +188,7 @@ function handleChange(changesSince: string | undefined, channel: CronofyChannel)
     console.log(`   restricted to calendars: ${calendarIds.join(', ')}`);
   }
 
-  // TODO: replace with a real, authenticated, paginated read:
+  // Your code: replace with a real, authenticated, paginated read:
   //
   //   const url = new URL('/v1/events', dataCenterUrl);
   //   url.searchParams.set('tzid', 'Etc/UTC');

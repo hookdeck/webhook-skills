@@ -79,7 +79,7 @@ async function verifyEbaySignature(rawBody, signatureHeader, config) {
   try {
     sig = JSON.parse(Buffer.from(signatureHeader, 'base64').toString('utf8'));
   } catch {
-    return false; // { alg, kid, signature, digest }
+    return false; // decoded JSON carries kid and signature
   }
   if (!sig.kid || !sig.signature) return false;
 
@@ -91,7 +91,7 @@ async function verifyEbaySignature(rawBody, signatureHeader, config) {
   }
 
   const verifier = crypto.createVerify('sha1'); // eBay signs ECDSA with SHA-1
-  verifier.update(rawBody); // raw bytes — never re-serialize before verifying
+  verifier.update(rawBody); // body exactly as received
   verifier.end();
   try {
     return verifier.verify(pem, sig.signature, 'base64');
@@ -145,11 +145,11 @@ app.post('/webhooks/ebay', express.raw({ type: '*/*' }), async (req, res) => {
   switch (topic) {
     case 'MARKETPLACE_ACCOUNT_DELETION':
       console.log('Account deletion for user:', data.userId, data.username);
-      // TODO: delete or anonymize this user's data
+      // Your code: delete or anonymize this user's data
       break;
     case 'AUTHORIZATION_REVOCATION':
       console.log('Authorization revoked for user:', data.userId, data.username);
-      // TODO: stop API calls for this user and purge stored OAuth tokens
+      // Your code: stop API calls for this user and purge stored OAuth tokens
       break;
     case 'ITEM_AVAILABILITY':
       console.log('Item availability changed:', data.itemId);

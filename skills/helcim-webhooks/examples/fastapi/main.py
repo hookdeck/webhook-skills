@@ -19,7 +19,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Helcim sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """Helcim sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),
@@ -60,7 +60,8 @@ async def helcim_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # The event name is the top-level `type`. cardTransaction is thin: {id, type}.
-    # terminalCancel is {data, type}. webhook-id is stable across retries: use it to deduplicate.
+    # terminalCancel is {data, type}. Helcim doesn't say whether retries keep webhook-id:
+    # key cardTransaction work on the transaction id and make terminalCancel handling repeatable.
     event_type = event.get("type")
     print(f"Received Helcim webhook {sig_headers['webhook-id']}: {event_type}")
 

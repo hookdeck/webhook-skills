@@ -19,7 +19,7 @@ function verifyReditusSignature(rawBody, signature, secret = process.env.REDITUS
   if (!/^[0-9a-fA-F]{64}$/.test(signature)) return false;
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  const received = Buffer.from(signature.toLowerCase(), 'hex'); // case-insensitive, as Hookdeck does
+  const received = Buffer.from(signature.toLowerCase(), 'hex'); // case-insensitive
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
 
@@ -34,29 +34,29 @@ function handleEvent(payload) {
   switch (eventType) {
     case 'partnership.accepted':
       console.log(`Partnership accepted: ${str(data.affiliate_email)}`);
-      // TODO: activate the affiliate in your system
+      // Your code: activate the affiliate in your system
       break;
 
     case 'referral.created':
       console.log(`Referral created: ${str(data.referral_id)} (affiliate ${str(data.affiliate_email)})`);
-      // TODO: record the referral
+      // Your code: record the referral
       break;
 
     case 'advocate.created':
       console.log(`Advocate created: ${str(data.advocate_id)} (${str(data.advocate_email)})`);
-      // TODO: send the advocate their referral link
+      // Your code: send the advocate their referral link
       break;
 
     case 'lead.created':
       console.log(`Lead created: ${str(data.lead_id)} for advocate ${str(data.advocate_uid)}`);
-      // TODO: attribute the lead to the advocate
+      // Your code: attribute the lead to the advocate
       break;
 
     case 'reward.created': {
       // The docs' sample shows amount 5521 as $55.21, i.e. minor units.
       const amount = typeof data.amount === 'number' ? data.amount : undefined;
       console.log(`Reward created: ${str(data.reward_id)} amount=${amount} ${str(data.currency)}`);
-      // TODO: grant the reward
+      // Your code: grant the reward
       break;
     }
 

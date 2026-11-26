@@ -73,7 +73,7 @@ async def envoy_webhook(raw_body: bytes = Depends(verified_envoy_body)):
 
 def handle_event(payload: Any) -> None:
     # `event` is the topic; `payload` is the entry/invite/etc., `meta` has the location and company.
-    # TODO: dedupe (e.g. on event + payload.id); Envoy retries failed deliveries.
+    # Dedupe (e.g. on event + payload.id) before acting: Envoy retries failed deliveries.
     payload = payload if isinstance(payload, dict) else {}
     event = payload.get("event")
     data = payload.get("payload") or {}

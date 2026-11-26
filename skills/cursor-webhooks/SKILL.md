@@ -126,48 +126,46 @@ def verify_cursor_webhook(body: bytes, signature_header: str, secret: str) -> bo
 ```json
 {
   "event": "statusChange",
-  "timestamp": "2024-01-01T12:00:00.000Z",
-  "id": "agent_123456",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "id": "bc_abc123",
   "status": "FINISHED",  // or "ERROR"
   "source": {
-    "repository": "https://github.com/user/repo",
+    "repository": "https://github.com/your-org/your-repo",
     "ref": "main"
   },
   "target": {
-    "url": "https://github.com/user/repo/pull/123",
-    "branchName": "feature-branch",
-    "prUrl": "https://github.com/user/repo/pull/123"
+    "url": "https://cursor.com/agents?id=bc_abc123",
+    "branchName": "cursor/add-readme-1234",
+    "prUrl": "https://github.com/your-org/your-repo/pull/1234"
   },
-  "summary": "Updated 3 files and fixed linting errors"
+  "summary": "Added README.md with installation instructions"
 }
 ```
+
+Some fields are optional and only included when available (a `FINISHED` agent with no pull request has no `target.prUrl`). `id` is the agent ID, not a delivery ID.
 
 ## Environment Variables
 
 ```bash
-# Your Cursor webhook signing secret
+# The webhook.secret you set when creating the agent
 CURSOR_WEBHOOK_SECRET=your_webhook_secret_here
 ```
 
+Cursor's docs describe no dashboard setting for webhooks. You choose the secret yourself and pass it, with the URL, in the `webhook` object of the legacy v0 Create An Agent request (`POST /v0/agents`); the current Cloud Agents API lists webhooks as coming soon. The secret is optional in the API but must be at least 32 characters when set, so always set one.
+
 ## Local Development
 
-For local webhook testing, install Hookdeck CLI:
-
 ```bash
-```
-
-Then start the tunnel:
-
-```bash
+# Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 cursor --path /webhooks/cursor
 ```
 
-No account required. Provides local tunnel + web UI for inspecting requests.
+Then create a small agent with the tunnel URL as `webhook.url`. Cursor documents no test button.
 
 ## Resources
 
 - `overview.md` - What Cursor webhooks are, event types
-- `setup.md` - Configure webhooks in Cursor dashboard
+- `setup.md` - Set `webhook.url` and `webhook.secret` when creating an agent (v0 API)
 - `verification.md` - Signature verification details and gotchas
 - `examples/` - Runnable examples per framework
 

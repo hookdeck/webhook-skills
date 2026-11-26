@@ -38,22 +38,24 @@ The response looks like this:
 
 `signatureSecret` is the signing secret. Salsa's example prints the placeholder `some-secret`, but a real
 secret is a `whsec_` prefix followed by base64 (the docs use `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw` as an
-example). Put the full value, prefix included, in `SALSA_WEBHOOK_SECRET`.
+example). Put the full value, prefix included, in `SALSA_WEBHOOK_SECRET`. Salsa returns it only in this create
+response, so store it straight away.
 
 Notes on the request:
 
 - The endpoint is `ENABLED` by default, so events are sent right away.
-- The docs describe no per-event selection. An endpoint receives the events Salsa sends for your account.
-- No challenge or validation request is sent when you create an endpoint, so your handler doesn't need a
-  handshake.
+- The create request takes only `description` and `endpointUrl`, so there is no per-event selection. An
+  endpoint receives every event Salsa sends for your account.
+- Salsa documents no challenge or validation request when you create an endpoint.
 - `webhookVersion` appears in the responses and can be set when updating an endpoint.
 
 ## Manage Endpoints
 
 Send a `PUT` request to `webhook-endpoints/{webhookEndpointId}` to change `endpointUrl`, `description`,
-`status` or `webhookVersion`. Set `status` to disable the endpoint: Salsa then stops sending events to it, and
+`status` or `webhookVersion`. The update requires all four fields, so send the current `webhookVersion` unless
+you mean to change it. Set `status` to disable the endpoint: Salsa then stops sending events to it, and
 delivery attempts are disabled. See the
-[Create Webhook Endpoint reference](https://docs.salsa.dev/reference/createwebhookendpoint) for the exact
+[Update WebhookEndpoint reference](https://docs.salsa.dev/reference/updatewebhookendpoint) for the exact
 request shapes.
 
 To rotate the signing secret, contact Salsa support. Update `SALSA_WEBHOOK_SECRET` when they do.

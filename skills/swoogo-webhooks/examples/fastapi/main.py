@@ -57,35 +57,35 @@ def parse_body(raw: bytes, content_type: str = ""):
 def handle_change(obj, payload: dict) -> None:
     if obj == "event":
         print(f"Event changed: {payload.get('id')}")
-        # TODO: sync event details
+        # Sync event details
 
     elif obj == "contact":
         print(f"Contact changed: {payload.get('id')}")
-        # TODO: sync the contact to your CRM
+        # Sync the contact to your CRM
 
     elif obj == "registrant":
         print(f"Registrant changed: {payload.get('id')}")
-        # TODO: upsert the registrant (insert and update both arrive here)
+        # Upsert the registrant (insert and update both arrive here)
 
     elif obj == "speaker":
         print(f"Speaker changed: {payload.get('id')}")
-        # TODO: sync the speaker roster
+        # Sync the speaker roster
 
     elif obj == "sponsor":
         print(f"Sponsor changed: {payload.get('id')}")
-        # TODO: sync the sponsor list
+        # Sync the sponsor list
 
     elif obj == "session":
         print(f"Session changed: {payload.get('id')}")
-        # TODO: refresh the agenda
+        # Refresh the agenda
 
     elif obj == "session_attendance":
         print(f"Session attendance changed: {payload.get('id')}")
-        # TODO: record the check-in
+        # Record the check-in
 
     elif obj == "registrant_line_item":
         print(f"Registrant line item changed: {payload.get('id')}")
-        # TODO: update fees and purchases
+        # Update fees and purchases
 
     else:
         print(f"Unhandled trigger object: {obj}")

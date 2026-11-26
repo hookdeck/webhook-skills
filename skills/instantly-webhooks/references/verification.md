@@ -85,8 +85,9 @@ def verify_instantly_header(received: str | None, expected: str | None) -> bool:
 | Invalid JSON (after auth) | `400` |
 | `INSTANTLY_WEBHOOK_SECRET` not set | `500` |
 
-Instantly retries non-2xx responses and eventually disables the webhook, so
-a misconfigured secret shows up as a disabled webhook (`status: -1`).
+Instantly counts only a `200` as a successful delivery. It retries failed
+deliveries and disables the webhook after repeated failures, so a misconfigured
+secret shows up as a disabled webhook (`status: -1`).
 
 ## Debugging Verification Failures
 

@@ -35,7 +35,7 @@ Steps, in order:
 
 ## Replay Protection
 
-Coassemble's docs show no timestamp window. The examples **don't check the timestamp age by default**: retries and replays (Coassemble's own, Hookdeck's, manual resends) carry the original `X-Coassemble-Timestamp`, so a fixed window would reject legitimate late redeliveries, and Hookdeck itself applies no tolerance. To opt in, set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. Use the `X-Coassemble-Delivery` header (identical across retries) for idempotency (see webhook-handler-patterns).
+Coassemble's docs show no timestamp window. The examples **don't check the timestamp age by default**: Hookdeck's retries and replays carry the original `X-Coassemble-Timestamp`, and Coassemble's docs don't say whether its own retries and manual replays re-sign with a new one, so a fixed window could reject legitimate late redeliveries. To opt in, set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. Use the `X-Coassemble-Delivery` header (identical across retry attempts) for idempotency (see webhook-handler-patterns).
 
 ## Common Gotchas
 

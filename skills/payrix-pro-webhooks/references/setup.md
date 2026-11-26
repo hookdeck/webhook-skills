@@ -31,19 +31,17 @@ PAYRIX_PRO_WEBHOOK_SECRET=replace-with-a-long-random-secret   # exact, whole val
 ## Hookdeck
 
 In Hookdeck, create a source of type **Payrix Pro** and set **API Key Header** and **API Key** to
-the same Header Name and Header Value (exact whole value). Hookdeck's Payrix Pro source pre-selects
-POST without managing the method, so if Payrix sends any other method (GET, PUT, PATCH, DELETE),
-allow that method on the source too.
+the same Header Name and Header Value. Payrix doesn't document the method; a method the source hasn't enabled is rejected, so check the first request and enable its method if needed ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 
-Trigger the alert, or replay with curl (illustrative payload):
+Trigger the alert, or check the header handling with curl (a placeholder body, not a Payrix payload):
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/payrix-pro \
   -H "Content-Type: application/json" \
   -H "$PAYRIX_PRO_WEBHOOK_HEADER: $PAYRIX_PRO_WEBHOOK_SECRET" \
-  -d '{"alert":"transaction","transaction":{"id":"t1_txn_example","total":1500}}'
+  -d '{"placeholder":"test body"}'
 ```
 
 ## Network Notes

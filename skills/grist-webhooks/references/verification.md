@@ -80,7 +80,7 @@ def safe_equal(a: str, b: str) -> bool:
 - **No Header Authorization set in Grist**: requests arrive with no `Authorization` header and
   every one gets a 401. Set the field in the webhook config.
 - **Retries**: Grist retries until it gets a success, so a 401 keeps the payload queued.
-- **Hookdeck**: a Hookdeck Grist source verifies the same header (full value). Paste the Header
+- **Hookdeck**: a Hookdeck Grist source checks the same header. Paste the Header
   Authorization value exactly as set in Grist, including any "Bearer " or "Basic " prefix.
 
 ## Debugging 401s

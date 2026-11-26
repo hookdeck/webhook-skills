@@ -25,13 +25,13 @@ metadata:
 
 ## How Etsy Webhooks Work
 
-Etsy webhooks follow the [Standard Webhooks](https://www.standardwebhooks.com/) spec. Every delivery is an HTTP POST with a JSON body and three headers:
+Etsy's signing matches the [Standard Webhooks](https://www.standardwebhooks.com/) spec, although Etsy's docs don't name it. Every delivery is an HTTP POST with a JSON body and three headers:
 
 | Header | Contents |
 |--------|----------|
 | `webhook-id` | Unique message ID (stays the same across retries) |
 | `webhook-timestamp` | Unix timestamp (seconds) when the event was emitted |
-| `webhook-signature` | Space-separated list of `v1,<base64 signature>` entries |
+| `webhook-signature` | One or more signature entries. Etsy's docs don't show the value; Standard Webhooks uses space-separated `v1,<base64 signature>` entries |
 
 The signature is HMAC-SHA256 over `{webhook-id}.{webhook-timestamp}.{raw body}`, keyed with the signing secret after you strip the `whsec_` prefix and base64-decode the rest. The result is base64-encoded. Etsy recommends rejecting timestamps more than 300 seconds from your server time.
 
@@ -54,7 +54,7 @@ function verifyEtsyWebhook(rawBody, headers, secret) {
     .update(`${id}.${timestamp}.${rawBody}`)
     .digest('base64');
 
-  // Header may hold several "v1,<sig>" entries (e.g. during secret rotation)
+  // Etsy says the header can hold more than one entry: accept any match
   return signatureHeader.split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
     if (version !== 'v1' || !sig) return false;

@@ -32,8 +32,8 @@ authentication is an optional static **HTTP Authorization** value you set on the
 
 When you add a webhook in 8x8 Connect (portal or Webhooks Configuration API, field
 `httpAuthorization`), you can set an HTTP Authorization value such as `Bearer 9QQhlsEb8VY` or
-`Basic dXNlcjpwYXNzd29yZA==`. Paste it **exactly as set in 8x8, including any `Bearer ` or
-`Basic ` prefix**. OAuth authentication is not supported. Compare the **whole
+`Basic dXNlcjpwYXNzd29yZA==`. Store it **exactly as set in 8x8, including any `Bearer ` or
+`Basic ` prefix**. This skill doesn't cover 8x8's OAuth option. Compare the **whole
 `Authorization` header** to that value. Do not strip, parse or base64-decode it, for Basic as
 well as Bearer:
 

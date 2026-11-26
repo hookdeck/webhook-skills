@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// Helcim sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Helcim sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {
@@ -59,7 +59,8 @@ export async function POST(request: Request) {
   }
 
   // The event name is the top-level `type`. cardTransaction is thin: { id, type }.
-  // terminalCancel is { data, type }. webhook-id is stable across retries: use it to deduplicate.
+  // terminalCancel is { data, type }. Helcim doesn't say whether retries keep webhook-id:
+  // key cardTransaction work on the transaction id and make terminalCancel handling repeatable.
   const type = event.type;
   console.log(`Received Helcim webhook ${id}: ${type}`);
 

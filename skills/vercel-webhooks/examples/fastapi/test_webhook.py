@@ -218,31 +218,6 @@ class TestVercelWebhook:
         assert response.status_code == 200
         assert response.json() == {"received": True}
 
-    def test_attack_detected_event(self):
-        """Test attack.detected event handling."""
-        event = create_test_event("attack.detected", {
-            "attack": {
-                "type": "ddos",
-                "action": "blocked",
-                "ip": "192.0.2.1"
-            }
-        })
-
-        body = json.dumps(event).encode()
-        signature = generate_vercel_signature(body, TEST_SECRET)
-
-        response = client.post(
-            "/webhooks/vercel",
-            content=body,
-            headers={
-                "x-vercel-signature": signature,
-                "content-type": "application/json"
-            }
-        )
-
-        assert response.status_code == 200
-        assert response.json() == {"received": True}
-
     def test_unknown_event_type(self):
         """Test handling of unknown event types."""
         event = create_test_event("unknown.event.type", {

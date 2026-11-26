@@ -18,13 +18,9 @@ Hostaway is vacation rental software. It can call a URL you provide when data ch
 
 ## Event Payload Structure
 
-The unified webhook payload is **not documented field by field**, and the support article doesn't name the HTTP method or body format. This illustrative payload is not Hostaway's schema:
+The unified webhook payload is **not documented field by field**, and neither page names the HTTP method, the body format or the field that carries the event name. The API changelog says unified webhooks carry the Reservation object, and the help article says each request includes `listingMapId`. Capture a delivery from a test direct booking before you write routing logic.
 
-```json
-{ "event": "reservation.created", "data": { "id": 1001, "listingMapId": 2002, "guestName": "Jane Doe", "status": "new" } }
-```
-
-The examples read the event name defensively from `event`, `eventType`, or `object` + `action`, and log the keys of any shape they don't recognise.
+The examples try a few candidate field names for the event (`event`, `eventType`, or `object` + `action`). These are guesses, not documented fields: replace them with the field you see in a captured delivery, and log the keys of any shape they don't recognise.
 
 ## Delivery
 
@@ -34,4 +30,4 @@ The examples read the event name defensively from `event`, `eventType`, or `obje
 
 ## Full Event Reference
 
-See [Using Hostaway Webhooks](https://support.hostaway.com/hc/en-us/articles/360009022653-Using-Hostaway-Webhooks) and the [Hostaway API documentation](https://api.hostaway.com/documentation). The help article returns 403 to curl; it loads in a browser.
+See [Using Hostaway Webhooks](https://support.hostaway.com/hc/en-us/articles/360009022653-Using-Hostaway-Webhooks) and the [Hostaway API documentation](https://api.hostaway.com/documentation). The help article page returns 403 to curl; its text is also served by the Zendesk Help Center API.

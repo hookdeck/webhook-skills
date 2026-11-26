@@ -44,31 +44,31 @@ def handle_event(payload: dict) -> None:
     # Notifications are thin: query the Swan API with resourceId for the details.
     if event_type == "Transaction.Booked":
         print(f"Transaction booked: {resource_id}")
-        # TODO: fetch the transaction and update your ledger
+        # Your code: fetch the transaction and update your ledger
 
     elif event_type == "Transaction.Pending":
         print(f"Transaction pending: {resource_id}")
-        # TODO: show the transaction as pending
+        # Your code: show the transaction as pending
 
     elif event_type == "Transaction.Rejected":
         print(f"Transaction rejected: {resource_id}")
-        # TODO: notify the account holder
+        # Your code: notify the account holder
 
     elif event_type == "Account.Created":
         print(f"Account created: {resource_id}")
-        # TODO: provision the account in your system
+        # Your code: provision the account in your system
 
     elif event_type == "AccountHolder.Updated":
         print(f"Account holder updated: {resource_id}")
-        # TODO: refresh the account holder's verification status
+        # Your code: refresh the account holder's verification status
 
     elif event_type == "Card.Created":
         print(f"Card created: {resource_id}")
-        # TODO: store the card reference
+        # Your code: store the card reference
 
     elif event_type == "Onboarding.Updated":
         print(f"Onboarding updated: {resource_id}")
-        # TODO: fetch the onboarding and advance your KYC flow
+        # Your code: fetch the onboarding and advance your KYC flow
 
     else:
         print(f"Unhandled event: {event_type}")

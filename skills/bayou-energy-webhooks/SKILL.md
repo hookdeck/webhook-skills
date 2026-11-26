@@ -57,7 +57,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
 
 > **Timestamp window.** The library always enforces a fixed **5-minute** window. Hookdeck retries and replays resend the **original** timestamp, so the library rejects a retry that arrives more than 5 minutes after the first attempt. If you receive through Hookdeck, use the manual verifier in [references/verification.md](references/verification.md), where the window can be dropped or widened.
 
-> **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/). They read the `webhook-*` headers and fall back to `svix-*` when `webhook-id` is absent, as Hookdeck does.
+> **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/). They read the `webhook-*` headers and fall back to `svix-*` when `webhook-id` is absent.
 
 ## Event Envelope
 

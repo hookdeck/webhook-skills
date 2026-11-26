@@ -70,13 +70,16 @@ async def sovos_webhook(
             f"Document received: {metadata.get('documentId')} "
             f"(ERP {metadata.get('erpDocumentId')}, status {metadata.get('sciResponseCode')})"
         )
-        # TODO: update the ERP document status; fetch notification["contentUrl"] if needed
+        # Update the ERP document status here; fetch notification["contentUrl"] if needed
+    # document.completed, workflow.completed and system.error are the statusEvent
+    # names Sovos configures. Its docs only show document.received as a delivered
+    # eventType, so log what arrives and adjust these branches to match.
     elif event_type in ("document.completed", "workflow.completed"):
         print(f"Document processing completed: {metadata.get('documentId')}")
-        # TODO: mark the invoice final and store legal attachments
+        # Mark the invoice final and store legal attachments here
     elif event_type == "system.error":
         print(f"Sovos system error: {metadata.get('documentId')}")
-        # TODO: alert and flag the document for review
+        # Alert your team and flag the document for review here
     else:
         print(f"Unhandled event type: {event_type}")
 

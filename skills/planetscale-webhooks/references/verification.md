@@ -2,7 +2,7 @@
 
 ## How It Works
 
-Every delivery carries `X-PlanetScale-Signature`. Its value is the **lowercase hex digest of HMAC-SHA256** over the **exact raw request body**, keyed with the webhook's secret. It is the whole header value: no `sha256=` prefix, no comma-separated list.
+Every delivery carries `X-PlanetScale-Signature`. Its value is the **hex digest of HMAC-SHA256** over the **exact raw request body**, keyed with the webhook's secret. It is the whole header value: no `sha256=` prefix, no comma-separated list.
 
 - **Key:** the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). One secret per webhook.
 - **Signed content:** the raw body bytes only. No timestamp, id or other header is signed.

@@ -24,11 +24,13 @@ The `secret` you set here is the value your handler uses as
 `FAVRO_WEBHOOK_SECRET`. The `postToUrl` is the value your handler uses as
 `FAVRO_WEBHOOK_URL` — they must match byte-for-byte.
 
-### 2. Via Favro UI Automations
+### 2. In the Favro app
 
-You can also create webhooks through Favro's board automations UI. Note that
-webhooks triggered by UI automations send **partial data with no pre-update
-state** — see [overview.md](overview.md).
+Open the board or backlog's menu (**...**), then **More** > **Integrations and API...**,
+and select **Configure new webhook**. Enter a name, the URL to post notifications to
+and a secret key, then select **Connect**. When the connection succeeds, Favro shows
+the options for picking which notifications to send. The same dialog logs each
+request Favro sent and the response it got (**View details**).
 
 ## The Secret
 
@@ -58,10 +60,10 @@ immediately after setup, check this first.
 As soon as the webhook is created, Favro POSTs a **ping** to `postToUrl`:
 
 ```json
-{ "payloadId": "AbCdEf==", "action": "ping", "hookId": "abc123", "hook": { "url": "https://example.com/webhooks/favro" } }
+{ "payloadId": "ZnvqwjdLh1wmbnEj6vOfHhv8ARY=", "action": "ping", "hookId": "67973f72db34592d8fc96c48", "hook": { "url": "https://yourserver.com/webhookfromfavro" } }
 ```
 
-Your endpoint must return a `2xx` for the webhook to be considered valid. The ping
+Favro expects a `200` for every payload, the ping included. The ping
 carries a `payloadId`, so it is signed with the same HMAC scheme — verify it like
 any other event and return `200`. If the ping fails verification, the usual cause
 is a `FAVRO_WEBHOOK_URL` mismatch (see above).

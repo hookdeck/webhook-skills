@@ -6,6 +6,8 @@ RootFi is a unified accounting, commerce and payments integrations API, now docu
 
 Each webhook config subscribes to **exactly one** event type, so create one config per event you want.
 
+This skill covers the V4 webhooks. Organisations still on the V3 API (`api.rootfi.dev/v3`) receive V3 webhooks: flat bodies with a `webhook_type` field, only `DATA_MODEL_CHANGES`, `CONNECTION_CHANGED` and `SYNC_COMPLETED`, and no signature. Endpoints carry over when Commenda migrates an organisation to V4, but the payloads change. See [Migrating from V3 to V4](https://integrations.docs.commenda.io/api-reference/v4/overview/migrating-from-v3).
+
 ## Common Event Types
 
 | Event | Triggered When | Common Use Cases |

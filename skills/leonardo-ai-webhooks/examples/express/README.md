@@ -53,7 +53,7 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/leonardo-ai \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LEONARDO_AI_WEBHOOK_SECRET" \
-  -d '{"type":"image_generation.complete","object":"generation","timestamp":1699490546932,"api_version":"v1","data":{"object":{"id":"gen-1","status":"COMPLETE","images":[]}}}'
+  -d '{"type":"image_generation.complete","object":"generation","timestamp":1699490546932,"api_version":"v1","data":{"object":{"id":"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX","status":"COMPLETE","images":[]}}}'
 ```
 
 ## Receive Webhooks Locally

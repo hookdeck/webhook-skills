@@ -21,47 +21,47 @@ function handleEvent(payload: ArcadiaPayload): void {
   switch (eventType) {
     case 'STATUS_CHANGE':
       console.log(`Status change on ${resource}: ${data?.id}`);
-      // TODO: if data.isCustomerActionRequired, prompt the user to fix the connection
+      // If data.isCustomerActionRequired, prompt the user to fix the connection
       break;
 
     case 'NEW_DATA_AVAILABLE':
       console.log(`New data available for ${resource}: ${data?.id}`);
-      // TODO: fetch the new data for data.accounts
+      // Fetch the new data for data.accounts
       break;
 
     case 'EXISTING_DATA_UPDATED':
       console.log(`Existing data updated for ${resource}: ${data?.id}`);
-      // TODO: re-sync the affected records
+      // Re-sync the affected records
       break;
 
     case 'DATA_DELETED':
       console.log(`Data deleted (${resource}): ${data?.businessUnitId}`);
-      // TODO: remove or move local copies (data.movedToBusinessUnitId)
+      // Remove or move local copies (data.movedToBusinessUnitId)
       break;
 
     case 'BUSINESS_UNIT_ASSIGNMENT':
       console.log(`Business unit assignment (${resource})`);
-      // TODO: update ownership of data.account
+      // Update ownership of data.account
       break;
 
     case 'REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS':
       console.log(`Credential validated: ${data?.id}`);
-      // TODO: mark the connection ready
+      // Mark the connection ready
       break;
 
     case 'REAL_TIME_CREDENTIAL_VALIDATION_FAILURE':
       console.log(`Credential validation failed: ${data?.id}`);
-      // TODO: ask the user to re-enter their utility credentials
+      // Ask the user to re-enter their utility credentials
       break;
 
     case 'MFA_CHALLENGE_METHOD':
       console.log(`MFA method needed for credential ${data?.credential?.id}`);
-      // TODO: show data.verificationMethods and submit the choice
+      // Show data.verificationMethods and submit the choice
       break;
 
     case 'MFA_CHALLENGE_CODE':
       console.log(`MFA code needed for credential ${data?.credential?.id}`);
-      // TODO: prompt the user for the code
+      // Prompt the user for the code
       break;
 
     default:

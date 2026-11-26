@@ -10,9 +10,9 @@ Tensorlake deliveries are signed by Svix per Standard Webhooks, with Svix's head
 | `svix-timestamp` | Unix timestamp in seconds when the message was sent |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Tensorlake source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+Tensorlake documents only the `svix-*` headers. Svix's scheme is the Standard Webhooks one, so the
+examples here read the `svix-*` headers and fall back to the Standard Webhooks names (`webhook-id`,
+`webhook-timestamp`, `webhook-signature`) when `svix-id` is absent.
 
 The algorithm:
 

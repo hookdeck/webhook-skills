@@ -84,7 +84,7 @@ def verify_tiltify_signature(
     expected = base64.b64encode(
         hmac.new(secret.encode("utf-8"), signed_content, hashlib.sha256).digest()
     )
-    # Compare the base64 text, as Hookdeck does: decoding would also accept a
+    # Compare the base64 text: decoding would also accept a
     # non-canonical last character (stray low bits) that maps to the same digest.
     received = signature_header.encode("ascii")
 

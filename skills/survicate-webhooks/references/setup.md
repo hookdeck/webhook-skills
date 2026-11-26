@@ -2,7 +2,7 @@
 
 ## Register the Endpoint
 
-Copy the workspace Signing Secret from Survicate Webhooks Settings. In the survey's Connect tab, configure the webhook URL and choose questionAnswered or surveyCompleted. Use Send sample request to test. The separate Verification Token is sent in plaintext and is not used by this HMAC verifier.
+Copy the workspace Signing Secret from **Integrations** > **Webhooks** (click **Connect**) in the Survicate panel. In the survey's Connect tab, pick Webhooks, paste the URL and enable delivery per answer (questionAnswered), on completion (surveyCompleted) or both. Use Send sample request to test. The secret and token can be regenerated at any time; update `SURVICATE_WEBHOOK_SECRET` as soon as you regenerate the secret. The separate Verification Token is sent in plaintext and is not used by this HMAC verifier.
 
 Use `POST /webhooks/survicate`. Configure `SURVICATE_WEBHOOK_SECRET` with the same secret as the sender; keep it out of source control.
 
@@ -18,7 +18,7 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `SURVICATE` source type once it is available in your environment and configure its verification secret. Named sources answer 200 at ingress; a failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures. Hookdeck applies no timestamp tolerance.
+Choose the `SURVICATE` source type once it is available in your environment and configure its verification secret. A request with a bad signature is recorded as failed verification and creates no event. The example receivers themselves return 401 for invalid signatures.
 
 No timestamp is included in the signed message. These examples do not invent an age check from unsigned fields.
 

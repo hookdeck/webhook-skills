@@ -52,37 +52,37 @@ def handle_event(payload: dict) -> None:
 
     if event == "invoice.charged":
         print(f"Invoice charged: {object_id}")
-        # TODO: sync the invoice (payload["value"] is the invoice DTO)
+        # Sync the invoice (payload["value"] is the invoice DTO)
         return
 
     if event == "notification.sent":
         print(f"Notification sent: {object_id}")
-        # TODO: surface the notification to the employee
+        # Surface the notification to the employee
         return
 
     if event == "voucherstatus.ready":
         print(f"Voucher ready for processing: {object_id}")
-        # TODO: fetch the voucher from the voucher reception
+        # Fetch the voucher from the voucher reception
         return
 
     if event == "closegroup.create":
         print(f"Close group created: {object_id}")
-        # TODO: store payload["value"] postings; fires on automatic closes (e.g. OCR matching) too
+        # Store payload["value"] postings; fires on automatic closes (e.g. OCR matching) too
         return
 
     if event == "closegroup.delete":
         print(f"Close group deleted: {object_id}")
-        # TODO: value is null; reopen the postings you stored from closegroup.create
+        # Value is null; reopen the postings you stored from closegroup.create
         return
 
     obj, _, verb = str(event).partition(".")
     if obj in CRUD_OBJECTS and verb in CRUD_VERBS:
         if verb == "delete":
             print(f"{obj} deleted: {object_id}")  # value is null, only the id is sent
-            # TODO: remove the local copy of the object
+            # Remove the local copy of the object
         else:
             print(f"{obj} {verb}d: {object_id}")
-            # TODO: upsert value (the DTO), ignoring versions older than the stored one
+            # Upsert value (the DTO), ignoring versions older than the stored one
         return
 
     print(f"Unhandled event: {event}")

@@ -27,16 +27,16 @@ metadata:
 Lettermint sends an `X-Lettermint-Signature` header of the form `t=<unix seconds>,v1=<hex>`.
 `v1` is the lowercase hex HMAC-SHA256 of `"<t>.<raw body>"`, where `<t>` is the header's `t`
 value exactly as sent. The key is the webhook secret used **as-is**, including the `whsec_` prefix,
-as UTF-8 bytes. During key rotation the header may carry more than one `v1`: accept the delivery if
-any of them matches, and ignore other keys such as `v0`.
+as UTF-8 bytes. The header can carry more than one `v1`, and Lettermint's SDKs accept a match on
+any of them, so do the same and ignore other keys such as `v0`.
 
 Paste the whole secret, including the whsec_ prefix. Lettermint uses it as a plain HMAC key.
 
 This is **not** Standard Webhooks, even though the secret starts with `whsec_`. Do not use the
 `standardwebhooks` or `svix` libraries, and do not strip the prefix or base64-decode the secret.
 
-Lettermint's docs recommend rejecting timestamps more than 300 seconds from now, but retries
-(12 attempts over about 14 hours) and Hookdeck replays keep the original `t`, so the window is
+Lettermint's docs recommend rejecting timestamps more than 300 seconds from now, but a delivery
+that Hookdeck retries or replays later keeps the original `t`, so the window is
 opt-in here (`LETTERMINT_WEBHOOK_TOLERANCE_SECONDS`, unset or `0` = off). Always sign over the
 **raw body bytes**, never a re-serialized object.
 
@@ -58,7 +58,7 @@ function verifyLettermintWebhook(rawBody, header, secret, toleranceSeconds = 0) 
 
 Missing header, malformed value or mismatch: respond `401` (Lettermint does not retry 4xx other than 408 and 429).
 
-Lettermint also ships SDKs with a `Webhook.verify()` helper. They additionally require `X-Lettermint-Delivery` to equal `t` and enforce a 300 second window by default. Hookdeck does not check `X-Lettermint-Delivery`, so these examples verify manually to behave the same way and keep replays working.
+Lettermint also ships SDKs with a `Webhook.verify()` helper. They additionally require `X-Lettermint-Delivery` to equal `t` and enforce a 300 second window by default. These examples verify manually, which keeps replays working.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -76,7 +76,7 @@ Dispatch on the body's top-level `event` field (also sent in the `X-Lettermint-E
 | `suppression.added` | A suppression entry was added | Sync suppressions to another system |
 | `webhook.test` | You clicked **Test Webhook** | Confirm the endpoint works |
 
-The other documented events (`message.created`, `message.sent`, `message.auto_replied`, `message.suppressed`, `message.policy_rejected`, `message.unsubscribed`, `message.opened`, `message.clicked`, `suppression.removed`, `message.inbound`) are listed in [references/overview.md](references/overview.md). The handlers log any event they don't handle.
+The other documented events (`message.created`, `message.sent`, `message.auto_replied`, `message.suppressed`, `message.policy_rejected`, `message.unsubscribed`, `message.opened`, `message.clicked`, `suppression.removed`, `message.inbound`, `inbound.rejected`) are listed in [references/overview.md](references/overview.md). The handlers log any event they don't handle.
 
 ## Environment Variables
 

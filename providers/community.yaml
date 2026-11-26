@@ -25,12 +25,15 @@ notes: >
   correct host. There is NO source-IP allowlist and NO handshake/challenge step.
   There is no official Community SDK for webhook verification in any language.
   ENVELOPE: top-level id (UUID), type, object ("member" or "message"), created
-  (ISO-8601 with microseconds), api_version (e.g. "2024-02-12"), and data. All five
+  (ISO-8601 with microseconds), api_version (e.g. "2024-02-12"), and data. All six
   documented sample payloads nest the event data at data.object, while the prose on
   the same page says data.member / data.message — follow the samples and fall back
-  defensively. EVENTS (complete documented set, five types): message.inbound,
-  message.outbound (some messages filtered out — help/start/stop, tapbacks),
-  member.created, member.updated, member.deleted. PAYLOADS: member objects carry id,
+  defensively. EVENTS (documented set, six types as of 2026-11-26): message.inbound,
+  message.outbound (some messages filtered out — help/start/stop, tapbacks,
+  media-only), member.created, member.updated (also fires on unsubscribe),
+  member.deleted (member deletes themselves), member.opted_out (unsubscribe such
+  as replying STOP; carries an opt_out object with source, opted_out_at and the
+  triggering message). An opt-out sends member.updated AND member.opted_out. PAYLOADS: member objects carry id,
   active, timestamp, client_id, communication_channel, communication_channel_id, and
   optional personal data (email, given_name, surname, city, country, country_code,
   state_or_province, state_or_province_abbreviation, postal_code, date_of_birth,
@@ -42,8 +45,9 @@ notes: >
   values are DM, Campaign, Fan_Onboarding, Opt_In, Opt_Out, Keyword_Response,
   Seat_Onboarding, Help_Response, Automated, External, External_Customer_Support —
   the sample shows lowercase "automated", so compare case-insensitively. DELIVERY:
-  at-least-once; deduplicate by storing the webhook or object id for at least an
-  hour. Endpoints must return 2xx within 15 seconds (body ignored); failures retry 5
+  at-least-once; deduplicate on the top-level event id (stable across retries),
+  stored for at least two hours, never on data.object.id (shared by separate
+  events). Retries can arrive after newer events: compare the member timestamp. Endpoints must return 2xx within 15 seconds (body ignored); failures retry 5
   times with increasing backoff for up to an hour, and persistently failing webhooks
   are emailed about and may be disabled. ACCESS: plan/permission-gated, configurable
   only in the Community Dashboard (no API to create webhooks).
@@ -52,4 +56,4 @@ testScenario:
     - message.inbound
     - member.created
 catalog:
-  summary: Verify Community (community.com SMS platform) webhook signatures (`community-signature`, HMAC-SHA256 hex over `{t}.{raw_body}`), handle message.inbound, message.outbound, member.created, member.updated, and member.deleted events
+  summary: Verify Community (community.com SMS platform) webhook signatures (`community-signature`, HMAC-SHA256 hex over `{t}.{raw_body}`), handle message.inbound, message.outbound, member.created, member.updated, member.deleted, and member.opted_out events

@@ -55,8 +55,9 @@ whitespace matter: never re-serialize before verifying.
 
 **Do not use the `standardwebhooks` or `svix` libraries.** The secret looks like a Standard
 Webhooks `whsec_` secret but is not one: use the whole string, `whsec_` included, as a plain
-UTF-8 HMAC key. There is no `webhook-id` and the digest is hex, not base64. No timestamp is
-signed, so there is no replay window to enforce; don't invent one from `Texture-Timestamp`.
+UTF-8 HMAC key. There is no `webhook-id` and the digest is hex, not base64. `Texture-Timestamp` (Unix
+milliseconds) is not signed. Texture's docs recommend rejecting deliveries older than 5 minutes; that
+check also rejects events you replay or queue later, so treat it as optional and dedupe on `key`.
 Python, FastAPI and Next.js versions are in [references/verification.md](references/verification.md).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/),
@@ -70,18 +71,28 @@ UPPER_SNAKE names (`DEVICE_UPDATED`), a separate vocabulary that does not appear
 | `type` | Fired when |
 |--------|------------|
 | `device.discovered` | A new device is discovered |
-| `device.updated` | Device data is updated |
+| `device.updated` | Device data is updated (changed fields only) |
 | `device.disconnected` | A device goes offline |
 | `command.succeeded` | A device command succeeds |
 | `command.failed` | A device command fails |
-| `command.overridden` | A device command is overridden |
+| `command.overridden` | A device's state no longer matches an active command |
 | `customer.created` | A customer is created |
-| `enrollment.approved` | An enrollment is approved |
+| `enrollment.approved` | An enrollment is approved (Grid Services only) |
 | `site.created` | A site is created |
+| `alert.ownership.changed` | An alert's assigned team or person changes |
 
-Every payload carries `type`, `deviceId`, `organizationId` and `workspaceId`. Handle the ones you
-need and log the rest. Texture's docs also show `device.created` in an example, but it is not in
-the documented event lists.
+Those ten are on Texture's [event types page](https://docs.texturehq.com/guides/event-types). The
+destinations page has 21 subscription names; the dotted `type` for the other eleven comes from the
+`EventTypes` list in Texture's MIT-licensed `@texturehq/events` package: `command.scheduled`,
+`connection.failed`, `device.connected`, `enrollment.submitted`, `enrollment.rejected`,
+`customer.updated`, `customer.deleted`, `site.updated`, `site.deleted`, `alert.created`,
+`alert.updated`.
+
+The body is `{ type, version, key, timestamp, data }`: `version` is that event's semantic schema
+version, `key` is for deduplication and `timestamp` is an RFC 3339 string. Device events carry
+`deviceId`, `workspaceId` and `organizationId` inside `data`. Handle the types you need and log the
+rest. Texture's webhooks page also shows `device.created` as an example `type`, but it is not in any
+list.
 
 ## Environment Variables
 

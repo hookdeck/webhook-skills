@@ -1,6 +1,6 @@
 # Etsy Webhooks - Next.js Example
 
-Minimal Next.js App Router example of receiving Etsy webhooks with signature verification. Etsy follows the Standard Webhooks spec, so this example verifies with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package.
+Minimal Next.js App Router example of receiving Etsy webhooks with signature verification. Etsy's signatures use the Standard Webhooks construction, so this example verifies with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package.
 
 ## Prerequisites
 

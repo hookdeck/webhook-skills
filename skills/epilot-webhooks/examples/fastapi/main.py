@@ -37,7 +37,7 @@ def resolve_signature_headers(headers: Mapping[str, str]) -> Optional[Dict[str, 
     """Read the three signature headers.
 
     epilot sends webhook-*; when webhook-id is absent, fall back to the svix-*
-    names (as Hookdeck does). The result uses the webhook-* names the
+    names. The result uses the webhook-* names the
     standardwebhooks library expects. Returns None when any header is missing.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"
@@ -92,10 +92,11 @@ async def verified_epilot_event(request: Request) -> Dict[str, Any]:
 
 
 def event_name(event: Dict[str, Any]) -> Optional[str]:
-    """The event name is per organization. The default payload carries it in
-    metadata.event_type; Event Catalog payloads (file events) use _event_name.
-    metadata.webhook_id identifies the webhook config, i.e. one eventName."""
-    return (event.get("metadata") or {}).get("event_type") or event.get("_event_name")
+    """Event Catalog payloads (Core and Custom Events) carry the bare event name in
+    _event_name. Automation-trigger and portal payloads have no documented name
+    field (only one docs sketch shows metadata.event_type), so fall back to
+    metadata.webhook_id, which identifies the webhook config, i.e. one eventName."""
+    return event.get("_event_name") or (event.get("metadata") or {}).get("event_type")
 
 
 def handle_event(event: Dict[str, Any]) -> None:
@@ -106,13 +107,14 @@ def handle_event(event: Dict[str, Any]) -> None:
     if name == "automation_trigger_webhook":
         logger.info(
             "Automation trigger: %s %s (webhook %s)",
-            entity.get("_schema_"),
+            entity.get("_schema"),
             entity.get("_id"),
             metadata.get("webhook_id"),
         )
-    elif name == "customer_request_created":
-        logger.info("Customer request created: %s %s", entity.get("_schema_"), entity.get("_id"))
-    elif name in ("FileCreated", "event_FileCreated"):
+    elif name == "CustomerRequestSubmitted":
+        # Core Event: the ticket and its attachments are ready.
+        logger.info("Customer request submitted: event %s", event.get("_event_id"))
+    elif name == "FileCreated":
         # Event Catalog envelope; files are listed in event_attachments.
         files = ", ".join(str(f.get("filename")) for f in event.get("event_attachments") or [])
         logger.info("File created in org %s: %s", event.get("_org_id"), files)

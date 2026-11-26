@@ -15,7 +15,7 @@ metadata:
 
 # Dodo Payments Webhooks
 
-[Dodo Payments](https://dodopayments.com) is a merchant-of-record payments platform covering payments, refunds, disputes, subscriptions, license keys, entitlements, credits, dunning and payouts. It POSTs a signed JSON event to each endpoint you add under **Developer > Webhooks**. Signatures follow [Standard Webhooks](https://standardwebhooks.com/), so each delivery carries `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
+[Dodo Payments](https://dodopayments.com) is a merchant-of-record payments platform covering payments, refunds, disputes, subscriptions, invoices, license keys, entitlements, credits, dunning and payouts. It POSTs a signed JSON event to each endpoint you add under **Developer > Webhooks**. Signatures follow [Standard Webhooks](https://standardwebhooks.com/), so each delivery carries `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
 
 ## When to Use This Skill
 
@@ -34,7 +34,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -67,7 +67,7 @@ Every body is the same envelope, and the event name is the top-level `type`:
 }
 ```
 
-`timestamp` is when the event occurred (ISO 8601). `data.payload_type` names the resource kind (`Payment`, `Subscription`, `Refund`, `Dispute`, `LicenseKey`, `CreditLedgerEntry`, `CreditBalanceLow`, `AbandonedCheckout`, `DunningAttempt`, `EntitlementGrant` or `Payout`), not the event. The other `data` fields vary per event.
+`timestamp` is when the event occurred (ISO 8601). `data.payload_type` names the resource kind (`Payment`, `Subscription`, `Refund`, `Dispute`, `LicenseKey`, `CreditLedgerEntry`, `CreditBalanceLow`, `AbandonedCheckout`, `DunningAttempt`, `EntitlementGrant`, `Payout` or `Invoice`), not the event. The other `data` fields vary per event.
 
 ## Common Event Types
 
@@ -86,7 +86,7 @@ Every body is the same envelope, and the event name is the top-level `type`:
 | `subscription.cancelled` | The merchant or customer cancels a subscription |
 | `license_key.created` | A new license key is created for a product |
 
-These are the events the examples route. Dodo documents 48 in all (the list may not be exhaustive): more payment, dispute (`challenged`, `accepted`, `cancelled`, `expired`) and subscription (`updated`, `past_due`, `paused`, `unpaused`, `plan_changed`, `update_payment_method`, `failed`, `expired`) events, plus `credit.*`, `abandoned_checkout.*`, `dunning.*`, `entitlement_grant.*` and `payout.*`. Ignore types you don't recognise. See [references/overview.md](references/overview.md).
+These are the events the examples route. Dodo documents 56 in all (the list may not be exhaustive): more dispute (`challenged`, `accepted`, `cancelled`, `expired`) and subscription (`updated`, `past_due`, `paused`, `unpaused`, `plan_changed`, `update_payment_method`, `failed`, `expired`) events, plus `invoice.*` (invoice-based billing), `credit.*`, `abandoned_checkout.*`, `dunning.*`, `entitlement_grant.*` and `payout.*`. Ignore types you don't recognise. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 

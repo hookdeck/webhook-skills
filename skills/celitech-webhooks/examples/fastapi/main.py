@@ -15,8 +15,8 @@ app = FastAPI(title="Celitech Webhook Handler")
 
 
 def resolve_signature_headers(headers: Mapping[str, str]) -> Optional[dict]:
-    """Celitech deliveries carry svix-* headers. Hookdeck also accepts the Standard
-    Webhooks webhook-* names when svix-id is absent, so do the same. The three values
+    """Celitech deliveries carry svix-* headers. Also accept the Standard
+    Webhooks webhook-* names when svix-id is absent. The three values
     are handed to the library under the svix-* names it expects."""
     prefix = "svix" if headers.get("svix-id") else "webhook"
     msg_id = headers.get(f"{prefix}-id")

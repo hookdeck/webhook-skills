@@ -50,7 +50,7 @@ function handleEvent(payload) {
 
     case 'delivered':
       console.log(`Delivered ${payload.email_id} to ${payload.rcpt}`);
-      // TODO: mark the message delivered
+      // Your code: mark the message delivered
       break;
 
     case 'open':
@@ -63,18 +63,18 @@ function handleEvent(payload) {
 
     case 'bounce':
       console.log(`Bounce (${payload.bounce}) for ${payload.rcpt}: ${payload.message}`);
-      // TODO: suppress the address on hard bounces
+      // Your code: suppress the address on hard bounces
       break;
 
     case 'spam':
       console.log(`Spam complaint from ${payload.rcpt}`);
-      // TODO: remove the address from your lists
+      // Your code: remove the address from your lists
       break;
 
     case 'unsubscribe':
     case 'resubscribe':
       console.log(`${payload.event} by ${payload.rcpt}`);
-      // TODO: update the recipient's preferences
+      // Your code: update the recipient's preferences
       break;
 
     case 'reject':
@@ -90,7 +90,7 @@ function handleEvent(payload) {
 
     case 'sms_failed':
       console.log(`SMS ${payload.message_id} to ${payload.destination_number} failed (${payload.status_code})`);
-      // TODO: retry or alert
+      // Your code: retry or alert
       break;
 
     default:

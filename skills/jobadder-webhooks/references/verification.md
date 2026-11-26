@@ -81,7 +81,7 @@ Hashing first also means non-ASCII header values never raise (`compare_digest` o
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Duplicates and ordering**: the docs say order isn't guaranteed and duplicates can occur.
   Dedupe on `eventId`.
-- **Hookdeck**: a Hookdeck JobAdder source (`JOBADDER`) checks the same header, whole value.
+- **Hookdeck**: a Hookdeck JobAdder source (`JOBADDER`) checks the same header.
 
 ## Debugging 401s
 

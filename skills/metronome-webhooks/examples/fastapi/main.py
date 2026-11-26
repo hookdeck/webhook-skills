@@ -29,8 +29,8 @@ _HEX64 = re.compile(rb"[0-9a-fA-F]{64}")
 
 
 def tolerance_seconds() -> float:
-    # Retries and Hookdeck replays resend the original X-Metronome-Date, and Hookdeck
-    # applies no tolerance itself, so the window is OFF unless you opt in.
+    # Retries and Hookdeck replays resend the original X-Metronome-Date,
+    # so the window is OFF unless you opt in.
     try:
         return max(float(os.getenv("METRONOME_WEBHOOK_TOLERANCE_SECONDS", "0")), 0.0)
     except ValueError:
@@ -123,29 +123,29 @@ async def metronome_webhook(request: Request):
 
     if event_type == "alerts.spend_threshold_reached":
         logger.info("Spend threshold reached: %s %s", data.get("customer_id"), data.get("current_spend"))
-        # TODO: Notify the customer or throttle
+        # Your code: Notify the customer or throttle
     elif event_type == "alerts.low_remaining_credit_balance_reached":
         logger.info("Low credit balance: %s %s", data.get("customer_id"), data.get("remaining_balance"))
-        # TODO: Trigger a top-up
+        # Your code: Trigger a top-up
     elif event_type == "alerts.low_remaining_commit_balance_reached":
         logger.info("Low commit balance: %s", data.get("customer_id"))
-        # TODO: Alert the account owner
+        # Your code: Alert the account owner
     elif event_type == "alerts.usage_threshold_reached":
         logger.info("Usage threshold reached: %s", data.get("customer_id"))
-        # TODO: Notify the customer
+        # Your code: Notify the customer
     elif event_type == "alerts.invoice_total_reached":
         logger.info("Invoice total reached: %s", data.get("customer_id"))
-        # TODO: Flag the invoice for review
+        # Your code: Flag the invoice for review
     elif event_type == "contract.create":
         logger.info("Contract created: %s", data.get("contract_id"))
-        # TODO: Provision the customer
+        # Your code: Provision the customer
     elif event_type == "contract.start":
         logger.info("Contract started: %s", data.get("contract_id"))
     elif event_type == "contract.edit":
         logger.info("Contract edited: %s", data.get("contract_id"))
     elif event_type == "contract.end":
         logger.info("Contract ended: %s", data.get("contract_id"))
-        # TODO: Revoke entitlements
+        # Your code: Revoke entitlements
     elif event_type == "contract.archive":
         logger.info("Contract archived: %s", data.get("contract_id"))
     elif event_type == "commit.create":
@@ -154,12 +154,12 @@ async def metronome_webhook(request: Request):
         logger.info("Credit created: %s", data.get("credit_id"))
     elif event_type == "invoice.finalized":
         logger.info("Invoice finalized: %s", data.get("invoice_id"))
-        # TODO: Record the receivable
+        # Your code: Record the receivable
     elif event_type == "invoice.void":
         logger.info("Invoice voided: %s", data.get("invoice_id"))
     elif event_type == "invoice.billing_provider_error":
         logger.info("Billing provider error: %s %s", data.get("invoice_id"), data.get("billing_provider_error"))
-        # TODO: Page whoever owns the billing integration
+        # Your code: Page whoever owns the billing integration
     elif event_type == "subscription.start":
         logger.info("Subscription started: %s", data.get("subscription_id"))
     elif event_type == "subscription.end":

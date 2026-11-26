@@ -48,27 +48,27 @@ def handle_event(payload: dict) -> None:
 
     if event == "Article published":
         print(f"Article published: {article}")
-        # TODO: notify the docs team or refresh a search index
+        # Example: notify the docs team or refresh a search index
 
     elif event == "Article created":
         print(f"Article created: {article}")
-        # TODO: add the article to a content tracker
+        # Example: add the article to a content tracker
 
     elif event == "Article deleted":
         print(f"Article deleted: {article}")
-        # TODO: purge cache entries for every language in payload["Slugs"]
+        # Example: purge cache entries for every language in payload["Slugs"]
 
-    elif event == "Article settings saved":
-        print(f"Article settings saved: {article}")
-        # TODO: re-sync article metadata
+    elif event in ("Article settings saved", "Article settings updated"):
+        print(f"{event}: {article}")
+        # Example: re-sync article metadata
 
     elif event == "Article workflow status updated":
         print(f"Article workflow status updated: {article}")
-        # TODO: trigger the downstream review step
+        # Example: trigger the downstream review step
 
     elif event == "Extension token deleted":
         print(f"Extension token deleted: {payload.get('Extension')}")
-        # TODO: alert the integration owner
+        # Example: alert the integration owner
 
     else:
         print(f"Unhandled event: {event}")

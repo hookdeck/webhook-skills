@@ -38,4 +38,4 @@ Click **…** → **Test webhook**. You get a `POST` with `event` set to `webhoo
 
 ## Using Hookdeck
 
-Create a Hookdeck source of type PlanetScale, paste the webhook secret into it, and use the Hookdeck source URL as the webhook URL in PlanetScale. Hookdeck's source verifies `X-PlanetScale-Signature` (hex HMAC-SHA256 of the raw body), then forwards to your app with retries and replay.
+Create a Hookdeck source of type PlanetScale, paste the webhook secret into it, and use the Hookdeck source URL as the webhook URL in PlanetScale. Hookdeck's source verifies the signature, then forwards to your app with retries and replay.

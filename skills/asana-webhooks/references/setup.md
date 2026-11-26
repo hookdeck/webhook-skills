@@ -59,8 +59,11 @@ During this request:
 
 1. Asana POSTs to your `target` with an `X-Hook-Secret` header and no signature.
 2. Your handler **echoes the same `X-Hook-Secret` back as a response header** and
-   returns `200`. **Store that secret** — it is the HMAC key for all future events.
-3. Asana returns `201 Created` with the webhook object (including its `gid`).
+   returns `200` (or `204`). **Store that secret** — it is the HMAC key for all future events.
+3. Asana returns `201 Created` with the webhook object (including its `gid`) and the
+   same `X-Hook-Secret` in the response body. Asana recommends checking it matches the
+   one your handler received. Through a Hookdeck URL, Hookdeck answers the handshake, so
+   take the secret from this response body instead.
 
 If the handshake fails, Asana returns an error and does **not** create the webhook.
 

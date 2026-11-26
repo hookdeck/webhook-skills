@@ -44,7 +44,7 @@ function handleEvent(event: HumaansEvent) {
       console.log(`Unhandled Humaans event: ${event.action}`);
   }
 
-  // TODO: sync the change to payroll, your directory, etc.
+  // Sync the change to payroll, your directory, etc.
   // Deduplicate on the webhook-id header: retries reuse it.
 }
 

@@ -27,7 +27,7 @@ To add event types later, GET the webhook first, then PUT the previous `eventTyp
 
 Only the Chat webhook guide names the method (`POST`, with `User-Agent: connecteam`); the setup page doesn't. Accept GET, POST, PUT, PATCH and DELETE on your route, as the examples do, and check the credential first for every method.
 
-Hookdeck's Connecteam source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source.
+Hookdeck's Connecteam source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must also be allowed on the source.
 
 ## Local Development
 

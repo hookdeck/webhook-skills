@@ -39,7 +39,10 @@ app.post('/webhooks/chargebee', express.json(), (req, res) => {
   // Decode and verify credentials
   const encoded = auth.substring(6);
   const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
-  const [username, password] = decoded.split(':');
+  // Split on the first colon only: passwords may contain ':'
+  const colonIndex = decoded.indexOf(':');
+  const username = decoded.slice(0, colonIndex);
+  const password = decoded.slice(colonIndex + 1);
 
   const expectedUsername = process.env.CHARGEBEE_WEBHOOK_USERNAME;
   const expectedPassword = process.env.CHARGEBEE_WEBHOOK_PASSWORD;
@@ -92,7 +95,10 @@ export async function POST(req: NextRequest) {
   // Decode and verify credentials
   const encoded = auth.substring(6);
   const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
-  const [username, password] = decoded.split(':');
+  // Split on the first colon only: passwords may contain ':'
+  const colonIndex = decoded.indexOf(':');
+  const username = decoded.slice(0, colonIndex);
+  const password = decoded.slice(colonIndex + 1);
 
   const expectedUsername = process.env.CHARGEBEE_WEBHOOK_USERNAME;
   const expectedPassword = process.env.CHARGEBEE_WEBHOOK_PASSWORD;

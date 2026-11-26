@@ -85,7 +85,7 @@ delivery is an ordinary signed event.
   Verification is never silently skipped.
 - **No timestamp check.** There is no `Cko-Timestamp` header and no signed
   timestamp, so there is no replay window to enforce. Replay protection is
-  deduplication on the event `id` (`evt_…`).
+  deduplication on the event `type` plus `id` (`evt_…`).
 - **`created_on ?? timestamp`** — the field name genuinely varies by event
   (`payment_approved` has `created_on`; `payment_captured` has `timestamp`).
 - **`amount` is the minor currency unit** — `{"amount": 20, "currency": "USD"}`

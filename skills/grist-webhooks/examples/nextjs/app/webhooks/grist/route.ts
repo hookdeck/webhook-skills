@@ -9,7 +9,7 @@ import { verifyGristRequest } from '../../../lib/verify-grist';
 function handleRows(rows: Record<string, unknown>[]): void {
   for (const row of rows) {
     console.log(`Grist row ${row.id} received`);
-    // TODO: upsert the row into your system, keyed on row.id
+    // Upsert the row into your system, keyed on row.id
   }
 }
 

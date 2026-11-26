@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// pganalyze sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// pganalyze sends webhook-* headers; also read the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {

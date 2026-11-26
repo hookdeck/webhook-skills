@@ -3,8 +3,8 @@ name: webhook-handler-patterns
 description: >
   Best practices for webhook handlers. Use when implementing the handler
   sequence (verify first, parse second, handle idempotently), idempotency,
-  error handling, retry logic, or framework-specific issues with Express,
-  Next.js, or FastAPI.
+  error handling, retry logic, out-of-order or replayed events, or
+  framework-specific issues with Express, Next.js, or FastAPI.
 license: MIT
 metadata:
   author: hookdeck
@@ -19,6 +19,7 @@ metadata:
 - Following the correct webhook handler order (verify → parse → handle idempotently)
 - Implementing idempotent webhook handlers
 - Handling errors and configuring retry behavior
+- Handling events that arrive out of order or are replayed after an outage
 - Understanding framework-specific gotchas (raw body, middleware order)
 - Building production-ready webhook infrastructure
 
@@ -33,6 +34,7 @@ metadata:
 - [references/idempotency.md](references/idempotency.md) - Prevent duplicate processing
 - [references/error-handling.md](references/error-handling.md) - Return codes, logging, dead letter queues
 - [references/retry-logic.md](references/retry-logic.md) - Provider retry schedules, backoff patterns
+- [references/ordering.md](references/ordering.md) - Handle out-of-order and replayed events safely
 
 ### Framework Guides
 

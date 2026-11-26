@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// Laso Finance sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Laso Finance sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {

@@ -1,8 +1,8 @@
 ---
 name: taskrabbit-webhooks
 description: >
-  Receive and verify Taskrabbit webhooks from the Taskrabbit Partner API
-  (Delivery and Home Services). Use when setting up a Taskrabbit webhook
+  Receive and verify Taskrabbit webhooks from the Taskrabbit Home Services
+  Partner API. Use when setting up a Taskrabbit webhook
   handler, verifying the Svix signature headers (svix-id, svix-timestamp,
   svix-signature) with a whsec_ secret from the Svix Partner Dashboard,
   debugging Taskrabbit signature verification, or handling project.completed,
@@ -94,7 +94,8 @@ npx hookdeck-cli listen 3000 taskrabbit --path /webhooks/taskrabbit
 ```
 
 No account required. Add the tunnel URL as an endpoint in the Svix Partner
-Dashboard and send a test event from there.
+Dashboard. Taskrabbit documents no test-event button, so replay a past
+message from the dashboard or wait for a real project event.
 
 ## Resources
 

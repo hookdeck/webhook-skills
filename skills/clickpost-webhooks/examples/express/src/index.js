@@ -56,15 +56,15 @@ function handleScan(payload) {
       break;
     case 6:
       console.log(`Out for delivery: ${waybill}`);
-      // TODO: notify the customer
+      // Notify the customer here.
       break;
     case 8:
       console.log(`Delivered: ${waybill}`);
-      // TODO: mark the order delivered
+      // Mark the order delivered here.
       break;
     case 9:
       console.log(`Failed delivery: ${waybill} (${status})`);
-      // TODO: start the NDR / reattempt flow
+      // Start your NDR or reattempt flow here.
       break;
     case 41:
     case 42:

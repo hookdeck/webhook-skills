@@ -44,20 +44,20 @@ def handle_event(payload: dict) -> None:
     if event in ("accounts.added", "accounts.connected", "accounts.failed",
                  "accounts.removed", "accounts.updated"):
         print(f"Account event {event}: account {data.get('account')}, user {data.get('user')}")
-        # TODO: update the connection state for data["account"]
+        # Your code: update the connection state for data["account"]
 
     elif event in ("gigs.added", "gigs.updated", "gigs.removed",
                    "gigs.partially_synced", "gigs.fully_synced"):
         print(f"Gig event {event}: {json.dumps(data)}")
-        # TODO: fetch the changed gigs by id from the Argyle API
+        # Your code: fetch the changed gigs by id from the Argyle API
 
     elif event in ("identities.added", "identities.updated"):
         print(f"Identity event {event}: {json.dumps(data)}")
-        # TODO: fetch the identity by id and refresh your records
+        # Your code: fetch the identity by id and refresh your records
 
     elif event in ("items.updated", "items.removed"):
         print(f"Item event {event}: {json.dumps(data)}")
-        # TODO: refresh your list of supported employers and platforms
+        # Your code: refresh your list of supported employers and platforms
 
     else:
         print(f"Unhandled event: {event}")

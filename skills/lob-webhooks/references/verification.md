@@ -6,16 +6,16 @@ Lob signs each delivery and sends two headers:
 
 | Header | Value |
 |--------|-------|
-| `Lob-Signature` | Lowercase hex HMAC-SHA256 digest, bare (no prefix) |
+| `Lob-Signature` | Hex HMAC-SHA256 digest, bare (no prefix) |
 | `Lob-Signature-Timestamp` | Timestamp included in the signed input |
 
 Signed input (as bytes): `Lob-Signature-Timestamp` header value + `.` + raw request body.
 Key: the webhook's secret from its dashboard details page, used as its UTF-8 bytes (not hex- or
-base64-decoded). There is no Lob webhook SDK; verify manually. Lob's steps: (1) build the
+base64-decoded). Lob's docs give no verification library; verify manually. Lob's steps: (1) build the
 signature input, (2) compute the HMAC-SHA256 as hex, (3) compare with `Lob-Signature`, (4)
 optionally check the timestamp.
 
-Events sent from Lob's webhook debugger are signed with a fixed test secret, so they fail verification. Real deliveries are signed with the webhook's secret.
+Lob signs events sent from its webhook debugger with the literal string `secret`, not the webhook's own secret, so they fail verification against the real one. Real deliveries are signed with the webhook's secret.
 
 ## Implementation
 
@@ -65,7 +65,7 @@ Frameworks: Express `express.raw({ type: '*/*' })`; Next.js `await request.array
 
 Lob's step 4 is optional and recommends rejecting timestamps older than 5 minutes. This skill
 leaves it **off by default**: Hookdeck retries and replays re-send the original headers and
-timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+timestamp, so a fixed window would reject legitimate
 retries. The examples read `LOB_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off; `300` = 5
 minutes). Lob does not document the timestamp unit, so the examples read a ~10-digit value as
 seconds and a ~13-digit value as milliseconds, and reject a non-numeric timestamp when a

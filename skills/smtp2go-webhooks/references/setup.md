@@ -58,11 +58,13 @@ Use the printed URL as the webhook URL. For FastAPI, use port `8000`.
 
 ## Sending a Manual Test
 
+The body below is a placeholder, not an SMTP2GO example: the field names are documented, but every value in angle brackets is made up. SMTP2GO publishes no example payload, so use **Test this webhook** or a real send to see actual values.
+
 ```bash
 curl -X POST http://localhost:3000/webhooks/smtp2go \
   -H "Content-Type: application/json" \
   -H "Authorization: $SMTP2GO_AUTHORIZATION" \
-  -d '{"event":"delivered","rcpt":"user@example.com","email_id":"1abcDE-ABC123-xy","id":"wh-1"}'
+  -d '{"event":"delivered","rcpt":"<recipient-address>","email_id":"<email-id>","time":"<event-time>"}'
 ```
 
-Form-encoded works too: `-H "Content-Type: application/x-www-form-urlencoded" -d 'event=bounce&bounce=hard&rcpt=user@example.com'`.
+Form-encoded works too: `-H "Content-Type: application/x-www-form-urlencoded" -d 'event=bounce&bounce=hard&rcpt=<recipient-address>'`. Don't rely on `id` to tell test deliveries apart: SMTP2GO describes it as the unique id for the webhook, so it may be the same on every delivery.

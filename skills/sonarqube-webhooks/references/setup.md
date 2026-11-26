@@ -35,4 +35,4 @@ Use the Hookdeck URL as the webhook URL in SonarQube.
 
 ## Testing
 
-Run an analysis on the project. SonarQube posts the result when it finishes, and you can see delivery status and the last response under the webhook in the UI. Failed deliveries are not retried.
+Run an analysis on the project. SonarQube posts the result when it finishes, and you can see delivery status and the payloads of past deliveries under the webhook in the UI. SonarQube Server does not retry failed deliveries.

@@ -80,8 +80,10 @@ inventory orders). The `eventType` field is one of:
 | `UPDATED` | One of those resources changes |
 | `DELETED` | One of those resources is deleted |
 
-The body is thin: the `eventType` plus the id of the resource. Fetch the full record from the
-Firstbase API.
+The body is thin: `eventId`, `eventType`, `resourceType` (`ORDER`, `RETURN_ORDER` or
+`INVENTORY_ORDER`) and `resourceId`. The granular event you selected (shipped, delivered ...) isn't
+in it, so fetch the full record from the Firstbase API. The Test button sends
+`{"type": "webhook.test"}` with no `eventType`; return a `2xx` for it.
 
 ## Environment Variables
 

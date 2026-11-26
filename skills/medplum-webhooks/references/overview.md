@@ -4,9 +4,9 @@ Receive signed Medplum FHIR Subscription notifications.
 
 ## Events and Payloads
 
-The example scenarios cover `create`, `update`, `delete`. These are subscription operations, not strings present in a notification. Route FHIR resources by resourceType and handle an empty delete body.
+The example scenarios cover `create`, `update`, `delete`. These are subscription operations, not strings in the notification body. Route FHIR resources by resourceType and handle an empty delete body.
 
-The body is a FHIR resource; dispatch on resourceType. There is no create/update/delete discriminator. Delete notifications contain {}. X-Medplum-Deleted-Resource supplies the resource type/id, but is unsigned because the HMAC covers only the body. Reconcile it with application state before acting; these examples do not trust that header as an authenticated identifier.
+The body is a FHIR resource; dispatch on resourceType. Nothing in the body says whether it was created or updated. Medplum's [server code](https://github.com/medplum/medplum/blob/1f2c185cb97e93b4f1decbf19a19ea41ab39e8d0/packages/server/src/workers/subscription.ts) also sends `X-Medplum-Interaction` (`create`, `update` or `delete`) and `X-Medplum-Subscription` (the Subscription ID) on every rest-hook request, though Medplum's docs don't list them. Delete notifications contain {}. X-Medplum-Deleted-Resource supplies the resource type/id. None of these headers is signed, because the HMAC covers only the body. Reconcile them with application state before acting; these examples do not trust those headers as authenticated identifiers.
 
 The tests use a minimal, illustrative payload with the routing fields. It is not a captured delivery or a complete schema; consult the event documentation before reading additional fields.
 

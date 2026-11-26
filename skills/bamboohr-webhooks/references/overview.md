@@ -86,7 +86,7 @@ Employees are **batched**: several can arrive in one `POST`, so always loop over
 
 ## Retries
 
-Up to 5 retries on network errors or 5xx responses (not 4xx), at about 0, 5, 10, 20 and 40 minutes, each with 0-30 seconds of random jitter. No request timeout is documented.
+Up to 5 retries on network errors or 5xx responses (not 4xx), each with 0-30 seconds of random jitter. The [Webhooks page](https://documentation.bamboohr.com/docs/webhooks#webhook-retries) lists the delays as immediately, 5, 10, 20 and 40 minutes; the [event reference](https://documentation.bamboohr.com/reference/employee-created-webhook) says 5, 10, 20, 40 and 80-minute intervals. No request timeout is documented.
 
 ## Full Reference
 

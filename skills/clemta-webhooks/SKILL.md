@@ -36,7 +36,7 @@ Clemta follows [Standard Webhooks](https://www.standardwebhooks.com):
 | `webhook-timestamp` | Unix seconds of this attempt |
 | `webhook-signature` | Space-separated entries: `v1,<base64>` (HMAC) and `v1a,<base64>` (Ed25519) |
 
-Clemta also sends `Clemta-Webhook-Id`, `-Timestamp` and `-Signature` copies of the same values. Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry (two during a secret rotation) and skip other versions such as `v1a`. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Clemta also sends `Clemta-Webhook-Id`, `-Timestamp` and `-Signature` copies of the same values. Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry (two during a secret rotation) and skip other versions such as `v1a`. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -57,12 +57,20 @@ The library always enforces a fixed **5-minute timestamp window**. Hookdeck retr
 
 ## Event Payload
 
-The body is `{ type, data }`. `data.object` is the resource in its API shape, and its own `object` field names the resource kind. The payload is rendered at the API version pinned on the endpoint.
+The body is Clemta's `event` resource. Its top-level fields, per the Partner API spec (`https://api.clemta.com/v1/openapi.json`):
 
-```json
-{ "type": "company.ein.assigned",
-  "data": { "object": { "object": "company", "id": "cmp_...", "ein": "12-3456789" } } }
-```
+| Field | Meaning |
+|-------|---------|
+| `object` | Always `event` |
+| `id` | The event id (`evt_...`), the same value as the `webhook-id` header |
+| `type` | The event name; branch on it |
+| `company_id` | The company the event is about (`cmp_...`), when it is about one |
+| `data.object` | The resource as of the event, in its API shape; its own `object` field names the kind (`company`, `service_order`, `invoice`, `requirement`, `file`, `tax_filing`, `calendar_event`) |
+| `livemode` | `false` for events from a `clmt_test_` key |
+| `timestamp` | When the fact happened (ISO 8601); use it when sequence matters |
+| `created_at` | When the event was recorded |
+
+The payload is rendered at the API version pinned on the endpoint, or the workspace's webhook version when none is pinned. Clemta publishes no example bodies, so capture one from the sandbox before writing parsers.
 
 ## Common Event Types
 

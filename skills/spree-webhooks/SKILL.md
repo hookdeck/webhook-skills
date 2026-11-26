@@ -41,9 +41,9 @@ function verifySpreeSignature(rawBody, signature, timestamp, secret) {
 
 Respond **401** for a missing or empty signature or timestamp, a malformed value or a mismatch, and any **2xx** for a valid delivery (anything else, a timeout or a connection error counts as a failure). Read the raw body first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check.
 
-**Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries. The examples offer an opt-in: set `SPREE_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use the event `id` for idempotency instead (see below).
+**Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in: set `SPREE_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use the event `id` for idempotency instead (see below).
 
-`@spree/sdk/webhooks` (1.2.1, the current release) exports `verifyWebhookSignature(payload, signature, timestamp, secret, toleranceSeconds = 300)`, which takes the body as a string and rejects timestamps more than 300 seconds old by default (the `constructWebhookEvent` helper in Spree's docs is only in the 6.0 prerelease). The examples verify the raw bytes directly so they work the same in Express, Next.js and FastAPI.
+`@spree/sdk/webhooks` (6.0.5, the current release) exports `constructWebhookEvent(rawBody, headers, secret, options)`, which verifies and returns a typed event, and `verifyWebhookSignature(payload, signature, timestamp, secret, toleranceSeconds = 300)`. Both take the body as a string and reject timestamps more than 300 seconds from the current time by default. The examples verify the raw bytes directly so they work the same in Express, Next.js and FastAPI.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

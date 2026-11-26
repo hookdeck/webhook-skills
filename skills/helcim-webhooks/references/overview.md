@@ -55,7 +55,7 @@ It does not include the amount, card type or approval status. Pass `id` to [Get 
 | `data.deviceCode` | The payment device the cancellation happened on |
 | `data.customerCode` / `data.invoiceNumber` | Customer and invoice, empty when not set |
 
-There is no event id in the body. The `webhook-id` header is unique per message and stable across retries, so it is the idempotency key.
+There is no event id in the body. Helcim doesn't say whether a retry keeps the `webhook-id` header, so key `cardTransaction` work on the card transaction `id` and make `terminalCancel` handling safe to repeat.
 
 ## Retry Schedule
 

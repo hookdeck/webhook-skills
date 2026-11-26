@@ -52,7 +52,7 @@ export function verifyMagicHourSignature(
     return { valid: false, error: 'Signature mismatch' };
   }
 
-  // Opt-in replay window. Off by default: retries and replays resend the original timestamp.
+  // Opt-in replay window. Off by default: Hookdeck retries and replays resend the original timestamp.
   if (toleranceSeconds > 0) {
     if (!/^\d+$/.test(timestamp)) return { valid: false, error: 'Invalid timestamp' };
     const age = Math.abs(Date.now() / 1000 - Number(timestamp));

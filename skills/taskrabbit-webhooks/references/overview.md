@@ -2,8 +2,10 @@
 
 ## What Are Taskrabbit Webhooks?
 
-Taskrabbit's Partner API (Delivery and Home Services) sends webhooks so you can
-track your projects in real time instead of polling the API. When a subscribed
+Taskrabbit's Home Services Partner API sends webhooks so you can track your
+projects in real time instead of polling the API. Taskrabbit's Delivery API
+(documented under the Dolly name) has separate webhooks with their own events and
+no documented signature; this skill doesn't cover them. When a subscribed
 event occurs, Taskrabbit sends an HTTP `POST` with a JSON body to your endpoint.
 
 Webhooks are **delivered via Svix**. Your endpoint URL and event subscriptions

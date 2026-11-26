@@ -48,16 +48,16 @@ def handle_event(item: dict) -> None:
         print("Cloudsmith ping received")
     elif event_id == "package.created":
         print(f"Package created: {pkg}")
-        # TODO: Record the new upload
+        # Your code: Record the new upload
     elif event_id in ("package.syncing", "package.synced"):
         print(f"{event_id}: {pkg} ({data.get('stage_str', 'unknown stage')})")
-        # TODO: package.synced means the package is ready to download
+        # Your code: package.synced means the package is ready to download
     elif event_id == "package.security_scanned":
         print(f"Security scan finished: {pkg}")
-        # TODO: Fetch the scan results from the Cloudsmith API
+        # Your code: Fetch the scan results from the Cloudsmith API
     elif event_id == "package.quarantined":
         print(f"Package quarantined: {pkg}")
-        # TODO: Alert the owning team
+        # Your code: Alert the owning team
     elif event_id == "package.failed":
         print(f"Package failed: {pkg}")
     elif event_id in ("package.released", "package.restored", "package.tags_updated", "package.deleted"):

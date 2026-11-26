@@ -2,7 +2,7 @@
 
 ## How It Works
 
-> Onshape signature keys are an Enterprise company setting. Paste the primary key; only the primary signature is verified.
+> A company administrator generates Onshape's signature keys in Company/Classroom/Enterprise settings > Webhooks. Use the primary key: this skill verifies the primary signature.
 
 Onshape signs each delivery when the company has signature keys set:
 
@@ -10,7 +10,7 @@ Onshape signs each delivery when the company has signature keys set:
 Signature = Base64( HMAC-SHA256( key, <X-onshape-webhook-timestamp value> + "." + <webhook payload> ) )
 ```
 
-Headers: `X-onshape-webhook-timestamp`, `X-onshape-webhook-signature-primary` (present if a primary key is set) and `X-onshape-webhook-signature-secondary`. The primary header carries the bare standard base64 digest (44 characters with `=` padding), no prefix. Hookdeck's Onshape source verifies the primary header only, so this skill does too and does not fall back to the secondary one.
+Headers: `X-onshape-webhook-timestamp`, `X-onshape-webhook-signature-primary` (present if a primary key is set) and `X-onshape-webhook-signature-secondary`. The primary header carries the bare standard base64 digest (44 characters with `=` padding), no prefix. This skill verifies the primary header only and does not fall back to the secondary one.
 
 ## Implementation
 
@@ -38,7 +38,7 @@ Full handlers: [examples/express/](../examples/express/), [examples/nextjs/](../
 - **Timestamp tolerance is opt-in:** Hookdeck retries and replays resend the original headers and timestamp, so rejecting old timestamps by default would drop legitimate retries. Set `ONSHAPE_WEBHOOK_TOLERANCE_SECONDS` to enable a window; unset or `0` is off.
 - **Case-sensitive base64:** do not lowercase or trim the header.
 - **Primary key only:** if only a secondary key is set in Onshape, no primary header is sent and every delivery fails; set a primary key.
-- **Keys are an Enterprise setting:** without keys no signature header is sent.
+- **Keys are a company setting:** without keys set in Company/Classroom/Enterprise settings, no signature header is sent.
 - **Trial notification:** the `webhook.register` delivery just needs 200.
 
 ## Debugging Verification Failures

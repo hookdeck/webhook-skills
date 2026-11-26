@@ -13,9 +13,7 @@ notes: >
   '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, key = base64-decode of the secret
   after the whsec_ prefix, base64 output. The secret (BEEHIIV_WEBHOOK_SECRET) is the endpoint's
   signing secret from Settings > Webhooks (Svix-issued, whsec_). Verify with the svix library (npm
-  'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature. This
-  matches Hookdeck's beehiiv source (Standard Webhooks, headers_prefix 'svix', whsec_ secret
-  base64-decoded, every v1 entry tried). The library always enforces a fixed 5-minute timestamp
+  'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature. The library always enforces a fixed 5-minute timestamp
   window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the
   library rejects late retries after 5 minutes, and point to a manual verifier in
   references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the decoded key,

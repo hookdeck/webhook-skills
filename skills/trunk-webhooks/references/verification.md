@@ -11,8 +11,8 @@ Trunk signs every delivery per Standard Webhooks, with Svix's header names:
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Trunk source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+carry the same values. The examples here read the `svix-*` headers and fall back to
+the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 
@@ -132,7 +132,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 
 ## Common Gotchas
 
-- **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order (Trunk's docs call this out: "Pass the library the raw request body exactly as received"). Use
+- **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order (Trunk's route-flaky-tests recipe reads the body with `express.raw()` and verifies those bytes). Use
   `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()`
   (FastAPI).
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not the

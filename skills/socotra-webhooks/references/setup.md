@@ -22,9 +22,7 @@ can be verified.
 
 ## Which HTTP Method Does Socotra Use?
 
-Socotra's docs don't name the HTTP method. Hookdeck's Socotra source pre-selects
-POST without managing the method, so any other method the sender uses must also
-be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE.
+Socotra's docs don't name the HTTP method. If you use Hookdeck, allow the method the sender uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE.
 
 ## Optional: Failure Handling
 

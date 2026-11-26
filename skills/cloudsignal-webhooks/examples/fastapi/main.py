@@ -11,7 +11,8 @@ load_dotenv()
 
 app = FastAPI(title="CloudSignal Webhook Handler")
 
-# The nine CloudSignal Webhooks v2.0 signal types (case-sensitive, PascalCase).
+# CloudSignal Webhooks v2.1 signal types (case-sensitive, PascalCase): the 11 on the
+# v2.1 reference, plus CloudprinterOrderCanceled, which only the official Node SDK lists.
 KNOWN_EVENT_TYPES = [
     "CloudprinterOrderValidated",
     "ItemValidated",
@@ -22,6 +23,9 @@ KNOWN_EVENT_TYPES = [
     "ItemError",
     "ItemCanceled",
     "CloudprinterOrderCanceled",
+    "ItemDeliveryStarted",
+    "ItemDeliveryCompleted",
+    "ItemDeliveryFailed",
 ]
 
 
@@ -80,31 +84,39 @@ async def handle_cloudsignal_webhook(signal: Dict[str, Any]):
         print(f"Item packed: {item} {item_reference}")
 
     elif signal_type == "ItemShipped":
-        # Type-specific fields: tracking, shipping_option.
+        # Type-specific fields: tracking, shipping_option, url.
         print(
             f"Item shipped: {item} tracking: {signal.get('tracking')} "
             f"shipping_option: {signal.get('shipping_option')}"
         )
-        # TODO: Store the tracking number, notify the customer.
+        # Your code: Store the tracking number, notify the customer.
 
     elif signal_type == "ItemError":
-        # Type-specific field: cause (optional).
+        # Type-specific fields: cause, delay (both optional).
         print(f"Item error: {item} cause: {signal.get('cause')}")
-        # TODO: Alert your team, reprint, or refund.
+        # Your code: Alert your team, reprint, or refund.
 
     elif signal_type == "ItemCanceled":
-        # Type-specific field: cause (optional).
+        # Type-specific fields: cause, message (both optional).
         print(f"Item canceled: {item} cause: {signal.get('cause')}")
 
     elif signal_type == "CloudprinterOrderCanceled":
+        # Listed only in the official Node SDK.
         print(f"Order canceled: {order} {order_reference}")
+
+    elif signal_type in ("ItemDeliveryStarted", "ItemDeliveryCompleted", "ItemDeliveryFailed"):
+        # v2.1 delivery signals. Type-specific fields: tracking, message (both optional).
+        print(
+            f"Delivery update: {signal_type} {item} tracking: {signal.get('tracking')} "
+            f"{signal.get('message')}"
+        )
 
     else:
         # Unknown/new type: acknowledge with 200 so CloudSignal does not retry.
         print(f"Unhandled CloudSignal type: {signal_type}")
 
-    # Respond 200 quickly. Any non-2xx makes CloudSignal retry the signal (up to
-    # 100 attempts over 7 days).
+    # Respond 200 quickly. Anything other than 200 or 204 makes CloudSignal retry
+    # the signal (up to 100 attempts over 7 days).
     return {"received": True}
 
 

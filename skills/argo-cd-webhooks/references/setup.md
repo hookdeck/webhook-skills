@@ -10,8 +10,7 @@
 
 Argo CD webhooks are not signed. Add a secret header to the webhook service (service.webhook.<name>.headers in argocd-notifications-cm) and enter it here. Argo CD sends GET unless the notification template sets a method, so GET and POST are both allowed.
 
-Hookdeck's Argo CD source pre-selects GET and POST without managing the method, so if a
-template uses PUT or PATCH, allow that method on the source too.
+Hookdeck's Argo CD source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)): allow GET and POST, and PUT or PATCH if a template uses them.
 
 ## Store the Shared Secret
 
@@ -84,9 +83,7 @@ metadata:
 
 The template chooses `GET`, `POST`, `PUT` or `PATCH`; the default is `GET`. The examples accept
 `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on the webhook route, check the credential first for
-every method, read the body for GET too, and return `200` for an empty body. Hookdeck's Argo CD source pre-selects GET
-and POST without managing the method, so if a template uses PUT or PATCH, allow that method on
-the source too.
+every method, read the body for GET too, and return `200` for an empty body. Hookdeck's Argo CD source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)): allow GET and POST, and PUT or PATCH if a template uses them.
 
 ## Register Your Endpoint
 

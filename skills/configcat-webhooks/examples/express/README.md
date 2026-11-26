@@ -19,7 +19,7 @@ Minimal example of receiving ConfigCat webhooks with signature verification.
    cp .env.example .env
    ```
 
-3. Add your ConfigCat signing key to `.env` as `CONFIGCAT_WEBHOOK_SECRET`, pasted **whole** including the `configcat_whsk_` prefix. Keep a single signing key on the webhook: with two keys ConfigCat sends two signatures and verification fails.
+3. Add your ConfigCat signing key to `.env` as `CONFIGCAT_WEBHOOK_SECRET`, pasted **whole** including the `configcat_whsk_` prefix. During a key rotation ConfigCat sends one signature per key, comma-separated, and the handler accepts a match on any of them.
 
 ## Run
 

@@ -7,17 +7,13 @@
 
 ## Get Your Signing Secret
 
-Mews signs each request with "your secret key". The security page does not describe how the secret is issued (it is tied to the webhook endpoint, per client), so obtain it from the place where your Mews POS webhook is registered or from your Mews contact. Store it as `MEWS_POS_WEBHOOK_SECRET` and use it as-is, as UTF-8 bytes (do not hex- or Base64-decode it).
+Each webhook endpoint has its own `secret`. Mews returns it in the `secret` attribute of the webhook endpoint resource, in the response to Create webhook endpoint and in Get webhook endpoints ([Webhook Endpoints](https://docs.mews.com/pos-api/operations/webhook-endpoints)). Store it as `MEWS_POS_WEBHOOK_SECRET` and use it as-is, as UTF-8 bytes (do not hex- or Base64-decode it). The docs don't describe rotating it, and Update webhook endpoint only changes `targetUrl` and `events`.
 
 ## Register Your Endpoint
 
-1. Register your endpoint URL for the Mews POS API webhooks (see [Mews POS webhooks](https://docs.mews.com/pos-api/events/webhooks)).
-2. Subscribe to the events you need: `booking.status.updated`, `order.state.updated`, `order.status.updated`, `order.total.updated`, `order.payments.added`, `product.availability.updated`.
-3. Point the endpoint at `/webhooks/mews-pos` on your server. Mews sends `POST` requests.
-
-## Optional: Shared Secret Token in the URL
-
-The docs also say that, to confirm a request originates from Mews, a shared secret token can be added to the URL. This is an extra check, not a replacement for `X-Signature` verification.
+1. Call Create webhook endpoint, `POST /v1/webhook-endpoints` on `https://api.mews.com/pos` (staging: `https://api.mews-demo.com/pos`), authenticated with your POS API bearer token. Send a JSON:API body with `type: "webhookEndpoints"` and `attributes.targetUrl` (required, up to 100 characters) pointing at `/webhooks/mews-pos` on your server.
+2. List the events you need in `attributes.events`: `booking.status.updated`, `order.state.updated`, `order.status.updated`, `order.total.updated`, `order.payments.added`, `product.availability.updated`.
+3. To change the subscription later, call Update webhook endpoint, `PATCH /v1/webhook-endpoints/{id}`. Mews sends `POST` requests.
 
 ## Local Development
 

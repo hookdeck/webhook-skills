@@ -12,7 +12,7 @@ Velt has two kinds:
   [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks) headers (`webhook-id`,
   `webhook-timestamp`, `webhook-signature`). You add endpoints in the Velt console and choose event types.
 - **Basic (V1)** webhooks are not signed. They send an optional auth token in the `Authorization` header
-  as `Basic <token>`, so Hookdeck's Velt source reports that they fail verification.
+  as `Basic <token>`, so they fail verification.
 
 This skill covers Advanced (V2). Deliveries are JSON `POST` requests by default.
 
@@ -67,7 +67,7 @@ The default payload is `WebhookV2Payload`:
 {
   "actionType": "updateData",
   "data": {
-    "actionUser": { "userId": "michael", "name": "Michael Scott", "organizationId": "crdt-array-demo-org1" },
+    "actionUser": { "userId": "michael", "name": "Jane Doe", "organizationId": "crdt-array-demo-org1" },
     "crdtData": { "id": "crdt-array-demo-todos-1", "lastUpdatedBy": "michael", "data": [] },
     "metadata": {
       "apiKey": "VKabul7W2DJhLu1BiMaj",

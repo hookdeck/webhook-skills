@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 /**
  * Verify a Spike API webhook signature: bare hex HMAC-SHA256 of the raw body,
- * keyed with the shared secret from the admin console (UTF-8 bytes, used as-is).
+ * keyed with the Webhook Signature Key from the admin console (UTF-8 bytes, used as-is).
  * No timestamp is signed.
  */
 function verifySpikeSignature(rawBody: Buffer, signature: string | null, secret: string): boolean {

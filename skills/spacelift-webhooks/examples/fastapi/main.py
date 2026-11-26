@@ -67,11 +67,11 @@ def handle_message(payload) -> str:
             last_version[run_id] = payload["stateVersion"]
             stack_id = _as_dict(payload.get("stack")).get("id")
             print(f"Run {run_id} on stack {stack_id}: {payload['state']} (v{payload['stateVersion']})")
-            # TODO: update your run tracking, notify a channel, etc.
+            # Your code: update your run tracking, notify a channel, etc.
 
     elif kind == "internal_error":
         print(f"Spacelift internal error ({payload.get('severity')}): {payload.get('title')}")
-        # TODO: alert the team
+        # Your code: alert the team
 
     else:
         print("Unhandled Spacelift message")
@@ -79,7 +79,7 @@ def handle_message(payload) -> str:
     return kind
 
 
-# Spacelift doesn't name the HTTP method, so accept all of them.
+# Spacelift sends POST by default, but a notification policy can set another method, so accept all of them.
 @app.api_route("/webhooks/spacelift", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def spacelift_webhook(request: Request):
     # Raw bytes, any content type. A missing body is zero bytes.

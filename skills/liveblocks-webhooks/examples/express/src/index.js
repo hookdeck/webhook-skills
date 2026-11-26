@@ -12,7 +12,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Liveblocks sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Liveblocks sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers) {
   const prefix = headers['webhook-id'] ? 'webhook' : 'svix';
   return {
@@ -59,7 +59,8 @@ app.post('/webhooks/liveblocks', express.raw({ type: '*/*' }), (req, res) => {
   // Every body is { type, data }: the event name is the camelCase top-level `type`
   const { type } = event;
   const data = event.data && typeof event.data === 'object' ? event.data : {};
-  // webhook-id is stable across retries and the body has no event id: use it to deduplicate
+  // The body has no event id, and Liveblocks doesn't say whether a retry reuses webhook-id,
+  // so make your handling idempotent on payload values
   console.log(`Received Liveblocks webhook ${headers['webhook-id']}: ${type}`);
 
   switch (type) {
@@ -117,7 +118,8 @@ app.post('/webhooks/liveblocks', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Thread unresolved:', data.threadId);
       break;
     case 'notification':
-      // data.kind is 'thread', 'textMention' or a custom '$'-prefixed kind
+      // data.kind is 'thread', 'textMention' or a custom '$'-prefixed kind.
+      // Each notification channel gets its own event: check data.channel (for example 'email')
       console.log('Notification:', data.kind, 'for user', data.userId);
       break;
     default:

@@ -58,7 +58,7 @@ Yes. The `cashfree-pg` Node package exposes `PGVerifyWebhookSignature(signature,
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. Cashfree's docs suggest a 5-minute window, but the unit of `x-webhook-timestamp` is not stated (check a real delivery).
+Not by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Cashfree's docs suggest a 5-minute window, but the unit of `x-webhook-timestamp` is not stated (check a real delivery).
 
 The examples offer an opt-in check: set `CASHFREE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). Values above `1e11` are read as milliseconds, anything else as seconds. Prefer idempotent handling over a window.
 

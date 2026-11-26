@@ -17,7 +17,7 @@ signature     = "sha256=" + hex(HMAC_SHA256(secret, signed_string))
 
 - Key: the webhook `secret` from the create-webhook response, used as its UTF-8 bytes, as-is.
 - Message: the exact `X-Webhook-Timestamp` header string, a literal `.`, then the raw request body bytes.
-- Digest: lowercase hex. Compare hex case-insensitively and accept it with or without the `sha256=` prefix (Hookdeck's parser accepts both).
+- Digest: lowercase hex. Compare hex case-insensitively and accept it with or without the `sha256=` prefix.
 
 CharityStack has no webhook SDK; verify manually.
 
@@ -59,7 +59,7 @@ Complete handlers with tests: [Express](../examples/express/), [Next.js](../exam
 
 ## Should I Check the Timestamp?
 
-CharityStack's guide recommends rejecting timestamps more than 5 minutes from your clock. These examples leave it **off by default**: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window rejects legitimate retries. Opt in with `CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The timestamp is inside the signed content, so it can't be refreshed on a replay.
+CharityStack's guide recommends rejecting timestamps more than 5 minutes from your clock. These examples leave it **off by default**: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window rejects legitimate retries. Opt in with `CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The timestamp is inside the signed content, so it can't be refreshed on a replay.
 
 ## Common Gotchas
 

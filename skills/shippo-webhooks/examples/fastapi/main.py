@@ -18,8 +18,9 @@ app = FastAPI()
 
 logger = logging.getLogger(__name__)
 
-# Optional replay window in seconds. Off by default (0): retries and replays, including
-# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Optional replay window in seconds. Off by default (0): Shippo documents no tolerance,
+# and a Hookdeck retry or replay carries the original timestamp, so a window would
+# reject late redeliveries.
 # Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS to a positive value to opt in.
 # A value that isn't a whole number of seconds is treated as 0 (check off), with a warning.
 _warned_invalid_tolerance = False
@@ -135,22 +136,22 @@ async def shippo_webhook(
     if event == "track_updated":
         status = (data_obj.get("tracking_status") or {}).get("status")
         print(f"Tracking updated: {data_obj.get('tracking_number')} {status}")
-        # TODO: update order status, notify customer on DELIVERED / FAILURE
+        # Update order status, notify customer on DELIVERED / FAILURE
     elif event == "transaction_created":
         print(f"Transaction created: {data_obj.get('object_id')} {data_obj.get('tracking_number')}")
-        # TODO: store label_url and tracking number
+        # Store label_url and tracking number
     elif event == "transaction_updated":
         print(f"Transaction updated: {data_obj.get('object_id')} {data_obj.get('status')}")
-        # TODO: sync label/transaction state
+        # Sync label/transaction state
     elif event == "batch_created":
         print(f"Batch created: {data}")
-        # TODO: review and purchase the batch
+        # Review and purchase the batch
     elif event == "batch_purchased":
         print(f"Batch purchased: {data}")
-        # TODO: download merged label PDFs
+        # Download merged label PDFs
     elif event == "automations_label_resolved":
         print(f"Automations label resolved: {data_obj.get('request_id')} {data_obj.get('status')}")
-        # TODO: dedupe on request_id; fulfil or alert on failure
+        # Dedupe on request_id; fulfil or alert on failure
     else:
         print(f"Unhandled Shippo event: {event}")
 

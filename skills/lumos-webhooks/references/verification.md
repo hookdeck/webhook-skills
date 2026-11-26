@@ -4,8 +4,7 @@
 
 Lumos lets you add custom headers to any webhook, "for example a bearer token or an API key
 that your endpoint expects". Your endpoint compares that header with the value you stored.
-This is also how Hookdeck's Lumos source verifies requests: a header name plus the exact, whole
-header value.
+Hookdeck's Lumos source checks the same header.
 
 ```
 Authorization: Bearer your-secret-value

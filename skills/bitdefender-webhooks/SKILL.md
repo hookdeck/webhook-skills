@@ -16,14 +16,14 @@ metadata:
 
 Bitdefender GravityZone (endpoint security) pushes security events to your server through the
 **Event Push Service**. You turn it on with the `setPushEventSettings` API using
-`serviceType: "jsonRPC"`. Payloads are not signed. The credential is the `Authorization`
+`serviceType: "jsonRPC"`. Payloads carry no HMAC signature. The credential is the `Authorization`
 header you configure in `serviceSettings.authorization`.
 
 ## When to Use This Skill
 
 - How do I receive Bitdefender GravityZone webhooks (Event Push Service)?
 - How do I verify the `Authorization` header on Bitdefender push events?
-- Does Bitdefender sign webhook payloads? (No: shared `Authorization` credential only)
+- Does Bitdefender sign webhook payloads? (No HMAC: a shared `Authorization` credential, plus an MD5 body digest header)
 - Why does my Bitdefender webhook endpoint return 401?
 - How do I handle `addEvents` JSON-RPC messages and the `module` values (`av`, `aph`, `fw`)?
 
@@ -57,7 +57,7 @@ any content type works, and parse it only after the check. In Python use
 `hmac.compare_digest` on bytes (encode both sides; a non-ASCII `str` raises).
 
 **What this does and does not give you:** a static shared credential authenticates the
-sender, not the body, and gives no replay protection (no signature, no timestamp). Use HTTPS
+sender, not the body, and gives no replay protection (no HMAC, no timestamp). Use HTTPS
 and rotate the credential with `setPushEventSettings` if it leaks. See
 [references/verification.md](references/verification.md).
 

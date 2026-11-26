@@ -2,7 +2,7 @@
 
 ## What Are Twenty Webhooks?
 
-Twenty (twenty.com) is an open-source CRM, available as a cloud service or self-hosted. A Twenty webhook sends an HTTP `POST` with a JSON body to your URL whenever a record is created, updated or deleted. All object types are covered, custom objects included. Every event goes to every webhook; Twenty's docs say event filtering may be added in future releases.
+Twenty (twenty.com) is an open-source CRM, available as a cloud service or self-hosted. A Twenty webhook sends an HTTP `POST` with a JSON body to your URL whenever a record is created, updated or deleted. All object types are covered, custom objects included. Twenty's docs say every event goes to every webhook and filtering may come later; the webhook form in current versions already has a **Filters** section (objects and actions, defaulting to all).
 
 > Set a secret on the Twenty webhook (Settings > Developers > Webhooks). Twenty signs deliveries only when the webhook has a secret.
 
@@ -16,7 +16,7 @@ Twenty signs each delivery (see [verification.md](verification.md)) and sends th
 
 ## Common Event Types
 
-The event name is `<object>.<action>` where the action is `created`, `updated` or `deleted`.
+The event name is `<object>.<action>`. Twenty's docs list the actions `created`, `updated` and `deleted`; its sender code also sends `restored` and `destroyed` (permanent delete).
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -47,7 +47,7 @@ and Twenty's sender names the event `eventName`. The examples read `eventName` a
 - Method: `POST`, JSON body.
 - A 2xx response (200-299) acknowledges receipt; non-2xx is logged as a delivery failure.
 - The sender's HTTP timeout is 5 seconds, so acknowledge quickly and process asynchronously.
-- Retries are not documented. Don't assume exactly-once delivery: make handlers idempotent.
+- Retries are not documented. In Twenty's sender code each delivery is attempted once and a failure is only logged, so an outage on your side loses events unless something in front of your handler stores them. Make handlers idempotent anyway.
 
 ## Full Event Reference
 

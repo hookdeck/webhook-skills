@@ -55,11 +55,11 @@ def handle_event(payload: dict) -> None:
 
     if cls == "OCP\\Files\\Events\\Node\\NodeCreatedEvent":
         print(f"File created by {uid}: {node.get('path')}")
-        # TODO: index the new file or kick off processing
+        # Index the new file or kick off processing here
 
     elif cls == "OCP\\Files\\Events\\Node\\NodeWrittenEvent":
         print(f"File written by {uid}: {node.get('path')}")
-        # TODO: re-process the changed file
+        # Re-process the changed file here
 
     elif cls == "OCP\\Files\\Events\\Node\\NodeTouchedEvent":
         print(f"File touched by {uid}: {node.get('path')}")
@@ -67,7 +67,7 @@ def handle_event(payload: dict) -> None:
     elif cls == "OCP\\Files\\Events\\Node\\NodeDeletedEvent":
         # node.id is usually absent here; only node.path is present
         print(f"File deleted by {uid}: {node.get('path')}")
-        # TODO: remove the file from your index
+        # Remove the file from your index here
 
     elif cls in (
         "OCP\\Files\\Events\\Node\\NodeCopiedEvent",
@@ -78,11 +78,11 @@ def handle_event(payload: dict) -> None:
         source = _obj(event.get("source")).get("path")
         target = _obj(event.get("target")).get("path")
         print(f"{short_name} by {uid}: {source} -> {target}")
-        # TODO: update your copy of the path
+        # Update your copy of the path here
 
     elif cls in ("OCP\\SystemTag\\TagAssignedEvent", "OCP\\SystemTag\\TagUnassignedEvent"):
         print(f"{short_name} by {uid}")
-        # TODO: sync tags
+        # Sync tags here
 
     elif cls in (
         "OCP\\Calendar\\Events\\CalendarObjectCreatedEvent",
@@ -90,11 +90,11 @@ def handle_event(payload: dict) -> None:
         "OCP\\Calendar\\Events\\CalendarObjectDeletedEvent",
     ):
         print(f"{short_name} by {uid} (calendar {event.get('calendarId')})")
-        # TODO: sync the calendar object
+        # Sync the calendar object here
 
     elif cls == "OCA\\Forms\\Events\\FormSubmittedEvent":
         print(f"Form submitted by {uid}")
-        # TODO: process the submission
+        # Process the submission here
 
     else:
         print(f"Unhandled event: {cls}")

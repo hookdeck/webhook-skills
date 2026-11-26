@@ -40,31 +40,31 @@ function handlePayment(payment) {
     case 'authorized':
       if (captures.length === 0) {
         console.log(`Payment authorized: ${id}`);
-        // TODO: process the order, then send the Capture Request
+        // Your code: process the order, then send the Capture Request
       } else {
         console.log(`Payment captured: ${id}`);
-        // TODO: nothing to do, this confirms your own capture
+        // Your code: nothing to do, this confirms your own capture
       }
       break;
 
     case 'closed':
       if (refunds.length > 0) {
         console.log(`Payment closed with refunds: ${id}`);
-        // TODO: record the latest entry in payment.refunds
+        // Your code: record the latest entry in payment.refunds
       } else {
         console.log(`Payment closed: ${id}`);
-        // TODO: mark the order paid; never downgrade a closed payment to authorized
+        // Your code: mark the order paid; never downgrade a closed payment to authorized
       }
       break;
 
     case 'rejected':
       console.log(`Payment rejected: ${id}`);
-      // TODO: cancel the order
+      // Your code: cancel the order
       break;
 
     case 'expired':
       console.log(`Payment expired: ${id}`);
-      // TODO: cancel the order
+      // Your code: cancel the order
       break;
 
     default:
@@ -79,7 +79,7 @@ function handleDispute(dispute) {
   switch (status) {
     case 'pending':
       console.log(`Dispute opened: ${disputeId} on payment ${paymentId}`);
-      // TODO: fetch the dispute and gather evidence
+      // Your code: fetch the dispute and gather evidence
       break;
 
     case 'arbitration':
@@ -88,12 +88,12 @@ function handleDispute(dispute) {
 
     case 'evidence_merchant':
       console.log(`Dispute evidence requested: ${disputeId}`);
-      // TODO: provide supporting evidence
+      // Your code: provide supporting evidence
       break;
 
     case 'approved':
       console.log(`Dispute approved: ${disputeId}`);
-      // TODO: record the refund to the customer
+      // Your code: record the refund to the customer
       break;
 
     case 'declined':

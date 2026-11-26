@@ -10,8 +10,9 @@ Unlike many providers, Customer.io payloads **do not carry a single dotted event
 (there is no `"event": "email.opened"`). Instead, each POST is **one event object** you
 identify by two fields together:
 
-- `object_type` — the channel/entity: `email`, `push`, `sms`, `in_app`, `slack`, `webhook`,
-  `whatsapp`, or `customer`.
+- `object_type` — the channel/entity: `email`, `push`, `web_push`, `sms`, `in_app`, `inbox`,
+  `slack`, `webhook`, `whatsapp`, or `customer`. Customer.io's OpenAPI file spells the in-app type
+  `in_app`, but the examples on its Reporting webhooks page print `in-app`, so accept both.
 - `metric` — the action: `sent`, `delivered`, `opened`, `clicked`, `bounced`, `dropped`,
   `spammed`, `failed`, `converted`, `unsubscribed`, `subscribed`, and more.
 
@@ -87,8 +88,10 @@ Common `data` fields: `customer_id`, `delivery_id`, `recipient`, `identifiers`, 
 - **7-day retries** with exponential backoff on failure. Subsequent events for the same
   workspace can backlog behind a failing endpoint (ordering pressure) — acknowledge fast and
   process asynchronously.
-- Responses of `400`, `401`, `403`, `404`, `429`, and `5xx`-class add roughly a **1-hour delay**
-  before the next retry batch.
+- Responses of `400`, `401`, `402`, `403`, `404`, `405`, `410`, `422`, `429`, `500`, `502` or `521`
+  (and connection errors such as `EOF` or `connection refused`) put the call in a batch that is
+  retried after an hour.
+- After 7 days, pending events expire and can't be recovered.
 
 ## Full Event Reference
 

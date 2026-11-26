@@ -43,7 +43,7 @@ Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the 
 const { Webhook } = require('standardwebhooks');
 
 // rawBody: exact request body string, NOT re-serialised JSON
-const prefix = req.get('webhook-id') ? 'webhook' : 'svix'; // fall back to svix-* like Hookdeck
+const prefix = req.get('webhook-id') ? 'webhook' : 'svix'; // fall back to svix-*
 const event = new Webhook(process.env.SAJN_WEBHOOK_SECRET).verify(rawBody, {
   'webhook-id': req.get(`${prefix}-id`),
   'webhook-timestamp': req.get(`${prefix}-timestamp`),
@@ -83,7 +83,7 @@ The event type is the top-level `type`; `data.object` is the resource (some even
 | `form.submitted` | A respondent submits a public form |
 | `webhook.test` | You call `POST /api/v1/webhooks/{id}/test` |
 
-> **All 64 documented types** (document, party, approval, identity check, contact, company, template, security, login and more): [references/overview.md](references/overview.md) and [sajn's event list](https://docs.sajn.se/webhooks/events).
+> **All 70 documented types** (document, party, bundle, approval, identity check, contact, company, template, security, login and more): [references/overview.md](references/overview.md) and [sajn's event list](https://www.sajn.se/docs/webhooks/events).
 
 ## Delivery Semantics
 

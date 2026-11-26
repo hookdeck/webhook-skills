@@ -48,13 +48,14 @@ def verify_favro_webhook(
 def event_key(body: dict) -> str:
     """Derive a ``<type>.<action>`` event key. Favro reuses the same ``action``
     across object types, so the type comes from which object the payload carries.
+    Comment events carry the ``card`` too, so check ``comment`` first.
     """
     if body.get("action") == "ping":
         return "ping"
-    if "card" in body:
-        obj_type = "card"
-    elif "comment" in body:
+    if "comment" in body:
         obj_type = "comment"
+    elif "card" in body:
+        obj_type = "card"
     else:
         obj_type = "unknown"
     return f"{obj_type}.{body.get('action')}"
@@ -89,25 +90,25 @@ async def favro_webhook(request: Request):
 
     # Dispatch on the event. Return 200 quickly; do slow work asynchronously.
     if event == "card.created":
-        pass  # TODO: sync new card
+        pass  # Your code: sync the new card
     elif event == "card.committed":
-        pass  # TODO: kick off work / notify assignees
+        pass  # Your code: handle a card committed to this widget
     elif event == "card.moved":
-        pass  # TODO: stage automation / status sync
+        pass  # Your code: react to the card's new column
     elif event == "card.updated":
-        pass  # TODO: keep external record in sync (payload may be partial — fetch if needed)
+        pass  # Your code: keep your copy of the card in sync
     elif event == "card.deleted":
-        pass  # TODO: clean up mirror record
+        pass  # Your code: remove your copy of the card
     elif event == "comment.created":
-        pass  # TODO: notifications / activity feed
+        pass  # Your code: handle the new comment
     elif event == "comment.updated":
-        pass  # TODO: sync edited comment
+        pass  # Your code: sync the edited comment
     elif event == "comment.deleted":
-        pass  # TODO: clean up mirror record
+        pass  # Your code: remove your copy of the comment
     else:
         print(f"Unhandled event: {event}")
 
-    # Acknowledge quickly so Favro does not retry.
+    # Favro expects a 200 for every event; repeated failures disable the webhook.
     return {"received": True}
 
 

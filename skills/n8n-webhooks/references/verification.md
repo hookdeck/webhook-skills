@@ -85,7 +85,7 @@ for unauthenticated requests.
   unauthenticated callers can't make you parse arbitrary input.
 - **HTTPS only.** The secret travels in a header on every request; plain HTTP exposes it.
 - **No replay protection.** A captured request can be resent. Include a unique `id` in the
-  body (e.g. `{{ $execution.id }}-{{ $itemIndex }}`) and dedupe on it if that matters.
+  body, built from the record (e.g. `order-{{ $json.orderId }}-created`), and dedupe on it if that matters.
 
 ## Debugging Authentication Failures
 

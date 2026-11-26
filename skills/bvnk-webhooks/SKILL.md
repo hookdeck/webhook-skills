@@ -30,7 +30,7 @@ BVNK signs the **raw request body** and sends the digest in the `x-signature` he
 - Key: the secret's **UTF-8 bytes, as-is**. The secret looks like base64 but is **not** base64-decoded.
 - Message: the exact body bytes. Never parse and re-serialize the JSON before verifying.
 - Nothing else is signed, so there is no timestamp or replay window to check.
-- Check the header's shape (`[A-Za-z0-9+/]{43}=`) before comparing, then compare the whole value in constant time. Base64 is compared exactly, so a value that decodes to the same bytes but spells the last character differently is rejected (as Hookdeck does).
+- Check the header's shape (`[A-Za-z0-9+/]{43}=`) before comparing, then compare the whole value in constant time. Base64 is compared exactly, so a value that decodes to the same bytes but spells the last character differently is rejected.
 - Missing, malformed or mismatched signature: respond `401`. Respond `200` within 10 seconds on success.
 
 Hookdeck's setup note for the BVNK source: "Paste the secret shown in the webhook's Public Key field in BVNK. Legacy BVNK webhooks (statusChanged events) sign differently and fail verification."
@@ -88,7 +88,7 @@ The body is JSON: `{ event, eventId, timestamp, data }`. Dispatch on the `event`
 | `platform:accounts:customer:status-change` | A customer's status changed |
 | `bvnk:customers:status-change` | A customer's status changed (customers API) |
 
-BVNK documents 28 event types in total across payments, customers and ledger; handle the ones you subscribe to and log the rest. See [references/overview.md](references/overview.md).
+BVNK documents 30 event types in total across payments, customers, cards and ledger; handle the ones you subscribe to and log the rest. See [references/overview.md](references/overview.md).
 
 > **For the full event list and payloads**, see [BVNK's webhook documentation](https://docs.bvnk.com/bvnk/get-started/create-webhook-listener).
 

@@ -2,7 +2,7 @@
 name: globalstack-webhooks
 description: >
   Receive and verify GlobalStack webhooks (stablecoin and fiat money-movement API, delivered
-  via Svix). Use when setting up GlobalStack webhook handlers, debugging svix-signature
+  in the Svix format). Use when setting up GlobalStack webhook handlers, debugging svix-signature
   verification, or handling events like onramp.success, offramp.failed, conversion.success,
   transfer.success, deposit.confirmed, and kyc.approved.
 license: MIT
@@ -15,8 +15,8 @@ metadata:
 # GlobalStack Webhooks
 
 [GlobalStack](https://globalstack.io) is a stablecoin and fiat money-movement API: onramps,
-offramps, conversions, transfers, deposits and KYC. It delivers webhooks through
-[Svix](https://www.svix.com/), which implements Standard Webhooks. Every delivery is an HTTP
+offramps, conversions, transfers, wallet transfers, split payments, deposits and KYC. It signs
+webhooks in the [Svix](https://www.svix.com/) format (Standard Webhooks). Every delivery is an HTTP
 `POST` with a JSON body and three signature headers: `svix-id`, `svix-timestamp`, and
 `svix-signature`. The body is a flat envelope: the event name is the top-level `event_type`,
 and the resource (the same body as the matching REST resource, plus event-only fields) is in
@@ -36,7 +36,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -79,7 +79,7 @@ widened. Deduplicate on `event_id` (or `svix-id`) instead of relying on the time
 
 ## Common Event Types
 
-27 events are documented (the list may not be exhaustive). The name is `event_type` in the JSON
+30 events are documented (the list may not be exhaustive). The name is `event_type` in the JSON
 body, and `event_category` is the family you subscribed to. The examples handle all of these:
 
 | Event | Triggered When |
@@ -94,12 +94,15 @@ body, and `event_category` is the family you subscribed to. The examples handle 
 | `transfer.processing` | A payout has been submitted |
 | `transfer.success` | A payout completed. Terminal |
 | `transfer.failed` | A payout failed, was cancelled, or was reversed. Terminal |
+| `wallet_transfer.success` | A move between two of your own wallets committed. Terminal |
 | `deposit.received` | Funds detected but not yet final |
 | `deposit.held` | Credited but withheld pending review |
 | `deposit.confirmed` | Settled and spendable. Terminal |
 | `deposit.failed` | A deposit could not be credited. Terminal |
 | `kyc.approved` | A customer verification passed |
-| `kyc.rejected` | A customer verification was declined |
+| `kyc.rejected` | A customer verification was declined (reason in `verification.failure_reason`) |
+| `split.completed` | The split of one payment is final, or was skipped |
+| `split.leg_released` | A share held for its recipient's limit was released |
 
 See [references/overview.md](references/overview.md) for the envelope, payload extras and delivery
 rules.

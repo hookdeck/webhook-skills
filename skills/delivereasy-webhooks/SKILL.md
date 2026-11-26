@@ -58,13 +58,14 @@ function verifyDelivereasy(rawBody, signature, apiKey) {   // rawBody: Buffer
 
 ## Payload and Delivery
 
-```json
-{ "id": 12345, "booking_identifier": "ABC123", "status": "...", "driver": {}, "pickup": {}, "dropoff": {} }
-```
+The body is the `booking_response` object from the Lastmile API reference: `id` (string), `booking_identifier`,
+`docket_reference`, `partner_store_id`, `status`, `driver`, `booking_details`, `pickup`, `dropoff`, `manifest`
+and `undeliverable_action`. Delivereasy publishes it as a schema without an example body.
 
 - Method: `POST`.
 - Return `200` as soon as the webhook arrives and process asynchronously.
-- Delivery is at least once: deduplicate on the booking `id`.
+- Delivery is at least once. Every stage change for a booking carries the same `id`, so deduplicate on
+  `id` plus `status`, not on `id` alone.
 - The retry schedule and timeout are not documented.
 - The webhook URL (one for staging, one for production) is set by a Delivereasy representative.
 

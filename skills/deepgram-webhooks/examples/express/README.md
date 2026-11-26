@@ -21,7 +21,7 @@ Minimal example of receiving Deepgram webhooks with authentication verification.
 
 3. Set your callback credentials in `.env`:
    - `DEEPGRAM_CALLBACK_USERNAME` / `DEEPGRAM_CALLBACK_PASSWORD`: the Basic Auth credentials you embed in the callback URL (`https://username:password@your-domain.com/webhooks/deepgram`)
-   - Optional `DEEPGRAM_API_KEY_ID`: the API Key ID from the [Deepgram Console](https://console.deepgram.com/) (not the key itself), used to check the `dg-token` header when Deepgram sends it
+   - Optional `DEEPGRAM_CALLBACK_SECRET`: a random hex secret (`openssl rand -hex 32`) you send as `extra=callback_secret:VALUE` on speech-to-text requests. When set, the handler also requires `metadata.extra.callback_secret` to match
 
 ## Run
 
@@ -62,7 +62,7 @@ npm test
 ## Implementation Notes
 
 - Verifies webhooks with the Basic Auth credentials embedded in the callback URL
-- Checks the `dg-token` header only when present (Deepgram does not send it on every callback)
+- Optionally checks the `extra` callback secret in `metadata.extra.callback_secret` (Deepgram no longer supports `dg-token` for verification)
 - Reads `request_id` from `metadata.request_id` (the callback body is `{ metadata, results }`)
 - Returns appropriate HTTP status codes
 - Handles JSON payloads with transcription results

@@ -103,7 +103,7 @@ leaf.public_key().verify(signature_bytes, canonical.encode(), padding.PKCS1v15()
 
 ## Subscription Confirmation URL
 
-Before GETting `SubscribeURL`, check it the way Hookdeck does:
+Before GETting `SubscribeURL`, check it:
 
 - `TopicArn` matches `arn:scw:sns:(fr-par|nl-ams):<project>:<topic>`
 - `SubscribeURL` is `https`, host `sns.mnq.<that region>.scaleway.com`, path `/`, no credentials, port or fragment

@@ -19,9 +19,8 @@ SafeBase (Trust Center, now part of Drata) sends webhooks through an embedded
 body and three signature headers: `svix-id`, `svix-timestamp`, and `svix-signature`.
 
 > SafeBase's help article never shows the header names or secret format. The `svix-*`
-> headers and the `whsec_` Signing Secret are Svix defaults, which is what Hookdeck's
-> SafeBase source (`SAFEBASE`) also assumes. Because the `svix-` prefix is inferred, the
-> examples (like Hookdeck) also accept `webhook-id`, `webhook-timestamp` and
+> headers and the `whsec_` Signing Secret are Svix defaults. Because the `svix-` prefix is inferred, the
+> examples also accept `webhook-id`, `webhook-timestamp` and
 > `webhook-signature` when the `svix-*` headers are absent.
 
 ## When to Use This Skill

@@ -33,7 +33,10 @@ The event name is the body's `type` field; the same value is sent in the `X-Komo
 | `settlement.created` | A settlement was created | Reconcile payouts |
 
 The per-payment webhook list also names `payment.marked.as.fraud`, which is missing from the Events
-table in the docs; handle unknown types by logging them.
+table in the docs. Platform Merchants (KOMOJU's Platform Model) can also receive `payment.marked.as.fraud`,
+`refund_request.updated` and `submerchant.*` events such as `submerchant.payment.captured`; see
+[Webhooks in the Platform Model](https://docs.komoju.com/en/docs/platform-model/management/webhooks-in-the-platform-model).
+Handle unknown types by logging them.
 
 ## Event Payload Structure
 
@@ -69,4 +72,4 @@ table in the docs; handle unknown types by logging them.
 
 ## Full Event Reference
 
-See [KOMOJU's webhook documentation](https://docs.komoju.com/en/docs/introduction/webhooks).
+See [KOMOJU's webhook documentation](https://docs.komoju.com/en/docs/introduction/core-concepts/webhooks).

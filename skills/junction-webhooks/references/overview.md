@@ -2,7 +2,7 @@
 
 ## What Are Junction Webhooks?
 
-[Junction](https://junction.com) (formerly Vital) is a health-data API for wearables, lab testing
+[Junction](https://junction.com) is a health-data API for wearables, lab testing
 and continuous queries. It sends an HTTPS `POST` to an endpoint you register when a user connects
 a provider, when a historical backfill finishes, when new or changed wearable data arrives, when a
 lab order or appointment changes, and when a Sense continuous query's result table changes.
@@ -45,6 +45,9 @@ Every event has the same envelope:
 - **Workout streams** are shallow: minimal metadata only, fetch the stream through the API.
 - `historical.data.{resource}.created` is data-less: it carries the user, provider and the date
   range that was backfilled. Fetch the data through the Data Access API.
+- `historical.data.{resource}.in_progress` is data-less too: it reports one completed chunk with
+  `completed_chunk_start_date`, `completed_chunk_end_date` and `historical_pull_id`. Only
+  supported backend providers send it, and a one-chunk backfill sends only the `created` event.
 
 ## Common Event Types
 
@@ -54,6 +57,7 @@ Every event has the same envelope:
 | `provider.connection.error` | A provider connection fails, such as expired credentials | Ask the user to reconnect |
 | `provider.device.created` | A device is added to a connection | Track devices |
 | `provider.device.updated` | A device changes | Track devices |
+| `historical.data.{resource}.in_progress` | One chunk of the historical backfill has completed (not sent for the final chunk) | Fetch that chunk's dates now |
 | `historical.data.{resource}.created` | The historical backfill for a resource has fully completed | Fetch the backfilled data |
 | `daily.data.{resource}.created` | New data for a resource is discovered | Ingest into your database |
 | `daily.data.{resource}.updated` | Existing data for a resource changes | Replace the stored version |
@@ -74,10 +78,11 @@ every resource is covered, and acknowledge anything else with `200`.
 
 ## Full Event Reference
 
-Junction documents about 185 event types in the
+Junction documents 243 event types in the
 [Event Catalog](https://docs.junction.com/event-catalog/provider.connection.created.md) (the list
 may not be exhaustive): the 4 `provider.*` events, 114 `daily.data.*` events (57 resources, each
-with `created` and `updated`), 57 `historical.data.*.created` events, the lab test events and
+with `created` and `updated`), 57 `historical.data.*.created` and 57
+`historical.data.*.in_progress` events, 10 lab testing events and
 `continuous_query.result_table.changed`. Schemas and example payloads are also in the Event
 Catalog tab of the Webhooks section in the Junction dashboard.
 

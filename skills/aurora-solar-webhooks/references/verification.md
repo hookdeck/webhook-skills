@@ -13,7 +13,7 @@ X-Aurora-Webhook-Token: your-header-auth-value
 The header name is user-chosen. The examples read it from `AURORA_SOLAR_WEBHOOK_HEADER` (default
 `X-Aurora-Webhook-Token`) and the expected value from `AURORA_SOLAR_WEBHOOK_SECRET`.
 
-> Set header_auth_key and header_auth_value on the Aurora Solar webhook and enter them here. Webhooks without them send nothing to verify.
+> Always set `header_auth_key` and `header_auth_value` on the Aurora Solar subscription. Aurora's webhook authentication is optional, so a subscription created without it sends no credential to check.
 
 **What this does and doesn't give you.** A static shared credential authenticates the sender, not
 the body, and gives no replay protection (no signature, no timestamp). Anyone who captures a

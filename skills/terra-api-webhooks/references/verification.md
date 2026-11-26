@@ -2,10 +2,10 @@
 
 ## How Does Terra Sign Webhooks?
 
-Every delivery carries a `terra-signature` header:
+Every delivery carries an `X-Terra-Signature` header (Terra's agent skills say a deprecated `Terra-Signature` duplicate is still sent too; read `X-Terra-Signature` first and fall back to it):
 
 ```
-terra-signature: t=1723808700,v1=a5ee9dba96b4f65aeff6c841aa50121b1f73ec7990d28d53b201523776d4eb00
+X-Terra-Signature: t=1723808700,v1=a5ee9dba96b4f65aeff6c841aa50121b1f73ec7990d28d53b201523776d4eb00
 ```
 
 | Part | Meaning |
@@ -14,7 +14,7 @@ terra-signature: t=1723808700,v1=a5ee9dba96b4f65aeff6c841aa50121b1f73ec7990d28d5
 | `v1` | HMAC-SHA256 of `<t>.<raw body>`, lowercase hex (64 characters) |
 | `v0` | May appear in Terra's manual example; ignore it |
 
-The signed string is the `t` value, a literal `.`, then the raw request body. The key is the destination's signing secret as UTF-8 bytes. The docs never say "hex"; it is read from the 64-character example values.
+The signed string is the `t` value, a literal `.`, then the raw request body. The key is the webhook's signing secret as UTF-8 bytes. The docs never say "hex"; it is read from the 64-character example values.
 
 ## Manual Verification
 
@@ -66,25 +66,26 @@ def verify_terra(raw_body: bytes, header, secret: str) -> bool:
     return any(re.fullmatch(rb"[0-9a-fA-F]{64}", s) and hmac.compare_digest(s.lower(), expected) for s in sigs)
 ```
 
-Terra does not document an SDK verification helper for this, so the examples verify manually in all three frameworks.
+Terra's Python (`verify_terra_webhook_signature`), JavaScript (`verifyTerraWebhookSignature` in `terra-api`) and Java (`WebhookHandlerUtility`) SDKs ship a helper. The examples verify manually so they have no SDK dependency.
 
 ## What Are the Common Gotchas?
 
 - **Raw body.** Verify the exact bytes. Express: `express.raw({ type: '*/*' })`. Next.js: `await request.arrayBuffer()`. FastAPI: `await request.body()`. Parse JSON only after the check; re-serialised JSON will not match.
 - **Build the message as bytes.** `t` bytes + `.` + body bytes. Never decode the body to a string and re-encode it.
 - **Keep `t` as a string.** Don't parse it to a number and format it back (leading zeros or whitespace would change the message).
-- **Several `v1` values.** Accept the delivery if any one matches (key rotation). Ignore `v0` and other keys.
+- **Several `v1` values.** Terra says the header carries one or more signatures; accept the delivery if any `v1` matches. Ignore `v0` and other keys.
+- **Header name.** Read `X-Terra-Signature`, falling back to the deprecated `terra-signature` while Terra still sends it.
 - **Validate before comparing.** Require exactly 64 hex characters. Lowercase both sides (hex is compared case-insensitively), then compare in constant time: `crypto.timingSafeEqual` on equal-length Buffers, `hmac.compare_digest` on bytes. Never `Buffer.from(sig, 'hex')` an unvalidated value, because it silently drops bad characters.
 - **Secret as-is.** Don't hex- or base64-decode it.
 - **Status code.** Missing or empty header, no `t`, malformed value or mismatch: `401`.
-- **Timestamp tolerance is opt-in.** The examples don't reject old timestamps unless `TERRA_WEBHOOK_TOLERANCE_SECONDS` is a positive whole number. Hookdeck retries and replays resend the original headers, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate redeliveries. If you opt in, measure against `t` (Unix seconds).
+- **Timestamp tolerance is opt-in.** The examples don't reject old timestamps unless `TERRA_WEBHOOK_TOLERANCE_SECONDS` is a positive whole number. Hookdeck retries and replays resend the original headers, so a fixed window would reject legitimate redeliveries. If you opt in, measure against `t` (Unix seconds).
 - **8-second budget.** Respond `2xx` within 8 seconds; do heavy work after acknowledging.
 
 ## How Do I Debug Verification Failures?
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Always `401` | Wrong secret (copied from another destination), or body parsed before verifying |
+| Always `401` | Wrong secret (copied from another webhook, or rotated since), or body parsed before verifying |
 | `401` only on some deliveries | Body modified by middleware (compression, JSON re-serialisation) |
 | `401` for old deliveries only | `TERRA_WEBHOOK_TOLERANCE_SECONDS` is set and the retry is older than the window |
 | `500` | `TERRA_WEBHOOK_SECRET` is not set |

@@ -14,7 +14,7 @@ signature = HMAC-SHA256(webhook_secret, request_body)
 
 `request_body` is the raw JSON payload, and `webhook_secret` is the secret set on the integration. The digest is lowercase hex, and the header value is `sha256=` followed by it. Nothing else is signed: no timestamp, id or header.
 
-Hookdeck's OpnForm source verifies the same way (HMAC, `sha256`, header `x-webhook-signature`, hex), and accepts the digest with or without the `sha256=` prefix.
+Hookdeck's OpnForm source verifies the same signature.
 
 ## Implementation
 
@@ -59,7 +59,7 @@ def verify_opnform(raw_body: bytes, signature_header, secret: str) -> bool:
 - **Secret is used as typed.** UTF-8 bytes, not hex- or base64-decoded.
 - **Validate before decoding.** `Buffer.from(sig, 'hex')` drops invalid characters without an error, so check for exactly 64 hex characters first. Hex is case-insensitive.
 - **Constant-time compare.** `crypto.timingSafeEqual` on equal-length buffers, `hmac.compare_digest` on bytes.
-- **No replay window.** No timestamp is signed, so don't invent one. Deduplicate on `submission_id`.
+- **No replay window.** No timestamp is signed, so don't invent one. Upsert on `submission_id` rather than dropping repeats, because an edited submission arrives again under the same id.
 
 ## Debugging Verification Failures
 

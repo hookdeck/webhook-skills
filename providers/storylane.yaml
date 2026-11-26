@@ -13,19 +13,15 @@ notes: >
   crypto.createHmac('sha256', secret); const digest = hmac.update(req.rawBody).digest('base64');' From
   the docs (registry summary): Header `x-storylane-signature: <base64>`. MAC = standard base64 of
   HMAC-SHA256(key = the Webhook Verification Secret, message = the raw request body). The Node sample
-  compares with `===`; the Ruby and Python samples compare in constant time. SIGNATURE SCHEME (it must
-  match Hookdeck's STORYLANE source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-storylane-signature", encoding "base64"). The x-storylane-signature header carries the bare
+  compares with `===`; the Ruby and Python samples compare in constant time. SIGNATURE SCHEME: HMAC-SHA256, signature in the x-storylane-signature header, base64 encoded. The x-storylane-signature header carries the bare
   standard base64 (padded) digest, no prefix. Compare the WHOLE header value as one digest (no list
   splitting or prefix parsing). The signature is standard base64 (padded) HMAC-SHA256, keyed with the
   secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
   signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
-  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
   compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
-  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
-  but Hookdeck rejects it, so the skill must reject it too. Secret: A Webhook Verification Secret. The
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes but is not the canonical encoding, so the skill must reject it. Secret: A Webhook Verification Secret. The
   page does not say where it is shown or whether it is per alert or per account. Use it as UTF-8
   bytes. Env var: STORYLANE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
   length and alphabet), then compare in constant time: Node checks lengths, then
@@ -36,8 +32,7 @@ notes: >
   one from unsigned headers or body fields. Events: dispatch on the body's `event` field. Top-level
   body field `event`, the LAST key of both examples. Only one value is documented, `demo_viewed`;
   known and unknown sessions share it and differ by `lead` being an object or null. Documented event
-  types (1): demo_viewed. Handle a few common ones and log the rest. Method: POST. Hookdeck's
-  Storylane source manages the method as POST, so the examples handle POST on the webhook route.
+  types (1): demo_viewed. Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
   and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. Documented sample payloads (each JSON file's

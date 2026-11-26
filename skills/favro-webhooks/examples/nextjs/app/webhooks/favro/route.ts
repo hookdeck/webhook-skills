@@ -40,6 +40,7 @@ export function verifyFavroWebhook(
 /**
  * Derive a `<type>.<action>` event key. Favro reuses the same `action` across
  * object types, so the type comes from which object the payload carries.
+ * Comment events carry the `card` too, so check `comment` first.
  */
 export function eventKey(body: {
   action?: string;
@@ -49,7 +50,7 @@ export function eventKey(body: {
   if (body.action === 'ping') {
     return 'ping';
   }
-  const type = body.card ? 'card' : body.comment ? 'comment' : 'unknown';
+  const type = body.comment ? 'comment' : body.card ? 'card' : 'unknown';
   return `${type}.${body.action}`;
 }
 
@@ -92,33 +93,33 @@ export async function POST(request: NextRequest) {
   // Dispatch on the event. Return 200 quickly; do slow work asynchronously.
   switch (event) {
     case 'card.created':
-      // TODO: sync new card
+      // Your code: sync the new card
       break;
     case 'card.committed':
-      // TODO: kick off work / notify assignees
+      // Your code: handle a card committed to this widget
       break;
     case 'card.moved':
-      // TODO: stage automation / status sync
+      // Your code: react to the card's new column
       break;
     case 'card.updated':
-      // TODO: keep external record in sync (payload may be partial — fetch if needed)
+      // Your code: keep your copy of the card in sync
       break;
     case 'card.deleted':
-      // TODO: clean up mirror record
+      // Your code: remove your copy of the card
       break;
     case 'comment.created':
-      // TODO: notifications / activity feed
+      // Your code: handle the new comment
       break;
     case 'comment.updated':
-      // TODO: sync edited comment
+      // Your code: sync the edited comment
       break;
     case 'comment.deleted':
-      // TODO: clean up mirror record
+      // Your code: remove your copy of the comment
       break;
     default:
       console.log(`Unhandled event: ${event}`);
   }
 
-  // Acknowledge quickly so Favro does not retry.
+  // Favro expects a 200 for every event; repeated failures disable the webhook.
   return NextResponse.json({ received: true });
 }

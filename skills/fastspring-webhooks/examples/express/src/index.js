@@ -44,52 +44,52 @@ function handleEvent(event) {
   switch (event.type) {
     case 'order.completed':
       console.log('Order completed:', event.id);
-      // TODO: Provision access, fulfill, send receipt, etc.
+      // Your code: Provision access, fulfill, send receipt, etc.
       break;
 
     case 'order.failed':
       console.log('Order failed:', event.id);
-      // TODO: Alert, retry payment flow, etc.
+      // Your code: Alert, retry payment flow, etc.
       break;
 
     case 'order.canceled':
       console.log('Order canceled:', event.id);
-      // TODO: Revoke provisional access, etc.
+      // Your code: Revoke provisional access, etc.
       break;
 
     case 'subscription.activated':
       console.log('Subscription activated:', event.id);
-      // TODO: Grant access, start entitlement, etc.
+      // Your code: Grant access, start entitlement, etc.
       break;
 
     case 'subscription.charge.completed':
       console.log('Subscription charge completed:', event.id);
-      // TODO: Extend entitlement, record revenue, etc.
+      // Your code: Extend entitlement, record revenue, etc.
       break;
 
     case 'subscription.charge.failed':
       console.log('Subscription charge failed:', event.id);
-      // TODO: Start dunning, notify customer, etc.
+      // Your code: Start dunning, notify customer, etc.
       break;
 
     case 'subscription.updated':
       console.log('Subscription updated:', event.id);
-      // TODO: Sync plan/quantity changes, etc.
+      // Your code: Sync plan/quantity changes, etc.
       break;
 
     case 'subscription.canceled':
       console.log('Subscription canceled:', event.id);
-      // TODO: Schedule end-of-term downgrade, etc.
+      // Your code: Schedule end-of-term downgrade, etc.
       break;
 
     case 'subscription.deactivated':
       console.log('Subscription deactivated:', event.id);
-      // TODO: Revoke access, etc.
+      // Your code: Revoke access, etc.
       break;
 
     case 'return.created':
       console.log('Return created:', event.id);
-      // TODO: Reverse entitlement, adjust revenue, etc.
+      // Your code: Reverse entitlement, adjust revenue, etc.
       break;
 
     default:
@@ -126,7 +126,7 @@ app.post(
       handleEvent(event);
     }
 
-    // Return 200 to acknowledge receipt (FastSpring retries until it gets a 200)
+    // Return 200 to mark every event in the batch processed (any status other than 200 or 202 is retried)
     res.status(200).send('OK');
   }
 );

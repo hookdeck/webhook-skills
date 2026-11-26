@@ -77,8 +77,7 @@ and Next.js versions are in [references/verification.md](references/verification
 HTTPS only, and rotate the username and password if they leak. Dedupe on `eventId`.
 
 **Credentials must arrive on the first request.** The docs don't say whether Rocketlane sends
-Basic credentials preemptively, and Hookdeck never answers with a `401` plus
-`WWW-Authenticate` challenge: it verifies the request as received.
+Basic credentials preemptively, and a `401` plus `WWW-Authenticate` challenge flow won't work through Hookdeck: Event Gateway doesn't prompt for credentials, and a request with wrong ones still gets a 200 and is recorded as failed verification.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/),
 > [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

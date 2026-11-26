@@ -17,7 +17,7 @@ Chargebee webhooks are HTTP callbacks that notify your application when events o
 | `payment_failed` | Payment attempt fails | Send payment failure notification, retry logic |
 | `invoice_generated` | New invoice is created | Send invoice to customer, update accounting |
 | `customer_created` | New customer record created | Create user account, sync customer data |
-| `customer_updated` | Customer information changes | Update user profile, sync changes |
+| `customer_changed` | Customer information changes | Update user profile, sync changes |
 
 ## Event Payload Structure
 

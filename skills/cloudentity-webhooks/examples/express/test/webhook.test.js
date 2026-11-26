@@ -13,7 +13,7 @@ const EVENTS = [
   'group.created', 'login.failed', 'consent.revoked', 'client.created',
 ];
 
-// Inferred shape: the event's subject_action name is the one key of `payload`.
+// Documented shape: the event's <subject>_<action> name is the one key of `payload`.
 function batch(...types) {
   return {
     audit_events: types.map((type, i) => ({

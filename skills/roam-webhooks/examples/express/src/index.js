@@ -48,7 +48,7 @@ function handleEvent(event) {
       console.log(`Unhandled Roam event: ${type}`);
   }
 
-  // TODO: acknowledge first, then do the real work in a background job
+  // In production, acknowledge first and do the real work in a background job
 }
 
 // Roam webhook endpoint - must use the raw body for signature verification

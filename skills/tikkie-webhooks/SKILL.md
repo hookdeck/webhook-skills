@@ -122,8 +122,7 @@ npx hookdeck-cli listen 3000 tikkie --path /webhooks/tikkie
 ```
 
 No account is needed. Register the printed URL with
-`POST /paymentrequestssubscription`. Hookdeck's `TIKKIE` source type is POST-only
-and has **no verification step**, because there's no signature to check. The
+`POST /paymentrequestssubscription`. Tikkie sends no signature, so there is nothing for Hookdeck to verify. The
 `subscriptionId` check and re-fetch still apply when you receive through Hookdeck.
 
 ## Reference Materials

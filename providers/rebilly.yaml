@@ -6,37 +6,29 @@ docs:
 notes: >
   Rebilly (subscription billing). 'If you use HTTP basic access authentication, Rebilly also sends
   an authorization header along with the GET, POST, PUT, PATCH, or DELETE request' (example
-  Authorization: Basic cmViaWxseTpzdXBlcm1hbgo=). No signature. Authenticate with HTTP Basic auth,
-  which is what Hookdeck's Rebilly source verifies. The examples read REBILLY_WEBHOOK_USERNAME and
+  Authorization: Basic cmViaWxseTpzdXBlcm1hbgo=). Authenticate with HTTP Basic auth, which Event Gateway also checks. The examples read REBILLY_WEBHOOK_USERNAME and
   REBILLY_WEBHOOK_PASSWORD, parse 'Authorization: Basic base64(username:password)' (scheme
   case-insensitive, accept only the strict base64 alphabet and decode strictly, e.g. validate=True
   in Python, so valid credentials followed by junk are rejected; split on the first colon), and
   compare the username and the password each in constant time, evaluating both before deciding (no
-  short-circuit). Missing or malformed header or mismatch: 401. SKILL.md and setup.md must say that
-  Hookdeck never sends a 401 challenge (no WWW-Authenticate round trip), so the credentials must
-  arrive with each request. Rebilly also signs every webhook (a Security-Signature RS256 JWT, and
-  Standard Webhooks v1a Ed25519 signatures in webhook-id/webhook-timestamp/webhook-signature with
-  public keys whpk_lr2xkGO1EEdyZxVx4DKQ5XfmSjxOmwv9UcwNPbn9fFI= live and
-  whpk_qism49rHt4dOh6txzL3dfnMTmhQiITY1A86Y9BJGEZM= sandbox). Hookdeck's Rebilly source checks only
-  basic auth. The examples check basic auth only; references/verification.md may describe the v1a
-  Ed25519 check (signed content '<webhook-id>.<webhook-timestamp>.<raw body>', any space-separated
-  'v1a,<base64>' entry, Ed25519 verify with the decoded whpk_ key; the svix/standardwebhooks
-  libraries don't do v1a) as an optional extra, noting that Rebilly's 5-minute timestamp check would
-  reject Hookdeck retries, which resend the original timestamp. Compare in constant time: Node
+  short-circuit). Missing or malformed header or mismatch: 401. SKILL.md and setup.md must say that the credentials must arrive with each request: Event Gateway doesn't prompt for them, and a request with wrong credentials still gets a 200 and is recorded as failed verification. Rebilly sends a Security-Signature JWT and a webhook-signature header with v2a and legacy v1a Ed25519 signatures.
+  The examples check basic auth. The optional v2a reference uses the organization's ID with % escaped
+  as %25 and then periods as %2E. Join this endpoint ID, webhook-id, webhook-timestamp and the original
+  body with periods, hash with SHA-256 and verify any v2a entry against the raw digest with the
+  environment's public key. Authenticate the original timestamp as signed text for Hookdeck replays.
+  Compare in constant time: Node
   checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
   sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
   on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
-  authenticates the sender, not the body, and gives no replay protection (no signature, no
-  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
-  and honeybadger skills on main. Hookdeck's source type is REBILLY, labelled 'Rebilly'. Hookdeck
-  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
-  same thing, verbatim: "Set HTTP basic access authentication on the Rebilly webhook. Its JWT and
-  Ed25519 signatures are not checked." Methods: the webhook's method is one of GET, POST, PUT,
+  authenticates the sender, not the body, and gives no replay protection (basic auth itself has no
+  signature or timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is REBILLY, labelled 'Rebilly'. SKILL.md and
+  references/setup.md must tell the user to set basic auth on the Rebilly webhook, because the source
+  doesn't check the JWT or Ed25519 signatures (in your own words; don't quote Hookdeck's setup note). Methods: the webhook's method is one of GET, POST, PUT,
   PATCH, DELETE. The examples must not be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
   webhook route (Express: app.all or one route per method; Next.js: export a handler for each;
   FastAPI: api_route with those methods), check the credential first for every method, and handle an
-  empty body. Say in SKILL.md and setup.md that Hookdeck's Rebilly source pre-selects POST without
-  managing the method, so any other method the sender uses must also be allowed on the source. Body:
+  empty body. Say in SKILL.md and setup.md that the Hookdeck source must allow whatever method the sender uses (see https://hookdeck.com/docs/sources#custom-methods). Body:
   per-event JSON with eventType plus the resource ids and HAL _embedded/_links, e.g.
   transaction-processed, customer-created, subscription-activated, invoice-issued,
   data-export-completed. A webhook's optional body template replaces the default payload. Dispatch
@@ -52,4 +44,4 @@ testScenario:
     - 'subscription-activated'
     - 'customer-created'
 catalog:
-  summary: 'Authenticate Rebilly webhooks (`Authorization: Basic` HTTP basic auth, compared in constant time; `Security-Signature` JWT and `v1a` Ed25519 signatures explained), accept GET, POST, PUT, PATCH and DELETE, handle transaction-processed, subscription-activated and invoice-issued events by `eventType`'
+  summary: 'Authenticate Rebilly webhooks (`Authorization: Basic` HTTP basic auth, compared in constant time; `Security-Signature` JWT and `v2a` Ed25519 signatures explained), accept GET, POST, PUT, PATCH and DELETE, handle transaction-processed, subscription-activated and invoice-issued events by `eventType`'

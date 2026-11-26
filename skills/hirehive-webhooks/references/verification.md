@@ -10,7 +10,7 @@ HireHive follows [Standard Webhooks](https://standardwebhooks.com/). Each reques
 | `webhook-timestamp` | Unix seconds when the message was sent |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries |
 
-Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. Hookdeck reads the `webhook-*` names and falls back to the `svix-*` names when `webhook-id` is absent, so the examples do the same and then hand the library the values under the `webhook-*` names it expects.
+Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. The examples read the `webhook-*` names and fall back to the `svix-*` names when `webhook-id` is absent and then hand the library the values under the `webhook-*` names it expects.
 
 The algorithm:
 
@@ -60,7 +60,7 @@ except Exception:  # WebhookVerificationError, or ValueError for a malformed sig
 
 ## Why Do Hookdeck Retries and Replays Fail the SDK Check?
 
-The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`. A retry or replay more than 5 minutes after the first delivery is rejected as "Message timestamp too old", even though the signature is valid. HireHive's own retry schedule reaches 14 to 24 hours between the last attempts, so this matters when HireHive retries into a handler that has been down.
+The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`. A retry or replay more than 5 minutes after the first delivery is rejected as "Message timestamp too old", even though the signature is valid. HireHive's own retries should pass the window, because the Standard Webhooks spec says each retry gets a new attempt timestamp; HireHive doesn't confirm this on its own pages.
 
 If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating on `webhook-id`.
 

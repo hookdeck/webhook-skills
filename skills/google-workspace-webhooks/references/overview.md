@@ -67,7 +67,7 @@ Google's events table lists `change`, but its example notification shows
 | State | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `exists` | A resource in the collection was created, modified, or deleted | Run an incremental sync with your `syncToken` |
-| `not_exists` | The watched resource no longer exists | Clean up the channel |
+| `not_exists` | Listed as a possible value; Google doesn't say when it's sent | Re-sync the collection |
 
 ### Admin SDK Directory — `users.watch?event=…`
 

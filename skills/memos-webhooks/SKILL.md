@@ -16,7 +16,7 @@ metadata:
 
 # Memos Webhooks
 
-[Memos](https://usememos.com) is an open-source, self-hosted note-taking app. Each user can add webhooks in **Settings**, and Memos POSTs a JSON event to the URL when a memo is created, updated, deleted or commented on. Since 0.31 deliveries are signed in the [Standard Webhooks](https://standardwebhooks.com/) format (`webhook-id`, `webhook-timestamp`, `webhook-signature`) whenever the webhook has a signing secret.
+[Memos](https://usememos.com) is an open-source, self-hosted note-taking app. Each user can add webhooks in **Settings**, and Memos POSTs a JSON event to the URL when a memo is created, updated, deleted or commented on. Since v0.30.0 deliveries are signed in the [Standard Webhooks](https://standardwebhooks.com/) format (`webhook-id`, `webhook-timestamp`, `webhook-signature`) whenever the webhook has a signing secret.
 
 ## When to Use This Skill
 
@@ -39,11 +39,11 @@ So if you receive through Hookdeck, set a custom response with body `{"code":0}`
 
 | Header | Value |
 |--------|-------|
-| `webhook-id` | Unique message ID beginning with `msg_`; retries reuse it. Your idempotency key (the body has no event id) |
+| `webhook-id` | Unique message ID beginning with `msg_`. Your idempotency key (the body has no event id) |
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. For a `whsec_...` secret the key is the base64-**decoded** part after the prefix; Memos uses any other secret value as its raw bytes. Compare against every `v1,` entry and ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. For a `whsec_...` secret the key is the base64-**decoded** part after the prefix; Memos uses any other secret value as its raw bytes. Compare against every `v1,` entry and ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -68,18 +68,16 @@ The library always enforces a fixed **5-minute timestamp window**. Hookdeck retr
 
 ## Event Type and Payload
 
-Memos sends `Content-Type: application/json` with this body, and the event name is the top-level `activityType`:
+Memos sends `Content-Type: application/json` with a JSON object of four fields, and the event name is the top-level `activityType`:
 
-```json
-{
-  "url": "https://example.com/webhooks/memos",
-  "activityType": "memos.memo.created",
-  "creator": "users/1",
-  "memo": { "name": "memos/abc123", "content": "Hello from Memos" }
-}
-```
+| Field | Meaning |
+|-------|---------|
+| `url` | The destination URL the webhook was sent to |
+| `activityType` | The event name. Route on this |
+| `creator` | The memo creator's resource name, `users/{user}` |
+| `memo` | The affected memo, in the API's Memo shape. On comment-created events this is the comment; from 26.11.2 read `memo.parent` for the memo it replies to (earlier releases put it in `memo.relations`) |
 
-The docs name `activityType`, `creator` and the affected `memo` (comment-created payloads also include the parent relation); `url` is the destination URL. They do not list the `activityType` values or the fields inside `memo`: the values below are the strings the v0.31.0 dispatchers pass, and the `memo` fields in the sample are illustrative, so the examples read only `activityType` and `creator`.
+The docs name `activityType`, `creator` and the affected `memo`; `url` and the `users/{user}` format come from Memos's source. Memos publishes no example body and the docs don't list the fields inside `memo`, so the examples read only `activityType` and `creator`. The `activityType` values below are the strings the 26.11.2 dispatchers pass (unchanged since v0.31.0).
 
 ## Common Event Types
 
@@ -94,7 +92,7 @@ These four are the events the docs describe (the list may not be exhaustive). Ev
 
 ## Delivery Semantics
 
-Return `2xx` with `{"code":0}` within 30 seconds (the v0.31.0 client timeout). A non-2xx status, invalid JSON or a nonzero `code` is a delivery failure. Deduplicate on `webhook-id`, and reject timestamps outside a window you choose. Return `400` for missing headers and `401` for a bad signature. Memos rejects private-network destinations by default; in 0.31 allow yours with `MEMOS_WEBHOOK_PRIVATE_NETWORK_ALLOWLIST`. There is no handshake or challenge request.
+Return `2xx` with `{"code":0}` within 30 seconds (the timeout in Memos's sender). A non-2xx status, invalid JSON or a nonzero `code` is a delivery failure. Deduplicate on `webhook-id`, and reject timestamps outside a window you choose. Return `400` for missing headers and `401` for a bad signature. Memos rejects private-network destinations by default; in 0.31 allow yours with `MEMOS_WEBHOOK_PRIVATE_NETWORK_ALLOWLIST`. There is no handshake or challenge request.
 
 ## Environment Variables
 

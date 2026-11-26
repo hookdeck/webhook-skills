@@ -19,7 +19,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """HireHive sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """HireHive sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),

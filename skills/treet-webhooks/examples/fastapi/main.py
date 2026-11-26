@@ -45,10 +45,10 @@ def handle_treet_event(payload: Dict[str, Any]) -> None:
 
     if trigger == "label/created":
         print(f"Shipping label created for bundle {payload.get('bundleId')}")
-        # TODO: store the carrier and tracking number
+        # Your code: store the carrier and tracking number
     elif trigger == "label/updated":
         print(f"Shipping label updated for bundle {payload.get('bundleId')}: {payload.get('status')}")
-        # TODO: update the shipment status
+        # Your code: update the shipment status
     else:
         print(f"Unhandled Treet trigger: {trigger}")
 

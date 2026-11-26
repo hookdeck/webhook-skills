@@ -34,11 +34,9 @@ def send(body, signature="AUTO", content_type="application/json"):
 @pytest.fixture(autouse=True)
 def environment(monkeypatch):
     monkeypatch.setenv("AUTHGEAR_WEBHOOK_SECRET", vector["secret"])
-    monkeypatch.setenv("AUTHGEAR_WEBHOOK_TOLERANCE_SECONDS", "0")
-    monkeypatch.setenv("UPPROMOTE_WEBHOOK_TOPIC", "user.created")
 
 
-def test_fixed_core_vector_and_event_routing(caplog):
+def test_fixed_documented_vector_and_event_routing(caplog):
     assert verify_signature(vector["body"].encode(), vector["signature"], vector["secret"])
     assert get_event_names(json.loads(vector["body"])) == vector["events"]
     with caplog.at_level("INFO"):
@@ -103,7 +101,7 @@ def test_rotation_and_unknown_versions():
 
 
 @pytest.mark.skipif(prefix not in ["v1=", "sha256="], reason="Not a prefixed body-only digest")
-def test_core_bare_digest():
+def test_bare_hex_digest():
     assert verify_signature(vector["body"].encode(), vector["signature"].split("=")[-1], vector["secret"])
 
 
@@ -122,5 +120,4 @@ def test_optional_age_policy(monkeypatch):
     assert not verify_signature(body, vector["signature"], vector["secret"], 300)
     assert verify_signature(body, sign(body, timestamp=str(int(time.time()))), vector["secret"], 300)
     assert not verify_signature(body, sign(body, timestamp=str(int(time.time())+1000)), vector["secret"], 300)
-    monkeypatch.setenv("AUTHGEAR_WEBHOOK_TOLERANCE_SECONDS", "bad")
     assert send(vector["body"]).status_code == 500

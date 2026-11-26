@@ -3,7 +3,7 @@ name: morta-webhooks
 description: >
   Receive and verify Morta webhooks. Use when setting up Morta webhook endpoints,
   debugging Morta-Signature verification, or handling Morta hub events like
-  table.row_created, project.created, member.created, and process.response_submitted.
+  table.row_created, hub.created, member.created, and document.response_submitted.
 license: MIT
 metadata:
   author: hookdeck
@@ -17,7 +17,7 @@ metadata:
 
 - How do I receive Morta webhooks?
 - How do I verify the `Morta-Signature` header?
-- How do I handle `table.row_created`, `project.created`, or `member.created` events?
+- How do I handle `table.row_created`, `hub.created`, or `member.created` events?
 - How do I read Morta's double-encoded `change` field?
 - Why is my Morta webhook signature verification failing?
 
@@ -67,13 +67,16 @@ Every delivery is a `POST` with the same JSON envelope; dispatch on the `event` 
 |-------|----------------|------------------|
 | `table.row_created` | Rows are added to a table | Sync new data downstream |
 | `table.row_updated` | Table rows change | Keep a mirror up to date |
-| `project.created` | A hub is created | Provision related resources |
-| `project.duplication_failed` | A hub duplication job fails (`change` carries the error) | Alert an owner |
+| `hub.created` | A hub is created | Provision related resources |
+| `hub.duplication_failed` | A hub duplication job fails (`change` carries the error) | Alert an owner |
 | `member.created` | A user is added to a hub | Onboarding automation |
-| `process.response_submitted` | A document response is submitted | Start a review workflow |
+| `document.response_submitted` | A document response is submitted | Start a review workflow |
 
-Morta documents 76 event types across `project.*`, `member.*`, `policy.*`, `table.*` and `process.*`
-(documents). The rest are listed in [references/overview.md](references/overview.md).
+Morta documents 75 event types across `hub.*`, `member.*`, `policy.*`, `table.*` and `document.*`.
+Hub and document events were named `project.*` and `process.*` until Morta renamed them. The old names
+are deprecated but still work: a webhook subscribed under an old name receives that old name in
+`event`, so the example handlers accept both spellings. The rest are listed in
+[references/overview.md](references/overview.md).
 
 ## Environment Variables
 

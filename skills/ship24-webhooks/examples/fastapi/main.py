@@ -19,11 +19,11 @@ processed_message_ids: set = set()
 def verify_ship24_request(headers, configured=None) -> bool:
     """Ship24 does not sign payloads. Every webhook carries the account's Webhook Secret as
     "Authorization: Bearer <secret>". The configured value is the bare secret (a pasted
-    "Bearer " prefix is stripped, as Hookdeck does). The scheme matches in any case; the
+    "Bearer " prefix is stripped). The scheme matches in any case; the
     secret is compared exactly, in constant time.
 
     A static shared credential authenticates the sender, not the body, and gives no replay
-    protection (no signature, no timestamp): use HTTPS and rotate the secret if it leaks.
+    protection (no signature, no timestamp): use HTTPS and keep the secret out of logs.
     """
     configured = configured if configured is not None else os.environ.get("SHIP24_WEBHOOK_SECRET")
     if not configured:
@@ -56,13 +56,13 @@ def handle_tracking(tracking: dict) -> None:
         events = tracking.get("events") or []
         event = events[0] if events else {}
         print(f"Tracking update for {tracker.get('trackingNumber')}: {event.get('status')}")
-        # TODO: compare event["occurrenceDatetime"] with the latest stored event before changing
+        # Your code: compare event["occurrenceDatetime"] with the latest stored event before changing
         # shipment status, because messages can arrive out of order
 
     elif topic == "tracking/pod":
         data = tracking.get("data") or {}
         print(f"Proof of delivery for {tracker.get('trackingNumber')}: {data.get('status')}")
-        # TODO: if data["status"] is "found", store data["content"]["text"] or download
+        # Your code: if data["status"] is "found", store data["content"]["text"] or download
         # data["content"]["downloadUrl"] (valid for 7 days)
 
     else:

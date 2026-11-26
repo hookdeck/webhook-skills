@@ -84,10 +84,12 @@ The other 43 are listed in [references/overview.md](references/overview.md); log
 
 ## Delivery
 
-Per Payt's docs, respond `200` within 10 seconds. Failures are retried up to 10 times at increasing
-intervals, and frequent failures deactivate the webhook (Payt emails you). Order is not guaranteed
-(`invoice_closed` can arrive before `invoice_created`) and events can repeat, so make processing idempotent.
-For an object you don't know yet, Payt suggests answering `404` so the event is retried later.
+Per Payt's docs, any `2xx` within 10 seconds counts as delivered. Anything else is retried up to 10 times
+at increasing intervals over roughly 4 days and 16 hours, and frequent failures deactivate the webhook (Payt
+emails the webhook's developer addresses). Order is not guaranteed (`invoice_closed` can arrive before
+`invoice_created`) and events can repeat, so make processing idempotent. The `X-PAYT-DELIVERY` header stays
+the same when a delivery is retried, so you can use it to spot repeats. For an object you don't know yet,
+Payt suggests answering `404` so the event is retried later.
 
 ## Environment Variables
 

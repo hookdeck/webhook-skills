@@ -21,6 +21,16 @@ COMPLETED = {
     "study": {"id": "study-uuid", "title": "Onboarding research"},
 }
 
+SCREENED_OUT = {
+    "event_type": "interview.screened_out",
+    "version": 1,
+    "interview": {
+        "id": "interview-uuid", "status": "screened_out", "vid": "participant-facing-id", "is_mock": False,
+        "created_at": "2026-10-20T10:00:00.000Z", "completed_at": "2026-10-20T10:05:00.000Z", "metadata": {},
+    },
+    "study": {"id": "study-uuid", "title": "Onboarding research"},
+}
+
 
 def sign(payload: str, msg_id: str, timestamp: str, secret: str = TEST_SECRET) -> str:
     """Svix algorithm: base64(HMAC-SHA256(decoded secret, "{id}.{timestamp}.{body}"))."""
@@ -63,6 +73,12 @@ def test_handles_interview_completed():
     response = send(json.dumps(COMPLETED))
     assert response.status_code == 200
     assert response.json() == {"success": True, "type": "interview.completed"}
+
+
+def test_handles_interview_screened_out():
+    response = send(json.dumps(SCREENED_OUT))
+    assert response.status_code == 200
+    assert response.json() == {"success": True, "type": "interview.screened_out"}
 
 
 def test_unknown_event_type():

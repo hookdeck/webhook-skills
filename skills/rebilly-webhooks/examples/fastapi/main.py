@@ -61,7 +61,7 @@ def verify_rebilly_request(headers, username=None, password=None) -> bool:
 async def require_basic_auth(request: Request) -> None:
     """FastAPI dependency: reject the request before the body is read.
 
-    Hookdeck never sends a 401 challenge, so the credentials must arrive with every request.
+    The credentials must arrive with every request (there is no challenge round trip).
     """
     if not verify_rebilly_request(request.headers):
         raise HTTPException(status_code=401, detail="Invalid or missing basic auth credentials")
@@ -72,35 +72,35 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "transaction-processed":
         print(f"Transaction processed")
-        # TODO: fulfil the order, inspect payload["_embedded"]["transaction"]
+        # Your code: fulfil the order, inspect payload["_embedded"]["transaction"]
 
     elif event_type == "transaction-declined":
         print(f"Transaction declined")
-        # TODO: notify the customer or retry with another payment instrument
+        # Your code: notify the customer or retry with another payment instrument
 
     elif event_type == "customer-created":
         print(f"Customer created")
-        # TODO: create the matching account in your system
+        # Your code: create the matching account in your system
 
     elif event_type == "subscription-activated":
         print(f"Subscription activated")
-        # TODO: grant access
+        # Your code: grant access
 
     elif event_type == "subscription-canceled":
         print(f"Subscription canceled")
-        # TODO: schedule access removal
+        # Your code: schedule access removal
 
     elif event_type == "invoice-issued":
         print(f"Invoice issued")
-        # TODO: email or store the invoice
+        # Your code: email or store the invoice
 
     elif event_type == "invoice-paid":
         print(f"Invoice paid")
-        # TODO: mark the order as paid
+        # Your code: mark the order as paid
 
     elif event_type == "data-export-completed":
         print(f"Data export completed: {payload.get('dataExportId')}")
-        # TODO: download the file from the "download" link in payload["_links"]
+        # Your code: download the file from the "download" link in payload["_links"]
 
     else:
         print(f"Unhandled event: {event_type}")

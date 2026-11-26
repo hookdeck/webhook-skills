@@ -32,7 +32,7 @@ header matches what you configured.
 Compare the full string `Bearer <token>`, not a token you've split out of it. The scheme
 prefix is part of what you configured, and splitting on spaces adds parsing edge cases
 (double spaces, lowercase `bearer`, missing prefix) that a plain equality check avoids.
-Hookdeck's Fillout source does the same: its **API Key** field takes the whole value.
+On Hookdeck's Fillout source, paste the same value into the **API Key** field.
 
 Use a constant-time comparison so response timing doesn't leak how much of the value
 matched. Hashing both sides with SHA-256 first gives equal-length inputs, so you don't
@@ -97,6 +97,9 @@ verify. All three examples use the standard library.
   `formId` and `url`.
 - **Store the token without `Bearer `.** `FILLOUT_WEBHOOK_TOKEN` is the bare token; the
   code adds the prefix. Putting `Bearer ` in both places gives `Bearer Bearer ...`.
+- **Publish after changing the header.** **Test** sends the editor's current settings, but
+  real submissions use the last published version. A test can pass while real deliveries
+  still send the old header, or none.
 - **Whitespace.** A trailing space or newline pasted into Fillout's header value makes
   every comparison fail. Re-type the value if the test request gets `401`.
 - **Don't confuse the API key with the webhook token.** Your Fillout API key

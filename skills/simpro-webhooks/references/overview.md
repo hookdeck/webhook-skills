@@ -6,7 +6,7 @@ Simpro (field service management) lets you subscribe to events instead of pollin
 
 ## Common Event Types
 
-The `ID` field is the event. The docs show `test.updated` and `company.customer.updated` as payload examples; the other IDs below follow the same `<resource>.<action>` pattern. Pick the events you want in the subscription screen, which is the authoritative list for your build.
+The `ID` field is the event. The docs show `test.updated` and `company.customer.updated` as payload examples; the other IDs below come from the `Events` list in the Webhook Subscriptions API, which documents 109 events. Pick the events you want in the subscription screen or the API.
 
 | Event (`ID`) | Triggered When | Common Use Cases |
 |--------------|----------------|------------------|

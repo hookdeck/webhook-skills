@@ -57,42 +57,42 @@ function handleEvent(payload) {
   switch (eventType) {
     case 'transaction-processed':
       console.log(`Transaction processed`);
-      // TODO: fulfil the order, inspect payload._embedded.transaction
+      // Your code: fulfil the order, inspect payload._embedded.transaction
       break;
 
     case 'transaction-declined':
       console.log(`Transaction declined`);
-      // TODO: notify the customer or retry with another payment instrument
+      // Your code: notify the customer or retry with another payment instrument
       break;
 
     case 'customer-created':
       console.log(`Customer created`);
-      // TODO: create the matching account in your system
+      // Your code: create the matching account in your system
       break;
 
     case 'subscription-activated':
       console.log(`Subscription activated`);
-      // TODO: grant access
+      // Your code: grant access
       break;
 
     case 'subscription-canceled':
       console.log(`Subscription canceled`);
-      // TODO: schedule access removal
+      // Your code: schedule access removal
       break;
 
     case 'invoice-issued':
       console.log(`Invoice issued`);
-      // TODO: email or store the invoice
+      // Your code: email or store the invoice
       break;
 
     case 'invoice-paid':
       console.log(`Invoice paid`);
-      // TODO: mark the order as paid
+      // Your code: mark the order as paid
       break;
 
     case 'data-export-completed':
       console.log(`Data export completed: ${payload.dataExportId}`);
-      // TODO: download the file from the "download" link in payload._links
+      // Your code: download the file from the "download" link in payload._links
       break;
 
     default:
@@ -103,7 +103,7 @@ function handleEvent(payload) {
 // Rebilly sends GET, POST, PUT, PATCH or DELETE, as configured on the webhook, so accept them all.
 // Read the body raw (any content type) and authenticate before parsing it.
 app.all('/webhooks/rebilly', express.raw({ type: '*/*' }), (req, res) => {
-  // Hookdeck never sends a 401 challenge, so the credentials must arrive with every request.
+  // The credentials must arrive with every request (there is no challenge round trip).
   if (!verifyRebillyRequest(req.headers)) {
     return res.status(401).json({ error: 'Invalid or missing basic auth credentials' });
   }

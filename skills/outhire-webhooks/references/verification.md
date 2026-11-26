@@ -8,7 +8,7 @@ Outhire uses [Standard Webhooks](https://www.standardwebhooks.com/). Every deliv
 |--------|-------|
 | `webhook-id` | Unique identifier for this delivery |
 | `webhook-timestamp` | Unix timestamp (seconds) of when the request was sent |
-| `webhook-signature` | One or more space-separated `v1,<base64 signature>` entries |
+| `webhook-signature` | `v1,<base64 signature>` (Outhire documents one value) |
 
 The signature is computed as:
 
@@ -30,7 +30,7 @@ Your endpoint URL is public. Without verification anyone can POST a fake `candid
 
 [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) (npm, PyPI) reads the three headers, checks the timestamp (fixed **5-minute** window), compares in constant time against every `v1,` entry and returns the parsed body. `OUTHIRE_WEBHOOK_SECRET` holds the full `whsec_` value.
 
-Hookdeck also accepts the `svix-id`, `svix-timestamp` and `svix-signature` spelling of the same headers. The examples read `webhook-*` and fall back to `svix-*` when `webhook-id` is absent, then hand the library the values under the `webhook-*` names:
+Svix-style senders use the `svix-id`, `svix-timestamp` and `svix-signature` spelling of the same headers. The examples read `webhook-*` and fall back to `svix-*` when `webhook-id` is absent, then hand the library the values under the `webhook-*` names:
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -112,10 +112,10 @@ Both verifiers use the same `webhook-*` or `svix-*` header selection as above. W
 - **Raw body.** The HMAC covers the exact bytes Outhire sent. Use `express.raw({ type: '*/*' })`, `await request.text()` or `await request.body()`. Parsing and re-serialising JSON changes whitespace and key order. Parse only after verifying.
 - **Decode the secret.** The HMAC key is the base64-decoded part after `whsec_`, not the literal string. Keep the `whsec_` prefix in the env var.
 - **One secret per webhook.** A staging webhook's secret won't verify production deliveries.
-- **Multiple signatures.** `webhook-signature` can hold several space-separated entries. Accept the request if any `v1,` entry matches.
+- **Multiple signatures.** Outhire documents a single `v1,` value, but Standard Webhooks allows several space-separated entries. Accept the request if any `v1,` entry matches.
 - **Late Hookdeck retries.** See the manual verifier above.
 - **Clock drift.** Keep your server clock in sync with NTP, or timestamps will fail the 5-minute check.
-- **No event ID in the body.** Dedupe on `webhook-id`.
+- **No event ID in the body.** Dedupe on `webhook-id` and on `event` + `candidate.id` + `occurred_at`; Outhire doesn't say whether a retry keeps the same `webhook-id`.
 
 ## How Do I Debug Outhire Verification Failures?
 

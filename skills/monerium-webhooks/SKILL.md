@@ -4,8 +4,8 @@ description: >
   Receive and verify Monerium webhooks, which follow the Standard Webhooks
   specification. Use when registering a Monerium webhook with POST /webhooks,
   generating the whsec_ secret, debugging webhook-id / webhook-timestamp /
-  webhook-signature verification, or handling order.created, order.updated and
-  subscription.created events for EURe orders.
+  webhook-signature verification, or handling order.created, order.updated,
+  profile.updated, profile.error, iban.updated and subscription.created events.
 license: MIT
 metadata:
   author: hookdeck
@@ -23,6 +23,7 @@ metadata:
 - How do I register a Monerium webhook (`POST /webhooks`) and what secret do I send?
 - How do I verify a Monerium webhook signature (`webhook-signature`)?
 - How do I handle `order.created` and `order.updated` events, or react to a `processed` or `rejected` order?
+- How do I handle `profile.updated`, `profile.error` or `iban.updated` for Whitelabel customers?
 - Why does my Monerium webhook subscription stay inactive (`subscription.created`)?
 - Why is my Monerium webhook verification failing, or failing only on retries and replays?
 
@@ -36,6 +37,8 @@ Monerium does not issue a signing secret. You generate it, send it in the `secre
 const secret = 'whsec_' + crypto.randomBytes(32).toString('base64');
 ```
 
+The [API reference](https://docs.monerium.com/api/#tag/webhooks/operation/create-subscription) requires a base64-encoded random value of 24 to 64 bytes, prefixed with `whsec_`.
+
 ## Verification (core)
 
 | Header | Value |
@@ -44,7 +47,7 @@ const secret = 'whsec_' + crypto.randomBytes(32).toString('base64');
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -66,16 +69,16 @@ The library always enforces a fixed **5-minute timestamp window**. Hookdeck retr
 
 ## Event Type and Payload
 
-Every body is a `{ type, data }` envelope. The event name is the dotted top-level `type`, and the order is in `data` (`id`, `state`, `meta`). Monerium's guide prints no payload example, so these fields come from its handler code:
+Every body has a dotted top-level `type`, an RFC 3339 `timestamp` and, for every event except `subscription.created`, a `data` object: the order, profile or IBAN. The [API reference](https://docs.monerium.com/api/#tag/webhooks) prints this `subscription.created` example:
 
 ```json
 {
-  "type": "order.updated",
-  "data": { "id": "<order id>", "state": "processed", "meta": { "txHashes": ["0x..."] } }
+  "type": "subscription.created",
+  "timestamp": "2024-08-09T12:44:04.777884Z"
 }
 ```
 
-For `order.updated`, act on `state` `processed` (`meta.txHashes` holds the on-chain transaction hashes) and `rejected` (`meta.rejectedReason` explains why). For `order.created`, `data.kind` of `issue` means an incoming payment was detected; the guide also reads `amount`, `currency`, `chain` and `counterpart`.
+The reference prints no example body for the order events. For `order.updated`, act on `state` `processed` (`meta.txHashes` holds the on-chain transaction hashes) and `rejected` (`meta.rejectedReason` explains why). For `order.created`, `data.kind` of `issue` means an incoming payment was detected; the guide also reads `amount`, `currency`, `chain` and `counterpart`.
 
 ## Common Event Types
 
@@ -83,13 +86,16 @@ For `order.updated`, act on `state` `processed` (`meta.txHashes` holds the on-ch
 |-------|------------|
 | `order.created` | An order is created, e.g. an incoming payment is detected, before it is processed |
 | `order.updated` | An order changes state. The primary event: act on `processed` and `rejected` |
-| `subscription.created` | Sent to your URL right after you register the webhook; answer `200 OK` to activate the subscription |
+| `profile.updated` | A profile's state changes (Whitelabel onboarding: `approved`, `rejected`, `incomplete` and others) |
+| `profile.error` | Profile data from a KYC provider was rejected as invalid and skipped. Opt-in |
+| `iban.updated` | An IBAN's details or state change; `data` holds the IBAN object |
+| `subscription.created` | Sent to your URL right after you create or update the webhook; answer `200 OK` or the subscription isn't created |
 
-The docs list these three and may not be exhaustive, so acknowledge types you don't recognise. See [references/overview.md](references/overview.md).
+If `POST /webhooks` omits `types`, Monerium subscribes `iban.updated` and `profile.updated`; name `order.created` and `order.updated` explicitly, and `profile.error` is opt-in. Acknowledge types you don't recognise. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 
-Anything other than `200 OK` is retried up to 10 times over 12 hours with exponential backoff. Store processed `webhook-id` values and deduplicate on them. The docs give no timeout or ordering guarantee, so respond quickly and process asynchronously. Return `400` for missing headers and `401` for a bad signature. Profile approval is notified by email, not by webhook.
+Anything other than `200 OK` is retried up to 10 times over 12 hours with exponential backoff. Retries carry the same `webhook-id`, so store processed values and deduplicate on them. `GET /webhooks` shows each subscription's `state` and any `deactivationReason`; `PATCH /webhooks/{subscription}` sets it back to `active`. The docs give no timeout or ordering guarantee, so respond quickly and process asynchronously. Return `400` for missing headers and `401` for a bad signature. On the Private plan, profile approval is notified by email, not by webhook.
 
 ## Environment Variables
 

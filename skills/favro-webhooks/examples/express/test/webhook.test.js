@@ -71,6 +71,9 @@ describe('eventKey', () => {
   test('maps a comment action', () => {
     expect(eventKey({ action: 'created', comment: {} })).toBe('comment.created');
   });
+  test('maps a comment action when the card is included too', () => {
+    expect(eventKey({ action: 'updated', card: {}, comment: {} })).toBe('comment.updated');
+  });
 });
 
 describe('POST /webhooks/favro', () => {

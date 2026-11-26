@@ -112,11 +112,11 @@ def handle_alert(alert: dict, group: dict) -> None:
 
     if status == "firing":
         print(f"Alert firing: {name} ({alert.get('fingerprint')}) on receiver {group.get('receiver')}")
-        # TODO: page on-call or open an incident (alert["labels"], alert["annotations"])
+        # Your code: page on-call or open an incident (alert["labels"], alert["annotations"])
 
     elif status == "resolved":
         print(f"Alert resolved: {name} ({alert.get('fingerprint')})")
-        # TODO: close the matching incident
+        # Your code: close the matching incident
 
     else:
         print(f"Unhandled alert status: {status}")

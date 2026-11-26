@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const eventType: string | undefined = event?.event_type?.id;
   const resource = event?.body ?? {};
 
-  // TODO: use event.id to deduplicate (Lob retries until it sees a 2xx).
+  // Deduplicate on event.id: Lob retries until it sees a 2xx.
   switch (eventType) {
     case 'postcard.created':
       console.log(`Postcard created: ${resource.id}`);
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     case 'postcard.delivered':
       console.log(`Postcard delivered: ${resource.id}`);
-      // TODO: trigger the downstream "mail delivered" workflow.
+      // Trigger your downstream "mail delivered" workflow here.
       break;
 
     case 'postcard.re-routed':
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     case 'self_mailer.rendered_thumbnails':
       console.log(`Self mailer thumbnails rendered: ${resource.id}`);
-      // TODO: download resource.thumbnails (small/medium/large URLs) if payload redaction is off.
+      // resource.thumbnails holds small/medium/large URLs when payload redaction is off.
       break;
 
     default:

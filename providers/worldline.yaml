@@ -1,0 +1,40 @@
+name: worldline
+displayName: Worldline
+docs:
+  webhooks: https://docs.connect.worldline-solutions.com/documentation/webhooks/
+  verification: https://docs.connect.worldline-solutions.com/documentation/webhooks/#faq-i-don-t-use-the-sdks-how-do-i-check-the-webhooks-message-signature
+  events: https://docs.connect.worldline-solutions.com/documentation/webhooks/event-types/
+  direct: https://docs.direct.worldline-solutions.com/en/integration/api-developer-guide/webhooks
+notes: >
+  Worldline SA (worldline.com). Covers BOTH Worldline Connect (GlobalCollect, ex-Ingenico Connect)
+  and Worldline Direct (ex-Ingenico/Ogone Direct), which share one scheme: X-GCS-Signature = standard
+  base64 HMAC-SHA256 of the raw body, keyed with the webhooks secret key (not the REST API key) whose
+  id is in X-GCS-KeyId. No timestamp, no replay window: dedupe on the top-level event id. Look the
+  secret up by key id and 401 unknown ids (Connect signs with the OLDEST key). Connect sends an
+  unsigned GET with X-GCS-Webhooks-Endpoint-Verification that must be echoed as a text/plain body,
+  or the endpoint is added deactivated; Direct documents no GET (it has ValidateWebhookCredentials,
+  which is the HMAC of the empty string, and SendTestWebhook). Envelope {apiVersion "v1", id, created,
+  merchantId, type} plus one resource key named after the type prefix (payment, refund, payout, token,
+  dispute, capture; Direct paymentlink.* -> paymentLink). Connect: 56 events plus
+  payment.paid_increment, 10 s timeout, 3xx fails, retries over 48 h from the first attempt,
+  TEST-prefixed ids for Configuration Center tests, no IP allowlist (DNS name or custom header
+  instead). Direct: 20 events incl. paymentlink.*, 5 retries relative to the last attempt, unsigned
+  retry-count header, IP ranges on its firewall-configuration page. Hookdeck source type WORLDLINE
+  (HMAC, x-gcs-signature, base64, one secret kept on the key Worldline currently signs with;
+  Hookdeck's edge answers the Connect verification GET for WORLDLINE sources). Not Worldpay,
+  Worldline Sips, Saferpay or Bambora.
+testScenario:
+  events:
+    - payment.captured
+    - payment.paid
+    - refund.refunded
+catalog:
+  summary: Verify Worldline Connect and Direct webhook signatures (`X-GCS-Signature`, base64 HMAC-SHA256 of the raw body, secret looked up by `X-GCS-KeyId`), answer the Connect endpoint-verification GET, handle payment.captured, payment.paid and refund.refunded events
+  marketplace:
+    description: Verify Worldline Connect and Worldline Direct webhook signatures (X-GCS-Signature, HMAC-SHA256, X-GCS-KeyId key rotation), answer the Connect endpoint-verification GET, dedupe on event id, handle payment.captured, payment.paid, payment.rejected, refund.refunded, dispute.created and paymentlink.paid events.
+    keywords:
+    - webhooks
+    - worldline
+    - ingenico
+    - globalcollect
+    - payments

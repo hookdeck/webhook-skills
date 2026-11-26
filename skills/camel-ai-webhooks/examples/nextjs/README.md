@@ -1,6 +1,6 @@
 # camelAI Webhooks - Next.js Example
 
-Minimal example of receiving [camelAI](https://camelai.com) (camelRun) webhooks with signature verification in a Next.js App Router route. camelRun signs deliveries per [Standard Webhooks](https://www.standardwebhooks.com/) (`webhook-id`, `webhook-timestamp`, `webhook-signature`), verified here with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent the handler reads the `svix-*` spelling of the same headers instead, as Hookdeck does.
+Minimal example of receiving [camelAI](https://camelai.com) (camelRun) webhooks with signature verification in a Next.js App Router route. camelRun signs deliveries per [Standard Webhooks](https://www.standardwebhooks.com/) (`webhook-id`, `webhook-timestamp`, `webhook-signature`), verified here with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent the handler reads the `svix-*` spelling of the same headers instead.
 
 ## Prerequisites
 

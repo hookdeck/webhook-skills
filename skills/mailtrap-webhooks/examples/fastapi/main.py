@@ -7,7 +7,7 @@ Mailtrap signs every webhook with a `Mailtrap-Signature` header: the lowercase
 hex HMAC-SHA256 of the RAW request body, keyed with the webhook's signing secret
 (32 hex characters) used as a plain UTF-8 string. No timestamp, no prefix.
 
-https://docs.mailtrap.io/email-api-smtp/advanced/webhooks#webhook-signature-verification
+https://docs.mailtrap.io/general/webhooks#webhook-signature-verification
 """
 
 import hashlib

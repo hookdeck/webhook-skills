@@ -89,11 +89,11 @@ function handleEvent(payload: unknown): void {
   switch (event) {
     case 'message_send':
       console.log('Xtremepush message_send event', Object.keys(properties));
-      // TODO: record that the campaign message was sent to this recipient
+      // Your code: record that the campaign message was sent to this recipient
       break;
     case 'message_delivery':
       console.log('Xtremepush message_delivery event', Object.keys(properties));
-      // TODO: record that the campaign message was delivered
+      // Your code: record that the campaign message was delivered
       break;
     default:
       console.log(`Unhandled Xtremepush event: ${event}`);

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Webhook } from 'standardwebhooks';
 
 // A whsec_ secret is base64-decoded after the prefix (the library does this).
-// Any other secret is used as its raw UTF-8 bytes, matching Hookdeck.
+// Any other secret is used as its raw UTF-8 bytes.
 function createWebhook(secret: string): Webhook {
   if (secret.startsWith('whsec_')) return new Webhook(secret);
   return new Webhook(new TextEncoder().encode(secret), { format: 'raw' });
@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
   switch (event.type) {
     case 'batch.completed':
       console.log(`Batch ${data.batch_id} completed:`, data.request_counts);
-      // TODO: download results with the files API using data.output_file_id
+      // Your code: download results with the files API using data.output_file_id
       break;
 
     case 'batch.failed':
       console.log(`Batch ${data.batch_id} failed:`, data.request_counts);
-      // TODO: alert, then inspect data.error_file_id
+      // Your code: alert, then inspect data.error_file_id
       break;
 
     default:

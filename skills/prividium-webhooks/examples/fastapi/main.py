@@ -23,7 +23,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Prividium sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """Prividium sends webhook-* headers; also read the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),

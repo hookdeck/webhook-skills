@@ -19,7 +19,7 @@ whenever a group of alerts fires or resolves. Webhooks are **not signed**. The r
 (`authorization`, default type Bearer) or `Basic base64(username:password)` (`basic_auth`). Your
 endpoint authenticates the request by comparing those credentials with the ones you configured.
 
-Hookdeck's Prometheus Alertmanager source offers both: **Basic auth** (the default) for
+Hookdeck's Prometheus Alertmanager source offers both: **Basic auth** for
 `basic_auth`, where you enter the username and password, and **Bearer token** for `authorization`,
 where you enter the bare credentials.
 
@@ -79,7 +79,7 @@ function verifyAlertmanagerRequest(headers, env = process.env) {
 - `basic_auth`: `Authorization: Basic base64(username:password)`, checked against
   `ALERTMANAGER_WEBHOOK_USERNAME` and `ALERTMANAGER_WEBHOOK_PASSWORD`. Split on the first colon (a
   password may contain `:`) and compare both parts. The `Basic` scheme matches in any case.
-  Hookdeck never sends a 401 challenge; Alertmanager sends `basic_auth` on every request anyway.
+  Alertmanager sends `basic_auth` on every request, so no challenge round trip is needed.
 - A form you haven't configured is rejected, so with neither configured every request is rejected.
 - Return `401` for a missing header, wrong scheme or mismatch, `400` for a body that isn't a JSON
   object, `200` once handled.
@@ -97,7 +97,7 @@ credential if it leaks.
 
 Alertmanager has no event-type field. The body is a version `"4"` notification:
 `version`, `groupKey`, `truncatedAlerts`, `status`, `receiver`, `groupLabels`, `commonLabels`,
-`commonAnnotations`, `externalURL`, and `alerts[]` (each with `status`, `labels`, `annotations`,
+`commonAnnotations`, `externalURL`, `notification_reason`, and `alerts[]` (each with `status`, `labels`, `annotations`,
 `startsAt`, `endsAt`, `generatorURL`, `fingerprint`).
 
 | Status | Meaning |
@@ -108,8 +108,10 @@ Alertmanager has no event-type field. The body is a version `"4"` notification:
 `status` is a state, not an event type, and the group `status` is `firing` while any alert in it is
 firing. Loop over `alerts[]` and use each alert's own `status`.
 
-Notifications repeat every `group_interval` and `repeat_interval`. Deduplicate with `groupKey`
-plus each alert's `fingerprint` (and `status`, `startsAt`, `endsAt` if resolved should count as new).
+Notifications repeat every `group_interval` and `repeat_interval`, and each one carries the whole
+group. Key your handling on each alert's `fingerprint`, `status` and `startsAt`, as the examples
+do, never on `groupKey` alone: a group's firing and resolved notifications share the same
+`groupKey`.
 
 ## Environment Variables
 

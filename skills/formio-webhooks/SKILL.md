@@ -63,7 +63,7 @@ function verifyFormioRequest(headers, user = process.env.FORMIO_WEBHOOK_USERNAME
   method Form.io sends POST for creates, PUT for updates and DELETE for deletes (URL params go in
   the query string). The HTTP verb is the only hint of the operation: there is no event field.
   The examples accept POST, PUT, PATCH, GET and DELETE and handle an empty body.
-- **Hookdeck:** the Form.io source pre-selects POST only. Allow PUT and DELETE on the source (and
+- **Hookdeck:** the Form.io source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Allow PUT and DELETE on the source (and
   any other methods your action uses), or those requests are rejected.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

@@ -1,0 +1,26 @@
+name: bitgo
+displayName: BitGo
+docs:
+  webhooks: https://developers.bitgo.com/docs/webhooks-overview
+  verification: https://developers.bitgo.com/reference/v2webhooknotificationverify
+  events: https://developers.bitgo.com/docs/webhooks-wallet
+notes: >
+  Wallet, enterprise, organization and block webhooks are created with the API (wallet: POST
+  /api/v2/{coin}/wallet/{walletId}/webhooks with type, url, label). POST /api/v2/webhook/secret
+  creates (or rotates, at most every 5 minutes) the per-enterprise secret; without it there is no
+  signature. X-Signature-SHA256 is 64 lowercase hex characters. BitGo documents verification only via
+  POST /api/v2/webhook/{webhookId}/verify (signature + notificationPayload as JSON string ->
+  isValid); a local hex HMAC-SHA256 of the raw body keyed with the secret as text is inferred from
+  the header name, format and third-party receivers. Wallet types include transfer, transaction,
+  pendingapproval, txRequest, txRequestTransaction, address_confirmation, admin, circuitBreaker,
+  lowFee, lowFeeAddressBalance, stuckTx, transactionExpire, transactionRemoved,
+  transaction_finality_on_l1. Needs HTTP 200; up to 7 retries (1, 5, 10, 30, 60, 120, 240 min).
+  Suspended after 500 consecutive failures (or >100 in 7 days); URL blocked after 10
+  non-retryable 4xx in an hour. Simulate with .../webhooks/{id}/simulate. Hookdeck source type
+  BITGO (HMAC sha256 hex on x-signature-sha256; verification optional; no timestamp window).
+testScenario:
+  events:
+    - transfer
+    - pendingapproval
+catalog:
+  summary: Verify BitGo webhooks (`X-Signature-SHA256` hex HMAC-SHA256 keyed with the webhook secret; inferred, cross-check with the verify endpoint), handle transfer, approval and transaction request notifications

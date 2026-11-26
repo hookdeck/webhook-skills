@@ -35,7 +35,7 @@ const crypto = require('crypto');
 
 function verifyLeonardoRequest(headers, configured = process.env.LEONARDO_AI_WEBHOOK_SECRET) {
   if (!configured) return false;                          // never accept when unconfigured
-  // Store the bare key; tolerate a pasted "Bearer <key>" like Hookdeck does.
+  // Store the bare key; tolerate a pasted "Bearer <key>".
   const secret = /^bearer /i.test(configured) ? configured.slice(7) : configured;
   if (!secret) return false; // a configured value of just "Bearer " must not match
   const header = headers['authorization'] || '';

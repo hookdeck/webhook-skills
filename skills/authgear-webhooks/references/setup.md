@@ -20,11 +20,11 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `AUTHGEAR` source type once it is available in your environment and configure its verification secret. Named sources answer 200 at ingress; a failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures. Hookdeck applies no timestamp tolerance.
+Choose the `AUTHGEAR` source type once it is available in your environment and configure its verification secret. A failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures.
 
 No timestamp is included in the signed message. These examples do not invent an age check from unsigned fields.
 
 ## Official Documentation
 
-- [Webhooks](https://docs.authgear.com/integrate/events-hooks/webhooks)
-- [Verification](https://docs.authgear.com/integrate/events-hooks/webhooks#verifying-signature)
+- [Webhooks](https://docs.authgear.com/customization/events-hooks/webhooks)
+- [Verification](https://docs.authgear.com/customization/events-hooks/webhooks#verifying-signature)

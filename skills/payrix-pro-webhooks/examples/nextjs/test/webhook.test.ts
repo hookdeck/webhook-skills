@@ -16,9 +16,9 @@ beforeAll(async () => {
   lib = await import('../lib/verify-payrix-pro');
 });
 
-// Illustrative payloads: Payrix doesn't document the body shape.
-const transactionAlert = { alert: 'transaction', transaction: { id: 't1_txn_example', total: 1500 } };
-const merchantAlert = { alert: 'merchant', merchant: { id: 't1_mer_example', status: 1 } };
+// Placeholder bodies, not Payrix payloads: Payrix doesn't document the body shape.
+const sampleBody = { placeholder: 'first test body' };
+const otherBody = { placeholder: 'second test body' };
 
 function makeRequest(
   method: string,
@@ -40,33 +40,33 @@ const json = (o: unknown) => JSON.stringify(o);
 describe('Payrix Pro webhook', () => {
   describe('credential check', () => {
     it('accepts the exact header value', async () => {
-      const res = await route.POST(makeRequest('POST', { [HEADER]: SECRET }, json(transactionAlert)));
+      const res = await route.POST(makeRequest('POST', { [HEADER]: SECRET }, json(sampleBody)));
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ received: true });
     });
 
     it('matches the header name case-insensitively', async () => {
-      const res = await route.POST(makeRequest('POST', { 'x-payrix-secret': SECRET }, json(merchantAlert)));
+      const res = await route.POST(makeRequest('POST', { 'x-payrix-secret': SECRET }, json(otherBody)));
       expect(res.status).toBe(200);
     });
 
     it('compares the whole value: a stripped Bearer prefix is rejected', async () => {
-      const res = await route.POST(makeRequest('POST', { [HEADER]: SECRET.replace('Bearer ', '') }, json(transactionAlert)));
+      const res = await route.POST(makeRequest('POST', { [HEADER]: SECRET.replace('Bearer ', '') }, json(sampleBody)));
       expect(res.status).toBe(401);
     });
 
     it('rejects a wrong value of the same length', async () => {
-      const res = await route.POST(makeRequest('POST', { [HEADER]: 'x'.repeat(SECRET.length) }, json(transactionAlert)));
+      const res = await route.POST(makeRequest('POST', { [HEADER]: 'x'.repeat(SECRET.length) }, json(sampleBody)));
       expect(res.status).toBe(401);
     });
 
     it('rejects a value of a different length without throwing', async () => {
-      const res = await route.POST(makeRequest('POST', { [HEADER]: 'short' }, json(transactionAlert)));
+      const res = await route.POST(makeRequest('POST', { [HEADER]: 'short' }, json(sampleBody)));
       expect(res.status).toBe(401);
     });
 
     it('rejects a missing header', async () => {
-      const res = await route.POST(makeRequest('POST', {}, json(transactionAlert)));
+      const res = await route.POST(makeRequest('POST', {}, json(sampleBody)));
       expect(res.status).toBe(401);
     });
 
@@ -101,7 +101,7 @@ describe('Payrix Pro webhook', () => {
 
   describe('body handling', () => {
     it('accepts form-encoded and plain text bodies', async () => {
-      const form = await route.POST(makeRequest('POST', { [HEADER]: SECRET }, 'alert=transaction&id=t1', 'application/x-www-form-urlencoded'));
+      const form = await route.POST(makeRequest('POST', { [HEADER]: SECRET }, 'placeholder=form-body', 'application/x-www-form-urlencoded'));
       expect(form.status).toBe(200);
       const text = await route.POST(makeRequest('POST', { [HEADER]: SECRET }, 'hello', 'text/plain'));
       expect(text.status).toBe(200);

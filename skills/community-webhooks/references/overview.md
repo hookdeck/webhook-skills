@@ -19,25 +19,32 @@ creating them. See [setup.md](setup.md).
 
 ## Common Event Types
 
-Community documents exactly five event types — there are no others.
+Community documents six event types.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `message.inbound` | A member sends a message to your account | Route to a support inbox, trigger keyword automations, sentiment/analytics |
 | `message.outbound` | Your account sends a message to a member | Log conversation history, attribute campaign sends, sync to a CRM |
 | `member.created` | A new member joins your account | Welcome flows, CRM/ESP contact creation, audience sync |
-| `member.updated` | A member changes any of the standard personal data collected | Keep profile data in sync, re-segment audiences |
-| `member.deleted` | A member unsubscribes or deletes themselves | Suppression lists, GDPR/CCPA deletion, downstream unsubscribe |
+| `member.updated` | A member unsubscribes or changes any of the standard personal data collected | Keep profile data in sync, re-segment audiences |
+| `member.deleted` | A member deletes themselves | GDPR/CCPA deletion, downstream cleanup |
+| `member.opted_out` | A member unsubscribes, such as by replying STOP | Suppression lists, downstream unsubscribe |
 
 Notes on `message.outbound`: Community filters some outbound messages out of the
 stream, including content handled by other Community features such as `help`,
-`start`, and `stop` messages, and tapbacks. Do not treat the outbound stream as
-a complete audit log of everything your account sent.
+`start`, and `stop` messages, and tapbacks, and messages with no text (media
+only). Do not treat the outbound stream as a complete audit log of everything
+your account sent.
 
 Notes on `member.updated`: the docs describe member update events as firing when
 a member joins, unsubscribes, deletes themselves, or changes standard personal
 data — so a change in a member's lifecycle can surface across
-`member.created` / `member.updated` / `member.deleted`.
+`member.created` / `member.updated` / `member.deleted`. An opt-out triggers a
+`member.updated` event *and* a `member.opted_out` event for the same member.
+
+Notes on `member.opted_out`: the payload carries the member's current data with
+`active: false`, plus an `opt_out` object with the `source` of the opt-out,
+`opted_out_at`, and the `message` that triggered it (`id` and `text`).
 
 ## Event Payload Structure
 
@@ -54,7 +61,7 @@ Every event is a JSON object with the same envelope:
 
 ### Where the payload actually lives
 
-Every one of the five documented sample payloads nests the event data under
+Every one of the six documented sample payloads nests the event data under
 **`data.object`**. The prose on the same documentation page instead says member
 events "include a `member` object in the event's `data` field" and message
 events "have a `message` object in the event's `data` field".
@@ -175,12 +182,20 @@ The documented `message.outbound` sample shows the lowercase value
 ### At-least-once delivery — you must deduplicate
 
 Community explicitly documents that a webhook can be sent more than once for the
-same event. Store the webhook `id` (or the object `id`) for **at least an hour**
-and check it before processing.
+same event. Deduplicate on the top-level event `id`, which stays the same across
+retries. Store it for **at least two hours**, longer than the one-hour retry
+window, record it atomically (for example with a unique constraint), and check it
+before processing. Don't deduplicate on `data.object.id`: it identifies the
+member or message and separate events share it.
 
-This matters most for messages: the docs recommend following the *at-most-once*
-principle when sending messages — better to not send a message at all than to
-send it twice.
+For actions that shouldn't be repeated, such as sending a message, record the
+event `id` before acting: Community's docs say it's better not to send a message
+at all than to send it twice.
+
+### Ordering
+
+Retried events can arrive after newer ones. When updating stored member data,
+compare the member's `timestamp` with the one you have and ignore older updates.
 
 ### Response requirements
 

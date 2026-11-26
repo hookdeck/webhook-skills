@@ -57,7 +57,7 @@ To try it by hand:
 curl -X POST http://localhost:8000/webhooks/quickbase \
   -H "Content-Type: application/json" \
   -H "Authorization: $QUICKBASE_WEBHOOK_SECRET" \
-  -d '{"event":"record_added","record_id":42,"table":"Projects"}'
+  -d '{"action":"Add","record_id":42,"table":"Projects"}'
 ```
 
 ## Receive Webhooks Locally
@@ -76,7 +76,7 @@ Put the printed URL in the webhook's **Endpoint URL**.
 
 1. The dependency checks the secret header before the body is read. Failure returns `401`.
 2. The body (if any) is parsed as JSON when possible; XML, RAW text and empty bodies are accepted.
-3. The `event` field is **illustrative**: Quickbase adds no event field, so it is a literal you put
-   in your own message body template. The handler recognizes `record_added`, `record_modified` and
-   `record_deleted` and acknowledges anything else.
+3. Quickbase adds no event field, so the handler reads an `action` field you put in your message
+   body template as `"action": "%action%"`. Quickbase replaces the `%action%` marker with `Add`,
+   `Replace` or `Delete`. The handler recognizes those and acknowledges anything else.
 4. It returns `200 {"received": true}`.

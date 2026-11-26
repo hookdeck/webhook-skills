@@ -38,7 +38,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -99,7 +99,7 @@ uppercase names (`RENEWAL`) are only the dashboard/API subscription filter. The 
 | `subscription_paused` | A user pauses (Google Play only) |
 | `subscription_extended` | The store extends the expiration date |
 | `expiration` | A subscription expires |
-| `transferred` | Reserved for ownership changes; not sent yet |
+| `transferred` | A subscription moves to a different user (`event_data` is `null`; `transfer` names both users) |
 
 Delivery is at least once and unordered: **deduplicate on `id`** (`evt_` + 32 hex, stable across
 redelivery; legacy uses `data.id`) and order by `occurred_at`. See

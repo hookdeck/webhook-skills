@@ -4,43 +4,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { classify, verifyPax8Request } from '../../../lib/verify-pax8';
 
 function handleEvent(payload: Record<string, unknown>): void {
-  const { topic, action } = classify(payload);
+  const { topic, sentAt } = classify(payload);
 
-  // SUBSCRIPTION and PRODUCT are the topic values the docs show; INVOICE, CLIENT, QUOTE
-  // and USER are assumed from the docs' event category names. Check topic-definitions.
+  // SUBSCRIPTION, INVOICE and PRODUCT are topic values printed in Pax8's docs. Read the
+  // client, quote and user topic strings from GET /webhooks/topic-definitions.
   switch (topic) {
     case 'SUBSCRIPTION':
-      console.log(`Pax8 subscription ${action}`);
-      // TODO: sync the subscription (the docs show the CREATE action) to your system
+      console.log(`Pax8 subscription notification sent at ${sentAt}`);
+      // Fetch the subscription from the Pax8 API and update your system.
       break;
 
     case 'INVOICE':
-      console.log(`Pax8 invoice ${action}`);
-      // TODO: import the invoice into billing
-      break;
-
-    case 'CLIENT':
-      console.log(`Pax8 client ${action}`);
-      // TODO: update your customer record
+      console.log(`Pax8 invoice notification sent at ${sentAt}`);
+      // Fetch the invoice from the Pax8 API and import it into billing.
       break;
 
     case 'PRODUCT':
-      console.log(`Pax8 product ${action}`);
-      // TODO: refresh your catalog cache
-      break;
-
-    case 'QUOTE':
-      console.log(`Pax8 quote ${action}`);
-      // TODO: sync the quote
-      break;
-
-    case 'USER':
-      console.log(`Pax8 user ${action}`);
-      // TODO: sync the user
+      console.log(`Pax8 product notification sent at ${sentAt}`);
+      // Refresh the product in your catalog cache.
       break;
 
     default:
-      console.log('Unclassified Pax8 payload (no recognized topic)');
+      console.log(`Pax8 notification for topic ${topic ?? '(none)'}`);
   }
 }
 

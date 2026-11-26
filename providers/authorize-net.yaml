@@ -1,0 +1,24 @@
+name: authorize-net
+displayName: Authorize.net
+docs:
+  webhooks: https://developer.authorize.net/api/reference/features/webhooks.html
+  verification: https://developer.authorize.net/api/reference/features/webhooks.html
+  events: https://developer.authorize.net/api/reference/features/webhooks.html
+notes: >
+  Webhooks are created in the Merchant Interface (Webhooks section) or via the Webhooks REST API
+  (Basic auth with API Login ID and Transaction Key; apitest.authorize.net for sandbox). A Signature
+  Key (Account > Settings > Security Settings > General Security Settings > API Credentials and
+  Keys) is required before webhooks are sent. X-ANET-Signature = "sha512=" + uppercase hex
+  HMAC-SHA512 of the raw body keyed with the Signature Key as text (not hex-decoded, unlike
+  transHashSHA2); compare hex case-insensitively. Body {notificationId, eventType, eventDate,
+  webhookId, payload{entityName, id, ...}}. Events net.authorize.payment.*, payment.fraud.*,
+  customer.*, customer.paymentProfile.*, customer.subscription.*, partner.boarding.*. Retries up to
+  10 times until HTTP 200 (3 x 3 min, 3 x 8 h, 4 x 48 h), then the webhook is set inactive. Dedupe
+  on notificationId. Hookdeck source type AUTHORIZE_NET (HMAC sha512 hex on x-anet-signature;
+  verification optional; no timestamp window).
+testScenario:
+  events:
+    - net.authorize.payment.authcapture.created
+    - net.authorize.customer.created
+catalog:
+  summary: Verify Authorize.net webhooks (`X-ANET-Signature` "sha512=" + uppercase hex HMAC-SHA512 keyed with the Signature Key as text), handle payment, fraud, customer profile and subscription events

@@ -12,7 +12,7 @@ Memberful sends an `X-Memberful-Webhook-Signature` header. Its value is the hex 
 | Key | the secret's UTF-8 bytes, not decoded |
 | Encoding | lowercase hex, 64 characters, no prefix |
 
-Hookdeck's Memberful source uses the same scheme (HMAC, `sha256`, `x-memberful-webhook-signature`, hex) and compares hex case-insensitively.
+Hookdeck's Memberful source verifies the same signature.
 
 ## Implementation
 

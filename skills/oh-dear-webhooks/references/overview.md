@@ -44,7 +44,9 @@ The uptime types carry a monitor-kind prefix: `[monitor-type]UptimeCheckFailedNo
 - Lighthouse: `lighthouseIssuesDetectedNotification`, `lighthouseIssuesFixedNotification`
 - AI checks: `aiCheckFailedNotification`, `aiCheckSucceededNotification`
 
-The docs' table of contents uses class-style names (`UptimeCheckFailed`, `CertificateChanged`, `CronFailed`). Those are **not** wire values. Note that one example payload on the docs page (scheduled task not on time) shows the typo `sentCronNotExutedOnTimeNotification`; the documented event name is `cronNotExecutedOnTimeNotification`.
+The docs' table of contents uses class-style names (`UptimeCheckFailed`, `CertificateChanged`, `CronFailed`). Those are **not** wire values. In the scheduled-task-not-on-time example, `sentCronNotExutedOnTimeNotification` is the nested `cron_check_log_item.type`, not the event name; the top-level `type` is `cronNotExecutedOnTimeNotification`.
+
+When the primary checker can't reach a monitor that was confirmed down but a second location can, Oh Dear sends `[monitor-type]UptimeCheckRecoveredNotification` with `run.result` set to `warning` instead of `succeeded`. Check `run.result` before you treat a recovered event as a full recovery.
 
 ## Event Payload Structure
 
@@ -52,15 +54,18 @@ Every payload shares a few top-level fields:
 
 ```json
 {
-  "uuid": "860e04a8-2025-4793-a45c-c9ad71710cf2",
-  "type": "httpUptimeCheckFailedNotification",
-  "date_time": "20180312092737",
-  "result_url": "https://ohdear.app/monitors/1/check/uptime/report/2"
+    "uuid": "<uuid>",
+    "type":"httpUptimeCheckFailedNotification",
+    "date_time":"20180312092737",
+    "result_url":"https:\/\/ohdear.app\/monitors\/1\/check\/uptime\/report\/2",
+    ...
 }
 ```
+
+This is the generic example from Oh Dear's docs. `date_time` is printed as a compact string such as `20180312092737`, and `result_url` links to the exact report in Oh Dear.
 
 Event-specific data (`monitor`, `run`, `check` and so on) follows. Nested objects have their own `type` keys (for example `"type": "uptime"` on a check); only the top-level `type` is the event. The `monitorAddedNotification` example in the docs has `type`, `date_time` and a `monitor` object with its `checks`.
 
 ## Full Event Reference
 
-For every payload, see [Oh Dear's webhook documentation](https://ohdear.app/docs/integrations/webhooks).
+For every payload, see [Oh Dear's webhook documentation](https://ohdear.app/docs/tools-and-sdks/webhooks).

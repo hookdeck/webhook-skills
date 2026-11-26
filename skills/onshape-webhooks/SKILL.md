@@ -26,7 +26,7 @@ metadata:
 
 ## Verification (core)
 
-> Onshape signature keys are an Enterprise company setting. Paste the primary key; only the primary signature is verified.
+> A company administrator generates Onshape's signature keys in Company/Classroom/Enterprise settings > Webhooks. Use the primary key: this skill verifies the primary signature.
 
 Apps register webhooks with the REST API (`POST /api/v6/webhooks`). Company administrators then set signature keys in Company/Classroom/Enterprise settings > Webhooks. Each delivery is an HTTP POST with a JSON body and these headers:
 

@@ -128,7 +128,7 @@ describe('POST /webhooks/semaphore', () => {
 });
 
 describe('other HTTP methods', () => {
-  it.each(['get', 'put', 'patch', 'delete'])('verifies and acknowledges a signed %s', async (method) => {
+  it.each(['put', 'patch'])('verifies and acknowledges a signed %s', async (method) => {
     const body = JSON.stringify(pipelineDone());
     const res = await request(app)
       [method](URL)
@@ -138,9 +138,9 @@ describe('other HTTP methods', () => {
     expect(res.status).toBe(200);
   });
 
-  it.each(['get', 'delete'])('verifies an empty %s over zero bytes and returns 200', async (method) => {
+  it.each(['get', 'delete'])('returns 405 for a signed %s', async (method) => {
     const res = await request(app)[method](URL).set('X-Semaphore-Signature-256', sign(''));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(405);
   });
 
   it('rejects an unsigned GET with 401', async () => {

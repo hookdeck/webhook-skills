@@ -13,7 +13,7 @@ The signing key can be any string you choose; make it long and random. Without a
 
 ## Register Your Endpoint
 
-1. In Buttondown, open the webhook settings (Events & webhooks) and add a webhook, or create one with the API (`POST` to the webhooks route).
+1. In Buttondown, go to **Settings** and click **Create webhook**, or create one with the API (`POST /v1/webhooks`).
 2. Enter your endpoint URL.
 3. Choose the event types to receive, for example `subscriber.created`, `subscriber.confirmed`, `subscriber.unsubscribed`, `email.sent`.
 4. Fill in the **Signing key** field and save.

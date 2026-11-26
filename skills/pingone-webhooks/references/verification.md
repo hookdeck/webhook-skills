@@ -16,8 +16,7 @@ Because the header name and value are free-form, the examples take both from the
 
 Compare the **whole value**. Don't strip or parse a `Bearer ` prefix, and don't base64-decode a
 `Basic ` value: if you typed `Basic username:password`, that literal string is what arrives.
-A missing header or a mismatch gets `401`. This matches Hookdeck's PingOne source (API key
-verification: header name plus exact whole value).
+A missing header or a mismatch gets `401`.
 
 ## Implementation
 

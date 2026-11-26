@@ -21,6 +21,11 @@
 
 Company and project administrators can both manage webhooks.
 
+Hooks can also be created with the [Webhooks API](https://developers.procore.com/documentation/webhooks-api):
+`POST /rest/v1.0/webhooks/hooks` with a `destination_url` and `destination_headers` (for example
+`{"Authorization": "Bearer <token>"}`), then one trigger per `resource_name` and `event_type`
+with `POST /rest/v1.0/webhooks/hooks/{hook_id}/triggers`.
+
 ## Store the Credential
 
 Set an Authorization Header (it is optional, but without it nothing authenticates the sender)

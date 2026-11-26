@@ -75,16 +75,21 @@ Key fields:
 
 ## Delivery and Retries
 
-- Acknowledge with a **2xx** response (the SDK and examples return **204 No
-  Content**). eBay treats non-2xx as a failure and retries.
-- If your endpoint keeps failing, eBay can **mark the destination down and
-  disable the associated application keyset** — reliably returning 2xx within
-  the delivery window (≈24h of retries) matters.
-- Notifications can arrive **more than once** or **out of order**. Process them
-  idempotently, keyed on `notification.notificationId`.
+- Acknowledge immediately with `200`, `201`, `202` or `204` (the SDK and
+  examples return **204 No Content**). eBay publishes no timeout.
+- For Marketplace Account Deletion, eBay resends an unacknowledged notification
+  until it is acknowledged. After 24 hours of unacknowledged notifications it
+  marks the callback URL down and emails your alert address; you then have 30
+  days to fix it before eBay marks you non-compliant. For other topics eBay
+  documents only that a destination can be `MARKED_DOWN` after failures.
+- Resends mean a notification can arrive **more than once**
+  (`notification.publishAttemptCount` counts the sends). eBay documents no
+  ordering. Process idempotently, keyed on `notification.notificationId`, and
+  compare `notification.eventDate` when order matters.
 
 ## Full Event Reference
 
-- [Notification API overview](https://developer.ebay.com/api-docs/commerce/notification/overview.html)
+- [Notification events (all topics)](https://developer.ebay.com/develop/api/sell/notification_events)
+- [Notification API reference](https://developer.ebay.com/develop/api/sell/notification_api)
 - [Marketplace Account Deletion guide](https://developer.ebay.com/marketplace-account-deletion)
 - [getTopics](https://developer.ebay.com/api-docs/commerce/notification/resources/topic/methods/getTopics)

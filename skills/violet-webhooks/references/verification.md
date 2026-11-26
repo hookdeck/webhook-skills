@@ -13,7 +13,7 @@ X-Violet-Hmac: X6+KKoN/xePC3yN6i+DVbDza3JqoasnMNDX1dz2c5fA=
 - Signed content: the **raw request body bytes** only. No timestamp, event id or header is signed
 - Encoding: standard base64 with padding, always 44 characters (`[A-Za-z0-9+/]{43}=`), no prefix
 
-Because no timestamp is signed, there is no replay window to enforce. Don't invent one from unsigned headers or body fields; use `X-Violet-Event-Id` for idempotency instead.
+Because no timestamp is signed, there is no replay window to enforce. Don't invent one from unsigned headers or body fields; use `X-Violet-Event-Id` for idempotency instead (`X-Violet-Event-Id-Source` on a resend, and `X-Violet-Recovery-Event-Key` for recovery case events).
 
 ## Implementation
 
@@ -53,13 +53,13 @@ def verify_violet_signature(raw_body: bytes, header: str | None, secret: str) ->
 - **Use the raw bytes.** Don't decode to a string and re-encode, and never `JSON.parse`/`JSON.stringify` the body before verifying: whitespace and key order must match exactly
 - **The secret is text.** The app secret looks like hex (`3c989fdb...`) but is the HMAC key as UTF-8, not decoded bytes
 - **Validate the format before decoding.** `Buffer.from(sig, 'base64')` silently drops invalid characters, so check length and alphabet first
-- **Compare the base64 string exactly.** The last base64 character carries two unused bits; a value that differs only there decodes to the same digest but isn't what Violet sent. Hookdeck's Violet source compares the string exactly, so the skill does too
+- **Compare the base64 string exactly.** The last base64 character carries two unused bits; a value that differs only there decodes to the same digest but isn't what Violet sent, so the skill compares the string exactly
 - **Respond 401** for a missing, malformed or mismatched signature, and answer quickly: Violet needs a 2XX within 10 seconds
-- **Name the event from the header.** The body has no event field, so read `X-Violet-Topic`
+- **Name the event from the header.** Most bodies have no event field, so read `X-Violet-Topic`
 
 ## How Does Hookdeck Verify Violet Webhooks?
 
-When Violet sends through Hookdeck, Hookdeck's `Violet` source verifies the signature for you (HMAC-SHA256, base64, header `x-violet-hmac`) using the same app secret. Your own endpoint can then rely on Hookdeck's verification, or keep verifying as shown above.
+When Violet sends through Hookdeck, Hookdeck's `Violet` source verifies the signature for you using the same app secret. Your own endpoint can then rely on Hookdeck's verification, or keep verifying as shown above.
 
 ## How to Debug Verification Failures
 

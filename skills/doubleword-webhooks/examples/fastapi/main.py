@@ -14,8 +14,7 @@ app = FastAPI()
 
 def create_webhook(secret: str) -> Webhook:
     """A whsec_ secret is base64-decoded after the prefix (the library does
-    this for str). Any other secret is used as its raw UTF-8 bytes, matching
-    Hookdeck, which the library accepts as bytes."""
+    this for str). Any other secret is used as its raw UTF-8 bytes, which the library accepts as bytes."""
     return Webhook(secret if secret.startswith("whsec_") else secret.encode("utf-8"))
 
 
@@ -63,10 +62,10 @@ async def doubleword_webhook(request: Request):
 
     if event_type == "batch.completed":
         print(f"Batch {data.get('batch_id')} completed: {data.get('request_counts')}")
-        # TODO: download results with the files API using data["output_file_id"]
+        # Your code: download results with the files API using data["output_file_id"]
     elif event_type == "batch.failed":
         print(f"Batch {data.get('batch_id')} failed: {data.get('request_counts')}")
-        # TODO: alert, then inspect data["error_file_id"]
+        # Your code: alert, then inspect data["error_file_id"]
     else:
         print(f"Unhandled event type: {event_type}")
 

@@ -8,8 +8,7 @@ notes: >
   Open finance (LatAm). Auth is optional on Aggregation, Payments Brazil and Payments Mexico
   webhooks. Aggregation: you enter the full value ('Basic <base64>' or 'Bearer <token>'); Payments
   Mexico/Brazil: you enter a token and Belvo sends 'Authorization: Bearer <token>'. No signature.
-  The credential is the Authorization header. Hookdeck's Belvo source compares the WHOLE
-  Authorization header value to the configured key, so the examples read BELVO_AUTHORIZATION = the
+  The credential is the Authorization header. The examples read BELVO_AUTHORIZATION = the
   full value as Belvo sends it (e.g. 'Bearer <token>'), including the scheme prefix, and compare the
   whole Authorization header to it; do not strip or parse the prefix (Coterie pattern). Belvo can
   send Bearer or Basic: compare the whole value either way. Missing header or mismatch: 401. Compare

@@ -8,12 +8,8 @@ notes: >
   for authenticating to your webhook callback. It will be added to the header of the request as
   authorization: Bearer $yourWebhookCallbackApiKey.' The callback URL and key are optional settings
   on a production API key; changing them means creating a new production API key. No signature.
-  Leonardo.Ai sends 'Authorization: Bearer <secret>'. Hookdeck's Leonardo.Ai source is API key
-  verification on the authorization header with value_prefix 'Bearer ' (hookdeck/core#6046 head
-  8c48f55d): the user stores just the secret, and the scheme matches in any case (auth schemes are
-  case-insensitive, RFC 9110). So the examples read the BARE secret from LEONARDO_AI_WEBHOOK_SECRET
-  (if the configured value itself starts with 'Bearer ', case-insensitively, strip it, as core
-  does), require the Authorization header to start with 'Bearer ' compared case-insensitively, and
+  Leonardo.Ai sends 'Authorization: Bearer <secret>'. On Hookdeck's Leonardo.Ai source the user stores just the secret, without the 'Bearer ' prefix. So the examples read the BARE secret from LEONARDO_AI_WEBHOOK_SECRET
+  (if the configured value itself starts with 'Bearer ', case-insensitively, strip it), require the Authorization header to start with 'Bearer ' compared case-insensitively, and
   compare the rest to the secret in constant time. Do not trim or otherwise alter the secret.
   Missing header, wrong scheme or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses

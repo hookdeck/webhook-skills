@@ -108,12 +108,12 @@ rationale, the Hub API re-check, and the Hookdeck note.
 
 ## The Payload
 
-Documented example (verbatim from the docs), plus the top-level `dhi_metadata`
+Documented example (from the docs, with the example account's username replaced by `example-user`), plus the top-level `dhi_metadata`
 object that mirrored Docker Hardened Image repositories add:
 
 ```json
 {
-  "callback_url": "https://registry.hub.docker.com/u/svendowideit/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/",
+  "callback_url": "https://registry.hub.docker.com/u/example-user/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/",
   "push_data": {
     "pushed_at": 1417566161,
     "pusher": "trustedbuilder",
@@ -129,10 +129,10 @@ object that mirrored Docker Hardened Image repositories add:
     "is_private": true,
     "is_trusted": true,
     "name": "testhook",
-    "namespace": "svendowideit",
-    "owner": "svendowideit",
-    "repo_name": "svendowideit/testhook",
-    "repo_url": "https://registry.hub.docker.com/u/svendowideit/testhook/",
+    "namespace": "example-user",
+    "owner": "example-user",
+    "repo_name": "example-user/testhook",
+    "repo_url": "https://registry.hub.docker.com/u/example-user/testhook/",
     "star_count": 0,
     "status": "Active"
   }
@@ -249,13 +249,10 @@ Append your token segment so the CLI forwards to the token route —
 the CLI creates a guest account on first run and gives you a public HTTPS URL
 plus a web UI for inspecting requests.
 
-Hookdeck's `DOCKER_HUB` source type is **"No verification (schema only)"** —
-there is nothing to verify, and it does not check a Docker Hub signature because
-none exists. What Hookdeck does add is an unguessable source URL, plus its own
+Docker Hub signs nothing, so there is no Docker Hub signature for Hookdeck to
+check. What Hookdeck does add is an unguessable source URL, plus its own
 outbound signature on the **Hookdeck → your destination** hop (a different hop
-from Docker Hub → Hookdeck). Docker Hub is not yet listed in
-hookdeck.com/docs/sources (checked 2026-09-28), so there is no Hookdeck guide
-page for it yet.
+from Docker Hub → Hookdeck).
 
 ## Reference Materials
 

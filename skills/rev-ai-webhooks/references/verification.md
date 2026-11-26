@@ -15,7 +15,6 @@ Points that cause most failures:
 - The header is `Authorization`, and its value must be of the form `<scheme> <token>`.
 - The key is the **whole header value including the scheme prefix**. Compare the full header
   to `REV_AI_AUTHORIZATION` (for example `Bearer 3f9c...`); don't strip, parse or add the prefix.
-  This is also how Hookdeck's Rev.ai source compares it.
 - A callback submitted with the deprecated `callback_url` carries no header at all.
 
 ## What This Does and Does Not Protect

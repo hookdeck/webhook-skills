@@ -60,7 +60,7 @@ const linkData = { paymentLink: { id: 'plink_019dbc4d', title: 'Invoice #001', r
 const linkRefund = { refund: { id: 'ref_xyz789', transactionId: 'txn_abc123', amount: 1000, currency: 'GBP' } };
 const printerData = { printer: { id: '6041b7c2', name: 'Kitchen Printer' }, venue };
 
-// All 27 documented events, each with a payload shaped like the docs
+// All 26 documented events, each with a payload shaped like the docs
 const EVENTS: Record<string, string> = {
   'order.created.v2': envelope('order.created.v2', order),
   'order.created': JSON.stringify(order), // legacy: bare order object, no `event`
@@ -80,8 +80,7 @@ const EVENTS: Record<string, string> = {
   'store.closed': envelope('store.closed', { closedReason: '', closedUntil: '', venue }),
   'store.opening_hours.updated': envelope('store.opening_hours.updated', { venue, openingHours: [{ day: 'monday', openTime: '09:00:00', closeTime: '22:00:00', active: true }], specialHours: [], source: 'dashboard' }),
   'item.out_of_stock': envelope('item.out_of_stock', { venue, item: { id: 5678, name: 'Margherita Pizza' }, reason: 'snoozed', source: 'manual', details: { snoozeEnd: null } }),
-  'payments.payout.created': envelope('payments.payout.created', { amounts: [{ currency: 'GBP', value: '3210.50' }], estimatedArrivalDate: '1/2024' }),
-  'bill.payment.created': envelope('bill.payment.created', {}),
+  'account.holder.payout': envelope('account.holder.payout', { amounts: [{ currency: 'GBP', value: 321050 }], estimatedArrivalDate: '1/2024' }),
   'payment_link.created': envelope('payment_link.created', { paymentLink: { id: 'plink_019dbc4d', type: 'one_off', amountType: 'fixed', amount: 2500, currency: 'GBP' }, venue }),
   'payment_link.paid': envelope('payment_link.paid', { ...linkData, payment: { transactionId: 'txn_abc123', amount: 2500, currency: 'GBP', pspReference: 'ABCD1234' } }),
   'payment_link.refund.created': envelope('payment_link.refund.created', { ...linkData, ...linkRefund }),
@@ -96,8 +95,8 @@ describe('Storekit webhook handler', () => {
     process.env.STOREKIT_WEBHOOK_SECRET = TEST_SECRET;
   });
 
-  test('covers the 27 documented events', () => {
-    expect(Object.keys(EVENTS)).toHaveLength(27);
+  test('covers the 26 documented events', () => {
+    expect(Object.keys(EVENTS)).toHaveLength(26);
   });
 
   test.each(Object.entries(EVENTS))('handles %s', async (type, payload) => {

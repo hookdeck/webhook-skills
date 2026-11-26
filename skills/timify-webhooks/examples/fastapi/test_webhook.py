@@ -14,23 +14,6 @@ from main import app, verify_timify_request
 
 client = TestClient(app)
 
-# Webhook names and types from TIMIFY's scope table (Sync webhooks are not supported).
-WEBHOOKS = [
-    ("Customers", "Created"), ("Customers", "Updated"), ("Customers", "Deleted"),
-    ("Event", "Created"), ("Event", "Updated"), ("Event", "Deleted"),
-    ("Events", "Deleted"),
-    ("Services", "Created"), ("Services", "Updated"), ("Services", "Deleted"),
-    ("Resource", "Created"), ("Resource", "Updated"), ("Resource", "Deleted"),
-    ("Company", "Created"), ("Company", "Updated"), ("Company", "Deleted"),
-    ("Manager", "Created"), ("Manager", "Updated"), ("Manager", "Deleted"),
-    ("Enterprise", "Updated"),
-    ("Customer Fields", "Created"), ("Customer Fields", "Updated"), ("Customer Fields", "Deleted"),
-    ("Shift", "Created"), ("Shift", "Updated"), ("Shift", "Deleted"),
-    ("Notification", "Created"),
-    ("Service Groups", "Created"), ("Service Groups", "Updated"), ("Service Groups", "Deleted"),
-]
-
-
 def sample_payload(webhook="Event", event_type="Created"):
     # ILLUSTRATIVE payload: TIMIFY's overview page does not document the field names.
     return {"webhook": webhook, "type": event_type, "data": {"id": "evt_123", "start": "2026-10-26T09:00:00Z"}}
@@ -99,11 +82,10 @@ class TestBodyHandling:
 
 
 class TestEventHandling:
-    @pytest.mark.parametrize("webhook,event_type", WEBHOOKS)
-    def test_handles_webhook(self, webhook, event_type, capsys):
-        res = post({"Authorization": SECRET}, body=json.dumps(sample_payload(webhook, event_type)))
+    def test_logs_top_level_fields(self, capsys):
+        res = post({"Authorization": SECRET})
         assert res.status_code == 200
-        assert "Unhandled" not in capsys.readouterr().out
+        assert "TIMIFY webhook received" in capsys.readouterr().out
 
     def test_acknowledges_unrecognised_payloads(self):
         res = post({"Authorization": SECRET}, body=json.dumps({"something": "else"}))

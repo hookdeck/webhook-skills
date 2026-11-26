@@ -52,35 +52,35 @@ async def commercelayer_webhook(request: Request):
     # Dispatch on the topic ({resource}.{trigger}).
     if topic == "orders.place":
         print(f"Order placed: {resource_id}")
-        # TODO: Start fulfillment, notify ops, etc.
+        # Your code: Start fulfillment, notify ops, etc.
 
     elif topic == "orders.approve":
         print(f"Order approved: {resource_id}")
-        # TODO: Trigger downstream processing.
+        # Your code: Trigger downstream processing.
 
     elif topic == "orders.cancel":
         print(f"Order cancelled: {resource_id}")
-        # TODO: Release stock, reverse workflows.
+        # Your code: Release stock, reverse workflows.
 
     elif topic == "orders.pay":
         print(f"Order paid: {resource_id}")
-        # TODO: Record revenue, kick off fulfillment.
+        # Your code: Record revenue, kick off fulfillment.
 
     elif topic == "orders.refund":
         print(f"Order refunded: {resource_id}")
-        # TODO: Update accounting, notify customer.
+        # Your code: Update accounting, notify customer.
 
     elif topic == "customers.create":
         print(f"Customer created: {resource_id}")
-        # TODO: CRM sync, welcome email.
+        # Your code: CRM sync, welcome email.
 
     elif topic == "shipments.ship":
         print(f"Shipment shipped: {resource_id}")
-        # TODO: Send tracking, update order status.
+        # Your code: Send tracking, update order status.
 
     elif topic == "shipments.deliver":
         print(f"Shipment delivered: {resource_id}")
-        # TODO: Close order, request a review.
+        # Your code: Close order, request a review.
 
     else:
         print(f"Unhandled topic: {topic}")

@@ -116,5 +116,3 @@ above is confirmed from three other places that agree:
   against `x-signature` with `timingSafeEqual`.
 - The official [`bundlesocial`](https://www.npmjs.com/package/bundlesocial) npm
   package (v2.70.0), whose verification helper is exactly that hex HMAC.
-- Hookdeck's own `BUNDLE_SOCIAL` source verification: HMAC, `sha256`,
-  header `x-signature`, encoding `hex`.

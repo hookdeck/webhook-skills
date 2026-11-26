@@ -28,8 +28,6 @@ SpherePay (v2 webhooks) sends a bare lowercase **hex** HMAC-SHA256 digest in `Sp
 
 > This is **not** Standard Webhooks: nothing is base64-decoded and the digest is hex. Do not use the `standardwebhooks` or `svix` libraries.
 
-Paste the whole secret, including the whsec_ prefix. SpherePay uses it as a plain HMAC key.
-
 ### Verification (Node.js)
 
 ```javascript

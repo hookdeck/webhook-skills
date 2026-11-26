@@ -18,7 +18,7 @@ The same feature is used to *fetch* data into the ticket sidebar (a `GET`
 whose JSON response becomes a widget). This skill covers the other use:
 **sending ticket events to your endpoint**.
 
-Source: [Connect external apps to Gorgias](https://docs.gorgias.com/en-US/http-integrations-81822)
+Source: [Connect external apps to Gorgias](https://docs.gorgias.com/en-US/connect-external-apps-to-gorgias-and-create-sidebar-widgets-81822)
 and the [Create an integration](https://developers.gorgias.com/reference/create-integration) API reference.
 
 ## What Triggers Are Available?
@@ -136,6 +136,6 @@ docs suggest this).
 
 ## Full Reference
 
-- [HTTP integrations (help center)](https://docs.gorgias.com/en-US/http-integrations-81822)
+- [HTTP integrations (help center)](https://docs.gorgias.com/en-US/connect-external-apps-to-gorgias-and-create-sidebar-widgets-81822)
 - [Integration object](https://developers.gorgias.com/reference/the-integration-object)
 - [Create integrations and widgets (tutorial)](https://developers.gorgias.com/docs/create-integrations-and-widgets-programmatically)

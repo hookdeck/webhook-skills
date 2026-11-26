@@ -52,14 +52,14 @@ npx hookdeck-cli listen 8000 lob --path /webhooks/lob
 
 Use the URL the CLI prints as the webhook URL in the Lob dashboard.
 
-> Events sent from Lob's webhook debugger are signed with a fixed test secret, so they fail verification. Real deliveries are signed with the webhook's secret.
+> Lob signs events sent from its webhook debugger with the literal string `secret`, not the webhook's own secret, so they fail verification against the real one. Real deliveries are signed with the webhook's secret.
 
 To check your setup against debugger events, temporarily set `LOB_WEBHOOK_SECRET=secret` (the literal string Lob uses for the debugger).
 
 ## How It Works
 
 - A FastAPI dependency (`verified_lob_event`) reads `await request.body()` (the **raw body**), verifies the signature, then parses the JSON.
-- The signature is the bare lowercase hex HMAC-SHA256 of the bytes `Lob-Signature-Timestamp` + `.` + raw body, keyed with the webhook secret. The signature format is validated (exactly 64 hex characters) before the constant-time compare.
+- The signature is the bare hex HMAC-SHA256 of the bytes `Lob-Signature-Timestamp` + `.` + raw body, keyed with the webhook secret. The signature format is validated (exactly 64 hex characters) before the constant-time compare.
 - Missing/empty headers, a malformed value, or a mismatch return `401`. A validly signed body that is not JSON returns `400`.
 - The event type is `event_type.id` in the body (for example `postcard.delivered`, `letter.mailed`, `check.in_transit`, `self_mailer.rendered_thumbnails`).
 - Old timestamps are **not** rejected by default, because Hookdeck retries and replays re-send the original timestamp. Set `LOB_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to opt in.

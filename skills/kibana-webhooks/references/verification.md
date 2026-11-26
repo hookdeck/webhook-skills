@@ -9,8 +9,7 @@ sends the credentials on every request:
 Authorization: Basic base64(username:password)
 ```
 
-There is no HMAC and no timestamp. Hookdeck's Kibana source verifies this header; it never sends
-a 401 challenge, so the header must arrive with each request.
+There is no HMAC and no timestamp. Hookdeck's Kibana source verifies this header, so it must arrive with each request.
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
 > protection.** Anyone who captures a request can replay it. Use HTTPS, and rotate the credential
@@ -85,8 +84,8 @@ handler for each of `GET`, `POST`, `PUT`, `PATCH` and `DELETE`.
 - **Raw body.** Use `express.raw({ type: '*/*' })` so any content type works; parse after the check.
 - **Colon in the password.** Split on the first colon only.
 - **Bytes in Python.** `hmac.compare_digest` on `str` raises on non-ASCII; encode both sides.
-- **No challenge.** Hookdeck never sends a 401 challenge; clients must send credentials upfront.
-- **Method on the source.** Hookdeck pre-selects POST; allow other methods on the source too.
+- **No challenge.** Clients must send credentials upfront.
+- **Method on the source.** The Hookdeck source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); allow other methods on the source too.
 
 ## Debugging Verification Failures
 

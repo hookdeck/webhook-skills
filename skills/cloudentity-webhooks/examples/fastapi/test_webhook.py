@@ -20,7 +20,7 @@ EVENTS = [
 
 
 def batch(*types):
-    # Inferred shape: the event's subject_action name is the one key of `payload`.
+    # Documented shape: the event's <subject>_<action> name is the one key of `payload`.
     return {
         "audit_events": [
             {

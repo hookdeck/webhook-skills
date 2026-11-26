@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 //   X-Bitculator-Signature: t=<unix seconds>,v1=<hex>
 // v1 = HMAC-SHA256 of "<t>.<raw body>" in hex, keyed with the whole secret string's UTF-8 bytes
 // (the whsec_ prefix included; not base64-decoded). <t> is used exactly as it appears in the header.
-// https://bitculator.com/en/documentation/api/v1
+// https://bitculator.com/en/documentation/crypto-api/v1
 
 // Optional replay window in seconds, off by default (unset or 0). Bitculator's own example accepts a
 // delivery only when |now - t| < 300; set BITCULATOR_WEBHOOK_TOLERANCE_SECONDS=300 to match that when
@@ -101,8 +101,8 @@ app.post('/webhooks/bitculator', express.raw({ type: '*/*' }), (req, res) => {
     return res.json({ received: true });
   }
 
-  // The body is documented as JSON, but its fields are not (only `test: true` on test deliveries):
-  // parse defensively and don't depend on any field.
+  // Documented body (the alarmTriggered callback in Bitculator's OpenAPI spec): { event, created_at,
+  // data: { alarm: { id, name, coin, metric, direction, target, triggered_at } } }. Parse it defensively.
   let event;
   try {
     event = JSON.parse(rawBody.toString('utf8'));
@@ -115,16 +115,18 @@ app.post('/webhooks/bitculator', express.raw({ type: '*/*' }), (req, res) => {
     return res.json({ received: true });
   }
 
-  // `test: true` marks a delivery from POST /api/v1/webhooks/{id}/test.
-  const isTest = event.test === true;
-  // Illustrative shape: data.alarm mirrors an item of GET /api/v1/alarms. Check every type.
-  const alarm = isObject(event.data) && isObject(event.data.alarm) ? event.data.alarm : {};
+  // A delivery from POST /api/v1/webhooks/{id}/test sends data: { test: true, alarm: null }.
+  const data = isObject(event.data) ? event.data : {};
+  const isTest = data.test === true;
+  // Check every field's type before reading into it.
+  const alarm = isObject(data.alarm) ? data.alarm : {};
   const coin = isObject(alarm.coin) ? alarm.coin : {};
   console.log(
     `${isTest ? 'Test ' : ''}alarm triggered: ${str(alarm.name) ?? '(unnamed)'} ` +
       `${str(coin.symbol) ?? ''} ${str(alarm.direction) ?? ''} ${str(alarm.target) ?? ''}`.trimEnd()
   );
-  // TODO: notify, trade or update dashboards; deduplicate, since deliveries are retried
+  // Your code: notify, trade or update dashboards. Deliveries are retried, so deduplicate, for
+  // example on data.alarm.id with data.alarm.triggered_at.
 
   res.json({ received: true });
 });

@@ -28,7 +28,7 @@ A static shared credential authenticates the sender, not the body, and gives no 
 
 3. Set `JAMF_PRO_WEBHOOK_HEADER` and `JAMF_PRO_WEBHOOK_SECRET` to the header name and value you
    entered for Header Authentication on the Jamf Pro webhook. Jamf Pro shows the setup note
-   "Choose Header Authentication on the Jamf Pro webhook and enter the same header name and value here."
+   "Choose Header Authentication on the Jamf Pro webhook and enter the same header name (the JSON key) and value (the JSON value) here."
 
 ## Run
 

@@ -64,7 +64,6 @@ def verify_100ms_request(headers, secret=None) -> bool:
 ## Common Gotchas
 
 - **Compare the whole value.** Don't strip or parse a `Bearer ` prefix; 100ms sends what you typed.
-  The same applies to Hookdeck's 100ms source (header name plus exact whole header value).
 - **Header names are case-insensitive.** Node lowercases them; look the name up lowercase.
 - **Constant-time compare.** Hash both sides or check lengths before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `hmac.compare_digest` on bytes, never `str`.

@@ -17,11 +17,6 @@ The spec has none of the following:
 - an asymmetric signature (RSA/ECDSA/Ed25519)
 - a published source-IP allowlist
 
-Hookdeck agrees. Its `TIKKIE` source type has no verification feature and
-accepts `POST` only. The commit that added it says: "Tikkie (ABN AMRO) payment
-notification webhooks carry no signature, so the source type is listed without
-a verification controller".
-
 **Any `crypto.createHmac`, `hmac.new` or `crypto.verify` over a Tikkie body is
 fabricated.** It will either reject every real notification or pretend to check
 something that isn't there. Since there's no signature, you don't need the raw

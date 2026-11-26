@@ -9,17 +9,17 @@ function handleEvent(payload: Record<string, unknown>): void {
   switch (classify(payload)) {
     case 'return.created':
       console.log(`Return ${ret.id} created (${ret.status})`);
-      // TODO: open a ticket or notify the warehouse
+      // Open a ticket or notify the warehouse
       break;
 
     case 'return.updated':
       console.log(`Return ${ret.id} updated (${ret.status})`);
-      // TODO: sync the return status; dedupe on return.id + payload.at
+      // Sync the return status; dedupe on return.id + payload.at
       break;
 
     case 'backfill':
       console.log(`Backfill event for return ${ret.id}`);
-      // TODO: load history without triggering customer-facing side effects
+      // Load history without triggering customer-facing side effects
       break;
 
     default:

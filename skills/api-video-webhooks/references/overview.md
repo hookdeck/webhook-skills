@@ -8,7 +8,7 @@ api.video (video hosting, encoding and live streaming API) sends an HTTP `POST` 
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `video.source.recorded` | The video's source file has been recorded | Confirm an upload landed |
+| `video.source.recorded` | A live stream recording is queued for encoding | Expect encoding events for the recording |
 | `video.encoding.quality.completed` | A rendition finished encoding | Enable playback at that quality |
 | `video.caption.generated` | A caption was generated | Publish captions |
 | `video.summary.generated` | A summary was generated | Store the summary |

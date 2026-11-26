@@ -29,7 +29,7 @@ The endpoint listens at `http://localhost:8000/webhooks/survicate`.
 pytest -q
 ```
 
-Tests cover a fixed signing vector, tampering, malformed signatures, raw byte preservation and wrong-typed JSON. `vector.json` contains an illustrative payload and a fixed digest checked against core; it is not a live vendor capture.
+Tests cover a fixed signing vector, tampering, malformed signatures, raw byte preservation and wrong-typed JSON. `vector.json` contains an illustrative payload and a fixed digest; it is not a live vendor capture.
 
 ## Receive Real Deliveries
 
@@ -37,7 +37,7 @@ Tests cover a fixed signing vector, tampering, malformed signatures, raw byte pr
 npx hookdeck-cli listen 8000 survicate --path /webhooks/survicate
 ```
 
-Register the public URL with Survicate. Use messageId when deduplicating deliveries. Acknowledge accepted events and avoid logging survey answers or personal data.
+Register the public URL with Survicate. Survicate documents `messageId` only as the webhook ID and doesn't say whether a retry repeats it, so make processing idempotent: upsert answers keyed on `responseUuid` plus `question.id`, and completed responses on `responseUuid`. Acknowledge accepted events and avoid logging survey answers or personal data.
 
 ## Responses
 

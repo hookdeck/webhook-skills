@@ -4,7 +4,7 @@
 
 Spacelift is an IaC orchestration platform. A **named webhook** (Integrations -> Webhooks) is an endpoint URL, an optional secret and optional extra headers. Spacelift sends it the messages that **notification policies** route to it. Two kinds of message exist: run state changes and internal errors. Per-stack webhooks are kept for backwards compatibility. Paid accounts only.
 
-Spacelift doesn't name the HTTP method in its docs. Hookdeck's Spacelift source pre-selects POST without managing the method, so allow any other method the sender uses on the source too.
+Spacelift sends `POST` by default. A notification policy's `webhook` rule can set another `method` (Spacelift's own examples use `PUT`), add headers and replace the payload. If you use Hookdeck, allow any non-`POST` method your policy sets on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Message Types
 
@@ -26,10 +26,10 @@ There is no event-name field or header, so the skill and examples use these name
   "run": {
     "id": "01EF9PFPNFFM2MQXTJKHK1B869",
     "branch": "master",
-    "commit": { "hash": "0ee3a3b7...", "message": "Update demo.tf", "authorLogin": "marcinwyszynski" },
+    "commit": { "hash": "0ee3a3b7...", "message": "Update demo.tf", "authorLogin": "example-user" },
     "createdAt": 1596979665,
     "delta": { "added": 0, "changed": 0, "deleted": 0, "resources": 1 },
-    "triggeredBy": "marcinw@spacelift.io",
+    "triggeredBy": "user1@example.com",
     "type": "TRACKED"
   },
   "stack": { "id": "spacelift-demo", "name": "Spacelift demo", "description": "", "labels": [] }

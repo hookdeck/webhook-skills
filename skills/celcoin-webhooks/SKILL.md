@@ -22,7 +22,7 @@ onboarding proposal is decided. Subscriptions are created through the Celcoin AP
 auth**: the `login` and `pwd` you set in the subscription's `auth` object come back on every
 notification as `Authorization: Basic base64(login:pwd)`.
 
-> **Hookdeck setup note:** Use Basic auth (auth.type basic) on the webhook subscription, not JWT/OAuth 2.0.
+> Set `auth.type` to `basic` on subscriptions you check with Basic credentials, including ones that point at a Hookdeck Celcoin source.
 
 Celcoin also offers a JWT/OAuth 2.0 mode (`auth.type` `jwt`, where Celcoin first calls your token
 endpoint). Hookdeck's Celcoin source does not cover it, and neither does this skill.
@@ -64,8 +64,8 @@ function verifyCelcoinAuth(authorization, username, password) {
   Python: `hmac.compare_digest` on bytes (encode both sides; `str` raises on non-ASCII).
 - Return `401` for a missing or malformed header or a mismatch, `400` for a body that isn't a JSON
   object, `200` once handled.
-- **Hookdeck never sends a 401 challenge** (no `WWW-Authenticate` round trip), so the credentials
-  must arrive with every request.
+- Celcoin's docs say the Basic credentials you define are sent with the notifications, so
+  expect them on every request rather than after a `401` challenge.
 - A static shared credential authenticates the **sender, not the body**, and gives **no replay
   protection** (no signature, no timestamp). Use HTTPS, and rotate the credential (update the
   subscription) if it leaks.
@@ -77,24 +77,41 @@ function verifyCelcoinAuth(authorization, username, password) {
 
 Celcoin's docs don't name the HTTP method of the notification. The examples therefore accept
 **GET, POST, PUT, PATCH and DELETE** on the webhook route, check the credential first for every
-method, and acknowledge an empty body. Hookdeck's Celcoin source pre-selects POST without managing
-the method, so if Celcoin uses any other method, **also allow that method on the Hookdeck source**.
+method, and acknowledge an empty body. Hookdeck's Celcoin source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if Celcoin uses any other method, **also allow that method on the Hookdeck source**.
 
 ## Event Payload and Entities
 
-Every notification has the same envelope, and you dispatch on `entity`:
+BaaS notifications share one envelope, and you dispatch on `entity`. This is Celcoin's `launch-in`
+example from its BaaS templates page (the tax ID is replaced with a placeholder):
 
 ```json
 {
-  "entity": "pix-payment-in",
-  "createTimestamp": "2025-05-07T17:30:00.7647117",
   "status": "CONFIRMED",
-  "body": { "id": "e2726e30-c318-4e1f-b284-e37c14e6c4b2" }
+  "entity": "launch-in",
+  "createTimestamp": "2025-05-07T17:30:00.7647117",
+  "body": {
+    "account": "420226177",
+    "description": "Saldo bloqueado devido a solicitação do Juiz",
+    "branch": "0001",
+    "amount": 50,
+    "taxId": "00000000000",
+    "id": "404bd03b-a2ba-4ef5-a385-d30d5930177b",
+    "oldBalance": 1,
+    "currentBalance": 10.11,
+    "clientCode": "404bd03b-a2ba-4ef5-a385-d30d59309999"
+  }
 }
 ```
 
 `status` is `CONFIRMED` or `ERROR` (an `ERROR` notification also carries an `error` object with
-`errorCode` and `message`). Subscriptions are registered per entity:
+`errorCode` and `message`).
+
+Webhooks registered through the CelBricks module (`/common/v1/webhook/subscription`) don't all use
+this envelope. Celcoin's Pix models wrap the data in `RequestBody` and name the type in
+`RequestBody.TransactionType` (`RECEIVEPIX`, `PAYMENT`, `REVERTPIX`, `REVERTED`), and its Pix
+Indireto MED, infraction and key-claim models put `DictRefund`, `InfractionReport` or `DictClaim` in
+`entity`. The examples dispatch on the BaaS `entity`; for CelBricks Pix subscriptions, use a separate
+route or check for `RequestBody` first. Subscriptions are registered per entity:
 
 | Entity | Sent When |
 |--------|-----------|
@@ -108,7 +125,7 @@ Every notification has the same envelope, and you dispatch on `entity`:
 | `spb-transfer-in` | A TED is received |
 | `onboarding-create` | A new account is created |
 | `onboarding-proposal` | The onboarding proposal is decided (`Approved` or `Reproved`) |
-| `kyc` | The KYC result of an account is available |
+| `kyc` | The KYC result of an account is available (KYC V1, which Celcoin marks discontinued) |
 
 Celcoin documents many more entities (Pix Automático, DICT claims, charges, bill payments, cards).
 See [references/overview.md](references/overview.md).

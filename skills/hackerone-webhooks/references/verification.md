@@ -13,7 +13,7 @@ X-H1-Signature: sha256=bc3a344f9214bff0100b4dfc9eec47aa281935bfc0da0db1575ae7d42
 - The key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
 - HackerOne provides no SDK for verification; this is a manual check.
 
-Set a secret on the HackerOne webhook and paste it here. Without one, HackerOne signs with an empty key, which this source cannot verify.
+HackerOne suggests setting a secret on every webhook.
 
 If no secret is set, HackerOne still sends a signature, keyed with the empty string. Anyone can compute that, so it proves nothing. The examples treat an empty `HACKERONE_WEBHOOK_SECRET` as a configuration error and reject requests.
 

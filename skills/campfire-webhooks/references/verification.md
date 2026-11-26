@@ -11,11 +11,11 @@
 | Key | The webhook's 50-character signing secret (`token`), UTF-8 bytes as-is |
 | Encoding | Lowercase hex, 64 characters, **no prefix** |
 
-The `-v1` in the header name is a scheme version. The value is the bare digest. It is not Standard Webhooks (no `webhook-id` / `webhook-timestamp` / `webhook-signature`).
+Despite the `-v1` in the header name, the value is the bare digest. It is not Standard Webhooks (no `webhook-id` / `webhook-timestamp` / `webhook-signature`).
 
 ## Why Does It Matter That the Message Is Built as Bytes?
 
-Hookdeck's Campfire source builds the message the same way, and so should you:
+Build the message from bytes:
 
 - literal `:` as UTF-8
 - the timestamp header **exactly as received** (latin1; never trimmed, parsed or reformatted)
@@ -74,7 +74,7 @@ Complete handlers with tests: [../examples/express/](../examples/express/), [../
 
 Campfire's docs recommend a 5-minute tolerance to prevent replay, and note that retries are re-signed with a fresh timestamp, so a tolerance check does not reject Campfire's own retries.
 
-The examples here leave it **off by default**, because behind Hookdeck, retries and replays resend the **original** headers and timestamp, and Hookdeck applies no tolerance itself: a fixed window would reject legitimate redeliveries. To opt in, set `CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off). With it on, a non-numeric timestamp is rejected. Make the handler idempotent either way.
+The examples here leave it **off by default**, because behind Hookdeck, retries and replays resend the **original** headers and timestamp: a fixed window would reject legitimate redeliveries. To opt in, set `CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off). With it on, a non-numeric timestamp is rejected. Make the handler idempotent either way.
 
 ## Common Gotchas
 

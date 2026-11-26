@@ -17,7 +17,7 @@ function safeEqual(a, b) {
 }
 
 /**
- * GravityZone does not sign payloads. The credential is the Authorization header, sent
+ * GravityZone sends no HMAC signature. The credential is the Authorization header, sent
  * verbatim from serviceSettings.authorization (e.g. "Bearer sfasdfw34243"). Compare the
  * WHOLE header value, including any "Bearer " / "Basic " prefix. Do not strip or decode it.
  */
@@ -34,7 +34,7 @@ function handleEvent(event) {
   switch (event.module) {
     case 'av':
       console.log(`Antimalware: ${event.malware_name} on ${event.computer_name} (${event.final_status})`);
-      // TODO: raise an alert or open a ticket for the detection
+      // Raise an alert or open a ticket for the detection
       break;
 
     case 'aph':

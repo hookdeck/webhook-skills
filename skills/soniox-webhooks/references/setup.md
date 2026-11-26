@@ -18,12 +18,10 @@ SONIOX_WEBHOOK_SECRET="Bearer your-secret-token"
 The secret must be the exact, whole header value you send to Soniox (including any `Bearer `
 prefix you typed). Generate a long random string for the token.
 
-> Soniox webhooks are not signed. Send webhook_auth_header_name and webhook_auth_header_value with every async transcription, and enter the same name and value here.
-
 ## Create a Transcription with a Webhook
 
 Pass `webhook_url` and the two header fields when you create the transcription. Check the
-[Soniox create-transcription reference](https://soniox.com/docs/stt/api-reference/transcriptions/create_transcription) (`POST /v1/transcriptions`) for the current request shape;
+[Soniox create-transcription reference](https://docs.soniox.com/api-reference/stt/transcriptions/create_transcription) (`POST /v1/transcriptions`) for the current request shape;
 the webhook fields look like this:
 
 ```bash
@@ -31,7 +29,7 @@ curl -X POST https://api.soniox.com/v1/transcriptions \
   -H "Authorization: Bearer $SONIOX_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "stt-async-preview",
+    "model": "stt-async-v6",
     "audio_url": "https://example.com/audio.mp3",
     "webhook_url": "https://example.com/webhooks/soniox",
     "webhook_auth_header_name": "Authorization",
@@ -60,5 +58,6 @@ curl -X POST http://localhost:3000/webhooks/soniox \
 
 ## Fetch the Transcript
 
-On `completed`, call the Soniox API with the `id` from the payload to get the transcript. See the
-Soniox async transcription docs for the endpoint.
+On `completed`, fetch the transcript with `GET https://api.soniox.com/v1/transcriptions/{id}/transcript`.
+On `error`, fetch the transcription with `GET https://api.soniox.com/v1/transcriptions/{id}` and read
+`error_message`.

@@ -19,7 +19,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Liveblocks sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """Liveblocks sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),
@@ -60,7 +60,8 @@ async def liveblocks_webhook(request: Request):
     # Every body is { type, data }: the event name is the camelCase top-level `type`
     event_type = event.get("type")
     data = event.get("data") if isinstance(event.get("data"), dict) else {}
-    # webhook-id is stable across retries and the body has no event id: use it to deduplicate
+    # The body has no event id, and Liveblocks doesn't say whether a retry reuses webhook-id,
+    # so make your handling idempotent on payload values
     print(f"Received Liveblocks webhook {sig_headers['webhook-id']}: {event_type}")
 
     if event_type == "userEntered":
@@ -100,7 +101,8 @@ async def liveblocks_webhook(request: Request):
     elif event_type == "threadMarkedAsUnresolved":
         print(f"Thread unresolved: {data.get('threadId')}")
     elif event_type == "notification":
-        # data.kind is "thread", "textMention" or a custom "$"-prefixed kind
+        # data.kind is "thread", "textMention" or a custom "$"-prefixed kind.
+        # Each notification channel gets its own event: check data.channel (for example "email")
         print(f"Notification: {data.get('kind')} for user {data.get('userId')}")
     else:
         # The documented list may grow: ignore what you don't need

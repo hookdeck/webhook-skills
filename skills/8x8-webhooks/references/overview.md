@@ -42,8 +42,8 @@ Every body has an `eventType` string. SMS and Chat Apps events also carry `names
     "umid": "9e09ac86-bd74-5465-851d-1eb5a5fdbb9a",
     "subAccountId": "SubAccount-1",
     "timestamp": "2016-01-01T14:34:56.017Z",
-    "source": "+6581968289",
-    "destination": "+4534735477",
+    "source": "+6555555501",
+    "destination": "+4555555501",
     "body": "Test MO message",
     "encoding": "GSM7",
     "smsCount": 2

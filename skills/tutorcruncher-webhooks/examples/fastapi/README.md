@@ -55,9 +55,7 @@ no install):
 npx hookdeck-cli listen 8000 tutorcruncher --path /webhooks/tutorcruncher
 ```
 
-Put the printed URL in your TutorCruncher integration. Hookdeck's TutorCruncher source
-pre-selects POST without managing the method, so allow any other method the sender uses on the
-source.
+Put the printed URL in your TutorCruncher integration. Allow the method the sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

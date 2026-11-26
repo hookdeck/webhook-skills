@@ -62,7 +62,7 @@ Return `401` on any failure. The full handlers are in [examples/express/](../exa
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Featurebase's own sample rejects timestamps older than 5 minutes, but Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries (and replays you triggered on purpose). The examples make it opt-in: set `FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) when you receive directly from Featurebase and want replay protection. Unset or `0` is off. `X-Webhook-Timestamp` is Unix seconds. Dedupe on the event `id` either way.
+Not by default. Featurebase's own sample rejects timestamps older than 5 minutes, but Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries (and replays you triggered on purpose). The examples make it opt-in: set `FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) when you receive directly from Featurebase and want replay protection. Unset or `0` is off. `X-Webhook-Timestamp` is Unix seconds. Dedupe on the event `id` either way.
 
 ## Common Gotchas
 

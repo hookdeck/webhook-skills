@@ -57,7 +57,7 @@ def handle_event(payload: dict) -> None:
 
     elif event == "delivered":
         print(f"Delivered {payload.get('email_id')} to {payload.get('rcpt')}")
-        # TODO: mark the message delivered
+        # Your code: mark the message delivered
 
     elif event == "open":
         print(f"Opened {payload.get('email_id')} by {payload.get('rcpt')}")
@@ -67,15 +67,15 @@ def handle_event(payload: dict) -> None:
 
     elif event == "bounce":
         print(f"Bounce ({payload.get('bounce')}) for {payload.get('rcpt')}: {payload.get('message')}")
-        # TODO: suppress the address on hard bounces
+        # Your code: suppress the address on hard bounces
 
     elif event == "spam":
         print(f"Spam complaint from {payload.get('rcpt')}")
-        # TODO: remove the address from your lists
+        # Your code: remove the address from your lists
 
     elif event in ("unsubscribe", "resubscribe"):
         print(f"{event} by {payload.get('rcpt')}")
-        # TODO: update the recipient's preferences
+        # Your code: update the recipient's preferences
 
     elif event == "reject":
         print(f"Rejected {payload.get('email_id')} to {payload.get('rcpt')}")
@@ -85,7 +85,7 @@ def handle_event(payload: dict) -> None:
 
     elif event == "sms_failed":
         print(f"SMS {payload.get('message_id')} to {payload.get('destination_number')} failed ({payload.get('status_code')})")
-        # TODO: retry or alert
+        # Your code: retry or alert
 
     else:
         print(f"Unhandled SMTP2GO event: {event}")

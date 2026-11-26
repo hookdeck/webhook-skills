@@ -1,0 +1,23 @@
+name: fedex
+displayName: FedEx
+docs:
+  webhooks: https://developer.fedex.com/api/en-us/catalog/shipment-visibility-webhook/docs/introduction/business-rules-and-best-practices.html
+  verification: https://developer.fedex.com/api/en-us/catalog/shipment-visibility-webhook/docs/introduction/business-rules-and-best-practices.html
+  events: https://developer.fedex.com/api/en-us/catalog/shipment-visibility-webhook/docs/introduction/test-webhook.html
+notes: >
+  FedEx Advanced Integrated Visibility (AIV) webhooks push tracking events for account-number or
+  tracking-number subscriptions (US-based accounts, monthly fee). fdx-signature = base64
+  HMAC-SHA256 of the payload keyed with the security token (26-100 characters, upper, lower and a
+  digit) set on the webhook or typed into "Try this webhook". One sentence on the business rules
+  page says "hex encoding", but the formula, Java sample and FAQ all say base64. Destination URL:
+  HTTPS, TLS 1.2+, POST + JSON, max 200 characters, no IPs/RFC 1918/fedex.com. URL validation on
+  creation needs 200 or 202; deliveries too. Payload is a detailed or event-specific tracking
+  response (schema downloadable from the portal; PII for account subscriptions). Retries 3 times
+  within about 15 minutes, then a missed-events queue for 7 days (start the retry process on the AIV webhook project). "Try this webhook"
+  sends a signed mock payload with only a portal login. Hookdeck source type FEDEX (HMAC sha256
+  base64 on fdx-signature; verification optional; no timestamp window).
+testScenario:
+  events:
+    - tracking-event
+catalog:
+  summary: Verify FedEx Advanced Integrated Visibility webhooks (`fdx-signature` base64 HMAC-SHA256 of the payload keyed with the security token), test with "Try this webhook", handle tracking notifications

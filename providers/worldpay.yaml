@@ -1,0 +1,39 @@
+name: worldpay
+displayName: Worldpay
+docs:
+  webhooks: https://docs.worldpay.com/access/products/events
+  verification: https://docs.worldpay.com/access/products/events/signature
+  events: https://docs.worldpay.com/access/products/events/overview
+  openapi: https://docs.worldpay.com/access/_bundle/products/events/@v1/openapi.yaml
+  certificate: https://docs.worldpay.com/access/products/events/certificate
+notes: >
+  Worldpay (worldpay.com; ex-FIS / Vantiv / Litle, acquired by Global Payments January 2026). Covers
+  Access Worldpay event webhooks: JSON with Content-Type application/vnd.worldpay.events-v1.hal+json
+  (express.json() ignores it, so read the raw body). Signing is opt-in through the Implementation
+  Manager, who also registers the URL (no self-service). Event-Signature header =
+  {keyId}/{hashFunction}/{signature}, hashFunction SHA256, signature = hex HMAC-SHA256 of the raw
+  body keyed with the per-merchant shared secret (not the API username/password). During key renewal
+  two comma-separated entries arrive in no fixed order: look the secret up by keyId and accept if any
+  entry verifies. Missing or bad signature -> 400 (Worldpay's documented contract), not 401. No
+  timestamp, no replay window: dedupe on eventId. Route on (eventDetails.classification,
+  eventDetails.type): 26 events from the OpenAPI spec (payment 20, payout 5, chargeback 1), and
+  `refused` exists as both payment and payout. 200 within 10 s, retries 30 s to 2 h for a week,
+  head-of-line blocking. Defence in depth: 33 published source IPs and a client certificate (CN
+  "Payment Status Event Sender", root CN UKDC1-PC-PKI02). WPG (Corporate Gateway) XML
+  <paymentService> notifications are unsigned and must be answered 200 with the literal body [OK].
+  Hookdeck source type WORLDPAY verifies Event-Signature and answers [OK] for WPG. Not Worldline.
+testScenario:
+  events:
+    - authorized
+    - sentForSettlement
+    - refunded
+catalog:
+  summary: Verify Access Worldpay `Event-Signature` webhooks (hex HMAC-SHA256 of the raw body, secret looked up by keyId, two signatures during key renewal), route on classification and type, handle authorized, settled and refunded events
+  marketplace:
+    description: Verify Access Worldpay event webhook signatures (Event-Signature, hex HMAC-SHA256, keyId lookup, key renewal), accept the application/vnd.worldpay.events-v1.hal+json body, dedupe on eventId, route on classification and type, and handle authorized, sentForSettlement, settled, refused, refunded, payout and chargeback events. Covers the WPG XML [OK] acknowledgement.
+    keywords:
+    - webhooks
+    - worldpay
+    - access-worldpay
+    - payments
+    - payouts

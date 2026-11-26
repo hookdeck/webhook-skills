@@ -3,12 +3,10 @@
 ## What Are Soniox Webhooks?
 
 Soniox is a speech-to-text API. For async transcription you can pass a `webhook_url` when you
-create a transcription, and Soniox POSTs to it when the transcription finishes, so you don't have
+create a transcription, and Soniox POSTs to it when the transcription finishes or fails, so you don't have
 to poll. Requests are not signed. Soniox can add one custom HTTP header of your choosing to every
 webhook request (`webhook_auth_header_name` / `webhook_auth_header_value`), which is how you
 authenticate them.
-
-> Soniox webhooks are not signed. Send webhook_auth_header_name and webhook_auth_header_value with every async transcription, and enter the same name and value here.
 
 ## Statuses
 
@@ -35,4 +33,4 @@ The payload doesn't contain the transcript. Fetch it from the Soniox API using `
 
 ## Full Reference
 
-See [Soniox's webhook documentation](https://soniox.com/docs/stt/async/webhooks).
+See [Soniox's webhook documentation](https://docs.soniox.com/stt/async/webhooks).

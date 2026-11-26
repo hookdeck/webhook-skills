@@ -41,7 +41,7 @@ function handleMeeting(meeting) {
     console.log(`Transcript: ${meeting.transcript.length} segments`);
   }
 
-  // TODO: Sync notes to your CRM, post the summary to Slack, create tasks, etc.
+  // Your logic goes here: sync notes to your CRM, post the summary to Slack, create tasks, etc.
   // Deduplicate on meeting.id: Circleback sends no delivery ID header.
 }
 

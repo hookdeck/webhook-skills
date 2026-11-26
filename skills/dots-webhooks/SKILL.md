@@ -66,7 +66,7 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 **Header names.** Dots' docs don't name the headers; `svix-*` is the Svix default, and Svix
 also sends the same values as Standard Webhooks `webhook-id`, `webhook-timestamp`, and
 `webhook-signature`. The examples read `svix-*` and fall back to `webhook-*` when `svix-id`
-is absent, as Hookdeck does. Never mix the two sets within one request.
+is absent. Never mix the two sets within one request.
 
 **Secret format.** One signing secret per endpoint, shown in the Svix dashboard when you
 create the endpoint. Dots' docs don't print it; Svix secrets start with `whsec_`, and the
@@ -86,7 +86,7 @@ can be dropped or widened. Deduplicate on `svix-id` instead of relying on the ti
 
 The event name is the top-level `event` field. Dots recommends subscribing to the canonical
 `.updated` events and fetching the resource by the id in the payload. The list below is the
-12 events Dots documents and may not be exhaustive.
+14 events Dots documents and may not be exhaustive.
 
 | Event | Triggered When | Id fields |
 |-------|----------------|-----------|
@@ -95,6 +95,8 @@ The event name is the top-level `event` field. Dots recommends subscribing to th
 | `flow.updated` | A flow was updated | `flow_id` |
 | `dispute.updated` | A dispute was updated | `dispute_id` |
 | `payout_request.updated` | A payout request changed status | `payout_request_id` |
+| `payout_batch.created` | A payout batch was created | `payout_batch_id` |
+| `payout_batch.updated` | A payout batch changed status (fetch the batch results for each item's transfer) | `payout_batch_id` |
 | `organization.updated` | An organization was updated | `organization_id` |
 | `app.updated` | An app was updated | `app_id` |
 | `transfer.updated` | A transfer was updated | `transfer_id` |

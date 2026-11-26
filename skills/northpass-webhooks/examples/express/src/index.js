@@ -36,37 +36,37 @@ function handleEvent(event) {
   switch (type) {
     case 'learner_created_events':
       console.log(`Learner created (event ${id})`);
-      // TODO: create the learner in your system (see data.included for the person)
+      // Your code: create the learner in your system (see data.included for the person)
       break;
 
     case 'person_activated_events':
       console.log(`Person activated (event ${id})`);
-      // TODO: mark the learner as active
+      // Your code: mark the learner as active
       break;
 
     case 'learner_enrolled_to_course_events':
       console.log(`Learner enrolled in a course (event ${id})`);
-      // TODO: record the enrollment (data.relationships.course / person)
+      // Your code: record the enrollment (data.relationships.course / person)
       break;
 
     case 'learner_started_course_events':
       console.log(`Learner started a course (event ${id})`);
-      // TODO: record course progress
+      // Your code: record course progress
       break;
 
     case 'course_completed_events':
       console.log(`Course completed (event ${id})`);
-      // TODO: issue credit or update the CRM
+      // Your code: issue credit or update the CRM
       break;
 
     case 'quiz_completed_events':
       console.log(`Quiz completed with value ${event.attributes?.value} (event ${id})`);
-      // TODO: store the score (attributes.value, attributes.minimum_passing_score)
+      // Your code: store the score (attributes.value, attributes.minimum_passing_score)
       break;
 
     case 'course_published_events':
       console.log(`Course published, version ${event.attributes?.version_number} (event ${id})`);
-      // TODO: refresh your course catalog
+      // Your code: refresh your course catalog
       break;
 
     default:

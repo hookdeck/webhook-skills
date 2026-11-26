@@ -62,8 +62,7 @@ function verifyHaloPsaRequest(headers, env = process.env) {
 - Missing or malformed header, or a mismatch: `401`. A body that isn't a JSON object (or array of
   objects): `400`. Handled: `200`.
 - The credentials must arrive on the **first** request. The Halo docs don't say whether Basic
-  credentials are sent preemptively, and Hookdeck never sends a `401` + `WWW-Authenticate`
-  challenge: it verifies the request as received.
+  credentials are sent preemptively.
 - A static shared credential authenticates the sender, **not the body**, and gives **no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
 - Read the body raw (`express.raw({ type: '*/*' })`, so any content type works) and
@@ -84,10 +83,11 @@ event per webhook, and can put conditions on them.
 | `Document edited on a Ticket` | An attachment is edited on a ticket (v2.242+) |
 
 Every payload carries an ID, notification ID, escmsg ID, event name, webhook ID, object ID and
-timestamp. The docs don't name those JSON properties in text, so the example payloads here are
-**illustrative**: inspect a real delivery. With **batching** on, the body is a JSON array of
+timestamp. The docs don't name those JSON properties in text, or say whether the event-name
+property carries the display names above exactly, so the example payloads and `switch` cases here
+are **illustrative**: inspect a real delivery. With **batching** on, the body is a JSON array of
 objects instead of one object. The **Method** setting also offers GET (for retrieving data), but
-notifications are POSTs and Hookdeck's HaloPSA source accepts POST only.
+notifications are POSTs.
 
 ## Environment Variables
 

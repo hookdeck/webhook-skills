@@ -41,16 +41,16 @@ def handle_event(event: dict) -> None:
 
     if topic == "CLIENT_CREATE":
         print(f"Client created: {event.get('itemId')}")
-        # TODO: query the client by itemId via GraphQL and sync it to your CRM
+        # Query the client by itemId via GraphQL and sync it to your CRM
     elif topic == "INVOICE_UPDATE":
         print(f"Invoice updated: {event.get('itemId')}")
-        # TODO: query the invoice by itemId via GraphQL and reconcile status/payments
+        # Query the invoice by itemId via GraphQL and reconcile status/payments
     elif topic == "APP_CONNECT":
         print(f"App connected: {event.get('accountId')}")
-        # TODO: store the account link for this accountId
+        # Store the account link for this accountId
     elif topic == "APP_DISCONNECT":
         print(f"App disconnected: {event.get('accountId')}")
-        # TODO: revoke tokens and clean up data for this accountId (required for Marketplace apps)
+        # Revoke tokens and clean up data for this accountId (required for Marketplace apps)
     else:
         print(f"Unhandled topic: {topic} ({event.get('itemId')})")
 

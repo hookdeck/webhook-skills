@@ -19,13 +19,18 @@ STATUS = {
     1: "Processing",
     2: "Encoding",
     3: "Finished",
-    4: "ResolutionFinished",
+    4: "Resolution finished",
     5: "Failed",
     6: "PresignedUploadStarted",
     7: "PresignedUploadFinished",
     8: "PresignedUploadFailed",
     9: "CaptionsGenerated",
     10: "TitleOrDescriptionGenerated",
+    11: "CaptionGenerationFailed",
+    12: "ChaptersGenerated",
+    13: "MomentsGenerated",
+    32: "VideoDeleted",
+    33: "SmartGenerationFailed",
 }
 
 
@@ -60,7 +65,9 @@ async def bunny_stream_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
     # Parse the payload after verification. Bunny's payload is thin:
-    # { VideoLibraryId, VideoGuid, Status }
+    # { IsLiveStreamWebhook, VideoLibraryId, VideoGuid, Status, EventId, Timestamp }
+    # plus Reason on SmartGenerationFailed. Deduplicate on EventId, which
+    # stays the same on retries.
     payload = json.loads(raw_body)
     library_id = payload.get("VideoLibraryId")
     video_guid = payload.get("VideoGuid")
@@ -74,24 +81,24 @@ async def bunny_stream_webhook(request: Request):
     # The event type IS the numeric Status. Dispatch on it.
     if status == 3:  # Finished - encoding done, video is ready to play
         print(f"Encoding finished for {video_guid}")
-        # TODO: publish the video, notify users, fetch full metadata via the
+        # Your code: publish the video, notify users, fetch full metadata via the
         # Stream API: GET /library/{library_id}/videos/{video_guid}
 
     elif status == 5:  # Failed - encoding failed
         print(f"Encoding failed for {video_guid}")
-        # TODO: alert, mark failed, offer re-upload
+        # Your code: alert, mark failed, offer re-upload
 
     elif status == 9:  # CaptionsGenerated
         print(f"Captions generated for {video_guid}")
-        # TODO: enable captions, index transcript
+        # Your code: enable captions, index transcript
 
     elif status == 10:  # TitleOrDescriptionGenerated
         print(f"AI title/description generated for {video_guid}")
-        # TODO: populate metadata fields
+        # Your code: populate metadata fields
 
     else:
-        # 0 Queued, 1 Processing, 2 Encoding, 4 ResolutionFinished,
-        # 6-8 presigned upload lifecycle
+        # 0 Queued, 1 Processing, 2 Encoding, 4 Resolution finished,
+        # 6-8 presigned upload lifecycle, 11-13 and 32-33
         print(f"Unhandled status: {status}")
 
     # Return 200 to acknowledge receipt.

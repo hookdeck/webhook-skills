@@ -9,9 +9,9 @@ ElevenLabs uses HMAC-SHA256 signature verification with a custom header format t
 3. **Algorithm**: HMAC-SHA256
 4. **Encoding**: Hexadecimal
 
-## SDK Verification (Recommended for Node/TypeScript)
+## SDK Verification (Recommended)
 
-ElevenLabs recommends using the official `@elevenlabs/elevenlabs-js` SDK for webhook verification and event construction. See [Verify the webhook secret and construct the webhook payload](https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload).
+ElevenLabs tells you to verify the header with its SDK: `constructEvent` in `@elevenlabs/elevenlabs-js`, and `construct_event(rawBody=..., sig_header=..., secret=...)` in the `elevenlabs` Python package (2.4.0 or later), which returns a `dict` and raises `BadRequestError`. See [Webhooks: Authentication](https://elevenlabs.io/docs/eleven-api/resources/webhooks#authentication).
 
 ```javascript
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
@@ -32,9 +32,9 @@ const event = await elevenlabs.webhooks.constructEvent(
 - **Success**: Returns the parsed event object (`event.type`, `event.data`).
 - **Failure**: Throws `ElevenLabsError` with `message` and `statusCode` (400). Return 401 and the error message to the client.
 
-## Manual Implementation (Fallback for other languages)
+## Manual Implementation (Fallback)
 
-Both the JavaScript/TypeScript SDK (`@elevenlabs/elevenlabs-js`, `webhooks.constructEvent`) and the Python SDK (`elevenlabs` >= 2.4.0, `webhooks.construct_event`) verify incoming webhooks. Use the manual implementation below only for languages without an official SDK helper, or when you need a dependency-free implementation.
+Both SDKs compare the signature with a plain string comparison and fix the timestamp tolerance at 30 minutes. Use the manual implementation below for a language without an SDK helper, or when you need a constant-time comparison, a different tolerance or no dependency. It follows the SDKs' code: HMAC-SHA256 of `<t>.<raw body>`, keyed with the secret string, hex-encoded.
 
 ```javascript
 const crypto = require('crypto');
@@ -96,9 +96,9 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
    - FastAPI: Access `request.body()` directly
 
 2. **Timestamp Validation**
-   - ElevenLabs uses a 30-minute tolerance window
-   - Reject webhooks with timestamps outside this window
-   - This prevents replay attacks
+   - The SDKs reject a timestamp more than 30 minutes old (from their code; the docs give no figure)
+   - Reject webhooks with timestamps outside your window
+   - This limits replay attacks
    - The SDKs always enforce the window. A delivery retried or replayed more than 30 minutes after ElevenLabs sent it, for example through Hookdeck, fails the check. If you need a longer window, use the manual implementation and widen its tolerance
 
 3. **Header Case Sensitivity**
@@ -107,7 +107,7 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
 
 4. **One Signature per Header**
    - The header format is `t=<unix seconds>,v0=<hex HMAC-SHA256 of "<t>.<rawBody>">`
-   - ElevenLabs documents one `v0=` value per header. The SDKs read a single value (JS: the first, Python: the last), and so does the manual implementation above
+   - ElevenLabs doesn't document more than one `v0=` value per header. The SDKs read a single value (JS: the first, Python: the last), and the manual implementation above reads the first
 
 5. **Constant-Time Comparison**
    - Both SDKs compare the signature with a plain string comparison (`!==` in JS, `!=` in Python), which isn't constant-time
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
 
 ### FastAPI (Python)
 
-Use the Python SDK's `construct_event` (`elevenlabs` >= 2.4.0). It verifies the signature, checks the timestamp (30-minute tolerance, enforced by the SDK) and returns the parsed event as a `dict`. `raw_body` must be a `str`, so decode the request bytes first. On failure it raises `elevenlabs.errors.BadRequestError`.
+Use the Python SDK's `construct_event` (`elevenlabs` >= 2.4.0). It verifies the signature, checks the timestamp (30-minute tolerance, enforced by the SDK) and returns the parsed event as a `dict`. `raw_body` must be a `str`, so decode the request bytes first. On failure it raises `elevenlabs.errors.BadRequestError`. For a constant-time comparison or a different tolerance, port the manual implementation above and compare with `hmac.compare_digest`.
 
 ```python
 import os

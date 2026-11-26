@@ -10,11 +10,11 @@ beforeAll(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-// ILLUSTRATIVE lesson-completed body: Lessonly does not document the payload
+// Trimmed from the sample payload in Lessonly's Reporting Webhook article
 const lessonCompleted = {
-  lesson_id: 1234,
-  user_id: 5678,
-  completed_at: '2026-10-25T12:00:00Z',
+  user: { id: '1234567890' },
+  lesson: { id: '1234567', title: 'A Sample Lesson' },
+  completed_at: '2022-12-02T15:13:26Z',
 };
 
 function makeRequest(

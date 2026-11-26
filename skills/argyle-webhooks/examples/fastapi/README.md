@@ -37,7 +37,7 @@ Server runs on http://localhost:8000. The route accepts GET, POST, PUT, PATCH an
 npx hookdeck-cli listen 8000 argyle --path /webhooks/argyle
 ```
 
-Use the URL it prints as the `url` of the subscription. Hookdeck's Argyle source pre-selects POST without managing the method, so allow any other method Argyle uses on the source too.
+Use the URL it prints as the `url` of the subscription. Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method Argyle uses on the source too.
 
 ## Test
 

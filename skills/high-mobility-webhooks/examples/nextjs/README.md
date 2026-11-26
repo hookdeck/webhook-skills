@@ -29,7 +29,7 @@ npm run dev
 
 Server runs on http://localhost:3000 and the webhook route is `/webhooks/high-mobility`.
 
-The route exports a handler for GET, POST, PUT, PATCH and DELETE, because High Mobility's docs don't name the method (Hookdeck's High Mobility source pre-selects POST without managing the method). It reads the exact bytes with `await request.arrayBuffer()`, checks `sha256=` + hex HMAC-SHA256, and treats a missing body as zero bytes. Failures return 401; a verified request with no body returns 200.
+The route exports a handler for GET, POST, PUT, PATCH and DELETE, because High Mobility's docs don't name the method (Hookdeck's High Mobility source accepts only the methods you allow). It reads the exact bytes with `await request.arrayBuffer()`, checks `sha256=` + hex HMAC-SHA256, and treats a missing body as zero bytes. Failures return 401; a verified request with no body returns 200.
 
 ## Test
 

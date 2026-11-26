@@ -78,7 +78,7 @@ app.post('/webhooks/returnless',
       case 'request.approved_with_manual_shipment':
       case 'request.approved_without_shipment':
         console.log(`Return request ${resourceId} approved (${event})`);
-        // TODO: Notify the customer or create a label
+        // Your code: Notify the customer or create a label
         break;
 
       case 'request.rejected':
@@ -87,12 +87,12 @@ app.post('/webhooks/returnless',
 
       case 'return.created':
         console.log(`Return ${resourceId} created`);
-        // TODO: Sync the return to your ERP or OMS
+        // Your code: Sync the return to your ERP or OMS
         break;
 
       case 'return.product.marked_as_received':
         console.log(`Returned product received on ${resourceId}`);
-        // TODO: Restock inventory or trigger a refund
+        // Your code: Restock inventory or trigger a refund
         break;
 
       case 'shipment.delivered':

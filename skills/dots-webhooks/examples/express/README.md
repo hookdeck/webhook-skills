@@ -80,7 +80,7 @@ the Dots API for its current state.
 ## Header Fallback
 
 The handler reads `svix-id`, `svix-timestamp`, and `svix-signature`, and falls back to the
-Standard Webhooks `webhook-*` names when `svix-id` is absent (as Hookdeck does). It never
+Standard Webhooks `webhook-*` names when `svix-id` is absent. It never
 mixes the two sets.
 
 ## Timestamp Window

@@ -56,25 +56,25 @@ function handleAyrshareEvent(event: JsonObject) {
       } else {
         console.log(`Scheduled post ${str(event.id)}: ${str(event.status)} (${errors} errors)`);
       }
-      // TODO: Update your post record from event.postIds / event.errors
+      // Your code: Update your post record from event.postIds / event.errors
       break;
     }
     case 'social':
       console.log(`Social account ${str(event.type)} on ${str(event.platform)}`);
-      // TODO: On "unlink" with source "system", prompt the user to relink
+      // Your code: On "unlink" with source "system", prompt the user to relink
       break;
     case 'messages': {
       const sender = isObject(event.senderDetails) ? str(event.senderDetails.name) : undefined;
       console.log(
         `Message ${subAction ?? 'event'} on ${str(event.platform)} from ${sender ?? str(event.senderId)}: ${str(event.message) ?? ''}`
       );
-      // TODO: Store the message; dedupe on id + subAction
+      // Your code: Store the message; dedupe on id + subAction
       break;
     }
     case 'comments': {
       const from = isObject(event.from) ? str(event.from.username) : undefined;
       console.log(`Comment on ${str(event.platform)} by ${from}: ${str(event.text)}`);
-      // TODO: Reply or moderate the comment
+      // Your code: Reply or moderate the comment
       break;
     }
     case 'ads':
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // At-least-once delivery: dedupe on event.hookId (hold claims for 24 h+)
+  // At-least-once delivery: claim event.hookId (retries) and a payload key (re-notifications), held 24 h+
   console.log(`Ayrshare delivery hookId=${str(event.hookId)}`);
   handleAyrshareEvent(event);
 

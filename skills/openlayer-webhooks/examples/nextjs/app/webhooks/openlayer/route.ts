@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// Openlayer sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Openlayer sends webhook-* headers; fall back to the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {

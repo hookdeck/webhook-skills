@@ -34,7 +34,7 @@ def signature_headers(headers: Mapping[str, str]) -> Dict[str, Optional[str]]:
     """Read the three signature headers.
 
     Notifuse sends webhook-*; if webhook-id is absent, fall back to the svix-*
-    names (what Hookdeck does too). The result always uses the webhook-* names
+    names. The result always uses the webhook-* names
     the standardwebhooks library expects.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"
@@ -137,7 +137,7 @@ async def notifuse_webhook(request: Request, event: Dict[str, Any] = Depends(ver
         return {"received": True, "duplicate": True}
 
     try:
-        # Notifuse needs a 2xx within 30 seconds. In production, enqueue the
+        # Notifuse needs a 2xx within 10 seconds. In production, enqueue the
         # event here and process it asynchronously.
         handle_event(event)
         processed_delivery_ids.add(delivery_id)

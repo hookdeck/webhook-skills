@@ -62,7 +62,7 @@ Key points:
 
 ## Responding
 
-Reply `200` with a **blank body**; anything else is an error. Failed deliveries are retried 3 times over 5 minutes, and 10 consecutive bad responses disable the webhook. The **Test** button sends fake data.
+Reply `200` with a **blank body**, as ReferralHero asks; every non-200 response counts as an error. Failed deliveries are retried 3 times over 5 minutes, and 10 consecutive bad responses disable the webhook. The **Test** button sends fake data.
 
 ## Event Handling
 

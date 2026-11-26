@@ -37,8 +37,7 @@ Add a custom header with a secret value to the KSAT or PhishER webhook.
 - `KNOWBE4_WEBHOOK_SECRET` is the exact, **whole** header value, including any `Bearer ` prefix you
   typed. Look the header up case-insensitively and compare the whole value; do not strip or parse a
   `Bearer ` prefix.
-- Hookdeck's KnowBe4 source does the same (API key verification: header name plus exact whole
-  header value).
+- Hookdeck's KnowBe4 source checks the same header.
 - KSAT also has an **Authentication** method field and PhishER offers No Auth, API Key, Bearer
   Token or Basic Auth. Basic Auth is not covered by Hookdeck's KnowBe4 source; use the custom
   header instead.
@@ -85,8 +84,10 @@ the payload (for example `{"System": "KnowBe4"}`).
 | KSAT: General Events | General account events you tick in the webhook |
 | PhishER: Send to Webhook | Message data for the data types selected on the webhook |
 
-The examples and tests use a clearly labelled **illustrative** payload with an `event_type` string
-(`Phish Failure Removed`). Inspect a real delivery, then adapt the handler.
+The examples route on a Custom Data key you add to each webhook: `System` set to `KnowBe4` on a
+KSAT webhook and `PhishER` on a PhishER one, the key/value pairs KnowBe4's own articles use. The
+tests send only that key, because no full payload is published. Inspect a real delivery before you
+read other fields.
 
 ## Delivery Behaviour
 

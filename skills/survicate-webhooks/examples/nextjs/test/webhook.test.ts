@@ -21,12 +21,11 @@ async function send(body: string, signature: string | null = sign(body), content
 beforeEach(() => {
   process.env.SURVICATE_WEBHOOK_SECRET = vector.secret;
   process.env.SURVICATE_WEBHOOK_TOLERANCE_SECONDS = '0';
-  process.env.UPPROMOTE_WEBHOOK_TOPIC = 'questionAnswered';
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 afterEach(() => { vi.restoreAllMocks(); });
 
-test('accepts the independent fixed core-compatible vector and routes its event', async () => {
+test('accepts the independent fixed vector and routes its event', async () => {
   expect(verifySignature(Buffer.from(vector.body), vector.signature, vector.secret)).toBe(true);
   expect(getEventNames(JSON.parse(vector.body))).toEqual(vector.events);
   expect((await send(vector.body, vector.signature)).status).toBe(200);
@@ -81,7 +80,7 @@ if (prefix === 'v1=' || timestamped) {
   });
 }
 if (prefix === 'v1=' || prefix === 'sha256=') {
-  test('accepts core-compatible bare digests', () => {
+  test('accepts bare digests', () => {
     expect(verifySignature(Buffer.from(vector.body), vector.signature.split('=').pop()!, vector.secret)).toBe(true);
   });
 }

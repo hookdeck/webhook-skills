@@ -88,9 +88,9 @@ def test_handles_event(event_type):
 
 
 def test_acknowledges_unhandled_event():
-    res = send(envelope("job.archived"))
+    res = send(envelope("example.unlisted"))
     assert res.status_code == 200
-    assert res.json()["type"] == "job.archived"
+    assert res.json()["type"] == "example.unlisted"
 
 
 def test_accepts_svix_prefixed_headers():

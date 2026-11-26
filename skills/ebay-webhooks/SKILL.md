@@ -1,8 +1,8 @@
 ---
 name: ebay-webhooks
 description: >
-  Receive and verify eBay Notification API webhooks (Platform Notifications /
-  Event Notifications). Use when setting up an eBay webhook endpoint, passing
+  Receive and verify eBay Notification API webhooks (event notifications, not
+  the Trading API's SOAP Platform Notifications). Use when setting up an eBay webhook endpoint, passing
   the endpoint challenge validation, debugging the x-ebay-signature ECDSA
   verification, fetching the public key with getPublicKey, or handling events
   like MARKETPLACE_ACCOUNT_DELETION.
@@ -35,10 +35,11 @@ Standard Webhooks spec. Two distinct mechanisms are involved:
    the hex is the **SHA-256** hash of exactly `challengeCode + verificationToken
    + endpoint` — **in that order**. The order is mandatory.
 2. **Per-notification signature (ECDSA)** — Every notification carries an
-   `x-ebay-signature` header: a **Base64-encoded JSON** object with fields
-   `alg`, `kid`, `signature`, and `digest`. Use the `kid` to fetch the matching
-   public key via `getPublicKey`, then verify the ECDSA signature over the
-   **raw request body**. Cache the public key ~1 hour (keyed by `kid`).
+   `x-ebay-signature` header: a **Base64-encoded JSON** object whose `kid`
+   names a public key and whose `signature` is the Base64 ECDSA signature. Use
+   the `kid` to fetch the key via `getPublicKey` (its response gives the
+   algorithm, ECDSA, and digest, SHA1), then verify the signature over the
+   request body. Cache the public key ~1 hour (keyed by `kid`).
 
 ## Verification (core)
 
@@ -64,11 +65,11 @@ async function verifyEbaySignature(rawBody, signatureHeader, getPublicKey) {
   if (!signatureHeader) return false;
   let sig;
   try { sig = JSON.parse(Buffer.from(signatureHeader, 'base64').toString('utf8')); }
-  catch { return false; }              // { alg, kid, signature, digest }
+  catch { return false; }              // decoded JSON carries kid and signature
   if (!sig.kid || !sig.signature) return false;
   const pem = await getPublicKey(sig.kid); // cache ~1h, keyed by kid
   const verifier = crypto.createVerify('sha1'); // eBay signs ECDSA with SHA-1
-  verifier.update(rawBody);            // RAW body bytes — do not re-serialize
+  verifier.update(rawBody);            // body exactly as received
   verifier.end();
   try { return verifier.verify(pem, sig.signature, 'base64'); }
   catch { return false; }
@@ -95,14 +96,17 @@ async function verifyEbaySignature(rawBody, signatureHeader, getPublicKey) {
 |-------|----------------|
 | `MARKETPLACE_ACCOUNT_DELETION` | An eBay user closed their account / requested personal-data deletion. **All developers must subscribe or opt out.** |
 | `AUTHORIZATION_REVOCATION` | A user revoked your app's authorization — stop making API calls on their behalf and clean up stored tokens. |
-| `ITEM_AVAILABILITY` | Availability of a subscribed item changed |
-| `ITEM_PRICE_REVISION` | Price of a subscribed item was revised |
-| `PRIORITY_LISTING_REVISION` | A priority listing was revised |
+| `ORDER_CONFIRMATION` | A buyer completed checkout; sent once per order line item |
+| `ITEM_AVAILABILITY` | A fixed-price item's availability changed |
+| `ITEM_PRICE_REVISION` | An item's price changed (sent to eBay Partner Network partners) |
+| `PRIORITY_LISTING_REVISION` | An item joined or left a Promoted Listings priority campaign (eBay Partner Network partners) |
 
-The topic arrives in the payload at `metadata.topic`. The full, current list of
-topics (and the OAuth scopes needed to subscribe) is returned by the
-[`getTopics`](https://developer.ebay.com/api-docs/commerce/notification/resources/topic/methods/getTopics)
-method — do not hard-code a list you cannot see.
+The topic arrives in the payload at `metadata.topic`. eBay lists every topic,
+grouped by area, on its
+[notification events page](https://developer.ebay.com/develop/api/sell/notification_events)
+(29 on 2026-11-26), and
+[`getTopics`](https://developer.ebay.com/develop/api/sell/notification_api#sell-notification_api-topic-gettopics)
+returns them with the OAuth scopes needed to subscribe.
 
 ## Environment Variables
 
@@ -116,14 +120,18 @@ EBAY_ENV=production                               # sandbox | production
 
 ## Local Development
 
+In Hookdeck Event Gateway, create an **eBay** source with your keyset's Client ID
+and Client Secret and the same verification token you give eBay, then forward
+it to your machine (`ebay` is the source's name):
+
 ```bash
-# Start tunnel (no account needed)
-npx hookdeck-cli listen 3000 ebay --path /webhooks/ebay
+hookdeck listen 3000 ebay --path /webhooks/ebay
 ```
 
-Use the forwarding URL as `EBAY_ENDPOINT` and as the destination URL you
-register with eBay. The endpoint URL used in the SHA-256 challenge hash **must**
-be the exact URL eBay calls (the public tunnel URL, not `localhost`).
+Register the source URL as your eBay destination endpoint. The eBay source
+answers eBay's challenge itself. If you answer the challenge in your own code
+instead, the endpoint in the SHA-256 hash **must** be the exact public URL eBay
+calls, never `localhost`.
 
 ## Reference Materials
 

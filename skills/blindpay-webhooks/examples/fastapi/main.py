@@ -66,7 +66,7 @@ async def blindpay_webhook(request: Request):
     # Flat body: `webhook_event` first, then the resource's own fields (no wrapper object)
     name = event.get("webhook_event")
     resource_id = event.get("id")
-    # svix-id is stable across retries and replays: deduplicate on it (or on the resource id + event)
+    # svix-id is stable across retries and replays: deduplicate on it (one resource id carries several .update events, so id + event is not unique)
     print(f"Received BlindPay webhook {name} ({msg_id}) for {resource_id}")
 
     if name in ("customer.new", "customer.update"):  # update includes KYC status changes

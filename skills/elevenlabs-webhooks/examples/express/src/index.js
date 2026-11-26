@@ -34,27 +34,37 @@ app.post('/webhooks/elevenlabs', async (req, res) => {
     // Process based on event type
     switch (event.type) {
       case 'post_call_transcription':
-        // Handle call transcription completion
-        console.log('Call transcription completed:', event.data.call_id);
-        // Add your business logic here
+        // Call ended and analysis is complete
+        console.log('Call transcription completed:', event.data.conversation_id);
+        // Your code: store event.data.transcript and event.data.analysis
+        break;
+
+      case 'post_call_audio':
+        // Full call audio as base64-encoded MP3 in event.data.full_audio
+        console.log('Call audio ready:', event.data.conversation_id);
+        break;
+
+      case 'call_initiation_failure':
+        // Phone call didn't connect: failure_reason is busy, no-answer or unknown
+        console.log('Call initiation failed:', event.data.conversation_id, event.data.failure_reason);
         break;
 
       case 'voice_removal_notice':
         // Handle voice removal notice
         console.log('Voice removal notice received:', event.data);
-        // Add logic to handle voice removal notice
+        // Your code: switch to one of event.data.suggested_voices
         break;
 
       case 'voice_removal_notice_withdrawn':
         // Handle voice removal notice withdrawal
         console.log('Voice removal notice withdrawn:', event.data);
-        // Add logic to handle notice withdrawal
+        // Your code: keep using event.data.voice_id
         break;
 
       case 'voice_removed':
         // Handle voice removal completion
         console.log('Voice removed:', event.data);
-        // Add logic to handle voice removal completion
+        // Your code: stop using event.data.voice_id
         break;
 
       default:

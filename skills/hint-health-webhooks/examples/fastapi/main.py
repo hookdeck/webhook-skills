@@ -49,31 +49,32 @@ async def hint_health_webhook(request: Request):
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
-    # The event name is the top-level "type" field; "object" is the affected record
+    # The event name is the top-level "type" field; "object" is the affected record.
+    # Patient objects hold health data, so log the record id, not the object.
     event_type = event.get("type") if isinstance(event.get("type"), str) else None
     obj = event.get("object") if isinstance(event.get("object"), dict) else None
     event_id = event.get("id") if isinstance(event.get("id"), str) else None
 
     if event_type == "patient.created":
-        print(f"Patient created: {event_id} {obj}")
+        print(f"Patient created: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "patient.updated":
-        print(f"Patient updated: {event_id} {obj}")
+        print(f"Patient updated: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "patient.destroyed":
-        print(f"Patient destroyed: {event_id} {obj}")
+        print(f"Patient destroyed: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "patient.inactive":
-        print(f"Patient inactive: {event_id} {obj}")
+        print(f"Patient inactive: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "membership.created":
-        print(f"Membership created: {event_id} {obj}")
+        print(f"Membership created: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "membership.updated":
-        print(f"Membership updated: {event_id} {obj}")
+        print(f"Membership updated: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "membership.destroyed":
-        print(f"Membership destroyed: {event_id} {obj}")
+        print(f"Membership destroyed: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "practitioner.created":
-        print(f"Practitioner created: {event_id} {obj}")
+        print(f"Practitioner created: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "practitioner.updated":
-        print(f"Practitioner updated: {event_id} {obj}")
+        print(f"Practitioner updated: {event_id} {obj.get('id') if obj else None}")
     elif event_type == "practitioner.destroyed":
-        print(f"Practitioner destroyed: {event_id} {obj}")
+        print(f"Practitioner destroyed: {event_id} {obj.get('id') if obj else None}")
     else:
         print(f"Unhandled event type: {event_type}")
 

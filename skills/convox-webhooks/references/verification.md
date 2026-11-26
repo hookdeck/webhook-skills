@@ -66,11 +66,11 @@ def verify_convox(raw_body: bytes, header: str, secret: str) -> bool:
     return any(hmac.compare_digest(bytes.fromhex(s), expected) for s in sigs if HEX64.fullmatch(s))
 ```
 
-Hex is compared case-insensitively (as Hookdeck does), so uppercase `v1=` values are accepted. Both sides are decoded to bytes before the constant-time compare. `timingSafeEqual` throws on different lengths, which is why the format check comes first.
+Hex is compared case-insensitively, so uppercase `v1=` values are accepted. Both sides are decoded to bytes before the constant-time compare. `timingSafeEqual` throws on different lengths, which is why the format check comes first.
 
 ## Should I Check the Timestamp?
 
-Convox's own sample code rejects a `t` more than 5 minutes from now. The examples here **don't by default**: Hookdeck retries and replays resend the original headers, so the original `t`, and Hookdeck itself applies no tolerance. A fixed window would reject a legitimate redelivery.
+Convox's own sample code rejects a `t` more than 5 minutes from now. The examples here **don't by default**: Hookdeck retries and replays resend the original headers, so the original `t`. A fixed window would reject a legitimate redelivery.
 
 To opt in, set `CONVOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is Unix seconds. Unset, empty or `0` means off; a value that isn't a whole number is treated as `0`, with a warning at startup.
 

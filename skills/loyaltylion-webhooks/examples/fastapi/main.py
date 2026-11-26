@@ -64,25 +64,25 @@ def handle_event(topic: Optional[str], body: dict) -> None:
 
     if topic == "customers/update":
         print(f"Customer {customer.get('id')} updated ({customer.get('points_approved')} points approved)")
-        # TODO: sync the customer's points balance and tier to your system
+        # Your code: sync the customer's points balance and tier to your system
     elif topic == "program_events/customer.enrolled":
         print(f"Customer {customer.get('id')} enrolled in the loyalty program")
-        # TODO: send a welcome message or tag the customer
+        # Your code: send a welcome message or tag the customer
     elif topic == "program_events/customer.points_earned":
         print(f"Customer {customer.get('id')} earned points")
-        # TODO: record the transaction (data["properties"]["transaction"])
+        # Your code: record the transaction (data["properties"]["transaction"])
     elif topic in ("program_events/customer.tier_upgraded", "program_events/customer.tier_downgraded"):
         print(f"Customer {customer.get('id')} tier changed ({topic.rsplit('.', 1)[-1]})")
-        # TODO: update tier-based perks
+        # Your code: update tier-based perks
     elif topic == "program_events/customer.claimed_reward":
         print(f"Customer {customer.get('id')} claimed a reward")
-        # TODO: fulfil or record the reward (voucher_code, discount_amount, ...)
+        # Your code: fulfil or record the reward (voucher_code, discount_amount, ...)
     elif topic == "program_events/customer.referral_complete":
         print(f"Referral completed for customer {customer.get('id')}")
     elif topic == "loyalty_emails/unsubscribe":
         unsubscribed = (data.get("unsubscribe") or {}).get("customer") or {}
         print(f"Customer {unsubscribed.get('id')} unsubscribed from loyalty emails")
-        # TODO: suppress loyalty emails for this customer
+        # Your code: suppress loyalty emails for this customer
     elif topic == "receipts/manual_approval_required":
         print(f"Receipt {(data.get('receipt') or {}).get('id')} needs manual review")
     elif topic == "rewards/store_fulfilment":
@@ -90,7 +90,7 @@ def handle_event(topic: Optional[str], body: dict) -> None:
         # when you create or update the custom reward, to confirm the URL works.
         suffix = " (test)" if body.get("test") else ""
         print(f"Fulfilment {body.get('reward_fulfilment_id')} for reward {body.get('reward_identifier')}{suffix}")
-        # TODO: grant the custom reward to body["customer_id"]
+        # Your code: grant the custom reward to body["customer_id"]
     else:
         print(f"Unhandled LoyaltyLion topic: {topic}")
 

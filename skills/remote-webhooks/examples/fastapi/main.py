@@ -73,23 +73,23 @@ def handle_event(event: dict) -> None:
 
     if event_type == "employment.onboarding.completed":
         print(f"Onboarding completed for employment {employment_id}")
-        # TODO: provision accounts, notify the manager
+        # Provision accounts, notify the manager
     elif event_type == "employment.onboarding_task.completed":
         task = _as_dict(event.get("completed_task"))
         print(f"Onboarding task \"{task.get('name')}\" completed for employment {employment_id}")
-        # TODO: update your onboarding checklist
+        # Update your onboarding checklist
     elif event_type == "timeoff.requested":
         print(f"Time off requested (employment {employment_id})")
-        # TODO: route to the approver
+        # Route to the approver
     elif event_type == "timeoff.approved":
         print(f"Time off approved (employment {employment_id})")
-        # TODO: update your calendar
+        # Update your calendar
     elif event_type == "payslip.released":
         print(f"Payslip released (employment {employment_id})")
-        # TODO: fetch the payslip through the Remote API
+        # Fetch the payslip through the Remote API
     elif event_type == "contract.termination_date_reached":
         print(f"Contract termination date reached (employment {employment_id})")
-        # TODO: start offboarding in your systems
+        # Start offboarding in your systems
     else:
         print(f"Unhandled event type: {event_type}")
 

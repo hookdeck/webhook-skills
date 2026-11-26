@@ -52,8 +52,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Svix envelope: { type, data }. Check the exact payload shape for each
-  // event in WeTravel's "Manage Webhooks" > Event Catalog.
+  // WeTravel doesn't publish its payloads, and Svix doesn't add an event-type
+  // field, so a top-level `type` and `data` is an assumption. Check each
+  // event's shape in WeTravel's "Manage Webhooks" > Event Catalog.
   const data = event.data ?? {};
   console.log(`Received WeTravel webhook: ${event.type} (${msgId})`);
 

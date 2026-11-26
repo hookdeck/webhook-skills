@@ -1,7 +1,5 @@
 # Setting Up Datacake Webhooks
 
-> Datacake webhooks are not signed. Add a secret header under Headers on the webhook and enter it here.
-
 ## Prerequisites
 
 - A Datacake workspace
@@ -28,17 +26,18 @@ receiver compares the whole value as typed, so if you include `Bearer ` in Datac
 2. Click **Add Webhook**.
 3. Set the **Endpoint URL** (for example `https://example.com/webhooks/datacake`).
 4. Optionally add a **Description**.
-5. Under **Events to send**, choose `device_measurement`, `decoder_output` and/or `downlink`.
+5. Under **Events to send**, choose the events you need. They arrive as `device_measurement`,
+   `decoder_output` and `downlink` in the body's `event` field.
 6. Under **Headers**, add the secret header: **Name** `Authorization` (or any custom name), **Value**
    `Bearer ABC123` (use your own token).
 7. Click **Create Webhook**. Your endpoint starts receiving data.
 
 ## Setting It Up in Hookdeck
 
-When you create a Datacake source in Hookdeck, it shows the same note: Datacake webhooks are not
-signed, so add a secret header under Headers on the webhook and enter it in Hookdeck (header name
-and exact whole header value). A request without it still gets `200` from Hookdeck, but Hookdeck
-records it as failed verification and doesn't forward it.
+Create a Hookdeck source with the Datacake type and use its URL as the webhook's **Endpoint URL**.
+Enter the header name you added under **Headers** as the source's **API Key Header**, and the whole
+header value as its **API Key**. A request without the right value still gets `200` from Hookdeck,
+but Hookdeck records it as failed verification and doesn't forward it.
 
 ## Test Mode vs Live Mode
 

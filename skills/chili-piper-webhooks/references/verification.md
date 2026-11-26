@@ -13,7 +13,7 @@ The signed message is `{timestamp}.{raw_request_body}`: the `X-Chili-Timestamp` 
 
 ## Implementation
 
-Build the signed message as **bytes**, the way Hookdeck's Chili Piper source does: separators as UTF-8, the timestamp header value encoded latin1 exactly as received (never trimmed, parsed or re-formatted), and the raw body bytes appended unchanged.
+Build the signed message as **bytes**: separators as UTF-8, the timestamp header value encoded latin1 exactly as received (never trimmed, parsed or re-formatted), and the raw body bytes appended unchanged.
 
 ### Node.js
 
@@ -53,23 +53,17 @@ The hex digest is compared case-insensitively (decoding to bytes handles that). 
 
 ## How Do I Test My Implementation?
 
-Test vector (secret and body are made up for this skill):
-
-- Secret: `test_chili_piper_secret`
-- `X-Chili-Timestamp`: `1742589000`
-- Body: `{"meetingIdChili":"123e4567-e89b-12d3-a456-426614174000","type":"Created"}` (compact, no trailing newline)
-- Expected `X-Chili-Signature`: `6a44e57295b1df93c32af22231c457052e8ae688ac1856f7320f39a7b2fb67bf`
+Chili Piper publishes no test vector. Compute an expected signature for a body and timestamp of your choice with openssl, using your own secret, and check that your code produces the same hex:
 
 ```bash
-printf '%s' '1742589000.{"meetingIdChili":"123e4567-e89b-12d3-a456-426614174000","type":"Created"}' \
-  | openssl dgst -sha256 -hmac 'test_chili_piper_secret' -hex
+printf '%s' "${TIMESTAMP}.${BODY}" | openssl dgst -sha256 -hmac "$CHILI_PIPER_WEBHOOK_SECRET" -hex
 ```
 
-The example tests include this vector.
+The body must be byte-for-byte what you pass to your code: compact, with no trailing newline unless your code sees one.
 
 ## How Do I Prevent Replay Attacks?
 
-Chili Piper suggests rejecting timestamps older than 5 minutes (300 s). This skill does **not** do that by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. The examples enable the check only when `CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS` is set above 0 (unset or `0` = off). When on, a request is rejected with `401` if `X-Chili-Timestamp` is not a whole number of seconds or differs from the current time by more than the tolerance. Otherwise, de-duplicate on `meetingIdChili` plus `type`.
+Chili Piper suggests rejecting timestamps older than 5 minutes (300 s). This skill does **not** do that by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples enable the check only when `CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS` is set above 0 (unset or `0` = off). When on, a request is rejected with `401` if `X-Chili-Timestamp` is not a whole number of seconds or differs from the current time by more than the tolerance. Either way, skip a repeated `Created` or `Deleted` by `meetingIdChili` plus `type`, and apply `Updated` as an idempotent write keyed on `meetingIdChili`.
 
 ## Common Gotchas
 
@@ -83,7 +77,7 @@ Chili Piper suggests rejecting timestamps older than 5 minutes (300 s). This ski
 ## Debugging Verification Failures
 
 1. Confirm the webhook is created and **enabled**, and that support has issued the secret. An empty `X-Chili-Signature` header usually means one of these is missing.
-2. Run the test vector above through your code. If it passes, the problem is the secret or body handling.
+2. Run the openssl check above through your code. If it passes, the problem is the secret or body handling.
 3. Log the raw body length and confirm it is a Buffer/bytes, not a parsed object.
 4. Check that no middleware or proxy rewrites the body.
 5. Make sure the timestamp in the signed message is the header value, not the current time.

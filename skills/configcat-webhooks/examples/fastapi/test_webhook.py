@@ -12,7 +12,7 @@ from main import app, compute_signature, verify_configcat_webhook  # noqa: E402
 client = TestClient(app)
 URL = "/webhooks/configcat"
 
-# Published vector from ConfigCat's docs (also verified against Hookdeck's CONFIGCAT source)
+# Published vector from ConfigCat's docs
 VECTOR_BODY = b"examplebody"
 VECTOR_ID = "b616ca659d154a5fb907dd8475792eeb"
 VECTOR_TIMESTAMP = "1669629035"
@@ -92,9 +92,19 @@ class TestConfigCatWebhook:
         )
         assert client.post(URL, content=b"{}", headers=headers).status_code == 401
 
-    def test_rejects_two_comma_separated_signatures(self):
+    def test_accepts_two_comma_separated_signatures_when_either_matches(self):
+        for first in (True, False):
+            headers = sign(b"{}")
+            valid = headers["x-configcat-webhook-signature-v1"]
+            headers["x-configcat-webhook-signature-v1"] = (
+                f"{valid},{VECTOR_SIGNATURE}" if first else f"{VECTOR_SIGNATURE},{valid}"
+            )
+            assert client.post(URL, content=b"{}", headers=headers).status_code == 200
+
+    def test_rejects_signature_list_where_no_entry_matches(self):
         headers = sign(b"{}")
-        headers["x-configcat-webhook-signature-v1"] += "," + VECTOR_SIGNATURE
+        other = compute_signature("configcat_whsk_other", "wh-1", headers["x-configcat-webhook-timestamp"], b"{}")
+        headers["x-configcat-webhook-signature-v1"] = f"{other},{VECTOR_SIGNATURE}"
         assert client.post(URL, content=b"{}", headers=headers).status_code == 401
 
     @pytest.mark.parametrize(

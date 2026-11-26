@@ -46,13 +46,13 @@ function verifyMemberfulSignature(rawBody, signature, secret = process.env.MEMBE
 - Express: `express.raw({ type: '*/*' })`. Next.js: `await request.arrayBuffer()`. FastAPI: `await request.body()`. Python: `hmac.compare_digest` on bytes.
 - Memberful's own Node sample calls `Buffer.from(signature, 'hex')` on the unvalidated header; don't copy that.
 - **Method:** Memberful sends `POST` only; the examples answer `405` to anything else.
-- **Hookdeck:** Hookdeck's Memberful source verifies the signature (HMAC SHA-256, `x-memberful-webhook-signature`, hex) and manages the method as POST.
+- **Hookdeck:** Hookdeck's Memberful source verifies the signature.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
-Names are exact (member events use `object_event`, most others `object.event`). The docs list the names but never show where the name sits in the payload; the examples assume a top-level `event` field and log anything else. Confirm against a real delivery.
+Names are exact (member events use `object_event`, most others `object.event`). The docs list the names but never show where the name sits in the payload. Memberful's own WordPress plugin routes on a top-level `event` field ([webhook.php](https://github.com/memberful/memberful-wp/blob/main/src/endpoints/webhook.php)), and the examples do the same and log anything else. Confirm against a test delivery.
 
 | Group | Events |
 |-------|--------|

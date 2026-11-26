@@ -89,9 +89,9 @@ The event type is in the body's `event_type` field, not in a header. Use the `we
 
 ## How Does Etsy Retry Failed Deliveries?
 
-A delivery fails if your endpoint doesn't return a 2xx. Etsy retries with exponential backoff, each delay starting after the previous attempt fails: immediately, 5 seconds, 5 minutes, 30 minutes, 2 hours, 5 hours, 10 hours, 10 hours. You can also retry a message manually, or "Recover" all failed messages since a date, from the Webhook portal.
+Etsy retries when your endpoint fails to acknowledge receipt; its docs don't say which status codes count as success or how long it waits for a response. It retries with exponential backoff, each delay starting after the previous attempt fails: immediately, 5 seconds, 5 minutes, 30 minutes, 2 hours, 5 hours, 10 hours, 10 hours. You can also retry a message manually, or "Recover" all failed messages since a date, from the Webhook portal.
 
-Because a slow handler can cause a retry, return 200 quickly and do the `resource_url` fetch asynchronously.
+Because the response timeout isn't published, return 200 quickly and do the `resource_url` fetch asynchronously.
 
 ## Full Event Reference
 

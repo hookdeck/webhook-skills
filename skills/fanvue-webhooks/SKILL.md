@@ -220,7 +220,7 @@ with `data.object` naming the resource and snake_case fields inside `data`.
 ## Delivery and Idempotency
 
 - At least once, in no guaranteed order. Return `2xx` once the event is stored, then process asynchronously.
-- Deduplicate on `id` (envelope) or `eventId` (legacy). Fold `timestamp` into the key for `app.subscription.*` and legacy `message.read`.
+- Deduplicate on `id` (envelope) or `eventId` (legacy). For legacy `message.read`, key on `eventId` plus the body's `timestamp` (when the read happened). For `app.subscription.*`, a repeated transition reuses the earlier `id`, and the envelope `timestamp` changes on every retry, so neither collapses retries safely: make the handler idempotent and read current state from `GET /apps/{appUuid}/subscription-status`.
 - Return `2xx` for unknown event types: a `4xx` counts as a failure and walks the endpoint towards auto-disable. Events missed while disabled are not backfilled.
 
 ## Environment Variables

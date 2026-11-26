@@ -38,10 +38,10 @@ Memberful's event reference describes each event but does not show a payload or 
 - Subscription, order and price payloads include a `pass` object with `id` and `name`. The dashboard calls a `pass` a **Plan**; make access decisions from `pass`, not from price-level fields.
 - `subscription.updated` carries a `changed` object mapping each field to `[old, new]` (for example `plan_id`, `expires_at`, `autorenew`). A downgrade that takes effect at the next renewal has an empty `changed`.
 - Times are Unix timestamps, except subscription events, which use ISO 8601 for `activated_at`, `created_at`, `expires_at`, `trial_end_at` and `trial_start_at`.
-- For `subscription.created`, compare the member ID at the top of the payload with the one nested in `member`: equal means a group manager (or a plan without groups), different means a member joining a group.
+- For `subscription.created`, compare the subscription's `member_id` with the `id` nested in its `member` object (field names from the docs' screenshot): equal means a group manager (or a plan without groups), different means a member joining a group.
 - `custom_fields.updated` values can be a string, an array of strings, or an empty array.
 
-**Assumption:** the examples read the event name from a top-level `event` field and log anything else (with the payload's top-level keys). Confirm against a real delivery (use the test webhook in the dashboard) and adjust.
+**Event name:** the docs don't say where it travels. Memberful's own WordPress plugin reads a top-level `event` field and then `member.id`, `subscription.member.id` or `order.member.id` ([webhook.php](https://github.com/memberful/memberful-wp/blob/main/src/endpoints/webhook.php)), so the examples read `event` too and log anything else (with the payload's top-level keys). Confirm against a test delivery from the dashboard.
 
 Treat every field as untrusted and check its type before use.
 
@@ -53,4 +53,4 @@ Treat every field as untrusted and check its type before use.
 
 ## Full Event Reference
 
-See [Memberful's webhook documentation](https://memberful.com/help/custom-development-and-api/webhooks/) and the [webhook event reference](https://memberful.com/docs/api-reference/webhook-event-reference).
+See [Memberful's webhook documentation](https://memberful.com/docs/api-reference/webhooks) and the [webhook event reference](https://memberful.com/docs/api-reference/webhook-event-reference).

@@ -25,7 +25,7 @@ event name (`queue.job.succeeded`) and `data` is the job document.
 - How do I verify SaladCloud webhook signatures (`webhook-signature`, base64 secret)?
 - How do I handle the `queue.job.succeeded` event from the Job Queue API?
 - Why is my SaladCloud webhook signature verification failing, or rejecting Hookdeck retries?
-- Why does Hookdeck need `whsec_` in front of my SaladCloud secret?
+- What do I paste into a Hookdeck source for my SaladCloud secret?
 
 ## Verification (core)
 
@@ -33,7 +33,7 @@ Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. SaladCloud sign
 the base64-decoded secret, base64-encodes the result, and sends one or more space-separated `v1,<signature>`
 entries. Use a Standard Webhooks library (`standardwebhooks` on npm and PyPI), which compares in constant
 time. Read the `webhook-*` headers, and when `webhook-id` is absent fall back to the `svix-*` headers
-(`svix-id`, `svix-timestamp`, `svix-signature`), as Hookdeck does.
+(`svix-id`, `svix-timestamp`, `svix-signature`).
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -64,16 +64,10 @@ prefix if there is one and otherwise base64-decodes the whole value, so the bare
 `whsec_`-prefixed form give the same key. Handlers fail closed: with the variable unset they return 500
 instead of accepting anything. A missing header or a bad signature returns 400 (401 also works).
 
-### Hookdeck needs the secret as `whsec_` plus the secret
+### Configure the Hookdeck source
 
-Hookdeck base64-decodes a secret only when it starts with `whsec_`, and uses anything else as raw UTF-8
-bytes. SaladCloud shows the secret without that prefix, so Hookdeck's configuration alert for this source
-reads:
-
-> SaladCloud shows the secret without a prefix. Paste it as whsec_ followed by the secret, or verification fails.
-
-When you configure the Hookdeck source, enter `whsec_<secret from the portal>`. Your own handler, behind or
-beside Hookdeck, can keep using the bare value.
+Paste the organization's webhook secret key into the SaladCloud source exactly as the portal shows it.
+Hookdeck also accepts an existing `whsec_`-prefixed value.
 
 ### Hookdeck retries and replays hit the 5-minute window
 

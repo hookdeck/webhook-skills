@@ -66,7 +66,7 @@ npx hookdeck-cli listen 3000 document360 --path /webhooks/document360
 ```
 
 Put the printed URL in the channel's **Webhook URL** and add the same header there. Hookdeck's
-Document360 source pre-selects POST without managing the method, so if the channel sends PUT,
+Document360 source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if the channel sends PUT,
 allow PUT on the source.
 
 ## How It Works

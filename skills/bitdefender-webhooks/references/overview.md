@@ -11,7 +11,7 @@ The collector must support TLS 1.2 or higher and respond with a `2xx` status; "a
 response or no response is considered an error." Events come from GravityZone's published IP
 addresses, which the docs ask you to allowlist.
 
-Payloads are not signed. The credential is the `Authorization` header (see
+Payloads carry no HMAC signature. The credential is the `Authorization` header (see
 [verification.md](verification.md)).
 
 ## Message Shape

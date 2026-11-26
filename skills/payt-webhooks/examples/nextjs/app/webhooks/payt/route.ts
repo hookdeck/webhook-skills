@@ -10,24 +10,24 @@ function handleEvent(eventName: string, context: Record<string, any>): void {
   switch (eventName) {
     case 'invoice_created':
       console.log(`Invoice ${context.invoice_number} created for ${debtor.name} (open: ${context.amount_open} ${context.currency_code})`);
-      // TODO: sync the new invoice to your system
+      // Your code: sync the new invoice to your system
       break;
 
     case 'invoice_paid':
     case 'invoice_closed':
       console.log(`Invoice ${context.invoice_number} ${eventName === 'invoice_paid' ? 'paid' : 'closed'}`);
-      // TODO: mark the invoice as settled
+      // Your code: mark the invoice as settled
       break;
 
     case 'invoice_payment_created':
       // book_amount is the amount in the administration's bookkeeping currency
       console.log(`Payment ${context.id} of ${context.amount} ${context.currency_code} on invoice ${context.invoice?.invoice_number}`);
-      // TODO: book the payment in your accounting system
+      // Your code: book the payment in your accounting system
       break;
 
     case 'case_created':
       console.log(`Debt collection case ${context.credit_case_number} created with ${(context.invoices || []).length} invoice(s)`);
-      // TODO: flag the debtor's invoices as in collection
+      // Your code: flag the debtor's invoices as in collection
       break;
 
     case 'case_paid':
@@ -44,7 +44,7 @@ function handleEvent(eventName: string, context: Record<string, any>): void {
 
     case 'credit_limit_exceeded':
       console.log(`Credit limit exceeded for debtor ${context.debtor_code} (${context.book_open_amount} open of ${context.credit_limit_amount})`);
-      // TODO: alert your credit controller
+      // Your code: alert your credit controller
       break;
 
     case 'psp_transaction_successful':
@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing event.event_name' }, { status: 400 });
   }
 
-  // Delivery is at least once and unordered: make processing idempotent. For an unknown
+  // Delivery is at least once and unordered: make processing idempotent. X-PAYT-DELIVERY stays
+  // the same when a delivery is retried, so you can use it to spot repeats. For an unknown
   // object Payt suggests answering 404 so it retries later.
   try {
     handleEvent(event.event_name, event.context && typeof event.context === 'object' ? event.context : {});
@@ -89,6 +90,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Handler error' }, { status: 500 });
   }
 
-  // Payt needs a 200 within 10 seconds, otherwise the delivery is retried
+  // Payt counts any 2xx within 10 seconds as delivered; anything else is retried
   return NextResponse.json({ received: true });
 }

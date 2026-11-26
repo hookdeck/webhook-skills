@@ -14,13 +14,15 @@ load_dotenv()
 
 app = FastAPI()
 
-# Legacy eventNotifications operations -> CloudEvents event names
+# Legacy eventNotifications operations -> the operation segment of CloudEvents
+# type names (qbo.<entity>.<operation>.v1), as the Intuit Developer portal lists
+# them. Note Void is `void`, not `voided`. Anything unknown is lowercased.
 LEGACY_OPERATIONS = {
     "Create": "created",
     "Update": "updated",
     "Delete": "deleted",
     "Merge": "merged",
-    "Void": "voided",
+    "Void": "void",
     "Emailed": "emailed",
 }
 
@@ -41,8 +43,11 @@ def verify_quickbooks_signature(
 def normalize_events(payload: Any) -> Optional[list[dict]]:
     """
     Normalize both payload shapes into a flat list of events:
-    - CloudEvents (current): top-level list, type = "qbo.{entity}.{event}.v1"
-    - Legacy: {"eventNotifications": [{"realmId", "dataChangeEvent": {"entities": [...]}}]}
+    - CloudEvents (format toggle on): top-level LIST, type = "qbo.{entity}.{operation}.v1",
+      Content-Type application/cloudevents-batch+json in a November 2026 test delivery
+    - Legacy (toggle off): {"eventNotifications": [{"realmId", "dataChangeEvent": {"entities": [...]}}]},
+      no type string - the entity name + operation identify the event
+    Anything else (including a single CloudEvent object that isn't in a list) is rejected.
     """
     if isinstance(payload, list):
         events = []
@@ -94,24 +99,20 @@ def handle_event(event: dict) -> None:
 
     if action == "created":
         print(f"Created: {label}")
-        # TODO: Fetch the record from the Accounting API and sync it
+        # Fetch the record from the Accounting API and sync it
     elif action == "updated":
         print(f"Updated: {label}")
-        # TODO: Re-fetch the record and update your copy
+        # Re-fetch the record and update your copy
     elif action == "deleted":
         print(f"Deleted: {label}")
-        # TODO: Remove or archive your copy
+        # Remove or archive your copy of the record
     elif action == "merged":
         print(f"Merged: {label}, removed ID {event['data'].get('deletedid')}")
-        # TODO: Re-point references from data.deletedid to entity_id
-    elif action == "voided":
-        print(f"Voided: {label}")
-        # TODO: Mark the transaction void
-    elif action == "emailed":
-        print(f"Emailed: {label}")
-        # TODO: Record that the document was sent
+        # Re-point references from data.deletedid to entity_id
     else:
-        print(f"Unhandled event type: {event['type']}")
+        # void, emailed, or an operation added later: re-fetch the record
+        # (or run a CDC query) to see its current state
+        print(f"Other change ({event['type']}): {label}")
 
 
 @app.post("/webhooks/quickbooks")

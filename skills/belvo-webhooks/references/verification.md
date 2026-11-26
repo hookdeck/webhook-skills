@@ -87,7 +87,7 @@ def safe_equal(a: str, b: str) -> bool:
   `express.raw({ type: '*/*' })` accepts any content type.
 - **A `401` is final for Payments**: Belvo never retries `4xx`, so a wrong credential during
   rollout loses the event. Return `5xx` only for genuine server errors.
-- **Hookdeck**: a Hookdeck Belvo source verifies the same header (full value).
+- **Hookdeck**: a Hookdeck Belvo source checks the same header.
 
 ## Debugging 401s
 

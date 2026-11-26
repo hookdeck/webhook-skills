@@ -29,7 +29,7 @@ In Settings, start from a preset and tick or untick single types:
 
 - **All events:** every type. With "Also send event types Needle adds later" on, new types are sent as soon as they exist.
 - **Recommended:** every LinkedIn and Instagram event, plus leads added, suppressed leads, finished sequences, AI messages written, and messages held for approval and approved.
-- **Engagements:** replies only.
+- **Engagements:** replies and accepted connection requests.
 
 In the API and MCP, `eventTypes` is `"all"` (also types added later, and the default if left out) or a list of types. A list never grows on its own.
 

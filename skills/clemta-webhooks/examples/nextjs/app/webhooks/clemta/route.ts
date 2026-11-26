@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// Clemta sends the Standard Webhooks webhook-* headers; Hookdeck also reads svix-* when webhook-id is absent
+// Clemta sends the Standard Webhooks webhook-* headers; this handler also reads svix-* when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {

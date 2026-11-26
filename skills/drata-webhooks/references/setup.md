@@ -60,7 +60,7 @@ curl -X POST http://localhost:3000/webhooks/drata \
 
 Point the Send webhook step at a Hookdeck Event Gateway source URL and set the
 source's authentication to a custom header (API key) with the same header name
-and value. Hookdeck rejects requests without it, queues deliveries, retries to
+and value. Requests without it are recorded as failed verification; Hookdeck queues deliveries, retries to
 your app, and lets you replay. See the
 [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway)
 skill.

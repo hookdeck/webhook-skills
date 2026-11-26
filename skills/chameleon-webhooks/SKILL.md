@@ -60,7 +60,7 @@ function verifyChameleonSignature(rawBody, signature, secret = process.env.CHAME
 
 The body is `{id, kind, sent_at, data}`. Dispatch on `kind`; no header names the topic. `data` holds
 the included models (`profile`, `tour`, `survey`, `response`, `step`, ...). Chameleon also sends
-`X-Chameleon-Id`, the same `id` as the body. Dedupe on it, because non-200 responses are retried.
+`X-Chameleon-Id`, "the Chameleon ID of this webhook". Dedupe on the body `id`, because failed deliveries are retried.
 
 | Event | Sent When |
 |-------|-----------|

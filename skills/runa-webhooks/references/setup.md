@@ -12,11 +12,14 @@ Endpoints are managed in a webhook portal powered by Svix:
 1. In your Runa account, open the [API section](https://app.runa.io/api-keys) and click **View webhook**.
    This opens the portal.
 2. Click **Add new endpoint** and enter the endpoint URL. A description is optional.
-3. Select a **single event type**: `order.completion` or `product.update`.
+3. Select the event type: `order.completed`, `order.failed`, `payout.blocked`,
+   `order.completion` or `product.update`. Runa's webhooks page says to pick a single type per
+   endpoint; its November 2026 changelog says the new events can be added to an existing
+   endpoint's event types.
 4. Create the endpoint, then copy its signing secret and store it in your server's secret manager.
 
-To receive both event types, add two endpoints (they can share a URL; the examples identify the
-event from the payload). No challenge or validation request is documented, so nothing needs to
+If you add one endpoint per event type, they can share a URL: the examples read `type` on the
+newer events and identify `order.completion` and `product.update` from the payload. No challenge or validation request is documented, so nothing needs to
 be echoed back when you create an endpoint.
 
 No URL yet? The form has a **Use Svix Play** button that generates a unique testing URL so you
@@ -32,7 +35,7 @@ RUNA_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 If the value doesn't start with `whsec_`, the examples reject it with a 500 instead of verifying
-with the wrong key. If you serve both event types from one handler, the two endpoints have
+with the wrong key. If you serve several endpoints from one handler, the endpoints have
 different secrets; see [verification.md](verification.md) for handling more than one.
 
 Runa's docs show `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw` in their code sample. That is Svix's

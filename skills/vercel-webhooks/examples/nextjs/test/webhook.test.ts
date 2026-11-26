@@ -213,30 +213,6 @@ describe('Vercel Webhook Handler', () => {
       expect(data).toEqual({ received: true });
     });
 
-    it('should handle attack.detected event', async () => {
-      const event = createTestEvent('attack.detected', {
-        attack: {
-          type: 'ddos',
-          action: 'blocked',
-          ip: '192.0.2.1'
-        }
-      });
-
-      const body = JSON.stringify(event);
-      const signature = generateVercelSignature(body, TEST_SECRET);
-
-      const request = new MockNextRequest(body, {
-        'x-vercel-signature': signature,
-        'content-type': 'application/json'
-      });
-
-      const response = await POST(request as any);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({ received: true });
-    });
-
     it('should handle unknown event types gracefully', async () => {
       const event = createTestEvent('unknown.event.type', {
         custom: 'data'

@@ -29,7 +29,7 @@ export interface YocoApiEvent {
 /** Checkout API event: `type` plus a nested `payload` object. */
 export interface YocoCheckoutEvent {
   id: string;
-  type: string; // "payment.succeeded" | "payment.failed" | "refund.succeeded" | "refund.failed"
+  type: string; // "payment.succeeded" | "refund.succeeded" | "refund.failed"
   createdDate: string;
   payload: {
     id: string;
@@ -115,9 +115,6 @@ function handleCheckoutEvent(event: YocoCheckoutEvent): void {
         `Checkout ${payload?.metadata?.checkoutId} paid: ` +
           `${payload?.amount} ${payload?.currency} (${payload?.id})`
       );
-      break;
-    case 'payment.failed':
-      console.log(`Checkout ${payload?.metadata?.checkoutId} payment failed`);
       break;
     case 'refund.succeeded':
       console.log(`Refund ${payload?.id} succeeded: ${payload?.amount} cents`);

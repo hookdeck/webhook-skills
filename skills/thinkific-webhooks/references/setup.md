@@ -27,7 +27,7 @@ Set `THINKIFIC_WEBHOOK_SECRET` to that value. It is used as UTF-8 bytes, as-is.
 
 ## Using Hookdeck
 
-Hookdeck's Thinkific source verifies `X-Thinkific-Hmac-Sha256` (HMAC-SHA256, hex) and POSTs. When
+Hookdeck's Thinkific source verifies the signature. When
 Hookdeck asks for the secret:
 
 > Paste the webhook's signing secret. Older webhooks are signed with the site API key, and OAuth app webhooks with the app client secret.

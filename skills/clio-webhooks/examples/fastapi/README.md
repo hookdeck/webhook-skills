@@ -49,11 +49,16 @@ pytest test_webhook.py -v
 
 ### Using Hookdeck CLI
 
-Forward webhooks to your local server (no account required):
+Create a Clio source in Hookdeck Event Gateway and forward it to your local server,
+where `clio` is the source's name:
 
 ```bash
-npx hookdeck-cli listen 8000 clio --path /webhooks/clio
+hookdeck listen 8000 clio --path /webhooks/clio
 ```
+
+Point your Clio webhook's `url` at the source URL. Event Gateway answers the
+handshake itself, so read the secret from the webhook's `shared_secret` field
+(`GET /api/v4/webhooks/{id}.json?fields=shared_secret`).
 
 ## How It Works
 

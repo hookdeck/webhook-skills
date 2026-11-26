@@ -50,7 +50,9 @@ const EVENT_TYPES = [
   'conversion.created', 'conversion.funds_received', 'conversion.processing', 'conversion.success', 'conversion.failed', 'conversion.returned',
   'transfer.processing', 'transfer.success', 'transfer.failed',
   'deposit.received', 'deposit.held', 'deposit.confirmed', 'deposit.failed',
+  'wallet_transfer.success',
   'kyc.approved', 'kyc.rejected',
+  'split.completed', 'split.leg_released',
 ];
 
 describe('GlobalStack webhook handler', () => {
@@ -58,8 +60,8 @@ describe('GlobalStack webhook handler', () => {
     process.env.GLOBALSTACK_WEBHOOK_SECRET = TEST_SECRET;
   });
 
-  test('covers the 27 documented events', () => {
-    expect(new Set(EVENT_TYPES).size).toBe(27);
+  test('covers the 30 documented events', () => {
+    expect(new Set(EVENT_TYPES).size).toBe(30);
   });
 
   test.each(EVENT_TYPES)('handles %s', async (type) => {

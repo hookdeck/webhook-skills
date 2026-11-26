@@ -86,47 +86,47 @@ app.post(
 
       case 'item.created':
         console.log(`Item created: ${content?.item_id}`);
-        // TODO: track onboarding progress
+        // Your code: track onboarding progress
         break;
 
       case 'item.refreshed':
-        console.log(`Item refreshed: ${content?.item_id} (status ${content?.status})`);
-        // TODO: pull fresh accounts/transactions
+        console.log(`Item refreshed: ${content?.item_id} (status_code ${content?.status_code})`);
+        // Your code: pull fresh accounts/transactions
         break;
 
       case 'item.account.created':
         console.log(`Account created under item ${content?.item_id}`);
-        // TODO: store the account, start reconciliation
+        // Your code: store the account, start reconciliation
         break;
 
       case 'item.account.updated':
         console.log(`Account updated under item ${content?.item_id}`);
-        // TODO: update cached balances
+        // Your code: update cached balances
         break;
 
       case 'item.account.deleted':
         console.log(`Account deleted under item ${content?.item_id}`);
-        // TODO: clean up local records
+        // Your code: clean up local records
         break;
 
       case 'payment.transaction.created':
         console.log('Payment transaction created');
-        // TODO: record a pending payment
+        // Your code: record a pending payment
         break;
 
       case 'payment.transaction.updated':
         console.log('Payment transaction updated');
-        // TODO: reconcile payment status
+        // Your code: reconcile payment status
         break;
 
       case 'payment.link.updated':
         console.log('Payment link updated');
-        // TODO: update checkout/payment-link state
+        // Your code: update checkout/payment-link state
         break;
 
       case 'user.deleted':
         console.log(`User deleted: ${content?.user_uuid}`);
-        // TODO: GDPR cleanup, revoke access
+        // Your code: GDPR cleanup, revoke access
         break;
 
       default:

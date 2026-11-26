@@ -122,7 +122,7 @@ signature === expected
 
 **Problem**: Using the wrong secret or format.
 
-**Solution**: Use the exact secret from Cursor dashboard, no modifications.
+**Solution**: Use the exact `webhook.secret` string you passed when creating the agent, with no decoding. Each agent signs with its own secret, so agents created before a secret change still use the old one.
 
 ## Debugging Verification Failures
 

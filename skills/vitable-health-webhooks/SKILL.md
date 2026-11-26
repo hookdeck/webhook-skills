@@ -77,7 +77,7 @@ Respond `401` when the signature or timestamp header is missing or empty, malfor
 
 ### Timestamp window (opt-in)
 
-Vitable's own examples reject timestamps more than 300 seconds old. **Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window rejects legitimate retries.** The examples therefore leave the check off unless `VITABLE_WEBHOOK_TOLERANCE_SECONDS` is set to a positive number (unset or `0` = off). See [references/verification.md](references/verification.md).
+Vitable's own examples reject timestamps more than 300 seconds old. **Hookdeck retries and replays resend the original headers and timestamp, so a fixed window rejects legitimate retries.** The examples therefore leave the check off unless `VITABLE_WEBHOOK_TOLERANCE_SECONDS` is set to a positive number (unset or `0` = off). See [references/verification.md](references/verification.md).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

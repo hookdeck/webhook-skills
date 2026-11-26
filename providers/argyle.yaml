@@ -16,15 +16,14 @@ notes: >
   secret) .update(rawBody) .digest('hex')' From the docs (registry summary): `X-Argyle-Signature:
   <hex>` = hex HMAC-SHA512(subscription `secret`, raw body), compared timing-safe (the guide's Node
   sample uses `createHmac('sha512', secret).update(rawBody).digest('hex')`). A subscription without a
-  `secret` gets no signature header at all. SIGNATURE SCHEME (it must match Hookdeck's ARGYLE source
-  exactly: HMAC controller, algorithm "sha512", header_key "x-argyle-signature", encoding "hex"). The
+  `secret` gets no signature header at all. SIGNATURE SCHEME (algorithm sha512, header x-argyle-signature, encoding hex). The
   X-Argyle-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
   value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA512, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 128 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: The optional `secret` you set on the
   subscription (Console or `POST /v2/webhooks`); Argyle does not generate one. Use it as UTF-8 bytes.
   Env var: ARGYLE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
@@ -40,13 +39,11 @@ notes: >
   accounts.connected, accounts.failed, accounts.removed, accounts.updated, gigs.added,
   gigs.fully_synced, gigs.partially_synced, gigs.removed, gigs.updated, identities.added,
   identities.updated, items.removed, items.updated (and 32 more). Handle a few common ones and log the
-  rest. Methods: Argyle's docs don't name the HTTP method. Hookdeck's Argyle source pre-selects POST
-  without managing the method (the user can change it). The examples must NOT be POST-only: accept
+  rest. Methods: Argyle's docs don't name the HTTP method. The allowed methods on the Hookdeck source can be changed (https://hookdeck.com/docs/sources#custom-methods). The examples must NOT be POST-only: accept
   GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one route per method;
   Next.js: export a handler for each; FastAPI: api_route with those methods), verify the signature
   first for every method, and treat a missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it is acknowledged
-  with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's Argyle source pre-selects POST without
-  managing the method, so any other method the sender uses must also be allowed on the source. Express
+  with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Documented sample payloads (each JSON file's `body` is the

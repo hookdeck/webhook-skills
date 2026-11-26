@@ -51,8 +51,8 @@ function verifyBox(rawBody: Buffer, signature: string | null, timestamp: string 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Box's docs don't name the HTTP method (Hookdeck pre-selects POST, unmanaged), so every method is
-// verified the same way.
+// Box's Box Sign webhooks page says deliveries are POSTs; the V2 webhooks page only says "an HTTP
+// call". Every method is verified the same way, so the route doesn't depend on which page is right.
 async function handle(request: NextRequest) {
   const secret = process.env.BOX_WEBHOOK_SECRET;
   if (!secret) {
@@ -75,7 +75,7 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
-  // Hookdeck leaves the method unmanaged, so a verified request may arrive without a body
+  // A verified request without a body has nothing to process
   if (rawBody.length === 0) return NextResponse.json({ received: true });
 
   let event: any;

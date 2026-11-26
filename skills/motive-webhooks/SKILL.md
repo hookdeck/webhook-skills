@@ -73,7 +73,7 @@ The payload is a JSON object. Dispatch on its `action` field (`trigger` says `cr
 | `vehicle_gateway_disconnected` / `vehicle_gateway_disconnect_ended` | A vehicle gateway disconnects or reconnects |
 | `dashcam_disconnected` | A dashcam disconnects |
 
-> **For payload fields and the full list**, see [references/overview.md](references/overview.md) and [Motive's webhooks docs](https://developer.gomotive.com/docs/overview-company-webhooks).
+> **For payload fields and the full list**, see [references/overview.md](references/overview.md) and [Motive's webhooks docs](https://developer-docs.gomotive.com/reference/overview-company-webhooks).
 
 ## Important Headers
 

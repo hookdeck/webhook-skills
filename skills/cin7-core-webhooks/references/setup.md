@@ -11,7 +11,7 @@ Use a custom header (ExternalHeaders) or Bearer auth on the Cin7 Core webhook, a
 
 | Option | `ExternalAuthorizationType` | Header sent |
 |--------|-----------------------------|-------------|
-| Bearer | `bearerauth` | `authorization: Bearer <token>` |
+| Bearer | `bearerauth` | `authorization: Bearer <token>` (the usual form; the docs don't name the header) |
 | Custom header | `noauth` plus `ExternalHeaders` | Your own name and value |
 
 `basicauth` is not covered by Hookdeck's Cin7 Core source; avoid it.

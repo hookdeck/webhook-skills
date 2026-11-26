@@ -10,8 +10,7 @@ notes: >
   "API_KEY", "apiKey": "123456". Basic authentication is not covered by Hookdeck's Trendyol source;
   say so. No signature: requests are unsigned. Trendyol sends the webhook's apiKey as plain text in
   the x-api-key header on every request. The examples read TRENDYOL_WEBHOOK_SECRET, look the
-  x-api-key header up case-insensitively and compare its WHOLE value to the secret. This is what
-  Hookdeck's Trendyol source does (API key verification, header x-api-key, exact whole value).
+  x-api-key header up case-insensitively and compare its WHOLE value to the secret.
   Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).

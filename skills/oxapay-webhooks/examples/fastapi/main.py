@@ -51,19 +51,19 @@ def handle_oxapay_callback(event: dict) -> None:
 
     if status == "Paying":
         print(f"Payment {track_id} ({event.get('type')}) paying: awaiting network confirmation")
-        # TODO: Mark the order as payment in progress; do NOT deliver goods yet
+        # Your code: Mark the order as payment in progress; do NOT deliver goods yet
     elif status == "Paid":
         print(f"Payment {track_id} ({event.get('type')}) paid: {event.get('amount')} {event.get('currency')}")
-        # TODO: Fulfil the order (look it up by event["order_id"])
+        # Your code: Fulfil the order (look it up by event["order_id"])
     elif status == "Confirming":
         print(f"Payout {track_id} confirming, tx {event.get('tx_hash')}")
-        # TODO: Mark the payout as sent and awaiting confirmation
+        # Your code: Mark the payout as sent and awaiting confirmation
     elif status == "Confirmed":
         print(f"Payout {track_id} confirmed, tx {event.get('tx_hash')}")
-        # TODO: Mark the payout as completed
+        # Your code: Mark the payout as completed
     elif status == "Failed":
         print(f"Payout {track_id} failed")
-        # TODO: Alert and release or retry the payout
+        # Your code: Alert and release or retry the payout
     else:
         print(f"Unhandled OxaPay status: {status}")
 

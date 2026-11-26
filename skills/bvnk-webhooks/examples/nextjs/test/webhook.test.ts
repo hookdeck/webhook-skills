@@ -68,7 +68,7 @@ describe('POST /webhooks/bvnk', () => {
     ['unpadded', VECTOR_SIGNATURE.slice(0, 43)],
     ['url-safe alphabet', VECTOR_SIGNATURE.replace('/', '_')],
     ['prefixed', 'sha256=' + VECTOR_SIGNATURE],
-    // "h" decodes to the same bytes as "g" but is not the canonical spelling Hookdeck accepts
+    // "h" decodes to the same bytes as "g" but is not the canonical spelling
     ['non-canonical base64', VECTOR_SIGNATURE.replace('g=', 'h=')],
   ])('rejects a %s signature', async (_name, value) => {
     expect((await POST(makeRequest(VECTOR_BODY, value))).status).toBe(401);

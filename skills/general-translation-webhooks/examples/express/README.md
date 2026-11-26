@@ -1,11 +1,11 @@
 # General Translation Webhooks - Express Example
 
-Minimal example of receiving [General Translation](https://generaltranslation.com) webhooks with signature verification. Deliveries are signed with Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and verified with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent the handler falls back to the `svix-*` header names, as Hookdeck does.
+Minimal example of receiving [General Translation](https://generaltranslation.com) webhooks with signature verification. Deliveries are signed with Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and verified with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent the handler falls back to the `svix-*` header names.
 
 ## Prerequisites
 
 - Node.js 18+
-- A General Translation organization on the Starter or Enterprise plan
+- A General Translation organization on the Enterprise plan
 - The signing secret (`whsec_...`) of your webhook endpoint
 
 ## Setup

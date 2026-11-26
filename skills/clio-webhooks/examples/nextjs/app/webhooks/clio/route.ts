@@ -9,9 +9,8 @@ import crypto from 'crypto';
  * Clio sends the HMAC-SHA256 of the raw body (keyed with the shared secret) in
  * the `X-Hook-Signature` header. Verify against the RAW body.
  *
- * Clio's docs do not say whether the digest is hex- or base64-encoded, so we
- * compute it once and compare against both. Confirm which encoding your real
- * deliveries use, then you can drop the other.
+ * Clio's docs compute a lowercase hex digest (`hexdigest`). We compute it once
+ * and also accept base64 as a safety net; the wrong encoding never matches.
  */
 function verifyClioWebhook(
   rawBody: string,
@@ -24,7 +23,7 @@ function verifyClioWebhook(
 
   const digest = crypto.createHmac('sha256', secret).update(rawBody).digest();
 
-  // Accept hex or base64 (encoding unspecified) — timing-safe either way.
+  // Hex per Clio's docs, base64 as a safety net — timing-safe either way.
   return [digest.toString('hex'), digest.toString('base64')].some((expected) => {
     try {
       return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
@@ -70,32 +69,32 @@ export async function POST(request: NextRequest) {
   switch (event) {
     case 'created':
       console.log(`Record created: ${record.id}`);
-      // TODO: sync the new record into your system
+      // Your code: sync the new record into your system
       break;
 
     case 'updated':
       console.log(`Record updated: ${record.id}`);
-      // TODO: update your local copy
+      // Your code: update your local copy
       break;
 
     case 'deleted':
       console.log(`Record deleted: ${record.id}`);
-      // TODO: soft-delete / archive locally
+      // Your code: soft-delete / archive locally
       break;
 
     case 'matter_opened':
       console.log(`Matter opened: ${record.id}`);
-      // TODO: kick off intake / billing setup
+      // Your code: kick off intake / billing setup
       break;
 
     case 'matter_pended':
       console.log(`Matter pended: ${record.id}`);
-      // TODO: pause automations
+      // Your code: pause automations
       break;
 
     case 'matter_closed':
       console.log(`Matter closed: ${record.id}`);
-      // TODO: final invoicing / close-out
+      // Your code: final invoicing / close-out
       break;
 
     default:

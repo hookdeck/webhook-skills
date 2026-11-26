@@ -61,15 +61,15 @@ function verifyCyberimpactRequest(headers, {
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 
 > **Security note:** a static shared credential authenticates the sender, not the body, and gives
-> no replay protection (there is no signature and no timestamp). Use HTTPS only, and rotate the
+> no replay protection (there is no signature, and the body's `timestamp` isn't signed). Use HTTPS only, and rotate the
 > credential in both the scenario and your endpoint if it leaks.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
-Every request has `event` set to `automation.webhook.send`. What differs is the `data` the
-scenario author selected.
+The documented request has `event` set to `automation.webhook.send`, and no other value is
+documented. What differs is the `data` the scenario author selected.
 
 | Event | Sent When |
 |-------|-----------|

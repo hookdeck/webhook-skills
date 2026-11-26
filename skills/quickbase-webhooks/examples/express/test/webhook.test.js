@@ -9,11 +9,11 @@ const { verifyQuickbaseRequest } = require('../src/index');
 
 const SECRET = process.env.QUICKBASE_WEBHOOK_SECRET;
 
-// Illustrative payloads: Quickbase adds no event field; these are user-written templates.
-const EVENTS = ['record_added', 'record_modified', 'record_deleted'];
+// Template output: Quickbase adds no event field; `action` comes from the %action% marker.
+const EVENTS = ['Add', 'Replace', 'Delete'];
 
-function sample(event = 'record_added') {
-  return { event, record_id: 42, table: 'Projects' };
+function sample(event = 'Add') {
+  return { action: event, record_id: 42, table: 'Projects' };
 }
 
 function send(method = 'post', body = JSON.stringify(sample()), contentType = 'application/json') {
@@ -107,13 +107,13 @@ describe('Quickbase webhook endpoint', () => {
   });
 
   describe('bodies', () => {
-    it.each(EVENTS)('handles illustrative %s payloads', async (event) => {
+    it.each(EVENTS)('handles %s actions', async (event) => {
       const res = await send('post', JSON.stringify(sample(event))).set('Authorization', SECRET);
       expect(res.status).toBe(200);
     });
 
     it('acknowledges unrecognized events', async () => {
-      const res = await send('post', JSON.stringify({ event: 'something_else' })).set('Authorization', SECRET);
+      const res = await send('post', JSON.stringify({ action: 'something_else' })).set('Authorization', SECRET);
       expect(res.status).toBe(200);
     });
 

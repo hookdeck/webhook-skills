@@ -13,8 +13,8 @@ contact cards, and account changes (API tokens, environments, subscriptions, tea
 
 ## Common Event Types
 
-76 event types are listed in Linq's authoritative list (the docs call it rendered from the OpenAPI spec, so
-treat that spec as the source of truth). The name is `event_type` in the JSON body. The examples handle these:
+76 event types are documented: 69 in Linq's authoritative list (rendered from the OpenAPI spec) plus the 7
+`call_voice.*` events from the Voice channel docs. The name is `event_type` in the JSON body. The examples handle these:
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -41,8 +41,9 @@ Other documented events the examples log as unhandled:
 - **Phone numbers and contacts:** `phone_number.assigned`, `phone_number.released`, `phone_number.line_type_updated`,
   `phone_number.forwarding_updated`, `contact_card.received`, `contact_card.created`, `contact_card.updated`,
   `contact_card.deleted`
-- **Calls:** `call.initiated`, `call.ringing`, `call.answered`, `call.ended`, `call.failed`, `call.declined`,
-  `call.no_answer`
+- **Calls (Voice channel):** `call_voice.initiated`, `call_voice.ringing`, `call_voice.answered`,
+  `call_voice.ended`, `call_voice.failed`, `call_voice.declined`, `call_voice.no_answer`. The older
+  `call.*` names no longer appear in Linq's event list.
 - **Location and payments:** `location.sharing.started`, `location.sharing.stopped`, `payment.succeeded`,
   `payment.canceled`, `payment.expired`, `payment.declined`, `payment.authorized`, `connection.created`,
   `connection.revoked`
@@ -107,7 +108,9 @@ registered URL: it is part of the URL Linq calls, and your route still sees the 
 | Retried | HTTP 5xx, 429, timeouts, refused connections, redirect loops, `3xx` without `Location` |
 | Not retried | Other 4xx, DNS failures, invalid hostnames, redirects from `https://` to `http://` |
 | Delivery model | At-least-once, so duplicates are possible |
-| Ordering | Not guaranteed for account events |
+| Ordering | Not guaranteed for account events; call events can also arrive out of order |
+| Retry identity | `event_id`, `created_at` and `data` stay the same; `webhook-timestamp` and `webhook-signature` are new on each attempt |
+| Source IP | One static IPv4 address, `54.157.59.12`, shared by every Linq customer |
 
 Return `2xx` quickly and process asynchronously. Don't redirect the endpoint: a `301`/`302`/`303` is followed
 as a body-less `GET`, so the delivery may count as successful without you receiving the event. Register the

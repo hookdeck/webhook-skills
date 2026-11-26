@@ -45,23 +45,23 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "Sale/Created":
         print("Sale created")
-        # TODO: sync the new sale to your system
+        # Sync the new sale to your system
 
     elif event_type == "Sale/OrderAuthorised":
         print("Sale order authorised")
-        # TODO: start fulfilment
+        # Start fulfilment
 
     elif event_type == "Sale/ShipmentAuthorised":
         print("Sale shipment authorised")
-        # TODO: notify the customer / update tracking
+        # Notify the customer / update tracking
 
     elif event_type == "Purchase/OrderAuthorised":
         print("Purchase order authorised")
-        # TODO: sync the purchase to accounting
+        # Sync the purchase to accounting
 
     elif event_type == "Product/Updated":
         print("Product updated")
-        # TODO: refresh your catalogue
+        # Refresh your catalogue
 
     else:
         print(f"Unhandled event: {event_type}")
@@ -77,8 +77,14 @@ async def cin7_core_webhook(request: Request):
     except (json.JSONDecodeError, UnicodeDecodeError):
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
+    # Stock/AvailableStockLevelChanged and Task/Overdue send a JSON array with no
+    # EventType. Give those webhooks their own URL and handle them by route.
+    if isinstance(payload, list):
+        print(f"Array body with {len(payload)} row(s)")
+        return {"received": True}
+
     if not isinstance(payload, dict):
-        raise HTTPException(status_code=400, detail="Expected a JSON object")
+        raise HTTPException(status_code=400, detail="Expected a JSON object or array")
 
     try:
         handle_event(payload)

@@ -25,12 +25,12 @@ Steps:
 2. Split the header on `,`, then each element on the first `=`, to get `t` and every `v1`. Ignore other keys (such as `v0`). No `t` means failure.
 3. Optionally reject if `t` is too far from now (see below).
 4. Compute `HMAC_SHA256(secret, t + "." + rawBody)` over bytes.
-5. For each `v1`: require exactly 64 hex characters, then compare in constant time (hex is case-insensitive). Accept if any `v1` matches. During key rotation the header can carry several.
+5. For each `v1`: require exactly 64 hex characters, then compare in constant time (hex is case-insensitive). Accept if any `v1` matches, as Lettermint's SDKs do.
 6. On a missing header, malformed value or mismatch respond `401`.
 
 ## Implementation
 
-Lettermint's SDKs have a `Webhook.verify()` helper (for example `new Webhook(secret).verify(rawBody, headers)` in the Node.js SDK). It also requires `X-Lettermint-Delivery` to equal `t` and rejects deliveries more than 300 seconds off by default. Hookdeck verifies only the signature, so the examples here do the same by hand: [examples/express/](../examples/express/), [examples/nextjs/](../examples/nextjs/) and [examples/fastapi/](../examples/fastapi/).
+Lettermint's SDKs have a `Webhook.verify()` helper (for example `new Webhook(secret).verify(rawBody, headers)` in the Node.js SDK). It also requires `X-Lettermint-Delivery` to equal `t` and rejects deliveries more than 300 seconds off by default. The examples here verify only the signature, by hand: [examples/express/](../examples/express/), [examples/nextjs/](../examples/nextjs/) and [examples/fastapi/](../examples/fastapi/).
 
 ### Node.js
 
@@ -76,7 +76,7 @@ def verify_lettermint_webhook(raw_body: bytes, header: str | None, secret: str, 
 
 - **Raw body.** Use `express.raw({ type: '*/*' })`, `await request.arrayBuffer()` or `await request.body()`. Never `JSON.parse` then `JSON.stringify` before verifying.
 - **Whole secret.** Keep `whsec_`. Stripping it or base64-decoding the rest gives a different key and every check fails.
-- **Timestamp window is opt-in.** Lettermint's docs recommend `|now - t| <= 300` seconds, and its SDKs enforce it. Retries (12 attempts over about 14 hours) and Hookdeck replays keep the original `t`, and Hookdeck applies no tolerance, so a fixed window would reject legitimate redeliveries. Set `LETTERMINT_WEBHOOK_TOLERANCE_SECONDS` to a positive whole number to opt in (`300` matches the SDKs); unset or `0` leaves it off. With the window on, `t` must be a Unix-seconds integer. Whatever you choose, dedupe on the envelope `id`: a valid signature doesn't stop a repeated delivery.
+- **Timestamp window is opt-in.** Lettermint's docs recommend `|now - t| <= 300` seconds, and its SDKs enforce it. A delivery that Hookdeck retries or replays later keeps the original `t`, so a fixed window would reject it. Set `LETTERMINT_WEBHOOK_TOLERANCE_SECONDS` to a positive whole number to opt in (`300` matches the SDKs); unset or `0` leaves it off. With the window on, `t` must be a Unix-seconds integer. Whatever you choose, dedupe on the envelope `id`: a valid signature doesn't stop a repeated delivery.
 - **`X-Lettermint-Delivery` is not checked.** The SDKs require it to equal `t`; the examples don't.
 - **Multiple `v1` values.** Accept if any matches.
 - **Status codes.** Lettermint doesn't retry `401`, so a wrong secret surfaces in the dashboard's delivery log rather than as retries.

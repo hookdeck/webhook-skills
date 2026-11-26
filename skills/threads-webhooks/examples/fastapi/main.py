@@ -51,24 +51,33 @@ def verify_threads_signature(raw_body: bytes, signature_header: Optional[str], a
 
 def handle_notification(notification: dict) -> None:
     """Dispatch one notification. Threads sends a flat object:
-    { app_id, topic, target_id, time, subscription_id, values: { field, value } }"""
-    values = notification.get("values") or {}
-    field = values.get("field")
-    value = values.get("value") or {}
+    { app_id, topic, target_id, time, subscription_id, values: [{ field, value }] }
+    Meta's docs show `values` as a single { field, value } object, but a live publish
+    notification (2026-11-18) sent an array of them, so accept both."""
+    values = notification.get("values") if isinstance(notification, dict) else None
+    changes = values if isinstance(values, list) else [values] if values else []
+    for change in changes:
+        if isinstance(change, dict):
+            handle_change(change)
+
+
+def handle_change(change: dict) -> None:
+    field = change.get("field")
+    value = change.get("value") or {}
 
     if field == "replies":
         replied_to = (value.get("replied_to") or {}).get("id")
         print(f"Reply {value.get('id')} by @{value.get('username')} to post {replied_to}")
-        # TODO: Moderate or respond to the reply.
+        # Your code: Moderate or respond to the reply.
     elif field == "mentions":
         print(f"Mention in post {value.get('id')} by @{value.get('username')}")
-        # TODO: Social listening / alerts.
+        # Your code: Social listening / alerts.
     elif field == "publish":
         print(f"Post {value.get('id')} published by @{value.get('username')}")
-        # TODO: Sync published posts.
+        # Your code: Sync published posts.
     elif field == "delete":
         print(f"Post {value.get('id')} deleted at {value.get('deleted_at')}")
-        # TODO: Remove the post from your own store.
+        # Your code: Remove the post from your own store.
     else:
         print(f"Unhandled Threads field: {field}")
 

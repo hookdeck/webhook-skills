@@ -41,9 +41,9 @@ app.post('/webhooks/delivereasy', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   // The payload is the booking itself; there is no event name. Dispatch on status.
-  // Delivery is at least once: deduplicate on booking.id.
+  // Delivery is at least once: deduplicate on booking.id plus booking.status.
   console.log(`Booking ${booking.id} (${booking.booking_identifier}) status: ${booking.status}`);
-  // TODO: enqueue for async processing, keyed by booking.id and status
+  // Your code: enqueue for async processing, keyed by booking.id and status
 
   res.status(200).send('OK');
 });

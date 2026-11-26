@@ -41,7 +41,7 @@ def read_signature_headers(headers: Mapping[str, str]) -> Dict[str, Optional[str
     """Read the signature headers.
 
     Standard Webhooks uses webhook-*; when webhook-id is absent, fall back to
-    the svix-* names, as Hookdeck does. Returned under the webhook-* names the
+    the svix-* names. Returned under the webhook-* names the
     library expects.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"

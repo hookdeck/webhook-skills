@@ -47,7 +47,7 @@ Python: `hmac.compare_digest(expected.encode(), signature.lower().encode())` on 
 
 ## Event Types
 
-The body is the object itself and carries no event name. The event arrives in two headers: `Hitpay-Event-Object` (`charge`, `payout`, `invoice`, `order`, `transfer`) and `Hitpay-Event-Type` (`created`, `updated`, ...). Dispatch on `{Hitpay-Event-Object}.{Hitpay-Event-Type}`.
+The body is the object itself and carries no event name. The event arrives in two headers: `Hitpay-Event-Object` (`charge`, `payout`, `invoice`, `order`, `transfer`) and `Hitpay-Event-Type` (`created`, `updated`). HitPay's payment request guides add `payment_request` with `completed` or `failed`. Dispatch on `{Hitpay-Event-Object}.{Hitpay-Event-Type}`, and for transfers also read `data.status` (`scheduled`, `processing`, `paid`, `failed`, `canceled`), because HitPay doesn't document the header values for transfer status events.
 
 | Event | Triggered When |
 |-------|----------------|

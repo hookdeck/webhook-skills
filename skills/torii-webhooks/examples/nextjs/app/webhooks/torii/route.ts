@@ -11,12 +11,12 @@ function handleWorkflowRequest(method: string, payload: unknown): void {
   switch (body.workflow) {
     case 'new app discovered':
       console.log(`[${method}] New app discovered:`, body.app);
-      // TODO: open a review ticket for the app
+      // open a review ticket for the app
       break;
 
     case 'user offboarding':
       console.log(`[${method}] User offboarding:`, body.user);
-      // TODO: revoke access in downstream systems
+      // revoke access in downstream systems
       break;
 
     default:

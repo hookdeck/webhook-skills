@@ -85,17 +85,17 @@ comparing every space-separated `v1,<base64>` entry in constant time.
 
 Triggers are created from per-datasource **presets**. Preset ids are per
 deployment (discover them with `GET /api/trigger-presets`), so there is no fixed
-event list. Glean's public docs don't publish the delivery body; the fields below come from
-the test fixture in Glean's customer-meeting-prep cookbook recipe, so treat them as illustrative
-and confirm them against a real delivery:
+preset list. Every delivery body is one of two variants, told apart by
+`event_type`, as defined by the `triggerEvent` callback in Glean's
+[Platform API OpenAPI spec](https://github.com/gleanwork/open-api/blob/main/final_specs/platform.yaml):
 
-| Field | Example | Meaning |
+| `event_type` | Meaning | Extra fields |
 |-------|---------|---------|
-| `event_type` | `CONTENT_SCHEDULE` | What kind of trigger fired (`CONTENT_SCHEDULE` for "a meeting starts in 30 minutes") |
-| `trigger_id` / `trigger_name` | `spec-7d2f...` | Which trigger produced it |
-| `datasource` / `doc_type` | `GOOGLECALENDAR` / `event` | Source content |
-| `doc_id`, `title`, `view_url` | | The matched document |
-| `event_time`, `time_offset_seconds` | `2026-08-25T18:30:00Z` / `1800` | Schedule triggers only |
+| `DOCUMENT_CHANGE` | A matched document changed; `reason` says why (for example `REVIEW_REQUESTED`) | `content`, `content_truncated`, `facets` (email and Slack documents) |
+| `CONTENT_SCHEDULE` | A schedule preset fired, e.g. 30 minutes before a calendar event | `time_offset_seconds` |
+
+Both variants carry `version` (`"1"`), `trigger_id`, `datasource`, `reason`,
+`doc_type`, `doc_id`, `view_url`, `title` and, when known, `event_time`.
 
 Always keep a default branch for `event_type` values you do not handle.
 

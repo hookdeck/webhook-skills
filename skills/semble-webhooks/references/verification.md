@@ -13,7 +13,7 @@ X-Webhook-Timestamp: 1700000500
 - `v1`: lowercase hex HMAC-SHA256 (64 characters)
 - Key: the subscription's `secret` from `createWebhook`, as a UTF-8 string
 - Signed message: `"<t>.<raw request body>"`
-- `X-Webhook-Timestamp` holds the same value as `t`. Use the `t` from `X-Webhook-Signature`; that is the value Hookdeck verifies.
+- `X-Webhook-Timestamp` holds the same value as `t`. Use the `t` from `X-Webhook-Signature`.
 
 Verify by splitting the header on `,`, trimming each part (a space may follow the comma), and splitting each on the first `=`. Take `t` and **every** `v1` and accept if any one matches. Semble's docs show a single `v1` and don't say it sends several during rotation, so this is only defensive. Reject a header with no `t` or no `v1`.
 

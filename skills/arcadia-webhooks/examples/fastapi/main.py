@@ -50,39 +50,39 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "STATUS_CHANGE":
         print(f"Status change on {resource}: {data.get('id')}")
-        # TODO: if data["isCustomerActionRequired"], prompt the user to fix the connection
+        # If data["isCustomerActionRequired"], prompt the user to fix the connection
 
     elif event_type == "NEW_DATA_AVAILABLE":
         print(f"New data available for {resource}: {data.get('id')}")
-        # TODO: fetch the new data for data["accounts"]
+        # Fetch the new data for data["accounts"]
 
     elif event_type == "EXISTING_DATA_UPDATED":
         print(f"Existing data updated for {resource}: {data.get('id')}")
-        # TODO: re-sync the affected records
+        # Re-sync the affected records
 
     elif event_type == "DATA_DELETED":
         print(f"Data deleted ({resource}): {data.get('businessUnitId')}")
-        # TODO: remove or move local copies (data["movedToBusinessUnitId"])
+        # Remove or move local copies (data["movedToBusinessUnitId"])
 
     elif event_type == "BUSINESS_UNIT_ASSIGNMENT":
         print(f"Business unit assignment ({resource})")
-        # TODO: update ownership of data["account"]
+        # Update ownership of data["account"]
 
     elif event_type == "REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS":
         print(f"Credential validated: {data.get('id')}")
-        # TODO: mark the connection ready
+        # Mark the connection ready
 
     elif event_type == "REAL_TIME_CREDENTIAL_VALIDATION_FAILURE":
         print(f"Credential validation failed: {data.get('id')}")
-        # TODO: ask the user to re-enter their utility credentials
+        # Ask the user to re-enter their utility credentials
 
     elif event_type == "MFA_CHALLENGE_METHOD":
         print(f"MFA method needed for credential {(data.get('credential') or {}).get('id')}")
-        # TODO: show data["verificationMethods"] and submit the choice
+        # Show data["verificationMethods"] and submit the choice
 
     elif event_type == "MFA_CHALLENGE_CODE":
         print(f"MFA code needed for credential {(data.get('credential') or {}).get('id')}")
-        # TODO: prompt the user for the code
+        # Prompt the user for the code
 
     else:
         print(f"Unhandled eventType: {event_type}")

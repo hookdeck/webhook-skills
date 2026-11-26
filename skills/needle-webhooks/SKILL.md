@@ -97,11 +97,12 @@ Dispatch on the top-level `type`. The inner `data.data` depends on the type. Nee
 | `campaign_status_changed` | A campaign is started, paused, etc. |
 | `account_disconnected` | A connected account needs signing in again |
 
-The docs list 67 types. See [references/overview.md](references/overview.md) for the groups.
+The docs list 68 types, two of them not sent yet. See [references/overview.md](references/overview.md) for the groups.
 
 ## Delivery Semantics
 
 - Reply `2xx` within 10 seconds. Otherwise the event is tried 3 times: right away, after 10 minutes and 1 hour after the first try. After 3 days it is given up.
+- A webhook whose URL gives no `2xx` for 3 days is turned off, and events from that time are not sent later. Turn it back on in Settings or with `enabled: true` on Update a webhook.
 - A `429` makes Needle pause sending to your URL for a few seconds.
 - Delivery is at least once and **unordered**: up to 5 requests can be open at once. Dedupe on `webhook-id` and use `timestamp` for ordering.
 - Custom headers you add to the webhook are sent but are **not signed**. Don't treat them as proof of origin on their own.

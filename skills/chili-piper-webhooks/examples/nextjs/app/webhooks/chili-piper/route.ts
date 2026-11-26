@@ -6,17 +6,17 @@ function handleChiliPiperEvent(payload: Record<string, any>) {
   switch (payload.type) {
     case 'Created':
       console.log(`Meeting ${payload.meetingIdChili} booked: ${payload.meetingTitle} at ${payload.meetingStartTime}`);
-      // TODO: Create the meeting in your CRM or notify the host
+      // Create the meeting in your CRM or notify the host
       break;
 
     case 'Updated':
       console.log(`Meeting ${payload.meetingIdChili} updated: ${payload.meetingStartTime}, assignee ${payload.assigneeEmail}`);
-      // TODO: Sync the new time or assignee
+      // Sync the new time or assignee: a meeting can be updated many times, so write its current state keyed on meetingIdChili
       break;
 
     case 'Deleted':
       console.log(`Meeting ${payload.meetingIdChili} canceled`);
-      // TODO: Remove the meeting from your CRM
+      // Remove the meeting from your CRM
       break;
 
     default:
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // Retry behavior is not documented: de-duplicate on meetingIdChili + type
+  // Retry behavior is not documented: skip a repeated Created or Deleted by meetingIdChili + type
   handleChiliPiperEvent(payload);
 
   return NextResponse.json({ received: true, type: payload.type });

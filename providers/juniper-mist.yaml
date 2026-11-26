@@ -1,0 +1,25 @@
+name: juniper-mist
+displayName: Juniper Mist
+docs:
+  webhooks: https://networkingdocs.hpe.com/documentation/us/en/software/mist/automation-integration/topics/task/webhooks-add-portal.html
+  verification: https://networkingdocs.hpe.com/documentation/us/en/software/mist/automation-integration/topics/task/webhooks-add-portal.html
+  events: https://github.com/mistsys/mist_openapi
+notes: >
+  Juniper Mist (HPE Mist) webhooks are set per org (Organization > Settings) or site (Site
+  Configuration), or with the API (/api/v1/orgs/{org_id}/webhooks, /api/v1/sites/{site_id}/webhooks;
+  Authorization Token header). Types http-post, oauth2, splunk. Only http-post webhooks with a
+  secret are signed, with two headers: X-Mist-Signature-v2 = HMAC_SHA256(secret, body) and
+  X-Mist-Signature = HMAC_SHA1(secret, body). The docs don't state the encoding; Juniper's mwtt
+  tool and the PlaceOS driver use lowercase hex of the raw body with no prefix. Body is
+  {topic, events: [...]} with several events per POST; topics include alarms, audits,
+  device-events, device-updowns, client-join, client-sessions, client-info, nac-accounting,
+  nac-events, location, zone, occupancy-alerts, ping (org and site levels differ). POST
+  /api/v1/orgs/{org_id}/webhooks/{webhook_id}/ping sends a test. Custom headers (max 1000 bytes)
+  are optional; X-Mist-Error reports bad ones. Retries not documented. Hookdeck source type
+  JUNIPER_MIST (HMAC sha256 hex on x-mist-signature-v2; secret is the webhook Secret).
+testScenario:
+  events:
+    - audits
+    - device-events
+catalog:
+  summary: Verify Juniper Mist webhooks (`X-Mist-Signature-v2` hex HMAC-SHA256 of the raw body keyed with the webhook secret; legacy `X-Mist-Signature` HMAC-SHA1), handle alarms, audits, device and client topics

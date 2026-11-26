@@ -14,8 +14,9 @@ notes: >
   object with an "events" array that BATCHES multiple events per request, so iterate
   events[] and verify the signature ONCE against the whole raw body. Each event has id,
   type, live, processed, created, data. Automatic retries reuse the same event id (dedupe
-  on it); manual retries get new ids. FastSpring auto-retries until the endpoint returns
-  HTTP 200 (HTTPS required). Optional source IP 107.23.30.83. No official webhook SDK —
+  on it); manual retries get new ids. FastSpring retries an unprocessed event for up to
+  7 days (at most 12 retries); a 200 marks the whole batch processed, a 202 only the event IDs
+  listed one per line in the body. HTTPS recommended, port 443 or 3443/8282/9191/9000/9999. Optional source IP 107.23.30.83. No official webhook SDK —
   verify HMAC manually in every framework. Set FASTSPRING_WEBHOOK_SECRET env var.
 testScenario:
   events:

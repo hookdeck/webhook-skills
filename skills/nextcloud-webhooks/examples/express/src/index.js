@@ -43,12 +43,12 @@ function handleEvent(payload) {
   switch (cls) {
     case 'OCP\\Files\\Events\\Node\\NodeCreatedEvent':
       console.log(`File created by ${uid}: ${node && node.path}`);
-      // TODO: index the new file or kick off processing
+      // Index the new file or kick off processing here
       break;
 
     case 'OCP\\Files\\Events\\Node\\NodeWrittenEvent':
       console.log(`File written by ${uid}: ${node && node.path}`);
-      // TODO: re-process the changed file
+      // Re-process the changed file here
       break;
 
     case 'OCP\\Files\\Events\\Node\\NodeTouchedEvent':
@@ -58,7 +58,7 @@ function handleEvent(payload) {
     case 'OCP\\Files\\Events\\Node\\NodeDeletedEvent':
       // node.id is usually absent here; only node.path is present
       console.log(`File deleted by ${uid}: ${node && node.path}`);
-      // TODO: remove the file from your index
+      // Remove the file from your index here
       break;
 
     case 'OCP\\Files\\Events\\Node\\NodeCopiedEvent':
@@ -66,25 +66,25 @@ function handleEvent(payload) {
     case 'OCP\\Files\\Events\\Node\\NodeRestoredEvent':
       // two-node events carry event.source and event.target (either may lack an id)
       console.log(`${cls.split('\\').pop()} by ${uid}: ${payload.event.source && payload.event.source.path} -> ${payload.event.target && payload.event.target.path}`);
-      // TODO: update your copy of the path
+      // Update your copy of the path here
       break;
 
     case 'OCP\\SystemTag\\TagAssignedEvent':
     case 'OCP\\SystemTag\\TagUnassignedEvent':
       console.log(`${cls.split('\\').pop()} by ${uid}`);
-      // TODO: sync tags
+      // Sync tags here
       break;
 
     case 'OCP\\Calendar\\Events\\CalendarObjectCreatedEvent':
     case 'OCP\\Calendar\\Events\\CalendarObjectUpdatedEvent':
     case 'OCP\\Calendar\\Events\\CalendarObjectDeletedEvent':
       console.log(`${cls.split('\\').pop()} by ${uid} (calendar ${payload.event.calendarId})`);
-      // TODO: sync the calendar object
+      // Sync the calendar object here
       break;
 
     case 'OCA\\Forms\\Events\\FormSubmittedEvent':
       console.log(`Form submitted by ${uid}`);
-      // TODO: process the submission
+      // Process the submission here
       break;
 
     default:

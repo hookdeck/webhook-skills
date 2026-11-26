@@ -57,15 +57,14 @@ receivers:
 ```
 
 Set `ALERTMANAGER_WEBHOOK_USERNAME` and `ALERTMANAGER_WEBHOOK_PASSWORD` to the same values. The
-examples split on the first colon, so a password may contain `:`. Hookdeck never sends a 401
-challenge, which is fine here: Alertmanager sends the credentials with every request.
+examples split on the first colon, so a password may contain `:`. Alertmanager sends the credentials with every request, so no challenge round trip is needed.
 
 ## Hookdeck
 
 Hookdeck's Prometheus Alertmanager source offers two methods. Pick the one that matches the
 receiver:
 
-- **Basic auth** (the default): for `basic_auth`. Enter the username and password.
+- **Basic auth**: for `basic_auth`. Enter the username and password.
 - **Bearer token**: for `authorization`. Enter the bare credentials, without `Bearer `.
 
 ## oauth2 Is Not Supported
@@ -81,7 +80,7 @@ Send a notification with curl, or use `amtool` / Prometheus to trigger an alert:
 curl -X POST http://localhost:3000/webhooks/prometheus-alertmanager \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ALERTMANAGER_WEBHOOK_SECRET" \
-  -d '{"version":"4","groupKey":"{}:{alertname=\"HighCPU\"}","status":"firing","receiver":"hookdeck","alerts":[{"status":"firing","labels":{"alertname":"HighCPU"},"annotations":{},"startsAt":"2026-10-26T10:00:00Z","endsAt":"0001-01-01T00:00:00Z","fingerprint":"1a2b3c4d5e6f7a8b"}]}'
+  -d '{"version":"4","status":"firing","alerts":[]}'
 ```
 
 ## Delivery Notes

@@ -7,9 +7,9 @@
 
 ## Register Your Endpoint and Get the Webhook Secret Key
 
-1. In Xtremepush, open the Webhooks integration (see the [webhooks documentation](https://docs.xtremepush.com/docs/webhooks-integration)) and add a webhook with your endpoint URL.
+1. In Xtremepush, go to **Settings > Integrations > Marketplace > Webhooks** and click **Connect** (see the [webhooks documentation](https://docs.xtremepush.com/docs/webhooks-integration-1)). Name the connection and enter your endpoint URL, which must start with `https://`.
 2. Select the events to receive (start with `message_send` and `message_delivery`).
-3. Choose the authentication type. The options are None, Basic Auth, Bearer Token and Signed Payload.
+3. Choose the authentication type. The options are None, Basic Auth, Bearer Token, Signed Payload and OAuth 2.0 Token.
 4. With Signed Payload, Xtremepush generates a Webhook Secret Key. Copy it into `XTREMEPUSH_WEBHOOK_SECRET`.
 
 **Choose the Signed Payload auth type on the Xtremepush webhook and paste its Webhook Secret Key. Other auth types are unsigned and fail verification.**
@@ -18,7 +18,7 @@ Use the key exactly as shown, as a UTF-8 string (no base64 or hex decoding). A n
 
 ## Hookdeck Source
 
-Hookdeck's source type is `XTREMEPUSH`, labelled "Xtremepush", and Hookdeck's source verifies the signature. Create it with the Webhook Secret Key. Xtremepush's docs don't name the HTTP method. **Hookdeck's Xtremepush source pre-selects POST without managing the method (you can change it), so any other method the sender uses must also be allowed on the source.**
+Hookdeck's source type is `XTREMEPUSH`, labelled "Xtremepush", and Hookdeck's source verifies the signature. Create it with the Webhook Secret Key. Xtremepush's docs don't name the HTTP method. **Allow the method the sender uses on the Hookdeck source** (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Local Development
 

@@ -3,7 +3,7 @@
 Minimal example of receiving Bitdefender GravityZone Event Push (`jsonRPC`) webhooks and
 authenticating them with the `Authorization` header.
 
-GravityZone does not sign payloads. The credential is the `Authorization` header, sent
+GravityZone sends no HMAC signature. The credential is the `Authorization` header, sent
 verbatim from `serviceSettings.authorization` (the docs' example is `Bearer sfasdfw34243`).
 The handler compares the **whole header value**, including any `Bearer ` / `Basic ` prefix,
 in constant time. A static credential authenticates the sender, not the body, and gives no

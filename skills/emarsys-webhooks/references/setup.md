@@ -27,8 +27,7 @@
 ## Preemptive Credentials
 
 The docs don't say whether Basic credentials are sent preemptively. Your endpoint must not rely
-on a `401` + `WWW-Authenticate` round trip, and neither does Hookdeck: it never sends the
-challenge, so the credentials must arrive with each request.
+on a `401` + `WWW-Authenticate` round trip, so the credentials must arrive with each request.
 
 ## Test
 

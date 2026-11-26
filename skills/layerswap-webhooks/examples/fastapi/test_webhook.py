@@ -15,25 +15,28 @@ TEST_SECRET = "whsec_dGVzdF9zZWNyZXRfa2V5X2Zvci13ZWJob29rcw=="
 
 client = TestClient(app)
 
-# swap.status values from the swap lifecycle docs
-STATUSES = ["user_transfer_pending", "ls_transfer_pending", "completed", "failed", "expired", "pending_refund", "refunded"]
+# Webhook `status` values (PascalCase) from Layerswap's Webhooks page
+STATUSES = ["PendingDeposit", "PendingWithdrawal", "Completed", "Failed", "Expired", "PendingRefund", "Refunded"]
 
 
-def body(status: str, **swap) -> str:
-    """Layerswap's body: {swap, quote, deposit_actions} (no event-type field; swap.status is the state)."""
+def body(status: str, **fields) -> str:
+    """Layerswap's documented example body: a flat swap object (no event-type field; `status` is the state)."""
     return json.dumps({
-        "swap": {
-            "id": "SWAP_ID",
-            "status": status,
-            "destination_address": "0x0000000000000000000000000000000000000001",
-            "requested_amount": 100,
-            "fail_reason": None,
-            "metadata": {"reference_id": "your-external-id"},
-            "transactions": [],
-            **swap,
-        },
-        "quote": {"receive_amount": 99.5, "min_receive_amount": 99.0},
-        "deposit_actions": [],
+        "id": "SWAP_ID",
+        "from": "ETHEREUM_MAINNET",
+        "to": "BASE_MAINNET",
+        "fee": 0.5,
+        "source_address": None,
+        "deposit_address": "0x...",
+        "status": status,
+        "app_name": "YOUR_APP_CLIENT_ID",
+        "is_testnet": False,
+        "amount": 100,
+        "to_address": "0x...",
+        "reference_id": "your-external-id",
+        "transactions": [],
+        "timestamp": 1793577600000,
+        **fields,
     })
 
 
@@ -87,38 +90,38 @@ def test_unknown_status():
     assert response.json()["status"] == "something_new"
 
 
-def test_body_without_swap_object():
+def test_body_without_status():
     assert send("{}").status_code == 200
 
 
 def test_any_content_type_verifies():
-    response = send(body("completed"), content_type="application/octet-stream")
+    response = send(body("Completed"), content_type="application/octet-stream")
     assert response.status_code == 200
 
 
 def test_webhook_prefixed_headers_accepted():
     """A delivery signed the same way but sent with webhook-* headers verifies."""
-    response = send(body("completed"), prefix="webhook")
+    response = send(body("Completed"), prefix="webhook")
     assert response.status_code == 200
-    assert response.json() == {"success": True, "status": "completed"}
+    assert response.json() == {"success": True, "status": "Completed"}
 
 
 def test_webhook_prefixed_invalid_signature():
-    response = send(body("completed"), prefix="webhook", signature="v1,aW52YWxpZF9zaWduYXR1cmU=")
+    response = send(body("Completed"), prefix="webhook", signature="v1,aW52YWxpZF9zaWduYXR1cmU=")
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid signature"
 
 
 def test_multiple_signatures():
     """Secret rotation: any matching v1, entry passes."""
-    payload = body("refunded")
+    payload = body("Refunded")
     msg_id, timestamp = "msg_rotation", now()
     signature = f"v1,aW52YWxpZF9zaWduYXR1cmU= {sign(payload, msg_id, timestamp)}"
     assert send(payload, msg_id, timestamp, signature).status_code == 200
 
 
 def test_other_signature_versions_ignored():
-    payload = body("refunded")
+    payload = body("Refunded")
     msg_id, timestamp = "msg_v1a", now()
     signature = sign(payload, msg_id, timestamp).replace("v1,", "v1a,", 1)
     assert send(payload, msg_id, timestamp, signature).status_code == 400
@@ -131,18 +134,18 @@ def test_missing_headers():
 
 
 def test_invalid_signature():
-    response = send(body("completed"), signature="v1,aW52YWxpZF9zaWduYXR1cmU=")
+    response = send(body("Completed"), signature="v1,aW52YWxpZF9zaWduYXR1cmU=")
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid signature"
 
 
 def test_malformed_signature_entry():
-    response = send(body("completed"), signature="v1,!!!not-base64!!!")
+    response = send(body("Completed"), signature="v1,!!!not-base64!!!")
     assert response.status_code == 400
 
 
 def test_wrong_secret():
-    payload = body("completed")
+    payload = body("Completed")
     msg_id, timestamp = "msg_other", now()
     signature = sign(payload, msg_id, timestamp, "whsec_b3RoZXJfc2VjcmV0X2tleQ==")
     assert send(payload, msg_id, timestamp, signature).status_code == 400
@@ -150,18 +153,18 @@ def test_wrong_secret():
 
 def test_tampered_body():
     msg_id, timestamp = "msg_tamper", now()
-    signature = sign(body("failed"), msg_id, timestamp)
-    response = send(body("completed"), msg_id, timestamp, signature)
+    signature = sign(body("Failed"), msg_id, timestamp)
+    response = send(body("Completed"), msg_id, timestamp, signature)
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid signature"
 
 
 def test_old_timestamp():
-    response = send(body("completed"), timestamp=str(int(time.time()) - 600))
+    response = send(body("Completed"), timestamp=str(int(time.time()) - 600))
     assert response.status_code == 400
     assert response.json()["detail"] == "Timestamp too old"
 
 
 def test_missing_secret(monkeypatch):
     monkeypatch.delenv("LAYERSWAP_WEBHOOK_SECRET")
-    assert send(body("completed")).status_code == 500
+    assert send(body("Completed")).status_code == 500

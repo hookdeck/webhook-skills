@@ -19,7 +19,7 @@ notes: >
   'hex'), then crypto.timingSafeEqual on equal-length buffers; in Python use hmac.compare_digest on
   bytes. No timestamp window. Setup also needs the GET verification handshake: respond to
   hub.mode=subscribe with hub.challenge when hub.verify_token matches (examples use
-  MESSENGER_VERIFY_TOKEN; Hookdeck's edge answers the challenge itself). Hookdeck setup (say this in
+  MESSENGER_VERIFY_TOKEN). Hookdeck setup (say this in
   SKILL.md's setup section and in references/setup.md): Paste your Meta app's App Secret (App settings
   > Basic). Express examples must read the raw body with express.raw({ type: '*/*' }).
 testScenario:

@@ -72,6 +72,7 @@ The JSON body has a `type` field and no common envelope; dispatch on `type`.
 | `video.status.errored` | Processing failed |
 | `video.status.deleted` | Video asset is deleted |
 | `video.status.repackaged` | A subtitle or audio stream was added |
+| `video.status.optimized` | Asset was optimized (API reference only) |
 | `live.video.status.created` | A live session is created |
 | `live.video.status.preparing` | A live session is preparing to start |
 | `live.video.status.ready` | A live session is ready for streaming |
@@ -89,6 +90,10 @@ The JSON body has a `type` field and no common envelope; dispatch on `type`.
 | `event.playlist.deleted` | A playlist is deleted |
 | `event.comment.all` | A comment is added, replied to or resolved |
 | `event.channel.member_joined` | A new channel member joined |
+| `event.video.analytics` | Video analytics event (API reference only) |
+| `event.image.analytics` | Image analytics event (API reference only) |
+
+`video.status.processed` is in Gumlet's webhooks guide but not in the API reference's trigger list.
 
 Video status payloads carry `asset_id`, `status`, `input` and `output`; live payloads carry
 `live_asset_id`, `status`, `input` and `output`.

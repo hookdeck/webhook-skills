@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 }
 
 function handleEvent(payload: any) {
-  // TODO: check payload.event_info?.event_id against your store and return if seen.
+  // Idempotency: check payload.event_info?.event_id against your store and return if seen.
   switch (eventName(payload)) {
     // --- Quote entity events ------------------------------------------------
     case 'draftQuote':

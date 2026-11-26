@@ -64,13 +64,13 @@ def handle_chili_piper_event(payload: Dict[str, Any]) -> None:
 
     if event_type == "Created":
         print(f"Meeting {payload.get('meetingIdChili')} booked: {payload.get('meetingTitle')} at {payload.get('meetingStartTime')}")
-        # TODO: Create the meeting in your CRM or notify the host
+        # Create the meeting in your CRM or notify the host
     elif event_type == "Updated":
         print(f"Meeting {payload.get('meetingIdChili')} updated: {payload.get('meetingStartTime')}, assignee {payload.get('assigneeEmail')}")
-        # TODO: Sync the new time or assignee
+        # Sync the new time or assignee: a meeting can be updated many times, so write its current state keyed on meetingIdChili
     elif event_type == "Deleted":
         print(f"Meeting {payload.get('meetingIdChili')} canceled")
-        # TODO: Remove the meeting from your CRM
+        # Remove the meeting from your CRM
     else:
         print(f"Unhandled Chili Piper event type: {event_type}")
 
@@ -107,7 +107,7 @@ async def chili_piper_webhook(request: Request):
     if not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
-    # Retry behavior is not documented: de-duplicate on meetingIdChili + type
+    # Retry behavior is not documented: skip a repeated Created or Deleted by meetingIdChili + type
     handle_chili_piper_event(payload)
 
     return {"received": True, "type": payload.get("type")}

@@ -16,15 +16,13 @@ notes: >
   function in the programming language of your choice will return the hash in lowercase hexits.' 'Each
   webhook includes a verification token in Token header. Be noted that the token is sent as plain
   text' From the docs (registry summary): `Hmac: <hex>` = lowercase hex HMAC-SHA256(workspace signing
-  secret, request body). Bare value, no prefix, no timestamp. SIGNATURE SCHEME (it must match
-  Hookdeck's SURVICATE source exactly: HMAC controller, algorithm "sha256", header_key "hmac",
-  encoding "hex"). The Hmac header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  secret, request body). Bare value, no prefix, no timestamp. SIGNATURE SCHEME: HMAC-SHA256, signature in the hmac header, hex encoded. The Hmac header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
   header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: One Signing Secret per workspace,
   from Webhooks Settings in the Survicate panel (the same page shows the plain Verification Token).
   Use it as UTF-8 bytes. Env var: SURVICATE_WEBHOOK_SECRET. Validate the signature's format before
@@ -36,7 +34,7 @@ notes: >
   one from unsigned headers or body fields. The signing secret is per workspace. Survicate also sends
   a plaintext Token header, which is not checked. Events: every body is `{messageId, deliveryTries,
   event: {<type>: {...}}}`; the event is the KEY inside `event` (questionAnswered or surveyCompleted).
-  Method: POST. Hookdeck's Survicate source manages the method as POST, so the examples handle POST on
+  Method: POST. The examples handle POST on
   the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
   await request.body()); parse the body only after the check. After verifying, treat every field of

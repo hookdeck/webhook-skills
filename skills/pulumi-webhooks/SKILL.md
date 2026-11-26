@@ -56,7 +56,7 @@ def verify_pulumi(raw_body: bytes, signature, secret: str) -> bool:
     return hmac.compare_digest(signature.lower().encode(), expected)
 ```
 
-Pulumi's own docs disagree with themselves: the header table and the Go and TypeScript snippets say hex, but the docs' Python snippet base64-encodes the digest, and the JavaScript snippet doesn't run as printed. Use hex, as above. A missing, empty or malformed header, or a mismatch, is a `401`.
+Pulumi's own docs disagree with themselves: the header table and the JavaScript, TypeScript and Go snippets say hex, but the docs' Python snippet base64-encodes the digest, and the JavaScript snippet on the ESC webhooks page doesn't run as printed. Use hex, as above. A missing, empty or malformed header, or a mismatch, is a `401`.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -77,8 +77,9 @@ The body has no event-name field. Dispatch on the `Pulumi-Webhook-Kind` header:
 | `drift_detection` | `status`, `driftDetected` | Has `driftRunId`, `resourceChanges`, `referenceUrl` |
 | `drift_remediation` | `status` | Has `resourceChanges`, `referenceUrl` |
 | `policy_violation` | | The examples log it; add a case to handle it |
+| `environment`, `environment_revision`, `environment_revision_tag`, `environment_tag`, `imported_environment_changed`, `environment_rotation` | `action` (environment, revision and tag kinds) | Pulumi ESC environment kinds, from organization or environment webhooks; same headers and signature. The examples log them |
 
-The 21 subscription filters you tick in Pulumi Cloud (such as `update_succeeded` and `deployment_failed`) are not sent as such: the filter only decides which deliveries you get, and within a kind the body tells you the outcome. See [references/overview.md](references/overview.md).
+The subscription filters you tick in Pulumi Cloud (21 for stacks and deployments, such as `update_succeeded` and `deployment_failed`, and 13 for ESC environments) are not sent as such: the filter only decides which deliveries you get, and within a kind the body tells you the outcome. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 
@@ -86,6 +87,7 @@ The 21 subscription filters you tick in Pulumi Cloud (such as `update_succeeded`
 |--------|-------------|
 | `Pulumi-Webhook-Signature` | Hex HMAC-SHA256 of the raw body. Only set if the webhook has a shared secret |
 | `Pulumi-Webhook-Kind` | The event kind (`stack`, `stack_update`, ...) |
+| `Pulumi-Webhook-ID` | Unique ID for each delivery, shown in the webhook's delivery logs. The docs don't say whether a redelivery keeps it |
 
 ## Environment Variables
 

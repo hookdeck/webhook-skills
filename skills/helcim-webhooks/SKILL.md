@@ -30,11 +30,11 @@ metadata:
 
 | Header | Value |
 |--------|-------|
-| `webhook-id` | Identifies the message; retries reuse it. Your idempotency key (the body has no event id) |
+| `webhook-id` | Identifies the message. Helcim doesn't say whether retries reuse it (the body has no event id) |
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** `verifierToken`. Helcim shows it as bare base64 with no `whsec_` prefix; the `standardwebhooks` library accepts it as shown, with or without a `whsec_` prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** `verifierToken`. Helcim shows it as bare base64 with no `whsec_` prefix; the `standardwebhooks` library accepts it as shown, with or without a `whsec_` prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -56,7 +56,7 @@ The library always enforces a fixed **5-minute timestamp window**, but Helcim do
 
 ## Hookdeck: Paste the verifierToken With a `whsec_` Prefix
 
-Hookdeck base64-decodes only secrets that start with `whsec_`, and Helcim's `verifierToken` has no prefix. When you add the Helcim source in Hookdeck, paste the token as `whsec_` followed by the token. Hookdeck's configuration alert for this source reads exactly:
+Helcim's `verifierToken` has no prefix. When you add the Helcim source in Hookdeck, paste the token as `whsec_` followed by the token. Hookdeck's configuration alert for this source reads exactly:
 
 > Paste your verifierToken as whsec_ followed by the token, or verification fails.
 
@@ -97,7 +97,7 @@ Helcim documents only these two (the list may not be exhaustive): ignore types y
 
 ## Delivery Semantics
 
-Return a `2xx` (200-299), then process asynchronously. Anything else is retried until a success code: immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h, each period starting when the previous attempt fails. Deduplicate on `webhook-id`. Return `400` for missing headers and `401` for a bad signature. An event is only sent if its toggle is on at **Integrations > Webhooks**.
+Return a `2xx` (200-299), then process asynchronously. Anything else is retried until a success code: immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h, each period starting when the previous attempt fails. Helcim doesn't document whether a retry keeps `webhook-id`, so make handlers idempotent: key `cardTransaction` work on the card transaction `id`, and make `terminalCancel` handling safe to repeat. Return `400` for missing headers and `401` for a bad signature. An event is only sent if its toggle is on at **Integrations > Webhooks**.
 
 ## Environment Variables
 

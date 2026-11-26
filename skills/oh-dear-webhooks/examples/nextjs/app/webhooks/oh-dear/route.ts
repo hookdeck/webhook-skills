@@ -39,7 +39,12 @@ export async function POST(request: NextRequest) {
   } else if (/^(http|tcp|ping)UptimeCheckFailedNotification$/.test(type)) {
     console.log(`Uptime check failed: ${event.result_url}`);
   } else if (/^(http|tcp|ping)UptimeCheckRecoveredNotification$/.test(type)) {
-    console.log(`Uptime check recovered: ${event.result_url}`);
+    // Partial connectivity after downtime uses the same type with run.result "warning"
+    if (event.run?.result === 'warning') {
+      console.log(`Uptime partly restored (warning): ${event.result_url}`);
+    } else {
+      console.log(`Uptime check recovered: ${event.result_url}`);
+    }
   } else if (type === 'certificateExpiresSoonNotification') {
     console.log('Certificate expires soon');
   } else if (type === 'brokenLinksFoundNotification') {

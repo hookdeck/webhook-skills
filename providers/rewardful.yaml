@@ -14,15 +14,13 @@ notes: >
   from the Webhooks page in your Rewardful dashboard.' From the docs (registry summary): Header
   `X-Rewardful-Signature: <hex>`, no prefix. MAC = lowercase hex of HMAC-SHA256(key = the endpoint's
   Signing Secret, message = the raw request body: `request.raw_post` in Rails, `php://input` in PHP,
-  `request.body` in Django). The samples compare with `==`/`!==`. SIGNATURE SCHEME (it must match
-  Hookdeck's REWARDFUL source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-rewardful-signature", encoding "hex"). The X-Rewardful-Signature header carries the bare
+  `request.body` in Django). The samples compare with `==`/`!==`. SIGNATURE SCHEME: HMAC-SHA256, header x-rewardful-signature, hex encoding. The X-Rewardful-Signature header carries the bare
   lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
   prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: One Signing Secret per endpoint, shown on the dashboard's Webhooks page. Use it as UTF-8
   bytes. Env var: REWARDFUL_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
@@ -38,8 +36,7 @@ notes: >
   affiliate_link.created, affiliate_link.updated, affiliate_link.deleted, affiliate_coupon.created,
   affiliate_coupon.updated, affiliate_coupon.activated, affiliate_coupon.deactivated,
   affiliate_coupon.deleted, referral.created, referral.lead (and 17 more). Handle a few common ones
-  and log the rest. Method: POST. Hookdeck's Rewardful source manages the method as POST, so the
-  examples handle POST on the webhook route. Express examples must read the raw body with
+  and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

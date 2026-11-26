@@ -22,7 +22,7 @@ function verifyVioletSignature(rawBody, signatureHeader, secret) {
     crypto.createHmac('sha256', secret).update(rawBody).digest('base64')
   );
   const received = Buffer.from(signatureHeader);
-  // Compare the base64 strings exactly (as Hookdeck does): a value whose last character carries
+  // Compare the base64 strings exactly: a value whose last character carries
   // stray low bits decodes to the same digest but is not the string Violet sends
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
@@ -46,6 +46,7 @@ function handleEvent(topic, body) {
     case 'ORDER_DELIVERED':
     case 'ORDER_REFUNDED':
     case 'ORDER_CANCELLED':
+    case 'ORDER_CANCELED': // Violet's docs spell this topic both ways
     case 'ORDER_FAILED': {
       const { id, status } = summarize(body);
       console.log(`${topic}: order ${id}${status ? ` (${status})` : ''}`);
@@ -76,7 +77,7 @@ function handleEvent(topic, body) {
       break;
     }
     default:
-      // 52 documented events: handle the ones you need and log the rest
+      // 56 documented events: handle the ones you need and log the rest
       console.log(`Unhandled Violet topic: ${topic}`);
   }
 }
@@ -111,9 +112,14 @@ app.post('/webhooks/violet', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Body must be a JSON object');
   }
 
-  // X-Violet-Event-Id identifies the event: use it for idempotency (retries and resends repeat it)
-  const eventId = req.headers['x-violet-event-id'];
-  console.log(`Violet event ${typeof eventId === 'string' ? eventId : '(no id)'}`);
+  // Dedupe key: recovery case events carry a stable X-Violet-Recovery-Event-Key (their
+  // X-Violet-Event-Id can change), and a resend carries the original ID in X-Violet-Event-Id-Source
+  const header = (name) => (typeof req.headers[name] === 'string' ? req.headers[name] : undefined);
+  const dedupeKey =
+    header('x-violet-recovery-event-key') ||
+    header('x-violet-event-id-source') ||
+    header('x-violet-event-id');
+  console.log(`Violet event ${dedupeKey || '(no id)'}`);
   handleEvent(topic, body);
 
   // Respond 2XX within 10 seconds; do slow work asynchronously

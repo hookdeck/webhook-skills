@@ -312,7 +312,7 @@ async def docker_hub_webhook(token: str, request: Request):
     #    or queue so the acknowledgement isn't delayed — retry policy and
     #    timeout are undocumented, so acknowledge fast and dedupe on
     #    repo_name + tag + pushed_at.
-    #    TODO: replace the print with your own processing, and deploy by DIGEST
+    #    Your code: replace the print with your own processing, and deploy by DIGEST
     #    rather than by tag.
     try:
         record = await confirm_tag(parsed["repo_name"], parsed["tag"])

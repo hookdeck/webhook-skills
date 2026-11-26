@@ -7,7 +7,7 @@ notes: >
   UKG Ready (formerly Kronos Workforce Ready) Webhook Subscriptions, documented in the Ready REST
   docs (secure.saashr.com), not developer.ukg.com. Not UKG Pro, whose webhooks are Svix-style
   signed; say the skill is for Ready only. The subscription's Authentication is Basic, OAuth, Bearer
-  Token or No Authentication. No signature. The credential is the Authorization header. Hookdeck's UKG Ready source takes the bare token in its Bearer Token field and accepts the header with or without 'Bearer '. The examples read UKG_READY_AUTHORIZATION = the full value as UKG Ready sends it (e.g. 'Bearer
+  Token or No Authentication. No signature. The credential is the Authorization header. In Hookdeck, the user pastes the bare token into the UKG Ready source's Bearer Token field. The examples read UKG_READY_AUTHORIZATION = the full value as UKG Ready sends it (e.g. 'Bearer
   <token>'), including the 'Bearer ' scheme prefix, and compare the whole Authorization header to
   it; do not strip, parse or base64-decode the prefix (Coterie pattern). Cover the Bearer Token
   option: the value is 'Bearer ' + the token set on the subscription. Basic and OAuth are not

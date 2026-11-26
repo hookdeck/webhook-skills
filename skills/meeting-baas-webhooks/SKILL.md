@@ -19,7 +19,9 @@ Microsoft Teams. In API v2, **account-level webhooks** report bot status, comple
 failure plus calendar sync events. They are delivered and signed by [Svix](https://www.svix.com/),
 which implements Standard Webhooks. Every delivery is an HTTP `POST` with a JSON body and three
 signature headers: `svix-id`, `svix-timestamp`, and `svix-signature`. The body is `{event, data}`:
-the event name is the top-level `event`, and `data.extra` echoes the `extra` you set on the bot.
+the event name is the top-level `event`. Bot events echo the `extra` you set on the bot: the
+Webhooks guide's examples put it in `data` (beside `data` for `bot.chat_message`), while the v2
+API reference puts it at the top level for every bot event, so read both.
 
 > **Only Meeting BaaS v2 account-level webhooks are supported. Per-bot callbacks and v1 API webhooks aren't signed this way and fail verification.**
 
@@ -40,7 +42,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -84,14 +86,16 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-12 events are documented (the list may not be exhaustive). The name is `event` in the JSON body.
-The examples handle all of these and return `200` for anything else:
+12 events are documented in the Webhooks guide (the list may not be exhaustive). The name is
+`event` in the JSON body. The examples handle all of these and return `200` for anything else,
+including `bot.chat_status`, which only the v2 API reference lists (whether the bot can use the
+meeting chat):
 
 | Event | Triggered When |
 |-------|----------------|
 | `bot.status_change` | A bot's status changes (`data.status.code`, e.g. `in_call_recording`) |
 | `bot.completed` | A bot finished recording and processing (presigned artifact URLs, valid 4 hours) |
-| `bot.chat_message` | A participant posts in the meeting chat (`extra` is beside `data`) |
+| `bot.chat_message` | A participant posts in the meeting chat (`extra` is beside `data` in every example) |
 | `bot.failed` | A bot failed (`data.error_code`, `data.error_message`) |
 | `calendar.connection_created` | A calendar connection was created |
 | `calendar.connection_updated` | A calendar connection was updated |

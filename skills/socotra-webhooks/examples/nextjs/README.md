@@ -48,5 +48,4 @@ deliveries locally:
 npx hookdeck-cli listen 3000 socotra --path /webhooks/socotra
 ```
 
-Use the printed Hookdeck URL as the webhook `url`. Hookdeck's Socotra source
-pre-selects POST without managing the method; allow any other method Socotra uses.
+Use the printed Hookdeck URL as the webhook `url`. Allow the method Socotra uses on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).

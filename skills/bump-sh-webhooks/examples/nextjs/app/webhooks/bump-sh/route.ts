@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     apiKeys: api ? Object.keys(api) : null,
     diffKeys: diff ? Object.keys(diff) : null,
   });
-  // TODO: post to chat, open a ticket, regenerate SDKs, notify API consumers, etc.
+  // Your code: post to chat, open a ticket, regenerate SDKs, notify API consumers, etc.
 
   return NextResponse.json({ received: true });
 }

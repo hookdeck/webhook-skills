@@ -14,7 +14,7 @@ metadata:
 
 # Felloh Webhooks
 
-Felloh, payments and trust-account infrastructure for UK travel businesses, sends a JSON webhook to your endpoint when a transaction changes status, a refund changes status, a booking is created or a user is created. Each request is signed: the `X-Signature` header holds the hex HMAC-SHA256 of the raw body, keyed with the signing key shown when you create the webhook.
+Felloh, payments and trust-account infrastructure for UK travel businesses, sends a JSON webhook to your endpoint when a transaction reaches a final status (declines included), a refund changes status, a booking is created or deleted, or a user is added to your organisation. Each request is signed: the `X-Signature` header holds the hex HMAC-SHA256 of the raw body, keyed with the signing key shown when you create the webhook.
 
 ## When to Use This Skill
 
@@ -69,7 +69,7 @@ Felloh sends **no event-name field or header**. The events are chosen when you r
 | `booking` | `booking` object (`id`, `booking_reference`), `customer_name`, `departure_date`, `return_date` | No |
 | `user-create` | `user` object (`id`), `email`, `first_name`, `last_name`, `organisation` | No |
 
-Dashboard test deliveries carry `X-Felloh-Test: true`, are signed with the real key and are never retried.
+Dashboard test deliveries carry `X-Felloh-Test: true`, are signed with the real key and are never retried. Felloh says to discard them after verifying, or a test looks like a genuine payment. Booking creation (`booking:create`) and deletion (`booking:delete`) share the `booking` payload; a deletion has a non-null `deleted_at`.
 
 ## Important Headers
 

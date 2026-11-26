@@ -87,10 +87,9 @@ break verification. Still check the header **before** acting on the payload.
 Yes. GREEN-API publishes the IPs it sends webhooks from:
 
 ```
-46.101.109.139   51.250.12.167    51.250.84.44     51.250.95.149
-89.169.137.216   158.160.49.84    165.22.93.202    167.172.162.71
-104.248.252.93   158.160.139.176  64.226.111.11    207.154.255.195
-94.131.81.171
+46.101.109.139   64.226.111.11    68.183.213.45    94.131.81.171
+104.248.252.93   165.22.80.121    167.172.162.71   207.154.255.195
+209.38.202.24
 ```
 
 The list changes over time, so check the
@@ -110,8 +109,9 @@ instead.
   you configured.
 - **No token configured.** No `Authorization` header is sent at all. The
   examples fail closed (401) when `GREEN_API_WEBHOOK_URL_TOKEN` is unset.
-- **Retries.** Non-2xx or unreachable endpoints are retried every minute for up
-  to 24 hours. Return `200` fast and dedupe (see
+- **Retries.** GREEN-API makes delivery attempts at a 1-minute interval and
+  guarantees delivery within 24 hours; its docs don't say which status codes
+  count as delivered. Return `200` fast and dedupe (see
   [overview.md](overview.md#event-payload-structure)).
 - **No replay protection.** There's no signed timestamp. Rely on idempotency.
 

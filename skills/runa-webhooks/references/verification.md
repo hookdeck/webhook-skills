@@ -11,8 +11,7 @@ Runa delivers through Svix, so every delivery carries three headers:
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Runa source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+carry the same values. The examples read the `svix-*` headers and fall back to the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 
@@ -140,9 +139,8 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDK.** See the Hookdeck section above.
-- **One secret per endpoint.** Each portal endpoint has its own `whsec_` secret, and Runa
-  endpoints are one event type each. If two endpoints (say `order.completion` and
-  `product.update`) point at the same URL, a single `RUNA_WEBHOOK_SECRET` only verifies one of
+- **One secret per endpoint.** Each portal endpoint has its own `whsec_` secret. If two
+  endpoints (say one for `order.completion` and one for `product.update`) point at the same URL, a single `RUNA_WEBHOOK_SECRET` only verifies one of
   them. Give each endpoint its own route and secret, or try each secret in turn and accept the
   first that verifies. See [setup.md](setup.md).
 - **Verify before acting.** Keep verification ahead of any order fulfilment or catalog update.

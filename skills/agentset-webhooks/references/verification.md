@@ -71,5 +71,4 @@ def verify_agentset_signature(raw_body: bytes, signature: Optional[str], secret:
 | Always 401 | Wrong secret (each webhook has its own), or body parsed before verifying |
 | 401 only behind a proxy | Something re-encodes or compresses the body; verify the bytes as received |
 | 401, header present | Header isn't 64 hex characters (a prefix, quotes, or a truncated copy) |
-| 401 on GET | The sender signs an empty body; read the body as empty bytes, don't reject it |
 | 401 with `AGENTSET_WEBHOOK_SECRET` unset | The examples reject everything when unconfigured |

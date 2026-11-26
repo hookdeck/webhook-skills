@@ -64,7 +64,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
             "metadata": {}, "ai_agent_domain": "example.ada.support" } }
 ```
 
-The payload has **no event ID**. Dedupe on the `svix-id` header.
+The payload has **no top-level event ID**. Dedupe on the `svix-id` header. Only `v1.audit_log.emitted` carries its own id, in `data.id`.
 
 ## Common Event Types
 

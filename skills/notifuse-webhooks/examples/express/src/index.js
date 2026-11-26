@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * Read the three signature headers. Notifuse sends webhook-*; if webhook-id is
- * absent, fall back to the svix-* names (what Hookdeck does too). The result
+ * absent, fall back to the svix-* names. The result
  * always uses the webhook-* names the standardwebhooks library expects.
  *
  * @param {(name: string) => string | undefined} get - header lookup
@@ -136,7 +136,7 @@ app.post('/webhooks/notifuse', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   try {
-    // Notifuse needs a 2xx within 30 seconds. In production, enqueue the
+    // Notifuse needs a 2xx within 10 seconds. In production, enqueue the
     // event here and process it asynchronously.
     handleEvent(event);
     processedDeliveryIds.add(deliveryId);

@@ -10,8 +10,7 @@ request.
 X-Webhook-Secret: <the value you typed>
 ```
 
-The header name and value are entirely yours. This matches how Hookdeck's Paperform source works
-(API key verification: header name plus exact value).
+The header name and value are entirely yours.
 
 ## What This Does and Doesn't Protect
 

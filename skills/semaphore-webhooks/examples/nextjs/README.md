@@ -27,7 +27,7 @@ Minimal example of receiving Semaphore CI notification webhooks with signature v
 npm run dev
 ```
 
-Server runs on http://localhost:3000 and accepts GET, POST, PUT, PATCH and DELETE on `/webhooks/semaphore`.
+Server runs on http://localhost:3000 and accepts POST, PUT and PATCH on `/webhooks/semaphore`.
 
 ## Test
 

@@ -28,7 +28,7 @@ def safe_equal(a: str, b: str) -> bool:
 def verify_payjp_request(headers, secret=None) -> bool:
     """PAY.JP does not sign payloads. Every webhook carries X-Payjp-Webhook-Token, the
     account's webhook token (whook_...). It authenticates the sender, not the body,
-    and gives no replay protection: use HTTPS and rotate the token if it leaks.
+    and gives no replay protection: use HTTPS and keep the token secret.
     """
     secret = secret if secret is not None else os.environ.get("PAYJP_WEBHOOK_SECRET")
     if not secret:
@@ -49,55 +49,55 @@ def handle_event(event: dict) -> None:
 
     if event_type == "charge.succeeded":
         print(f"Charge succeeded: {data.get('id')} ({data.get('amount')} {data.get('currency')})")
-        # TODO: fulfil the order
+        # Fulfil the order
 
     elif event_type == "charge.failed":
         print(f"Charge failed: {data.get('id')} ({data.get('failure_code')})")
-        # TODO: notify the customer
+        # Notify the customer
 
     elif event_type == "charge.updated":
         print(f"Charge updated: {data.get('id')}")
-        # TODO: sync metadata
+        # Sync metadata
 
     elif event_type == "charge.refunded":
         print(f"Charge refunded: {data.get('id')} ({data.get('amount_refunded')} refunded)")
-        # TODO: reverse fulfilment
+        # Reverse fulfilment
 
     elif event_type == "charge.captured":
         print(f"Charge captured: {data.get('id')}")
-        # TODO: confirm the sale
+        # Confirm the sale
 
     elif event_type == "dispute.created":
         print(f"Dispute created: {data.get('id')}")
-        # TODO: gather evidence
+        # Gather evidence
 
     elif event_type == "customer.created":
         print(f"Customer created: {data.get('id')}")
-        # TODO: sync the customer record
+        # Sync the customer record
 
     elif event_type == "customer.updated":
         print(f"Customer updated: {data.get('id')}")
-        # TODO: sync the customer record
+        # Sync the customer record
 
     elif event_type == "customer.deleted":
         print(f"Customer deleted: {data.get('id')}")
-        # TODO: remove the customer record
+        # Remove the customer record
 
     elif event_type == "subscription.created":
         print(f"Subscription created: {data.get('id')}")
-        # TODO: activate access
+        # Activate access
 
     elif event_type == "subscription.renewed":
         print(f"Subscription renewed: {data.get('id')}")
-        # TODO: extend access
+        # Extend access
 
     elif event_type == "subscription.canceled":
         print(f"Subscription canceled: {data.get('id')}")
-        # TODO: schedule revocation
+        # Schedule revocation
 
     elif event_type == "transfer.succeeded":
         print(f"Transfer succeeded: {data.get('id')}")
-        # TODO: reconcile the payout
+        # Reconcile the payout
 
     else:
         print(f"Unhandled event: {event_type}")

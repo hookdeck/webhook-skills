@@ -36,9 +36,9 @@ The Test button sends this body:
 | Field | Meaning |
 |-------|---------|
 | `id` | Event id (use it for idempotency) |
-| `event` | Always `automation.webhook.send` |
+| `event` | `automation.webhook.send`, the only documented value |
 | `timestamp` | ISO 8601 time |
-| `idClient` | Your Cyberimpact account id |
+| `idClient` | A numeric client identifier (the docs don't define it) |
 | `data` | The contact (`type: "member"`, `id`, `email`, `firstname`, `lastname`, ...) |
 
 The author of the scenario picks what goes in **Data to be transmitted**: contact details,

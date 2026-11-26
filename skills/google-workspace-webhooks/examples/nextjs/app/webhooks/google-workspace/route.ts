@@ -113,7 +113,7 @@ function handleNotification(n: GoogleWorkspaceNotification) {
       console.log(`Calendar resource changed: ${n.resourceUri} — run an incremental sync`);
       break;
     case 'not_exists':
-      console.log(`Calendar resource no longer exists: ${n.resourceUri}`);
+      console.log(`Calendar state not_exists (undocumented): ${n.resourceUri} — run an incremental sync`);
       break;
 
     // Admin SDK Directory users.watch

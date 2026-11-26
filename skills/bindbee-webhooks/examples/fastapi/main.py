@@ -55,7 +55,7 @@ def verify_bindbee_signature(raw_body: bytes, msg_id: str, timestamp: str, signa
 
     Written out by hand, not with the `standardwebhooks` or `svix` libraries: they base64-decode
     the secret, but Bindbee's secret is used as raw UTF-8 bytes. A secret that starts with
-    `whsec_` is base64-decoded after the prefix, as Hookdeck does; any other secret is the key as-is.
+    `whsec_` is base64-decoded after the prefix; any other secret is the key as-is.
     """
     if not (msg_id and timestamp and signature_header):
         raise WebhookVerificationError("Missing signature headers")

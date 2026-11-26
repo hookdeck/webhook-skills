@@ -14,27 +14,27 @@ function handleEvent(event: PingOneEvent): void {
   switch (type) {
     case 'USER.CREATED':
       console.log(`User created (event ${event.id})`);
-      // TODO: provision the user in your system
+      // provision the user in your system
       break;
 
     case 'USER.UPDATED':
       console.log(`User updated (event ${event.id})`);
-      // TODO: sync the changed attributes
+      // sync the changed attributes
       break;
 
     case 'USER.DELETED':
       console.log(`User deleted (event ${event.id})`);
-      // TODO: deprovision the user
+      // deprovision the user
       break;
 
     case 'AUTHENTICATION.CREATED':
       console.log(`Authentication recorded for ${actor ?? 'unknown actor'} (event ${event.id})`);
-      // TODO: record the sign-in
+      // record the sign-in
       break;
 
     case 'PASSWORD.RESET':
       console.log(`Password reset (event ${event.id})`);
-      // TODO: notify the user
+      // notify the user
       break;
 
     default:

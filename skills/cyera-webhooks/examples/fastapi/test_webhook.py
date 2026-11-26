@@ -65,6 +65,22 @@ READINESS_CHECK = {
     "answers": ["Yes", "No"],
 }
 
+IDENTIFIERS = {
+    "request_type": "identifiers",
+    "integration_name": "Webhook Integration",
+    "integration_kind": "webhook",
+    "topic": "identifiers:create",
+    "identifiers": {"email": [{"email": "john@example.com"}]},
+    "webhook_callback_url": "https://acme.privacy.cyera.io/api/v2/webhooks/callback",
+    "privacy_request_id": "4b7a02e2-361e-4957-9d69-b381e3f47758",
+    "integration_id": "7efa58a8-9b7d-4faf-8082-5f7f7f407db7",
+    "results_token": "9f2c1e4a7b6d4c0f8a31b5d2e7c94a10",
+    "webhook_request_id": "3aa32ca6-e60d-4b71-981a-d1ba258fd712",
+}
+# Reminders reuse the create body with a ":reminder" topic and expect 200.
+ACCESS_REMINDER = {**ACCESS, "topic": "privacy_request:reminder"}
+OPT_OUT_REMINDER = {**OPT_OUT, "topic": "opt_out:reminder"}
+
 
 def now_seconds() -> str:
     return str(int(time.time()))
@@ -113,8 +129,12 @@ class TestValidDeliveries:
             (OPT_OUT, 201),
             (HEALTH_CHECK, 200),
             (READINESS_CHECK, 200),
+            (IDENTIFIERS, 200),
+            (ACCESS_REMINDER, 200),
+            (OPT_OUT_REMINDER, 200),
         ],
-        ids=["access", "deletion", "opt_out", "health_check", "readiness_check"],
+        ids=["access", "deletion", "opt_out", "health_check", "readiness_check", "identifiers",
+             "access_reminder", "opt_out_reminder"],
     )
     def test_accepts_signed_request(self, payload, status):
         assert post(payload).status_code == status

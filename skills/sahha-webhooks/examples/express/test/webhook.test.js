@@ -10,7 +10,7 @@ process.env.SAHHA_WEBHOOK_SECRET = SECRET;
 
 const { app } = require('../src/index');
 
-/** Sign exactly like Sahha: lowercase hex HMAC-SHA256 of the raw body, no prefix. */
+/** Sign exactly like Sahha: hex HMAC-SHA256 of the raw body, no prefix. */
 function sign(rawBody, secret = SECRET) {
   return crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 }

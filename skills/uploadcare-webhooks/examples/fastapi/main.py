@@ -43,19 +43,19 @@ def handle_event(payload: dict) -> None:
 
     if event == "file.uploaded":
         print(f"File uploaded: {uuid}")
-        # TODO: save a record for payload["data"] / payload["file"] (CDN URL)
+        # Your code: save a record for payload["data"] / payload["file"] (CDN URL)
     elif event == "file.stored":
         print(f"File stored: {uuid}")
-        # TODO: mark the upload as permanent
+        # Your code: mark the upload as permanent
     elif event == "file.info_updated":
         print(f"File info updated: {uuid}")
-        # TODO: sync data["metadata"] / data["appdata"] (v0.7); see payload["previous_values"]
+        # Your code: sync data["metadata"] / data["appdata"] (v0.7); see payload["previous_values"]
     elif event == "file.infected":
         print(f"File infected: {uuid}")
-        # TODO: quarantine or delete the file
+        # Your code: quarantine or delete the file
     elif event == "file.deleted":
         print(f"File deleted: {uuid}")
-        # TODO: remove your matching record
+        # Your code: remove your matching record
     else:
         print(f"Unhandled event: {event}")
 

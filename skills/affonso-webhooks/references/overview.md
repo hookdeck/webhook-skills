@@ -11,7 +11,7 @@ The type is in the body's `type` field.
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `affiliate.created` | A new affiliate signs up | Welcome email, CRM record |
-| `affiliate.confirmed` | An affiliate is confirmed (`ACTIVE`) | Enable the affiliate's links or perks |
+| `affiliate.confirmed` | An affiliate confirms their email address (`ACTIVE` in the docs example) | Enable the affiliate's links or perks |
 | `referral.lead` | A referred visitor becomes a lead | Attribute signups |
 | `referral.converted` | A referral converts to a customer | Link `customerId` to the affiliate |
 | `transaction.created` | A sale and its commission are recorded | Revenue and commission tracking |
@@ -73,4 +73,4 @@ Every event shares one envelope; `data` depends on the event family.
 
 ## Full Event Reference
 
-For the complete payloads, see [Affonso's webhook documentation](https://docs.affonso.io/webhooks) (affiliate, referral, transaction, payout and coupon event pages).
+For the complete payloads, see [Affonso's webhook documentation](https://docs.affonso.io/webhooks/introduction) (affiliate, referral, transaction, payout and coupon event pages).

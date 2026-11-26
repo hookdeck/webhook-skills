@@ -41,8 +41,7 @@ the same route.
 ## Using Hookdeck
 
 1. Create a source with type **Deliverect** and paste the secret above.
-2. **Allow the methods you need on the source.** Hookdeck's Deliverect source pre-selects POST
-   without managing the method (you can change it). Some Deliverect calls are GET requests with no
+2. **Allow the methods you need on the source.** Hookdeck's Deliverect source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Some Deliverect calls are GET requests with no
    body, and any other method the sender uses (PUT, PATCH, DELETE) must be allowed too, or those
    calls are not accepted.
 3. Hookdeck's source verifies the signature before delivering to your destination. Your handler

@@ -47,30 +47,30 @@ def handle_event(payload: dict) -> None:
 
     if event in ("datarequest.report_complete", "datarequest.report_available"):  # report_available is deprecated
         print(f"Report ready ({event}): {ids} report_uri={payload.get('report_uri')}")
-        # TODO: fetch the report from payload["report_uri"]
+        # Your code: fetch the report from payload["report_uri"]
 
     elif event == "datarequest.report_update_available":
         print(f"Report updated: {ids}")
-        # TODO: re-fetch the report; datarequest.report_complete follows when it is complete
+        # Your code: re-fetch the report; datarequest.report_complete follows when it is complete
 
     elif event == "datarequest.report_error":
         print(f"Report error: {ids} reasons={payload.get('reason_codes')}")
-        # TODO: ask the individual to provide better documents
+        # Your code: ask the individual to provide better documents
 
     elif event in ("datarequest.items_available", "datarequest.items_processed"):
         print(f"Items ready ({event}): {ids}")
-        # TODO: pull payload["items"]
+        # Your code: pull payload["items"]
 
     elif event == "datarequest.no_items":
         print(f"No items: {ids}")
-        # TODO: tell the individual nothing was found
+        # Your code: tell the individual nothing was found
 
     elif event in ("datarequest.updates_available", "datarequest.acquisition_completed"):  # both deprecated
         print(f"Data request update ({event}): {ids}")
 
     elif event == "datarequest.refresh_failed":
         print(f"Refresh failed: {ids} reasons={payload.get('reason_codes')}")
-        # TODO: ask the individual to reconnect their account
+        # Your code: ask the individual to reconnect their account
 
     elif event == "datasource.connected":
         print(f"Datasource connected: {ids} datasource={payload.get('datasource_id')}")
@@ -84,7 +84,7 @@ def handle_event(payload: dict) -> None:
     elif event in ("session.completed", "session.rejected", "session.terminated", "session.no_login"):
         # session.completed is deprecated
         print(f"Session event ({event}): {ids} session={payload.get('session_id')} reason={payload.get('reason_code')}")
-        # TODO: follow up with the individual
+        # Your code: follow up with the individual
 
     elif event in ("item.created", "item.processed"):
         print(f"Item event ({event}): item={payload.get('item_id')} type={payload.get('item_type')}")
@@ -94,7 +94,7 @@ def handle_event(payload: dict) -> None:
 
     elif event == "individual.purged":
         print(f"Individual purged: individual={payload.get('individual_id')}")
-        # TODO: delete the individual's data on your side
+        # Your code: delete the individual's data on your side
 
     else:
         print(f"Unhandled event: {event}")

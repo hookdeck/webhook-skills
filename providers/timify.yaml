@@ -26,8 +26,9 @@ notes: >
   supported." Webhooks (from the scope table): Customers, Event, Events, Services, Resource,
   Company, Manager, Enterprise, Customer Fields, Shift, Notification, Service Groups with types
   Created, Updated, Deleted; Before Confirmations and Before Reminders are type Sync. Body: JSON
-  event data; the field names aren't on the overview page, so use a clearly labelled illustrative
-  payload and dispatch defensively. POST. Express examples must read the raw body with express.raw({
+  event data; the field names aren't on the overview page, so the handlers must not branch on a
+  guessed field: log the top-level fields, acknowledge, and tell the reader to use one subscription
+  and Server URL per webhook scope or to branch on a field from a real delivery. POST. Express examples must read the raw body with express.raw({
   type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
   parse the body only after the check.
 testScenario:

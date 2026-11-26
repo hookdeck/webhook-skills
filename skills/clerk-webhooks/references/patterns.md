@@ -72,7 +72,7 @@ return new Response('Received', { status: 200 });
 
 ## Webhook Reliability
 
-**Retries**: Svix retries failed webhooks for up to 3 days. Return 2xx to acknowledge success; 4xx/5xx triggers a retry.
+**Retries**: Svix retries failed webhooks on its [retry schedule](https://docs.svix.com/retries) (8 attempts over about 27 hours at the time of writing). Return 2xx to acknowledge success; 4xx/5xx, or no response, triggers a retry.
 
 **Replay**: Failed webhooks can be replayed from the Clerk Dashboard.
 

@@ -34,7 +34,7 @@ Steps the examples follow:
 
 1. Read the raw body as bytes. Build the signed message as bytes; never decode and re-encode it.
 2. Parse the header: first `t=`, every `s=`. No `t=` fails. Ignore other keys.
-3. Check each `s` is exactly `[A-Za-z0-9+/]{43}=` **before** comparing. Don't decode it first: `Buffer.from(s, 'base64')` silently drops bad characters, and a value whose last character has stray low bits decodes to the same bytes but is not what Khipu sent (Hookdeck rejects it, so the skill does too).
+3. Check each `s` is exactly `[A-Za-z0-9+/]{43}=` **before** comparing. Don't decode it first: `Buffer.from(s, 'base64')` silently drops bad characters, and a value whose last character has stray low bits decodes to the same bytes but is not what Khipu sent, so the skill rejects it.
 4. Compare strings in constant time (`crypto.timingSafeEqual` after a length check; `hmac.compare_digest` on bytes).
 5. Accept if any `s` matches. Otherwise respond `401`.
 
@@ -48,12 +48,12 @@ The worked example from Khipu's docs, used in every example's tests:
 
 ## Replay Protection
 
-The examples **don't check the timestamp by default**. Hookdeck retries and replays resend the original headers, and Hookdeck itself applies no tolerance, so a window would reject legitimate late redeliveries. To opt in, set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is milliseconds, so the examples compare `|now_ms - t| / 1000`. Unset, `0` or a non-numeric value leaves it off (a non-numeric value logs a warning). Use `payment_id` for idempotency.
+The examples **don't check the timestamp by default**. Hookdeck retries and replays resend the original headers, so a window would reject legitimate late redeliveries. To opt in, set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is milliseconds, so the examples compare `|now_ms - t| / 1000`. Unset, `0` or a non-numeric value leaves it off (a non-numeric value logs a warning). Use `payment_id` for idempotency.
 
 ## Common Gotchas
 
 - **Raw body:** don't parse or re-serialise JSON before verifying (key order, spacing, escaped slashes and `"1000.0000"` strings all change the bytes). Use `express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`.
-- **Version 3.0 only:** a collection without `notify_api_version` `"3.0"` sends 1.3 notifications with a `notification_token`; they fail this check.
+- **Version 3.0 only:** a collection created with the older 2.0 payments API gets 1.3 notifications with a `notification_token`; they fail this check.
 - **Milliseconds:** `t` is milliseconds, not seconds.
 - **Use `t` as a string:** never parse it to a number and format it back.
 - **Secret:** the collecting account's merchant secret, with no whitespace or quotes.
@@ -61,6 +61,6 @@ The examples **don't check the timestamp by default**. Hookdeck retries and repl
 
 ## Debugging Verification Failures
 
-- Confirm the collection was created with `notify_api_version` `"3.0"` and the secret is for the account that created it (staging and production differ).
-- Log the raw body length and compare with Khipu's records; any middleware that re-serialises JSON breaks the signature.
+- Confirm the collection was created with `notify_api_version` `"3.0"` and the secret is for the account that created it.
+- Log the raw body length; any middleware that re-serialises JSON breaks the signature.
 - If you set a tolerance and valid events fail after downtime, the window is rejecting retries; raise it or turn it off.

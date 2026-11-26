@@ -25,13 +25,21 @@ Other events in the catalog:
 - Enrichment: `audience.prospect_export_completed`, `audience.company_export_completed`
 - Lookup: `github_to_linkedin.completed`, `github_lookup.completed`, `domain_lookup.completed`, `social_media_lookup.completed`
 - Search: `saved_search.run_upcoming`, `saved_search.run_completed`, `combined_search.completed`, `google_maps_search.completed`, `local_business_search.completed`, `audience.build_completed`
+- Lookup (spec only): `github_org_contributors.completed`
 - Monitoring: `tracker.list_run_upcoming`, `tracker.list_run_completed` (enabled per organization), `job_changes.profiles_added`
+- Monitoring (spec only): `tracker.list_baseline_completed`
+- Enrichment (spec only, legacy): `batch_contact_enrich_v1.completed`
+
+The spec-only types are in the `webhooks` section of Fiber AI's
+[OpenAPI spec](https://api.fiber.ai/openapi.json) and the `createWebhookEndpoint` enum, but
+not in the docs' event catalog.
 - Other: `depth_chart.completed`, `sales_nav_scrape.completed`, `sales_nav_lite_scrape.completed`
 
 ## Event Payload Structure
 
 Most completion events share one shape: `success`, an identifier (`task_id`, `run_id`,
-`search_id` or `audience_id`, depending on the operation) and `error` (set on failure).
+`search_id` or `audience_id`, depending on the operation; `job_id` on
+`batch_live_enrich.completed`) and `error` (set on failure).
 Exceptions:
 
 - `job.changed` has a `profiles` array (each with `listId`) and no `success` or `error`.
@@ -40,7 +48,9 @@ Exceptions:
 - Heads-up events (`saved_search.run_upcoming`, `tracker.list_run_upcoming`, `tracker.list_run_completed`) only send `success: true`.
 - Tracker signals use a richer envelope with a stable `eventId` and `occurredAt`.
 
-Example (`reveal.completed`):
+Example (`reveal.completed`, from the docs page). The OpenAPI spec's schema and example name
+the contact fields `email` and `number` instead of `emailAddress` and `phoneNumber`, so read
+both until a real delivery shows which arrives:
 
 ```json
 {
@@ -52,11 +62,12 @@ Example (`reveal.completed`):
 }
 ```
 
-The docs' example payloads do not include a `type` field, and Fiber AI names no event header,
-so the event type isn't documented anywhere in the delivery. To tell events apart, subscribe
-one endpoint per event type and route by URL, or compare deliveries with the `examplePayload`
-that `listWebhookEventTypes` returns for each type. The example handlers read a `type` field
-only defensively, if one is present, and treat a `profiles` array as `job.changed`; use
+None of the spec's example payloads includes a field naming the event, and Fiber AI names no
+event header, so the delivery doesn't say which event it is. A `type` field, where present,
+means something else: the saved search type (`combined`, `company_only`, `prospect_only`) on
+`saved_search.run_upcoming`, and `PROFILE` or `COMPANY` on `batch_live_enrich.completed`. To
+tell events apart, subscribe one endpoint per event type and name the type in its URL (the
+examples read an `event` query parameter), and treat a `profiles` array as `job.changed`; use
 `sendTestWebhookEvent` to see exactly what your endpoint receives.
 
 ## Delivery Behavior

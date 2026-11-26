@@ -54,7 +54,7 @@ def handle_event(event: dict) -> None:
     else:
         logger.info("Unhandled Roam event: %s", event_type)
 
-    # TODO: acknowledge first, then do the real work in a background job
+    # In production, acknowledge first and do the real work in a background job
 
 
 @app.post("/webhooks/roam")

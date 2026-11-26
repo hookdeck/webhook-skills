@@ -59,7 +59,7 @@ and FastAPI. Details in [references/verification.md](references/verification.md)
 ## Setup
 
 Register the endpoint on the **Developers** tab of the Creem dashboard (or with
-`POST /v1/webhooks`, the SDK, CLI or MCP server) and copy the signing secret from the
+`POST /v1/webhooks`, the TypeScript SDK or the CLI) and copy the signing secret from the
 **Developers > Webhook** page into `CREEM_WEBHOOK_SECRET`. Full steps in
 [references/setup.md](references/setup.md).
 
@@ -73,11 +73,11 @@ resource under `object`; `object.object` names the kind (`checkout`, `subscripti
 |-------------|----------------|
 | `checkout.completed` | A checkout finishes |
 | `subscription.paid` | A subscription payment succeeds (Creem recommends it for granting access) |
-| `subscription.active` | A new subscription is created and paid (use for synchronisation) |
+| `subscription.active` | A new subscription is paid, or a subscription returns to `active` (use for synchronisation) |
 | `subscription.canceled` | The merchant or customer canceled the subscription |
 | `subscription.scheduled_cancel` | Cancellation is scheduled for the end of the period |
 | `subscription.past_due` / `subscription.unpaid` | A payment failed |
-| `subscription.expired` | The period ended without a new payment |
+| `subscription.expired` | The period ended without a new payment (not terminal: payment can still be collected until `canceled`) |
 | `subscription.update` / `subscription.trialing` / `subscription.paused` | The subscription changed |
 | `refund.created` | A refund is created |
 | `dispute.created` | A dispute is opened |
@@ -88,9 +88,11 @@ More detail in [references/overview.md](references/overview.md).
 
 ## Delivery and Idempotency
 
-Creem makes up to 5 attempts (initial, then after 30 s, 5 min, 30 min and 6 h) and stops after
-24 hours. Delivery is at least once, so deduplicate on the event `id`. Events can also be
-resent from the dashboard.
+Return a 2xx within 15 seconds: Creem counts a slower response as a failed attempt, and any 2xx
+as delivered. Creem makes up to 5 attempts (initial, then after 30 s, 5 min, 30 min and 6 h) and
+stops after 24 hours. Delivery is at least once, and automatic retries keep the event `id`, so
+deduplicate on it. Events can also be resent from the dashboard, but a manual resend arrives with
+a new `id` and `created_at`, so key payment work on the transaction (`last_transaction.id`) too.
 
 ## Environment Variables
 
@@ -100,11 +102,19 @@ CREEM_WEBHOOK_SECRET=your_creem_webhook_secret   # Developers > Webhook page
 
 ## Local Development
 
+The Creem CLI forwards your store's events to a local URL, with the real signature header, and
+prints the signing secret to verify with:
+
+```bash
+creem listen --forward-to http://localhost:3000/webhooks/creem
+```
+
+Or use the Hookdeck CLI and register the printed URL as a webhook endpoint in the Creem dashboard
+(no Hookdeck account required):
+
 ```bash
 npx hookdeck-cli listen 3000 creem --path /webhooks/creem
 ```
-
-No account required. Register the printed URL as a webhook endpoint in the Creem dashboard.
 
 ## Resources
 

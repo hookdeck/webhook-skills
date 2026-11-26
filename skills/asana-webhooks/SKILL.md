@@ -30,7 +30,8 @@ Asana webhooks have **two phases** that both POST to your `target` URL:
    request carrying an `X-Hook-Secret` header and **no** `X-Hook-Signature`. Your
    endpoint must **echo that same `X-Hook-Secret` back as a response header** and
    return `200`. **Store the secret** — it is the key for verifying every future
-   delivery. This secret is shown only during the handshake.
+   delivery. Asana also returns it in the body of the `201 Created` response to
+   `POST /webhooks`, but `GET /webhooks/{webhook_gid}` never returns it.
 2. **Event deliveries (ongoing).** Every later request carries an
    `X-Hook-Signature` header — a hex HMAC-SHA256 of the **raw request body**,
    keyed with the stored secret. The body is a batch: `{"events": [...]}`.
@@ -94,7 +95,7 @@ object. Fetch full details with a follow-up API call using the resource `gid`.
 | `undeleted` | A previously deleted resource is restored |
 
 Event object fields: `action`, `resource` (`{ gid, resource_type }`), `parent`,
-`user`, `created_at`, and (with filters) `change`.
+`user`, `created_at`, and, for `changed` events, `change`.
 
 > **For the full event reference**, see [Asana Webhooks Guide](https://developers.asana.com/docs/webhooks-guide).
 
@@ -123,7 +124,9 @@ ASANA_ACCESS_TOKEN=your_personal_access_token
 npx hookdeck-cli listen 3000 asana --path /webhooks/asana
 ```
 
-Create the webhook against the tunnel URL:
+Create the webhook against the tunnel URL. Hookdeck answers the `X-Hook-Secret`
+handshake itself, so your local handler won't see it: copy `X-Hook-Secret` from the
+`201 Created` response body into `ASANA_WEBHOOK_SECRET`.
 
 ```bash
 curl -X POST https://app.asana.com/api/1.0/webhooks \

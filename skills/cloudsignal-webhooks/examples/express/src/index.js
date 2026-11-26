@@ -16,7 +16,8 @@ if (!EXPECTED_APIKEY) {
   );
 }
 
-// The nine CloudSignal Webhooks v2.0 signal types (case-sensitive, PascalCase).
+// CloudSignal Webhooks v2.1 signal types (case-sensitive, PascalCase): the 11 on the
+// v2.1 reference, plus CloudprinterOrderCanceled, which only the official Node SDK lists.
 const KNOWN_EVENT_TYPES = [
   'CloudprinterOrderValidated',
   'ItemValidated',
@@ -27,6 +28,9 @@ const KNOWN_EVENT_TYPES = [
   'ItemError',
   'ItemCanceled',
   'CloudprinterOrderCanceled',
+  'ItemDeliveryStarted',
+  'ItemDeliveryCompleted',
+  'ItemDeliveryFailed',
 ];
 
 const app = express();
@@ -101,7 +105,7 @@ app.post('/webhooks/cloudsignal', express.json(), (req, res) => {
       break;
 
     case 'ItemShipped':
-      // The item has shipped. Type-specific fields: tracking, shipping_option.
+      // The item has shipped. Type-specific fields: tracking, shipping_option, url.
       console.log(
         'Item shipped:',
         item,
@@ -110,23 +114,30 @@ app.post('/webhooks/cloudsignal', express.json(), (req, res) => {
         'shipping_option:',
         signal.shipping_option
       );
-      // TODO: Store the tracking number, notify the customer.
+      // Your code: Store the tracking number, notify the customer.
       break;
 
     case 'ItemError':
-      // A production issue occurred. Type-specific field: cause (optional).
+      // A production issue occurred. Type-specific fields: cause, delay (both optional).
       console.log('Item error:', item, 'cause:', signal.cause);
-      // TODO: Alert your team, reprint, or refund.
+      // Your code: Alert your team, reprint, or refund.
       break;
 
     case 'ItemCanceled':
-      // The item was canceled in production. Type-specific field: cause (optional).
+      // The item was canceled in production. Type-specific fields: cause, message (optional).
       console.log('Item canceled:', item, 'cause:', signal.cause);
       break;
 
     case 'CloudprinterOrderCanceled':
-      // The whole order was canceled.
+      // The whole order was canceled. Listed only in the official Node SDK.
       console.log('Order canceled:', order, order_reference);
+      break;
+
+    case 'ItemDeliveryStarted':
+    case 'ItemDeliveryCompleted':
+    case 'ItemDeliveryFailed':
+      // v2.1 delivery signals. Type-specific fields: tracking, message (both optional).
+      console.log('Delivery update:', type, item, 'tracking:', signal.tracking, signal.message);
       break;
 
     default:

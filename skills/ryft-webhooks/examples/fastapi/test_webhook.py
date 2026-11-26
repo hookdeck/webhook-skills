@@ -38,7 +38,7 @@ def environment(monkeypatch):
     monkeypatch.setenv("UPPROMOTE_WEBHOOK_TOPIC", "PaymentSession.captured")
 
 
-def test_fixed_core_vector_and_event_routing(caplog):
+def test_fixed_vector_and_event_routing(caplog):
     assert verify_signature(vector["body"].encode(), vector["signature"], vector["secret"])
     assert get_event_names(json.loads(vector["body"])) == vector["events"]
     with caplog.at_level("INFO"):
@@ -103,7 +103,7 @@ def test_rotation_and_unknown_versions():
 
 
 @pytest.mark.skipif(prefix not in ["v1=", "sha256="], reason="Not a prefixed body-only digest")
-def test_core_bare_digest():
+def test_bare_digest():
     assert verify_signature(vector["body"].encode(), vector["signature"].split("=")[-1], vector["secret"])
 
 

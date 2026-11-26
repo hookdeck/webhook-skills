@@ -17,8 +17,7 @@ notes: >
   replays resend the original timestamp, so a 5-minute window rejects late retries: behind Hookdeck
   either set it to 0 and rely on Hookdeck's verification or accept that. references/verification.md
   must include a standalone manual verifier (Node and Python) with no timestamp window.
-  Missing/malformed header or mismatch: 401. Hookdeck's source: HMAC sha256, hex, header
-  x-jamie-signature, timestamp-prefixed with '.'. Hookdeck's source type is JAMIE, labelled 'Jamie'.
+  Missing/malformed header or mismatch: 401. Scheme: HMAC-SHA256, hex, header x-jamie-signature, signed content timestamp + '.' + raw body. Hookdeck's source type is JAMIE, labelled 'Jamie'.
   Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
   user the same thing: "Choose Signature Verification when creating the Jamie webhook and paste its
   signing secret. API key mode is not supported." Model on main's Stripe-style skills (duffel,

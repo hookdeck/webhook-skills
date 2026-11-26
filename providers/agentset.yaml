@@ -12,15 +12,14 @@ notes: >
   delivered with an Agentset-Signature header.' 'Calculate the HMAC of the raw body using the SHA-256
   hash function and the secret.' '.createHmac('sha256', secret) .update(rawBody) .digest('hex');' From
   the docs (registry summary): hex(HMAC-SHA256(signing secret, raw body)), the whole header value, no
-  prefix; the Next.js, Python and Go samples compare it directly. SIGNATURE SCHEME (it must match
-  Hookdeck's AGENTSET source exactly: HMAC controller, algorithm "sha256", header_key
-  "agentset-signature", encoding "hex"). The agentset-signature header carries the bare lowercase hex
+  prefix; the Next.js, Python and Go samples compare it directly. SIGNATURE SCHEME (algorithm sha256, header
+  agentset-signature, encoding hex). The agentset-signature header carries the bare lowercase hex
   digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
   parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
   body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
   raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: One signing secret per webhook, shown in its Update Details tab. Use it as UTF-8 bytes. Env
   var: AGENTSET_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
@@ -35,14 +34,11 @@ notes: >
   document.ready, document.deleted, ingest_job.queued, ingest_job.queued_for_resync,
   ingest_job.queued_for_deletion, ingest_job.processing, ingest_job.error, ingest_job.ready,
   ingest_job.deleted. Handle a few common ones and log the rest. Methods: Agentset's docs don't name
-  the HTTP method. Hookdeck's Agentset source pre-selects POST without managing the method (the user
-  can change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
+  the HTTP method. The allowed methods on the Hookdeck source can be changed (https://hookdeck.com/docs/sources#custom-methods). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
   webhook route (Express: app.all or one route per method; Next.js: export a handler for each;
   FastAPI: api_route with those methods), verify the signature first for every method, and treat a
   missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it is
-  acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's
-  Agentset source pre-selects POST without managing the method, so any other method the sender uses
-  must also be allowed on the source. Express examples must read the raw body with express.raw({ type:
+  acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

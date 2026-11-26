@@ -20,7 +20,8 @@ protection (no signature, no timestamp). Anyone who captures one request can rep
 key proves nothing about the content. So:
 
 - Serve the endpoint over HTTPS only.
-- Rotate the key (recreate the webhook) if it leaks, and update `CLOUDENTITY_WEBHOOK_API_KEY`.
+- Rotate the key if it leaks: set a new `api_key` when you update the webhook, then update
+  `CLOUDENTITY_WEBHOOK_API_KEY`.
 - Deduplicate on each audit event's `event_id` so replays and retries are harmless.
 
 ## Implementation
@@ -64,7 +65,7 @@ def verify_cloudentity_request(headers, api_key=None) -> bool:
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `compare_digest` on bytes.
 - **Fail closed.** If `CLOUDENTITY_WEBHOOK_API_KEY` is unset, reject everything.
-- **The key is shown once.** If you lost it, create a new webhook and use its key.
+- **Copy the key when it's shown.** If you lost it, set a new `api_key` by updating the webhook.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then
   `JSON.parse` after the key check.
 - **Batches.** The body holds many events in `audit_events`; handle each one.
@@ -74,6 +75,6 @@ def verify_cloudentity_request(headers, api_key=None) -> bool:
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | `CLOUDENTITY_WEBHOOK_API_KEY` unset, or copied from another webhook |
-| 401 after recreating the webhook | A new webhook has a new key; update the variable |
+| 401 after rotating the key | The webhook's `api_key` changed; update the variable |
 | 401 only behind a proxy | The proxy strips or renames `X-API-Key` |
 | 400 after authentication | Body isn't JSON with an `audit_events` array |

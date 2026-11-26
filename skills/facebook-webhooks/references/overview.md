@@ -37,11 +37,13 @@ is an **(object, field) pair**:
 |--------|-------|----------------|------------------|
 | `page` | `feed` | Post, comment, like, or reaction on the Page | Moderate comments, sync posts, reply |
 | `page` | `mention` | The Page is mentioned in a post/comment | Social listening, alerts |
-| `page` | `messages` | A person messages the Page (Messenger) | Chatbots, support routing |
-| `instagram` | `comments` | A comment is added to an IG media object | Comment moderation, auto-reply |
-| `instagram` | `mentions` | The IG account is @mentioned | Engagement tracking |
+| `page` | `leadgen` | Someone submits a lead ad form | CRM sync (fetch the lead by `leadgen_id`) |
 | `user` | `feed` | An update is posted to a user's feed | Personal timeline sync |
-| `permissions` | — | A user grants or revokes a permission | Revoke handling, re-auth prompts |
+| `permissions` | `connected` | A user connects to or disconnects from the app | Revoke handling, re-auth prompts |
+| `ad_account` | `creative_fatigue` | An ad's creative is fatiguing | Creative refresh alerts |
+
+Messenger, Instagram and WhatsApp fields have their own skills
+(`messenger-webhooks`, `instagram-webhooks`, `whatsapp-webhooks`).
 
 For the complete list of objects and fields, see the
 [Meta Webhooks Reference](https://developers.facebook.com/docs/graph-api/webhooks/reference).
@@ -99,8 +101,9 @@ Messenger delivery (`messaging` array instead of `changes`):
 - **Respond `200 OK` quickly**, then process asynchronously. Meta retries failed
   deliveries immediately, then with decreasing frequency for up to **36 hours**,
   after which they are dropped.
-- **Development mode apps only receive test notifications.** Move the app to Live
-  mode to receive real user events.
+- **Your app must be published.** Meta's Marketing API use case guide says an
+  app must be published to receive webhook notifications; App Review isn't
+  required to use webhooks.
 
 ## Full Event Reference
 

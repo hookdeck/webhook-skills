@@ -23,7 +23,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Memos sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """Memos sends webhook-* headers; fall back to the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),
@@ -73,7 +73,7 @@ async def memos_webhook(request: Request):
     # The body is { url, activityType, creator, memo }; the event name is the top-level activityType
     activity_type = event.get("activityType")
     creator = event.get("creator")
-    # webhook-id is stable across retries and the body has no event id: use it to deduplicate
+    # The body has no event id: deduplicate on webhook-id
     print(f"Received Memos webhook {sig_headers['webhook-id']}: {activity_type}")
 
     if activity_type == "memos.memo.created":

@@ -23,15 +23,18 @@ curl -X POST https://app.recurrente.com/api/webhook_endpoints \
   }'
 ```
 
-You can register several URLs (production, staging, logging). Each event is sent to all of them,
-and no per-endpoint event filter is documented. Return `200` for events you don't handle.
+You can register several URLs (production, staging, logging). Each event is sent to all of them
+unless you limit an endpoint's event types in the Webhooks dashboard. For new accounts, select
+`intent.succeeded` and `intent.failed`: a filter that only lists `payment_intent.*` misses them.
+Return `200` for events you don't handle.
 
 ## Where Do I Find the Signing Secret?
 
 Each endpoint has its own secret, in the form `whsec_...`.
 
-- **Via the API:** the `signingSecret` field in the response to `POST /api/webhook_endpoints`. It
-  is returned only in that response, so store it securely.
+- **Via the API:** the `signingSecret` field in the response to `POST /api/webhook_endpoints`.
+  `GET /api/webhook_endpoints/{id}` returns it again for a key with write access (a read-only key
+  gets `403`). Store it securely.
 - **Via the dashboard:** at any time in the Svix dashboard, reachable from **Configuración >
   Desarrolladores y API > Webhooks**.
 

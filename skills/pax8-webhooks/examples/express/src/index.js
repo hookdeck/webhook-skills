@@ -31,52 +31,41 @@ function verifyPax8Request(headers, config = process.env) {
 }
 
 /**
- * The body is not documented (samplePayload is elided), so read topic and action
- * defensively. Both are returned upper-case, or null when absent.
+ * Pax8's Webhooks API reference types a delivery as WebhookPayload: accountId, url,
+ * webhookId, sentAt, webhookTopic ({ id, topic, filters }) and payloadData. The topic
+ * name is webhookTopic.topic. payloadData varies by topic and isn't documented, so treat
+ * the notification as a prompt to fetch current state from the Pax8 API.
  */
 function classify(payload) {
-  const norm = (v) => (typeof v === 'string' && v ? v.toUpperCase() : null);
-  return { topic: norm(payload.topic), action: norm(payload.action) };
+  const wt = payload.webhookTopic;
+  const topic = wt && typeof wt.topic === 'string' && wt.topic ? wt.topic.toUpperCase() : null;
+  const sentAt = typeof payload.sentAt === 'string' ? payload.sentAt : null;
+  return { topic, sentAt };
 }
 
 function handleEvent(payload) {
-  const { topic, action } = classify(payload);
+  const { topic, sentAt } = classify(payload);
 
-  // SUBSCRIPTION and PRODUCT are the topic values the docs show; INVOICE, CLIENT, QUOTE
-  // and USER are assumed from the docs' event category names. Check topic-definitions.
+  // SUBSCRIPTION, INVOICE and PRODUCT are topic values printed in Pax8's docs. Read the
+  // client, quote and user topic strings from GET /webhooks/topic-definitions.
   switch (topic) {
     case 'SUBSCRIPTION':
-      console.log(`Pax8 subscription ${action}`);
-      // TODO: sync the subscription (the docs show the CREATE action) to your system
+      console.log(`Pax8 subscription notification sent at ${sentAt}`);
+      // Fetch the subscription from the Pax8 API and update your system.
       break;
 
     case 'INVOICE':
-      console.log(`Pax8 invoice ${action}`);
-      // TODO: import the invoice into billing
-      break;
-
-    case 'CLIENT':
-      console.log(`Pax8 client ${action}`);
-      // TODO: update your customer record
+      console.log(`Pax8 invoice notification sent at ${sentAt}`);
+      // Fetch the invoice from the Pax8 API and import it into billing.
       break;
 
     case 'PRODUCT':
-      console.log(`Pax8 product ${action}`);
-      // TODO: refresh your catalog cache
-      break;
-
-    case 'QUOTE':
-      console.log(`Pax8 quote ${action}`);
-      // TODO: sync the quote
-      break;
-
-    case 'USER':
-      console.log(`Pax8 user ${action}`);
-      // TODO: sync the user
+      console.log(`Pax8 product notification sent at ${sentAt}`);
+      // Refresh the product in your catalog cache.
       break;
 
     default:
-      console.log('Unclassified Pax8 payload (no recognized topic)');
+      console.log(`Pax8 notification for topic ${topic ?? '(none)'}`);
   }
 }
 

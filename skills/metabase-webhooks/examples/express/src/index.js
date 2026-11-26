@@ -56,7 +56,7 @@ function handleEvent(payload) {
       const rows = raw_data && Array.isArray(raw_data.rows) ? raw_data.rows.length : 0;
       const test = payload.alert_id === null ? ' (test alert)' : '';
       console.log(`Alert${test}: ${question_name} (#${question_id}) returned ${rows} rows ${question_url}`);
-      // TODO: forward to chat/on-call, store raw_data, or decode payload.data.visualization (base64 PNG)
+      // Your logic here: forward to chat or on-call, store raw_data, or decode payload.data.visualization (base64 PNG)
       break;
     }
 
@@ -73,9 +73,15 @@ app.post('/webhooks/metabase', express.raw({ type: '*/*', limit: '10mb' }), (req
     return res.status(401).json({ error: 'Invalid or missing Basic credentials' });
   }
 
+  const raw = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
+
+  // The webhook form's "Send a test" button posts with no body. Acknowledge it.
+  if (raw.trim() === '') {
+    return res.status(200).json({ received: true, test: true });
+  }
+
   let payload;
   try {
-    const raw = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
     payload = JSON.parse(raw);
   } catch {
     return res.status(400).json({ error: 'Invalid JSON body' });

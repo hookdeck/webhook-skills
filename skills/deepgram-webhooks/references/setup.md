@@ -11,9 +11,7 @@
 1. Log into [Deepgram Console](https://console.deepgram.com/)
 2. Navigate to API Keys section
 3. Create or select an API key
-4. Note both:
-   - **API Key**: Used for authentication when making requests
-   - **API Key ID**: Shown in console, optionally used to check the `dg-token` header when it is present
+4. Note the **API Key**: used for authentication when making requests
 
 ## Configure Your Webhook Endpoint
 
@@ -47,7 +45,7 @@ curl -X POST \
 
 ### 3. Using Basic Auth (Recommended)
 
-Embed credentials in your callback URL. Deepgram sends them as an `Authorization: Basic` header, and this is the check your handler should rely on (the `dg-token` header is not sent on every callback). Percent-encode any special characters in the username or password:
+Embed credentials in your callback URL. Deepgram includes them when it sends results, and they arrive as an `Authorization: Basic` header. This is the check your handler should rely on; the `dg-token` header is no longer a supported verification method. For speech-to-text you can also send a secret as `extra=callback_secret:VALUE` (see [verification.md](verification.md)). Percent-encode any special characters in the username or password:
 
 ```bash
 # Format: https://username:password@domain/path
@@ -133,6 +131,6 @@ curl -X GET \
 ### Common Issues
 
 1. **Webhook not received**: Check port restrictions (must be 80, 443, 8080, or 8443)
-2. **Authentication failures**: Verify the Basic Auth credentials in your callback URL match your handler's configuration (percent-encode special characters). Don't require `dg-token`: it is not sent on every callback
+2. **Authentication failures**: Verify the Basic Auth credentials in your callback URL match your handler's configuration (percent-encode special characters). Don't check `dg-token`: Deepgram no longer supports it for verification
 3. **Repeated webhooks**: Ensure you return 200-299 status; Deepgram retries on errors
 4. **Timeout errors**: Deepgram waits for response; process asynchronously if needed

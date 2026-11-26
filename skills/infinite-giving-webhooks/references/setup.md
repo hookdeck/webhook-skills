@@ -1,6 +1,6 @@
 # Setting Up Infinite Giving Webhooks
 
-> Infinite Giving webhooks are for integration partners. Paste the signing secret Infinite Giving gives you at partner kickoff.
+> Webhooks are for integration partners: Infinite Giving configures your webhook URL at partner kickoff and shares the webhook signing secret out-of-band, separately for sandbox and production.
 
 ## Prerequisites
 
@@ -26,8 +26,8 @@ Use port `8000` for the FastAPI example.
 
 ## Using Hookdeck
 
-Create an **Infinite Giving** source in Hookdeck and paste the signing secret there. Hookdeck verifies `X-IG-Signature` before forwarding to your destination.
+Create an **Infinite Giving** source in Hookdeck and paste the signing secret there. Hookdeck verifies the signature before forwarding to your destination.
 
 ## Testing
 
-The docs describe no sandbox or test-event button. Replay the sample payloads from the [webhooks overview](https://docs.infinitegiving.com/guide/webhooks/overview) signed with your secret, as the example tests do.
+Infinite Giving sets partners up in a sandbox environment first, with its own signing secret and webhook URL, and documents no test-event button. Webhooks come from the environment the donation happened in. Locally, replay the sample payloads from the [webhooks overview](https://docs.infinitegiving.com/guide/webhooks/overview) signed with your secret, as the example tests do.

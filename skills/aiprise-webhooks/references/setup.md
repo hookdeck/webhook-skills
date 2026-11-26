@@ -27,16 +27,16 @@ Callback URLs can be set at the template level or overridden per request.
 
 1. Go to Dashboard → **View Templates** → select your template `{TemplateID}`.
 2. Set:
-   - **Callback URL** — receives verification result callbacks.
-   - **Events Callback URL** — receives business-profile change events.
+   - **Callback URL** — receives decision callbacks (final results).
+   - **Events Callback URL** — receives event callbacks for each step of a case.
 3. Save the template.
 
 ### Per request (overrides the template for a single session)
 
 When creating a verification session via the API, pass:
 
-- `callback_url` — verification result callback destination.
-- `events_callback_url` — business-profile change events destination.
+- `callback_url` — decision callback destination.
+- `events_callback_url` — event callback destination.
 
 Request-level URLs take precedence over the template configuration.
 
@@ -56,12 +56,15 @@ or order ID). AiPrise echoes it back in the callback alongside
 
 ## Test Mode vs Live Mode
 
-Use AiPrise's sandbox/test environment and templates to trigger sample verification
+Sandbox and Production have separate API keys, so each environment signs callbacks
+with its own key, and webhooks are configured per environment. Use the Sandbox
+environment and templates to trigger sample verification
 outcomes before going live. Run a test verification and confirm your endpoint:
 
 1. Receives a POST at `/webhooks/aiprise`.
 2. Passes `X-HMAC-SIGNATURE` verification (see [verification.md](verification.md)).
-3. Dispatches correctly on `aiprise_summary.verification_result`.
+3. Dispatches event callbacks on their event field, and decision callbacks on
+   `aiprise_summary`.
 
 ## Local Development
 

@@ -60,7 +60,7 @@ app.post('/webhooks/privy', express.raw({ type: '*/*' }), (req, res) => {
   // The event name is the top-level `type`; the event's own fields (user, wallet_id, ...)
   // sit beside it at the top level, not under `data`
   const type = event.type;
-  // svix-id is stable across retries; `idempotency_key` (where present) identifies the event itself
+  // Deduplicate on `event_id` (funds events: `idempotency_key`); svix-id identifies a redelivery
   console.log(`Received Privy webhook ${id}: ${type}`);
 
   switch (type) {

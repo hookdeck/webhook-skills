@@ -11,7 +11,8 @@ export interface VerifyResult {
  * Verify an Ultravox webhook.
  *
  * Signature = lowercase hex HMAC-SHA256(secret, rawBody || X-Ultravox-Webhook-Timestamp),
- * with NO separator between the body bytes and the timestamp string.
+ * with NO separator between the body bytes and the timestamp string. The signature
+ * header may list several comma-separated digests (one per secret); any match is valid.
  */
 export function verifyUltravoxWebhook(
   rawBody: Buffer,
@@ -23,17 +24,18 @@ export function verifyUltravoxWebhook(
   if (!signature) return { valid: false, error: 'Missing X-Ultravox-Webhook-Signature header' };
   if (!timestamp) return { valid: false, error: 'Missing X-Ultravox-Webhook-Timestamp header' };
 
-  // The whole header is one digest: exactly 64 hex characters, nothing else
-  if (!HEX_DIGEST.test(signature)) return { valid: false, error: 'Malformed signature' };
-
   // Signed message as bytes: raw body, then the timestamp header exactly as received (latin1)
   const signedContent = Buffer.concat([rawBody, Buffer.from(timestamp, 'latin1')]);
   const expected = crypto.createHmac('sha256', secret).update(signedContent).digest();
-  const received = Buffer.from(signature.toLowerCase(), 'hex'); // safe: format validated above
 
-  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-    return { valid: false, error: 'Invalid signature' };
-  }
+  // The header holds one hex digest, or several separated by commas when the webhook
+  // has more than one secret (key rotation). Accept the delivery if any of them matches.
+  const matched = signature.split(',').some((candidate) => {
+    if (!HEX_DIGEST.test(candidate)) return false;
+    const received = Buffer.from(candidate.toLowerCase(), 'hex'); // safe: format validated above
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  });
+  if (!matched) return { valid: false, error: 'Invalid signature' };
 
   // Opt-in replay window. Off by default: Hookdeck retries/replays keep the original timestamp.
   if (toleranceSeconds > 0) {

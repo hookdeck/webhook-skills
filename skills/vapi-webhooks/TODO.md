@@ -10,7 +10,7 @@ They are acceptable for merge; contributions to close them are welcome.
 - [x] **HMAC construction confirmed** by recomputing digests of real Vapi sandbox
   deliveries (secret `test`, SHA-256, hex, verbatim key). Signature header
   `x-signature` (bare digest). The **Payload Format** decides the signed content:
-  - `{body}` → `HMAC-SHA256(rawBody, secret)` — matches hookdeck/core; recommended.
+  - `{body}` → `HMAC-SHA256(rawBody, secret)` — recommended.
   - `{timestamp}.{body}` → `HMAC-SHA256(x-timestamp + "." + rawBody, secret)`,
     where `x-timestamp` is the send-time epoch-ms header. Verified it is **not**
     reproducible when the timestamp header is disabled (the signing value isn't

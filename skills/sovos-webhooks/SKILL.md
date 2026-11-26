@@ -5,8 +5,8 @@ description: >
   through Svix. Use when setting up a Sovos webhook handler, debugging
   svix-id / svix-timestamp / svix-signature verification, configuring the
   Svix Consumer App Portal, or handling Sovos document notifications by
-  eventType such as document.received, document.completed,
-  workflow.completed, and system.error.
+  eventType (document.received) and the configured statusEvent names
+  workflow.completed, system.error and document.completed.
 license: MIT
 metadata:
   author: hookdeck
@@ -77,12 +77,16 @@ which events are sent on the **Sovos side** (Compliance Network UI or
 `POST /v2/configurations/workspaces/settings`); the Svix portal cannot add or
 filter events. Event names that appear in Sovos's documentation:
 
-| `eventType` | When it is sent |
-|-------------|-----------------|
-| `document.received` | A document notification was received during processing (the documented payload example) |
-| `document.completed` | A document finished its lifecycle |
-| `workflow.completed` | A processing workflow for a document completed |
-| `system.error` | Processing failed with a system error |
+| Name | Where Sovos shows it |
+|------|----------------------|
+| `document.received` | `eventType` in the webhook payload example, the only delivered value shown |
+| `workflow.completed` | `statusEvent` in the configuration request sample |
+| `system.error` | `statusEvent` in the configuration request and response samples |
+| `document.completed` | `statusEvent` in the configuration response sample |
+
+Sovos doesn't describe what triggers each event, and doesn't say whether a
+delivery's `eventType` uses the same spelling as the `statusEvent` you configure.
+Log the values you receive before routing on them.
 
 Sovos does not publish a full catalog on the webhooks pages, so keep a default
 branch for event types you have not mapped. See

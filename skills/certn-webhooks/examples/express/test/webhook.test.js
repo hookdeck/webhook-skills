@@ -1,122 +1,118 @@
 const request = require('supertest');
 const crypto = require('crypto');
 
-// Certn's signing secret is used as-is, as UTF-8; this one is only for tests
-const SECRET = 'test_certn_signing_secret_3b7d';
+// A signing key for tests only
+const SECRET = 'test_certn_signing_key_3b7d';
 process.env.CERTN_WEBHOOK_SECRET = SECRET;
 
 const { app } = require('../src/index');
 
-function v1For(body, timestamp, secret = SECRET) {
-  return crypto.createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
-}
-
-// Certn puts a space after each comma: t=<ts>, v1=<hex>
-function sign(body, timestamp = Math.floor(Date.now() / 1000), secret = SECRET) {
-  return `t=${timestamp}, v1=${v1For(body, timestamp, secret)}`;
+function sign(body, secret = SECRET) {
+  return crypto.createHmac('sha256', secret).update(body).digest('hex');
 }
 
 // Content-Type is deliberately varied: verification must not depend on it
 function post(body, signature, contentType = 'application/json') {
   const req = request(app).post('/webhooks/certn').set('Content-Type', contentType);
-  if (signature !== undefined) req.set('Certn-Signature', signature);
+  if (signature !== undefined) req.set('X-Signature', signature);
   return req.send(body);
 }
 
-const complete = JSON.stringify({
-  id: '1ba124f1-d473-44c0-a066-d623b2cb6253',
-  applicant_type: 'Standard',
-  report_status: 'COMPLETE',
-  result: 'CLEARED',
-  result_label: 'Cleared',
-  check_executions: [{ id: 'check_exec_SYS5AS3GLcZZpo0i1GfNXQ', check_name: 'criminal_record_check', status: 'COMPLETE' }],
+// Certn's documented CASE_STATUS_CHANGED example
+const caseStatusChanged = JSON.stringify({
+  created: '2024-06-27T12:00:00Z',
+  event_id: '1712aea0-77a4-425c-9649-7f544a3de477',
+  event_type: 'CASE_STATUS_CHANGED',
+  object_id: '2f64d134-1c54-4028-8e8b-9cfa7bd8011c',
+  object_type: 'CASE',
+  case_status: 'CLIENT_ACTION_REQUIRED',
 });
-const inProgress = JSON.stringify({ id: 'a1', report_status: 'IN_PROGRESS', result: 'NONE' });
 
-describe('Certn webhook signature verification', () => {
-  let logSpy;
-  beforeEach(() => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+const checkStatusChanged = JSON.stringify({
+  created: '2024-06-27T12:00:00Z',
+  event_id: 'e50b8c4f-9a95-40a0-886a-37aa21ea078e',
+  event_type: 'CHECK_STATUS_CHANGED',
+  object_id: '2f64d134-1c54-4028-8e8b-9cfa7bd8011c',
+  object_type: 'CASE',
+  case_status: 'CLIENT_ACTION_REQUIRED',
+  triggered_check: {
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    type: 'UK_MANUAL_IDENTITY_VERIFICATION_1',
+    status: 'CLIENT_ACTION_REQUIRED',
+    action_required_resolution: { summary: 'Complete UK Manual Identity Verification', step_count: 0, steps: [] },
+  },
+});
+
+function eventOf(type, extra = {}) {
+  return JSON.stringify({
+    created: '2024-06-27T12:00:00Z',
+    event_id: '3c2f1a9d-7b54-4e21-9f0c-5d6a8b3e21fa',
+    event_type: type,
+    object_id: '2f64d134-1c54-4028-8e8b-9cfa7bd8011c',
+    object_type: 'CASE',
+    ...extra,
   });
-  afterEach(() => {
-    delete process.env.CERTN_TIMESTAMP_TOLERANCE_SECONDS;
-    jest.restoreAllMocks();
+}
+
+beforeEach(() => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterEach(() => jest.restoreAllMocks());
+
+describe('Certn endpoint verification (GET challenge)', () => {
+  it('echoes the challenge as a plain-text body', async () => {
+    const res = await request(app).get('/webhooks/certn').query({ challenge: 'abc123' });
+    expect(res.status).toBe(200);
+    expect(res.text).toBe('abc123');
+    expect(res.headers['content-type']).toMatch(/^text\/plain/);
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
   });
 
-  it('accepts a valid Certn-Signature', async () => {
-    const res = await post(complete, sign(complete));
+  it('needs no signature', async () => {
+    const res = await request(app).get('/webhooks/certn?challenge=xyz');
+    expect(res.status).toBe(200);
+    expect(res.text).toBe('xyz');
+  });
+
+  it('rejects a GET without a challenge', async () => {
+    expect((await request(app).get('/webhooks/certn')).status).toBe(400);
+  });
+});
+
+describe('Certn X-Signature verification', () => {
+  it('accepts a valid signature', async () => {
+    const res = await post(caseStatusChanged, sign(caseStatusChanged));
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ received: true });
   });
 
-  it('accepts the header without a space after the comma', async () => {
-    const t = Math.floor(Date.now() / 1000);
-    expect((await post(complete, `t=${t},v1=${v1For(complete, t)}`)).status).toBe(200);
-  });
-
   it('verifies regardless of Content-Type', async () => {
-    expect((await post(complete, sign(complete), 'text/plain')).status).toBe(200);
+    expect((await post(caseStatusChanged, sign(caseStatusChanged), 'text/plain')).status).toBe(200);
   });
 
-  it('accepts when any v1 matches (secret roll)', async () => {
-    const t = Math.floor(Date.now() / 1000);
-    const header = `t=${t}, v1=${v1For(complete, t, 'old_secret')}, v1=${v1For(complete, t)}`;
-    expect((await post(complete, header)).status).toBe(200);
+  it('accepts an uppercase hex signature', async () => {
+    expect((await post(caseStatusChanged, sign(caseStatusChanged).toUpperCase())).status).toBe(200);
   });
 
-  it('ignores schemes other than v1', async () => {
-    const t = Math.floor(Date.now() / 1000);
-    const header = `t=${t}, v0=${v1For(complete, t)}`;
-    expect((await post(complete, header)).status).toBe(400);
+  it('rejects a missing signature', async () => {
+    expect((await post(caseStatusChanged)).status).toBe(403);
   });
 
-  it('rejects a missing signature header', async () => {
-    expect((await post(complete)).status).toBe(400);
-  });
-
-  it('rejects a header with no t or no v1', async () => {
-    const t = Math.floor(Date.now() / 1000);
-    expect((await post(complete, `v1=${v1For(complete, t)}`)).status).toBe(400);
-    expect((await post(complete, `t=${t}`)).status).toBe(400);
-  });
-
-  it('rejects a signature made with another secret', async () => {
-    expect((await post(complete, sign(complete, undefined, 'wrong_secret'))).status).toBe(400);
+  it('rejects a signature made with another key', async () => {
+    expect((await post(caseStatusChanged, sign(caseStatusChanged, 'wrong_key'))).status).toBe(403);
   });
 
   it('rejects a tampered body', async () => {
-    expect((await post(complete.replace('CLEARED', 'NONE'), sign(complete))).status).toBe(400);
+    const tampered = caseStatusChanged.replace('CLIENT_ACTION_REQUIRED', 'COMPLETE');
+    expect((await post(tampered, sign(caseStatusChanged))).status).toBe(403);
   });
 
-  it('rejects non-hex or wrong-length v1 values without throwing', async () => {
-    const t = Math.floor(Date.now() / 1000);
-    expect((await post(complete, `t=${t}, v1=${'zz'.repeat(32)}`)).status).toBe(400);
-    expect((await post(complete, `t=${t}, v1=abcd`)).status).toBe(400);
-    expect((await post(complete, `t=${t}, v1=${v1For(complete, t)}00`)).status).toBe(400);
-  });
-
-  it('accepts an uppercase hex v1', async () => {
-    const t = Math.floor(Date.now() / 1000);
-    expect((await post(complete, `t=${t}, v1=${v1For(complete, t).toUpperCase()}`)).status).toBe(200);
-  });
-
-  it('accepts an old timestamp by default (retries and replays keep it)', async () => {
-    const old = Math.floor(Date.now() / 1000) - 86400;
-    expect((await post(complete, sign(complete, old))).status).toBe(200);
-  });
-
-  it('rejects an old timestamp when the window is opted in', async () => {
-    process.env.CERTN_TIMESTAMP_TOLERANCE_SECONDS = '300';
-    const old = Math.floor(Date.now() / 1000) - 3600;
-    expect((await post(complete, sign(complete, old))).status).toBe(400);
-    expect((await post(complete, sign(complete))).status).toBe(200);
-  });
-
-  it('treats an invalid tolerance value as off', async () => {
-    process.env.CERTN_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
-    const old = Math.floor(Date.now() / 1000) - 3600;
-    expect((await post(complete, sign(complete, old))).status).toBe(200);
+  it('rejects non-hex or wrong-length signatures without throwing', async () => {
+    expect((await post(caseStatusChanged, 'zz'.repeat(32))).status).toBe(403);
+    expect((await post(caseStatusChanged, 'abcd')).status).toBe(403);
+    expect((await post(caseStatusChanged, `${sign(caseStatusChanged)}00`)).status).toBe(403);
+    expect((await post(caseStatusChanged, `sha256=${sign(caseStatusChanged)}`)).status).toBe(403);
   });
 
   it('returns 400 for invalid JSON with a valid signature', async () => {
@@ -125,26 +121,36 @@ describe('Certn webhook signature verification', () => {
   });
 });
 
-describe('Certn dispatch on report_status', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-  afterEach(() => jest.restoreAllMocks());
-
-  it('handles COMPLETE', async () => {
-    await post(complete, sign(complete));
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('report complete: result CLEARED'));
+describe('Certn dispatch on event_type', () => {
+  it('handles CASE_STATUS_CHANGED', async () => {
+    await post(caseStatusChanged, sign(caseStatusChanged));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('status: CLIENT_ACTION_REQUIRED'));
   });
 
-  it('handles IN_PROGRESS', async () => {
-    await post(inProgress, sign(inProgress));
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('report in progress'));
+  it('handles CHECK_STATUS_CHANGED with a client action', async () => {
+    await post(checkStatusChanged, sign(checkStatusChanged));
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining('check UK_MANUAL_IDENTITY_VERIFICATION_1 status: CLIENT_ACTION_REQUIRED')
+    );
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Client action required'));
   });
 
-  it('logs unknown statuses and still acknowledges', async () => {
-    const body = JSON.stringify({ id: 'x', report_status: 'SOMETHING_NEW' });
+  it('handles CASE_REPORT_READY', async () => {
+    const body = eventOf('CASE_REPORT_READY', { case_status: 'COMPLETE' });
+    await post(body, sign(body));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('report ready'));
+  });
+
+  it('handles CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED', async () => {
+    const body = eventOf('CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED', { case_status: 'IN_PROGRESS' });
+    await post(body, sign(body));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('new input claims'));
+  });
+
+  it('logs unknown event types and still acknowledges', async () => {
+    const body = eventOf('SOMETHING_NEW');
     const res = await post(body, sign(body));
     expect(res.status).toBe(200);
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Unhandled report_status: SOMETHING_NEW'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Unhandled event type: SOMETHING_NEW'));
   });
 });

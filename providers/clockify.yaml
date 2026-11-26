@@ -1,0 +1,23 @@
+name: clockify
+displayName: Clockify
+docs:
+  webhooks: https://clockify.me/help/administration/api-webhook-settings
+  verification: https://docs.clockify.me/
+  events: https://docs.clockify.me/
+notes: >
+  Workspace owners and admins create webhooks under Preferences > Advanced > Manage webhooks or
+  via POST /v1/workspaces/{workspaceId}/webhooks; each webhook watches one webhookEvent (Free plan
+  allows 3). Not an HMAC: Clockify-Signature carries the webhook's static token (authToken in the
+  API, "Signing secret" in the UI), a non-expiring JWT sent unchanged on every delivery; compare
+  it in constant time. Each webhook has its own token. PATCH .../webhooks/{webhookId}/token (or
+  "Change (reset) Signing secret") issues a new one and invalidates the old. The add-on docs also
+  list a clockify-webhook-event-type header. Body is the changed object itself (time entry,
+  project, task, ...), no envelope or event ID. Retries up to 4 times over 72 hours (12 s, 10 min,
+  30 min, 72 h); only 2xx succeeds. Hookdeck source type CLOCKIFY (API_KEY on clockify-signature;
+  one source per webhook; verification optional; no timestamp window).
+testScenario:
+  events:
+    - NEW_TIME_ENTRY
+    - NEW_PROJECT
+catalog:
+  summary: Authenticate Clockify webhooks (`Clockify-Signature` carries the webhook's static token, compared in constant time, not an HMAC), handle time entry, project, user and invoice events

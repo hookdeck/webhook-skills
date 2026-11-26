@@ -4,7 +4,7 @@
 
 - Header: `X-Body-Signature`
 - Algorithm: HMAC-SHA256 over the **raw request body** only
-- Key: the shared secret from the admin console, used as-is (UTF-8 bytes)
+- Key: the application's Webhook Signature Key from the admin console, used as-is (UTF-8 bytes)
 - Encoding: bare lowercase hex digest (64 chars), the whole header value, no prefix
 
 No timestamp, id or other header is signed, so there is no replay window to check.
@@ -52,7 +52,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 
 ## Debugging Verification Failures
 
-1. Confirm the secret is the shared key from the admin console, unmodified.
+1. Confirm the secret is the **Webhook Signature Key** from the admin console, unmodified, and not the authentication **HMAC Key**.
 2. Confirm you hash the raw bytes, not parsed or re-serialized JSON.
 3. Confirm you read `X-Body-Signature` (not `X-Signature` or similar).
 4. Confirm no proxy or middleware altered the body.

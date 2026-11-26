@@ -27,9 +27,10 @@ LearnHouse (open-source learning platform, cloud or self-hosted) POSTs a JSON en
 
 - Header: `X-Webhook-Signature: sha256=<hex>`
 - Algorithm: HMAC-SHA256, lowercase hex
-- Signed content: the **raw request body bytes only**. No timestamp, id or other header is signed, so there is no replay window to check.
+- Signed content: the **raw request body bytes only**. No header is signed. The body's own `timestamp` (when LearnHouse first tried the delivery) is covered by the signature, and LearnHouse's SDK docs suggest rejecting deliveries older than a few minutes on it. LearnHouse enforces no window itself.
 - Key: the endpoint secret (`whsec_...`), used **whole, prefix included, as plain UTF-8 bytes**. This is **not** Standard Webhooks: do not strip `whsec_`, do not base64-decode it, and do not use the `standardwebhooks` or `svix` libraries.
 - Missing, malformed or mismatched signature: respond `401`.
+- Official SDK: `@learnhouse/sdk` exports `parseWebhook` (verifies and returns the typed event) and `verifyWebhookSignature`. The hand-written check below does the same thing.
 
 ## Verification (core)
 
@@ -69,19 +70,26 @@ Dispatch on the body's `event` field (the same name is also sent in the `X-Webho
 ```json
 {
   "event": "course_completed",
-  "delivery_id": "dlv_1a2b3c4d5e6f7081",
-  "timestamp": "2026-06-22T12:00:00Z",
+  "delivery_id": "dlv_9f1e3c7b22a44f0d",
+  "timestamp": "2026-04-19T14:31:02Z",
   "org_id": 1,
   "data": {
-    "user": { "user_uuid": "user_…", "email": "learner@example.com", "username": "learner" },
-    "course": { "course_uuid": "course_…", "name": "Introduction to Python" }
+    "user": {
+      "user_uuid": "user_abc",
+      "email": "alice@example.com",
+      "username": "alice"
+    },
+    "course": {
+      "course_uuid": "course_xyz",
+      "name": "Intro to Python"
+    }
   }
 }
 ```
 
 ## Common Event Types
 
-LearnHouse documents 39 event types; the full list is in [references/overview.md](references/overview.md).
+LearnHouse documents 46 event types in its [Event Catalogue](https://docs.learnhouse.app/platform/automations/events); the full list is in [references/overview.md](references/overview.md).
 
 | Event | Triggered When |
 |-------|----------------|
@@ -91,7 +99,7 @@ LearnHouse documents 39 event types; the full list is in [references/overview.md
 | `activity_completed` | A learner completes an activity |
 | `assignment_submitted` | A learner submits an assignment |
 | `assignment_graded` | An assignment is graded |
-| `certificate_claimed` | A learner claims a certificate |
+| `certificate_claimed` | A learner receives a certificate |
 | `user_signed_up` | A user signs up to the organization |
 
 ## Environment Variables
@@ -114,7 +122,7 @@ Use the tunnel URL as the endpoint URL in LearnHouse. If you route deliveries th
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - What LearnHouse webhooks are, all 39 events, payload and headers
+- [references/overview.md](references/overview.md) - What LearnHouse webhooks are, all 46 events, payload and headers
 - [references/setup.md](references/setup.md) - Create an endpoint and get the signing secret
 - [references/verification.md](references/verification.md) - Signature verification details and gotchas
 - [examples/](examples/) - Runnable Express, Next.js and FastAPI receivers

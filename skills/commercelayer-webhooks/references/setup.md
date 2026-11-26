@@ -23,6 +23,7 @@ import { CommerceLayer } from '@commercelayer/sdk';
 const client = CommerceLayer({
   organization: process.env.COMMERCELAYER_ORGANIZATION, // your org slug
   accessToken: process.env.COMMERCELAYER_ACCESS_TOKEN,  // integration token
+  apiVersion: '2017-08', // required from @commercelayer/sdk 8; '2026-05' is the latest
 });
 
 const webhook = await client.webhooks.create({

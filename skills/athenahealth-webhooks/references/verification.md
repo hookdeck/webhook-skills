@@ -10,7 +10,7 @@ X-Hub-Signature: sha256=<hex digest>
 
 The digest is HMAC-SHA256 of the **raw request body**, keyed with the `X-Hub-Secret` value you chose when you created the Subscription. Only the body is signed: no timestamp, no message ID. If no secret was set, the header is absent and notifications are unsigned.
 
-athenahealth states that the method "may change from `sha256` in future" and receivers should check the method in the header. The examples require the `sha256=` prefix and reject any other method, so a future method change would fail verification until you add support for it.
+athenahealth signs with `sha256` "at present" and says this may change in future, so receivers should check the method in the header. The examples require the `sha256=` prefix and reject any other method, so a future method change would fail verification until you add support for it.
 
 ## Implementation
 
@@ -59,8 +59,8 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 
 ## Debugging Verification Failures
 
-- 401 on every request: wrong `ATHENAHEALTH_WEBHOOK_SECRET` (it must equal the `X-Hub-Secret` sent when creating or last updating the Subscription; no quotes or trailing whitespace).
-- 401 with no `X-Hub-Signature` header on the request: the Subscription was created without `X-Hub-Secret`, or a proxy stripped the header. Update the Subscription with `PUT` and a secret.
+- 401 on every request: wrong `ATHENAHEALTH_WEBHOOK_SECRET` (it must equal the `X-Hub-Secret` sent when creating the Subscription; no quotes or trailing whitespace).
+- 401 with no `X-Hub-Signature` header on the request: the Subscription was created without `X-Hub-Secret`, or a proxy stripped the header. Delete the Subscription and create it again with `X-Hub-Secret`.
 - 401 and the header starts with something other than `sha256=`: athenahealth changed the signing method. Add support for the new method.
 - Works for some subscriptions only: they were created with different secrets.
 - Intermittent failures: a middleware (JSON parser, proxy) is altering the body before verification.

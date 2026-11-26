@@ -17,7 +17,7 @@ No challenge or validation request is documented. Every event type arrives at th
 
 ## Where Do I Find the Webhook Secret?
 
-Each endpoint has its own signing secret, in the endpoint details on the dashboard. Hexclave doesn't show its format, but the deliveries go through Svix, whose secrets are `whsec_`-prefixed. Store the full value:
+Each endpoint has its own signing secret, in the endpoint details on the dashboard, where it's labelled **Verification Secret**. Hexclave's [dashboard code](https://github.com/hexclave/hexclave/blob/dev/apps/dashboard/src/app/%28main%29/%28protected%29/projects/%5BprojectId%5D/webhooks/%5BendpointId%5D/page-client.tsx) reads it from Svix, so it's a `whsec_`-prefixed Svix endpoint secret. Store the full value:
 
 ```bash
 HEXCLAVE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx

@@ -11,8 +11,7 @@ Flexprice Cloud delivers through Svix, so every delivery carries three headers:
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Flexprice source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+carry the same values. The examples read the `svix-*` headers and fall back to the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 

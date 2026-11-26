@@ -81,7 +81,7 @@ def verify_formio_request(headers, user, pwd):
 - **Constant-time compare.** Hash both sides or check lengths before `timingSafeEqual`, which
   throws on unequal lengths. In Python, pass bytes to `hmac.compare_digest`.
 - **Fail closed.** If either environment variable is unset, reject everything.
-- **Hookdeck source.** It pre-selects POST only; allow PUT and DELETE too.
+- **Hookdeck source.** It accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); allow PUT and DELETE too.
 - **Transform Payload.** A custom script can change the body shape.
 
 ## Debugging Verification Failures

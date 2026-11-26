@@ -19,7 +19,7 @@ Hexclave (formerly Stack Auth) sends a webhook when a user, team, team membershi
 | `team_permission.created` | A permission is granted on a team | Update access rules |
 | `team_permission.deleted` | A permission is removed from a team | Update access rules |
 
-These are the 10 types Hexclave documents; the list may not be exhaustive.
+These are the 10 types Hexclave documents; the list may not be exhaustive. Hexclave's open-source code also sends `project_permission.created` and `project_permission.deleted` when a project-level permission is granted or revoked ([source](https://github.com/hexclave/hexclave/blob/dev/packages/shared/src/interface/crud/project-permissions.ts)), and the dashboard's **Test endpoint** action sends one `stack.test` event. None of the three is in the docs' list.
 
 ## Event Payload Structure
 

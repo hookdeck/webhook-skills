@@ -18,10 +18,10 @@ function handleEvent(payload: WizaPayload): void {
     case 'individual_reveal':
       if (status?.code === 200) {
         console.log(`Reveal ${id} finished`);
-        // TODO: store the contact details in payload.data
+        // Store the contact details in payload.data
       } else if (status?.code === 400) {
         console.log(`Reveal ${id} failed`);
-        // TODO: flag the lookup as failed or retry it
+        // Flag the lookup as failed or retry it
       } else {
         console.log(`Reveal ${id} has status ${status?.code}`);
       }

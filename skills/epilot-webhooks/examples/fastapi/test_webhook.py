@@ -62,7 +62,7 @@ def automation_trigger() -> dict:
             "event_type": "automation_trigger_webhook",
             "correlation_id": "c0ffee",
         },
-        "entity": {"_id": "e1", "_schema_": "opportunity", "name": "New Opportunity", "status": "open"},
+        "entity": {"_id": "e1", "_schema": "opportunity", "name": "New Opportunity", "status": "open"},
         "relations": [],
         "changed_attributes": {"added": {}, "deleted": {}, "updated": {}},
     }
@@ -82,14 +82,18 @@ class TestValidSignatures:
         assert res.json() == {"received": True}
         assert "Automation trigger: opportunity e1" in caplog.text
 
-    def test_accepts_customer_request_created(self, caplog):
-        payload = automation_trigger()
-        payload["metadata"]["event_type"] = "customer_request_created"
-        body = json.dumps(payload)
+    def test_accepts_customer_request_submitted_event_catalog_payload(self, caplog):
+        body = json.dumps(
+            {
+                "_event_name": "CustomerRequestSubmitted",
+                "_event_id": "01F130Q52Q6MWSNS8N2AVXV4JN",
+                "_org_id": "739224",
+            }
+        )
         with caplog.at_level(logging.INFO, logger="epilot-webhooks"):
             res = post(body, signed_headers(body))
         assert res.status_code == 200
-        assert "Customer request created" in caplog.text
+        assert "Customer request submitted" in caplog.text
 
     def test_accepts_file_created_event_catalog_payload(self, caplog):
         body = json.dumps(

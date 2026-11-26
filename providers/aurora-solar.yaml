@@ -15,8 +15,7 @@ notes: >
   AURORA_SOLAR_WEBHOOK_HEADER (default 'X-Aurora-Webhook-Token') and the expected value from
   AURORA_SOLAR_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
   user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
-  parse a 'Bearer ' prefix. This is what Hookdeck's Aurora Solar source does (API key verification:
-  API Key Header + exact whole API Key value). Missing header or mismatch: 401. Compare in constant
+  parse a 'Bearer ' prefix. Hookdeck's source checks this header too. In the examples, a missing header or mismatch returns 401. Compare in constant
   time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
   digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
   str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
@@ -28,8 +27,7 @@ notes: >
   authentication on the Aurora Solar webhook. Webhooks without it send nothing to verify." Methods:
   the receivers' primary route must handle GET with the data in the query string and no body
   (Express app.get, Next.js export GET, FastAPI @app.get), check the header first, then read the
-  query parameters. Also accept POST for flexibility. Say in SKILL.md and setup.md that Hookdeck's
-  Aurora Solar source pre-selects GET without managing the method. Show a URL template such as
+  query parameters. Also accept POST for flexibility. Say in SKILL.md and setup.md that the method Aurora Solar uses must be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Show a URL template such as
   https://<hookdeck-url>?event=project_created&project_id={project_id}. Each subscription is for one
   event, so put a static event name in the template to dispatch on. Respond within 10 seconds;
   failures are retried 5 more times over 24 hours. Express examples must read the raw body with

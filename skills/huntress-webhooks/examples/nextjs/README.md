@@ -44,7 +44,8 @@ npm test
 ```
 
 The tests sign requests with the same HMAC-SHA256 algorithm Huntress uses
-(`{svix-id}.{svix-timestamp}.{raw body}`).
+(`{id}.{timestamp}.{raw body}`). The handler accepts either the `webhook-*` headers a live
+Send Test delivery used or the `svix-*` names in Svix's guide.
 
 ## Receive Real Webhooks Locally
 

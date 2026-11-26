@@ -35,6 +35,7 @@ Creating or editing a webhook opens a modal with these fields:
    - `member.created`
    - `member.updated`
    - `member.deleted`
+   - `member.opted_out`
 4. **Signature secret** — displayed in the same modal. Copy it now (see below).
 
 ## Get Your Signature Secret
@@ -98,7 +99,8 @@ Then trigger real events:
 - `message.inbound` — text your Community number from that phone.
 - `message.outbound` — send a DM to that member from the Dashboard.
 - `member.updated` — change a standard personal data field for that member.
-- `member.deleted` — have the test number text `STOP` / delete themselves.
+- `member.opted_out` and `member.updated` — have the test number text `STOP`.
+- `member.deleted` — have the test member delete themselves.
 
 Because Community delivers **at-least-once**, expect and handle duplicate
 deliveries even during local testing. Deduplicate on the event `id`.

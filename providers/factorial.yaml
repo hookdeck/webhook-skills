@@ -8,8 +8,7 @@ notes: >
   secret you define. Returned on every delivery in the x-factorial-wh-challenge header'). Without a
   challenge Factorial sends nothing to verify: say so prominently. No signature. Factorial sends the
   subscription challenge as plain text in the vendor-fixed 'x-factorial-wh-challenge' header.
-  Hookdeck's Factorial source compares that header's WHOLE value (header name case-insensitive) to
-  the configured key, so the examples read FACTORIAL_WH_CHALLENGE and compare the whole
+  The examples read FACTORIAL_WH_CHALLENGE and compare the whole
   'x-factorial-wh-challenge' value to it in constant time. Missing header or mismatch: 401. Compare
   in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
   SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never

@@ -14,15 +14,13 @@ notes: >
   body) is taken as-is. ... Make sure to use the raw request body, not a parsed or re-serialized
   version' From the docs (registry summary): hex(HMAC-SHA256(team API key, raw body)), the whole
   header value. X-SendX-Signature-Alg names the algorithm (`hmac-sha256`); the Python sample rejects
-  any other value. SIGNATURE SCHEME (it must match Hookdeck's SENDX source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-sendx-signature", encoding "hex"). The x-sendx-signature header
+  any other value. SIGNATURE SCHEME: HMAC-SHA256, signature in the x-sendx-signature header, hex encoded. The x-sendx-signature header
   carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no
   list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the
   secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
   signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
-  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
   constant-time compare. Secret: The team API key (the same X-Team-ApiKey used for the REST API);
   there is no separate webhook secret. Use it as UTF-8 bytes. Env var: SENDX_WEBHOOK_SECRET. Validate
   the signature's format before decoding it (exact length and alphabet), then compare in constant
@@ -31,11 +29,9 @@ notes: >
   uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
   empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
   replay window to check; do not invent one from unsigned headers or body fields. The HMAC key is the
-  SendX team API key. SendX also sends X-SendX-Signature-Alg (`hmac-sha256`); the examples may log it
-  but Hookdeck does not check it. Events: dispatch on the body's top-level `type`, an INTEGER code (7
+  SendX team API key. SendX also sends X-SendX-Signature-Alg (`hmac-sha256`); the examples may log it; verification does not depend on it. Events: dispatch on the body's top-level `type`, an INTEGER code (7
   = mail open from a campaign, 8 = click, 5 = bounce, ...); each engagement kind has one code per
-  sending surface. Compare as numbers. Method: POST. Hookdeck's SendX source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  sending surface. Compare as numbers. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Hookdeck's source type is SENDX, labelled 'SendX'. Hookdeck shows this setup note for the source,

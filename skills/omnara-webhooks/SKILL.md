@@ -2,7 +2,7 @@
 name: omnara-webhooks
 description: >
   Receive and verify Omnara webhooks (hosted AI agents, Standard Webhooks signing).
-  Use when setting up an Omnara agent event_webhook handler, debugging webhook-signature
+  Use when setting up an Omnara event webhook subscription handler, debugging webhook-signature
   verification, or handling agent_input, model_output, tool_result, context_checkpoint
   and tool_call_update events.
 license: MIT
@@ -14,25 +14,26 @@ metadata:
 
 # Omnara Webhooks
 
-An Omnara agent's `event_webhook` sends its timeline events and tool-call updates to a public
-HTTPS endpoint as JSON `POST` requests. The body is `{ "event": "<type>", "data": {...} }`:
+An Omnara event webhook is a project-owned subscription that sends agents' timeline events and
+tool-call updates to a public HTTPS endpoint as JSON `POST` requests. It receives events from the
+whole project, from agents using one profile, or from one agent. (Until 2026-10-29 it was an
+`event_webhook` block in each agent config; that block no longer applies.) The body is `{ "event": "<type>", "data": {...} }`:
 the event type is the top-level `event`, and timeline events repeat it in `data.event_kind`.
 Every request carries `Webhook-Id` (stable across retries) and `Webhook-Timestamp`; signed
 requests also carry `Webhook-Signature`, per [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md).
 
 ## Signing is opt-in
 
-Deliveries are signed only when the agent config sets `event_webhook.signing_secret_id`.
+Deliveries are signed only when the subscription has a signing secret (`signing_secret_id`).
 Without it they still carry `Webhook-Id` and `Webhook-Timestamp` but cannot be verified.
-Hookdeck's configuration alert for this source reads exactly:
-
-> "Signing is opt-in per agent: set event_webhook.signing_secret_id, then paste that secret here as whsec_ followed by the secret. Unsigned deliveries fail verification."
+The secret is bare base64; when you add it to a Hookdeck Omnara source, enter it as `whsec_`
+followed by the value.
 
 See [references/setup.md](references/setup.md).
 
 ## When to Use This Skill
 
-- How do I receive Omnara webhooks (`event_webhook`)?
+- How do I receive Omnara event webhooks?
 - How do I verify Omnara webhook signatures (`webhook-signature`)?
 - How do I handle `tool_call_update`, `tool_result` or `model_output` events?
 - Why is my Omnara webhook signature verification failing, or rejecting Hookdeck retries?
@@ -44,9 +45,9 @@ base64-encoded. `webhook-signature` holds one or more space-separated `v1,<base6
 The secret is bare base64 (from `openssl rand -base64 32`); the HMAC key is its base64-decoding.
 The official `standardwebhooks` library (npm and pip) checks every `v1` entry in constant time,
 strips a `whsec_` prefix if present, and otherwise base64-decodes the whole secret, so the bare
-value and the `whsec_`-prefixed form Hookdeck needs give the same key. Read the `webhook-*`
+value and the `whsec_`-prefixed form give the same key. Read the `webhook-*`
 headers and, when `webhook-id` is absent, fall back to the `svix-*` headers (`svix-id`,
-`svix-timestamp`, `svix-signature`), as Hookdeck does.
+`svix-timestamp`, `svix-signature`).
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -89,8 +90,8 @@ widened. Deduplicate on `webhook-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-5 event types are documented (the list may not be exhaustive). The name is `event` in the body,
-and `event_webhook.events` is a required, nonempty allowlist of them. The examples handle all five:
+5 event types are documented (the API's `event_types` enum lists exactly these). The name is `event` in the body,
+and each subscription's `event_types` is a required, nonempty allowlist of them. The examples handle all five:
 
 | Event | Triggered When |
 |-------|----------------|
@@ -117,12 +118,13 @@ OMNARA_WEBHOOK_SECRET=your_base64_secret
 npx hookdeck-cli listen 3000 omnara --path /webhooks/omnara
 ```
 
-Set the agent's `event_webhook.url` to the tunnel URL, with `events` and `signing_secret_id` set.
+Use the tunnel URL as the subscription URL in the project's **Webhooks** tab, with event types and a
+signing secret selected.
 
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Omnara webhook concepts, payloads, events, delivery
-- [references/setup.md](references/setup.md) - Configure `event_webhook`, create the signing secret
+- [references/setup.md](references/setup.md) - Create the subscription and its signing secret
 - [references/verification.md](references/verification.md) - Verification details, header fallback, manual verifier, timestamp window
 
 ## Attribution

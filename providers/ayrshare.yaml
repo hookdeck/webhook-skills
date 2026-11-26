@@ -20,15 +20,13 @@ notes: >
   hex(HMAC-SHA256(profile signing secret, raw body)). X-Authorization-Content-SHA256 carries the bare
   current signature; X-Authorization-Content-SHA256-V2 carries `v1=<current>` and, for 24 h after a
   rotation, `v1=<current>,v1=<previous>` (accept if any matches). X-Authorization-Timestamp is sent
-  but is not part of the signed content. SIGNATURE SCHEME (it must match Hookdeck's AYRSHARE source
-  exactly: HMAC controller, algorithm "sha256", header_key "x-authorization-content-sha256-v2",
-  encoding "hex"). The x-authorization-content-sha256-v2 header carries `v1=<hex>`. Strip a leading
-  `v1=` before validating the digest; Hookdeck's parser also accepts the bare digest, so accept the
-  value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  but is not part of the signed content. SIGNATURE SCHEME (algorithm sha256, header x-authorization-content-sha256-v2,
+  encoding hex). The x-authorization-content-sha256-v2 header carries `v1=<hex>`. Strip a leading
+  `v1=` before validating the digest; accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret,
   over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
   message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
   never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
-  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require
   exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
   compare. Secret: Optional `secret` given when registering a webhook, or set/rotated in the dashboard
   or via POST /hook/webhook/secret. One secret per User Profile across all its actions. Without a
@@ -42,14 +40,13 @@ notes: >
   several comma-separated `v1=` entries (secret rotation): split on commas, trim spaces, and accept
   the delivery if ANY `v1=` entry matches; ignore entries with other keys. Ayrshare also sends
   X-Authorization-Content-SHA256 (the bare current signature) and an unsigned
-  X-Authorization-Timestamp; verify only the -V2 header, as Hookdeck does, which keeps working through
+  X-Authorization-Timestamp; verify only the -V2 header, which keeps working through
   the 24-hour rotation window. Events: dispatch on the body's `action` field. Top-level `action` (the
   registration category); `subAction` refines it within messages (messageCreated, messageRead, ...),
   comments, mentions and scheduled (tikTokPublished). The automations action also carries `type`
   (`automation.triggered`, `automation.completed`). Documented event types (11): scheduled, social,
   messages, batch, feed, mentions, comments, automations, demo, suspended, ads. Handle a few common
-  ones and log the rest. Method: POST. Hookdeck's Ayrshare source manages the method as POST, so the
-  examples handle POST on the webhook route. Express examples must read the raw body with
+  ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

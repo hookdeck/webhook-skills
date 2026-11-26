@@ -23,12 +23,13 @@ These are the events the examples handle:
 
 ### Other user verification events
 
-`applicantActionOnHold`, `applicantActionLevelChanged`, `applicantPersonalInfoChanged`, `applicantTagsChanged`, `applicantActivated`, `applicantDeactivated`, `applicantPrechecked`, `applicantLevelChanged`, `applicantRiskLevelChanged`, `applicantWorkflowCompleted`, `applicantWorkflowFailed`, `applicantAwaitingService`, `applicantAwaitingUser`, `applicantStepsReset`, `applicantPersonalDataDeleted`, `applicantVerificationLinkOpened`, `applicantShareTokenConsumed`, `applicantShareTokenFailed`, `verificationLinkSdkEvent`.
+`applicantActionOnHold`, `applicantActionLevelChanged`, `applicantPersonalInfoChanged`, `applicantTagsChanged`, `applicantActivated`, `applicantDeactivated`, `applicantPrechecked` (deprecated: no longer offered for new webhooks), `applicantLevelChanged`, `applicantRiskLevelChanged`, `applicantWorkflowCompleted`, `applicantWorkflowFailed`, `applicantAwaitingService`, `applicantAwaitingUser`, `applicantStepsReset`, `applicantPersonalDataDeleted`, `applicantVerificationLinkOpened`, `applicantShareTokenConsumed`, `applicantShareTokenFailed`, `verificationLinkSdkEvent`.
 
 ### Transaction monitoring and case management events
 
 - Transaction monitoring: `applicantKytTxnCreated`, `applicantKytTxnApproved`, `applicantKytTxnRejected`, `applicantKytTxnReviewed`, `applicantKytOnHold`, `applicantKytTxnAwaitingUser`, `applicantKytTxnDataChanged`, `applicantKytTxnDeleted`.
-- Case management: `kytCaseCreated`, `kytCaseReviewed`, `kytCaseStatusChanged`.
+- Case management 1.0: `kytCaseCreated`, `kytCaseStatusChanged`, and the deprecated `kytCaseReviewed`. Case management 2.0: `kytCaseV2Created`, `kytCaseV2StatusChanged`, `kytCaseV2BlueprintChanged`, `kytCaseV2PriorityChanged`. AML cases: `amlCaseApproved`, `amlCaseRejected`, `amlCaseOnHold`.
+- Fraud Network Detection: `applicantFraudNetworkCreated`, `applicantFraudNetworkModified`.
 
 When a verification level uses a **workflow**, `applicantReviewed` is deferred until the workflow completes, and `applicantAwaitingUser`, `applicantAwaitingService`, `applicantWorkflowCompleted` and `applicantWorkflowFailed` may also be sent.
 

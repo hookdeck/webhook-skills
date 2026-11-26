@@ -22,7 +22,7 @@ official [`svix`](https://pypi.org/project/svix/) library (Chargeblast delivers 
    ```
 
 3. Add your Chargeblast webhook secret to `.env` as `CHARGEBLAST_WEBHOOK_SECRET`
-   (the full `whsec_...` value from the dashboard's settings tab).
+   (the full `whsec_...` value from your Chargeblast dashboard).
 
 ## Run
 

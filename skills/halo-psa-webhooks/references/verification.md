@@ -20,8 +20,7 @@ protection** (no signature, no timestamp). Use HTTPS, and rotate the credential 
    deciding (no short-circuit).
 5. Missing or malformed header, or a mismatch: `401`.
 
-The credentials must arrive on the first request. Hookdeck never sends a `401` +
-`WWW-Authenticate` challenge and verifies the request as received.
+The credentials must arrive on the first request.
 
 ## Implementation
 
@@ -90,13 +89,11 @@ See the complete, tested handlers in [../examples/](../examples/).
 - **Raw body.** Read the body raw (`express.raw({ type: '*/*' })`) so any content type works,
   and authenticate before parsing it.
 - **Batching.** With batching on the body is a JSON array. Accept both an object and an array.
-- **Not preemptive?** The docs don't say whether credentials are sent preemptively. A server that
-  waits for a `401` challenge won't work: Hookdeck never challenges.
+- **Not preemptive?** The docs don't say whether credentials are sent preemptively. A server that waits for a `401` challenge won't work.
 - **Passwords with colons** work, because only the first colon splits the pair.
 - **Don't short-circuit.** Evaluate the username and password comparisons both, then combine.
 - **Fail closed.** If either environment variable is unset, reject every request.
-- **GET method.** Halo's Method setting also offers GET (for retrieving data); notifications are
-  POSTs and Hookdeck's source accepts POST only.
+- **GET method.** Halo's Method setting also offers GET (for retrieving data); notifications are POSTs.
 
 ## How Do I Debug 401s from a Halo Webhook?
 

@@ -15,15 +15,14 @@ notes: >
   docs (registry summary): hex(HMAC-SHA256(webhook secret, raw body)), the whole header value, no
   prefix. The JavaScript and TypeScript samples hash `JSON.stringify(req.body)`, a re-serialization
   that will not match byte-for-byte; the page itself warns to use the exact body, as the Python and
-  Ruby samples do. SIGNATURE SCHEME (it must match Hookdeck's PLANETSCALE source exactly: HMAC
-  controller, algorithm "sha256", header_key "x-planetscale-signature", encoding "hex"). The
+  Ruby samples do. SIGNATURE SCHEME: HMAC-SHA256, header x-planetscale-signature, hex encoding. The
   x-planetscale-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
   header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: One secret per webhook: database
   Settings > Webhooks > ... > Show secret. Use it as UTF-8 bytes. Env var: PLANETSCALE_WEBHOOK_SECRET.
   Validate the signature's format before decoding it (exact length and alphabet), then compare in
@@ -40,7 +39,7 @@ notes: >
   branch.schema_recommendation, branch.sleeping, branch.start_maintenance, backup.failed,
   backup.succeeded, cluster.storage, database.access_request, deploy_request.opened,
   deploy_request.queued, deploy_request.in_progress (and 7 more). Handle a few common ones and log the
-  rest. Method: POST. Hookdeck's PlanetScale source manages the method as POST, so the examples handle
+  rest. Method: POST. The examples handle
   POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
   so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
   FastAPI: await request.body()); parse the body only after the check. Documented sample payloads

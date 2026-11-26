@@ -26,8 +26,8 @@ def sample_payload(event="Article published"):
     return {
         "Knowledge base name": "Document360 2.0",
         "Event": event,
-        "User": "Matt Sterling",
-        "User email": "matt.sterling@document360.co",
+        "User": "Example User",
+        "User email": "user@example.com",
         "Logged on (UTC)": "09/12/2025 06:15:00",
         "Article name": "Getting Started",
         "Article id": "e1444f0x-0xx0-000x-xxx0-0x3f2bc3713c",

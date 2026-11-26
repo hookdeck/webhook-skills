@@ -3,31 +3,36 @@
 ## What Are AiPrise Webhooks?
 
 AiPrise is an identity verification platform for KYC (Know Your Customer) and KYB
-(Know Your Business). When a verification session finishes — or when a business
-profile changes — AiPrise notifies your server with a **callback**: a signed HTTP
-POST to a URL you configure.
+(Know Your Business). As a verification case or profile moves through its
+steps, when it reaches a final decision, and when a shared token changes state,
+AiPrise notifies your server with a **callback**: a signed HTTP POST to a URL you
+configure.
 
 Callbacks let you react to verification outcomes asynchronously instead of polling
 the AiPrise API. Every callback is signed with HMAC-SHA256 so you can confirm it
 genuinely came from AiPrise (see [verification.md](verification.md)).
 
-## Two Callback Destinations
+## Callback Destinations
 
-AiPrise sends to two configurable URLs, both signed identically:
+AiPrise sends to these URLs, all signed identically:
 
-| Destination | Configured via | Delivers |
-|-------------|----------------|----------|
-| Verification result | `callback_url` (or template) | The outcome of a verification session |
-| Business-profile events | `events_callback_url` (or template) | Changes to a business profile |
+| Destination | Configured via | Delivers | Event field |
+|-------------|----------------|----------|-------------|
+| Decision callback | `callback_url` (or template) | Final result of a session not linked to a profile; business profiles send one too | none |
+| Event callbacks | `events_callback_url` (or template, or the profile) | Each step of a case or profile | `event_type`, `user_profile_event_type` or `business_profile_event_type` |
+| Token sharing webhooks | The sharing agreement | Token sent, imported or failed to import | `token_sharing_event_type` |
+
+When a session is linked to a user profile, its `callback_url` isn't used: everything
+goes to the profile's `events_callback_url`.
 
 URLs are set at the **template level** (Dashboard → View Templates → `{TemplateID}`)
 or overridden per request via the `callback_url` / `events_callback_url` fields.
 Request-level values take precedence over the template.
 
-## Verification Results
+## Decision Results
 
-AiPrise does **not** use a rich typed-event system. The meaningful "event" is the
-value of `aiprise_summary.verification_result`:
+A decision callback has no event field. Its outcome is in `aiprise_summary`; the API
+reference defines `verification_result`:
 
 | `verification_result` | Triggered When | Common Use Cases |
 |-----------------------|----------------|------------------|
@@ -36,12 +41,13 @@ value of `aiprise_summary.verification_result`:
 | `REVIEW` | The result needs manual review | Route to a human analyst / compliance queue |
 | `UNKNOWN` | The result is indeterminate | Retry, investigate, or ask the user to try again |
 
-Each callback also carries a process status describing the session lifecycle, such
-as `COMPLETED`, `PENDING`, or `FAILED`.
+AiPrise's callback pages print `aiprise_summary.decision` with `APPROVED`, `DECLINED`,
+`MANUAL_REVIEW` or `FAILED` instead, so handle both fields. A run status such as
+`COMPLETED`, `PENDING` or `FAILED` describes where the session is.
 
-## Event Payload Structure
+## Payload Structure
 
-A verification-result callback looks like:
+The signature page's example decision callback:
 
 ```json
 {
@@ -79,5 +85,8 @@ Match a callback to a user or onboarding flow using:
 
 ## Full Event Reference
 
-For the complete callback and authentication documentation, see
-[AiPrise Callbacks & Authentication](https://docs.aiprise.com/docs/callbacks-authentication).
+- [Callback Authentication](https://docs.aiprise.com/docs/callbacks-authentication)
+- [Case event callbacks](https://docs.aiprise.com/docs/event-callbacks)
+- [User profile event callbacks](https://docs.aiprise.com/docs/profile-event-callback)
+- [Business profile event callbacks](https://docs.aiprise.com/docs/event-callback)
+- [Token sharing webhooks](https://docs.aiprise.com/docs/token-sharing-webhooks)

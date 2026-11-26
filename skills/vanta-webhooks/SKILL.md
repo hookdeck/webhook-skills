@@ -59,10 +59,12 @@ wh.verify(raw_body, {"svix-id": msg_id, "svix-timestamp": ts, "svix-signature": 
 
 ## Common Event Types
 
-Event types follow `v1.<domain>.<entity>.<action>`. The event reference documents
-each event's **payload** (for example `{"questionnaire": {"id": "123", "status": "COMPLETE"}}`);
-it does not document a `type` field in the body. The examples read `type` from an
-envelope if one is present and otherwise fall back to the payload's top-level key.
+Event types follow `v1.<domain>.<entity>.<action>`. The event reference says the
+payload documented for each event is the event body (for example
+`{"questionnaire": {"id": "123", "status": "COMPLETE"}}`), and no documented body field
+or header carries the type. The examples read `type` from an envelope if one is present
+and otherwise fall back to the payload's top-level key, which names the resource but not
+the action. For exact routing, give each event type its own endpoint.
 
 | Event | Triggered When |
 |-------|----------------|
@@ -73,7 +75,7 @@ envelope if one is present and otherwise fall back to the payload's top-level ke
 | `v1.trust-center.access-request.approved` | A Trust Center access request is approved |
 | `v1.evidence.status-changed` | Audit evidence status changes (Audit Partner accounts only) |
 
-See [references/overview.md](references/overview.md) for all 25 events.
+See [references/overview.md](references/overview.md) for all 26 events.
 
 ## Environment Variables
 

@@ -50,8 +50,8 @@ def _safe_equal(a: str, b: str) -> bool:
 
 def verify_basic_auth(authorization: Optional[str]) -> bool:
     """Primary check: Basic Auth credentials embedded in the callback URL
-    (https://user:pass@your-domain.com/webhooks/deepgram), which Deepgram
-    sends as an Authorization: Basic header"""
+    (https://user:pass@your-domain.com/webhooks/deepgram). Deepgram includes
+    them when it sends the result; they arrive as an Authorization: Basic header"""
     username = os.environ.get("DEEPGRAM_CALLBACK_USERNAME")
     password = os.environ.get("DEEPGRAM_CALLBACK_PASSWORD")
     if not username or not password:
@@ -70,18 +70,10 @@ def verify_basic_auth(authorization: Optional[str]) -> bool:
 # Dependency for webhook verification
 async def verify_deepgram_webhook(
     authorization: Optional[str] = Header(None),
-    dg_token: Optional[str] = Header(None, alias="dg-token"),
 ):
     """Verify Deepgram webhook authentication"""
     if not verify_basic_auth(authorization):
         raise HTTPException(status_code=401, detail="Invalid Basic Auth credentials")
-
-    # Supplementary check: Deepgram does not send dg-token on every callback,
-    # so compare it only when it is present (and an API Key ID is configured)
-    expected_key_id = os.environ.get("DEEPGRAM_API_KEY_ID")
-    if dg_token and expected_key_id and not _safe_equal(dg_token, expected_key_id):
-        raise HTTPException(status_code=403, detail="Invalid dg-token")
-
     return True
 
 @app.post("/webhooks/deepgram")
@@ -96,6 +88,22 @@ async def handle_deepgram_webhook(
 
         # Parse the JSON body
         webhook_data = json.loads(raw_body)
+    except Exception as e:
+        logger.error(f"Error parsing webhook: {e}")
+        raise HTTPException(status_code=400, detail="Invalid webhook payload")
+
+    # Optional STT check: if you send extra=callback_secret:VALUE with each
+    # /v1/listen request, Deepgram returns it in metadata.extra.callback_secret.
+    # (dg-token is no longer a supported way to verify callbacks.)
+    callback_secret = os.environ.get("DEEPGRAM_CALLBACK_SECRET")
+    if callback_secret:
+        metadata = webhook_data.get("metadata") if isinstance(webhook_data, dict) else None
+        extra = (metadata or {}).get("extra") or {}
+        received = extra.get("callback_secret")
+        if not isinstance(received, str) or not _safe_equal(received, callback_secret):
+            raise HTTPException(status_code=401, detail="Invalid callback secret")
+
+    try:
 
         # Validate with Pydantic model
         webhook = DeepgramWebhook(**webhook_data)

@@ -20,7 +20,7 @@ Missing, malformed or mismatched signatures return 401. Correctly signed invalid
 
 Confirm the secret belongs to this endpoint and environment. Capture the raw bytes before any JSON middleware. Check the header spelling and encoding; never log the secret. An authentic payload can still have unexpected field types, so the handlers guard nested values before dispatch.
 
-The body is a FHIR resource; dispatch on resourceType. There is no create/update/delete discriminator. Delete notifications contain {}. X-Medplum-Deleted-Resource supplies the resource type/id, but is unsigned because the HMAC covers only the body. Reconcile it with application state before acting; these examples do not trust that header as an authenticated identifier.
+The body is a FHIR resource; dispatch on resourceType. Nothing in the body says whether it was created or updated. Medplum's [server code](https://github.com/medplum/medplum/blob/1f2c185cb97e93b4f1decbf19a19ea41ab39e8d0/packages/server/src/workers/subscription.ts) also sends `X-Medplum-Interaction` (`create`, `update` or `delete`) and `X-Medplum-Subscription` (the Subscription ID) on every rest-hook request, though Medplum's docs don't list them. Delete notifications contain {}. X-Medplum-Deleted-Resource supplies the resource type/id. None of these headers is signed, because the HMAC covers only the body. Reconcile them with application state before acting; these examples do not trust those headers as authenticated identifiers.
 
 ## Official Documentation
 

@@ -49,7 +49,7 @@ Postscript may add event types at any time. Acknowledge events you don't handle.
 
 Respond `200` (the body is ignored), ideally before doing any complex work. If Postscript doesn't
 get a `200`, or the response is slow, it retries every 5 minutes for up to 1 hour. The same event
-can be delivered more than once, so make the handler idempotent. Payloads have no documented event id. `webhook_id` appears to be the subscription's id (same UUID form as the subscription `id`), so it repeats across events: don't dedupe on it. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
+can be delivered more than once, so make the handler idempotent. Payloads have no documented event id. Postscript doesn't say what `webhook_id` identifies, and it has the same UUID form as a subscription's `id`, so don't dedupe on it alone. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
 
 ## Full Event Reference
 

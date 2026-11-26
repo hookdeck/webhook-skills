@@ -7,7 +7,7 @@ verification using the official [`svix`](https://www.npmjs.com/package/svix) lib
 ## Prerequisites
 
 - Node.js 18+
-- A Sohar Health account with production API credentials and a webhook endpoint (its `whsec_...` secret comes from the Svix Portal)
+- A Sohar Health account with production API credentials and a webhook endpoint (an account administrator reveals its `whsec_...` signing secret in the dashboard)
 
 ## Setup
 
@@ -22,7 +22,7 @@ verification using the official [`svix`](https://www.npmjs.com/package/svix) lib
    ```
 
 3. Add your Sohar Health webhook secret to `.env.local` as `SOHAR_HEALTH_WEBHOOK_SECRET` (the full
-   `whsec_...` value from the Svix Portal: dashboard Webhooks > your endpoint > **Open Svix Portal**).
+   `whsec_...` value from the dashboard: Webhooks > your endpoint > **Signing Secret**).
 
 ## Run
 
@@ -56,7 +56,7 @@ npx hookdeck-cli listen 3000 sohar-health --path /webhooks/sohar-health
 
 1. Register the tunnel URL with the [Create Webhook](https://docs.soharhealth.com/api-reference/webhooks/create-webhook.md) API (`POST /v1/webhooks`, production credentials). It returns an `endpointId`.
 2. Subscribe it with [Create Event](https://docs.soharhealth.com/api-reference/webhooks/create-webhook-event.md) (`POST /v1/webhooks/{endpointId}/events`, body `{"event": "sandbox.verification.updated"}`).
-3. Open the endpoint in the [Webhooks](https://app.soharhealth.com/webhooks) page, choose **Open Svix Portal**, and copy the signing secret into `.env.local`.
+3. Open the endpoint in the [Webhooks](https://app.soharhealth.com/webhooks) page, reveal the **Signing Secret** in the detail panel, and copy it into `.env.local`.
 
 ## Event Handling
 

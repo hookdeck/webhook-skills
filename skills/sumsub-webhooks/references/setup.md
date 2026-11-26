@@ -2,12 +2,12 @@
 
 ## Prerequisites
 
-- A Sumsub account with access to **Dev space** in the Dashboard
+- A Sumsub account with access to **Configurations → Developers → Webhooks** in the Dashboard
 - A public **HTTPS** endpoint (Sumsub rejects HTTP and internal hosts). For local development use the Hookdeck CLI tunnel below.
 
 ## Create a Webhook and Get the Secret Key
 
-1. In the Sumsub Dashboard, open **Dev space → Webhooks → Webhook manager** and click **Create webhook**.
+1. In the Sumsub Dashboard, go to **Configurations → Developers → Webhooks**, open the **Manager** tab and click **Create webhook**.
 2. **Name**: any label.
 3. **Receiver type**: **HTTP address**.
 4. **Target**: your endpoint, e.g. `https://your-app.example.com/webhooks/sumsub`.

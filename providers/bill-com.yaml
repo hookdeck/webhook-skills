@@ -1,0 +1,27 @@
+name: bill-com
+displayName: Bill.com
+docs:
+  webhooks: https://developer.bill.com/docs/working-with-bill-webhooks
+  verification: https://developer.bill.com/docs/test-with-webhook-security
+  events: https://developer.bill.com/docs/working-with-bill-webhooks
+notes: >
+  Connect Events API (sandbox base https://gateway.stage.bill.com/connect-events). POST
+  /v3/subscriptions (headers X-Idempotent-Key, devKey, sessionId; apiToken for Spend & Expense;
+  body name, status.enabled, events [{type, version}], notificationUrl HTTPS) returns a one-time
+  securityKey; POST /v3/subscriptions/{id}/security-key rotates it. Every notification has
+  x-bill-sha-signature = base64 HMAC-SHA256 keyed with securityKey as text. The docs verify
+  against the "minified" payload because they read it from webhook.site's formatted view; BILL
+  sends the stored compact JSON string, so the raw body verifies (no official code says so).
+  Body {metadata {eventId, subscriptionId, organizationId, eventType, version}, payload}. Catalog
+  GET /v3/events/catalog (bill.created/updated/archived and vendor, payment, invoice, bank, card,
+  risk events). POST /v3/subscriptions/{id}/test sends a signed test (eventType test). Needs HTTP
+  200 within 10 s; retries at 2/4/8/16 s (5 attempts), then status.enabled=false. Dedupe on the
+  event id, order by timestamp; 180-day history and resend endpoints. Max 10 subscriptions per
+  org. Production URLs are allowlisted by BILL. Hookdeck source type BILL_COM (HMAC sha256 base64
+  on x-bill-sha-signature; securityKey pasted as-is).
+testScenario:
+  events:
+    - test
+    - bill.created
+catalog:
+  summary: Verify BILL (Bill.com) webhooks (`x-bill-sha-signature` base64 HMAC-SHA256 of the raw body keyed with the subscription securityKey), send test notifications, handle bill and other Connect Events

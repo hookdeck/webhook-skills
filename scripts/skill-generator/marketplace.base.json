@@ -34,6 +34,33 @@
       ]
     },
     {
+      "name": "bfcm-webhook-playbook",
+      "description": "Black Friday / Cyber Monday (BFCM) webhook playbook: prepare Shopify, Stripe, BigCommerce, WooCommerce and PayPal webhooks for peak traffic, and recover when webhooks are failing by capturing, replaying in order and rate-limiting delivery with the Hookdeck Event Gateway via CLI, API and Terraform.",
+      "source": "./skills/bfcm-webhook-playbook",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "development",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/bfcm-webhook-playbook",
+      "keywords": [
+        "webhooks",
+        "black-friday",
+        "cyber-monday",
+        "bfcm",
+        "incident-response",
+        "replay",
+        "recovery",
+        "hookdeck"
+      ]
+    },
+    {
       "name": "hookdeck-event-gateway",
       "description": "Hookdeck Event Gateway: webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability.",
       "source": "./skills/hookdeck-event-gateway",
@@ -108,7 +135,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: {providerCount} provider skills (Stripe, Shopify, GitHub, and {otherProviderCount} others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all {skillCount} skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: {providerCount} provider skills (Stripe, Shopify, GitHub, and {otherProviderCount} others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all {skillCount} skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": "{allSkills}",

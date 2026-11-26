@@ -23,7 +23,7 @@ Onramper (the fiat-to-crypto on-ramp aggregator) sends a webhook each time a tra
 - How do I verify the `X-Onramper-Webhook-Signature` header?
 - How do I handle `completed`, `paid`, `pending`, `new`, `failed` and `canceled` transactions?
 - Why is my Onramper webhook signature verification failing?
-- How do I tell a `buy` from an `offramp` transaction in the payload?
+- How do I tell a buy from a sell (off-ramp) transaction in the payload?
 
 ## Verification (core)
 
@@ -50,7 +50,7 @@ Read the body as raw bytes (Express: `express.raw({ type: '*/*' })`; Next.js: `a
 
 Onramper sends no event name and no header carries a type. Dispatch on the body's `status` field. Its six documented values (Onramper's "Webhook Status" table) are `new`, `pending`, `paid`, `completed`, `failed` and `canceled`.
 
-`transactionType` (`buy` or `offramp`) gives the direction. Handle the statuses you need and log the rest. Other fields include `transactionId`, `onrampTransactionId`, `onramp`, `sourceCurrency`, `targetCurrency`, `inAmount`, `outAmount`, `paymentMethod`, `walletAddress`, `transactionHash`, `partnerContext` and `statusDate`.
+`transactionType` gives the direction. Onramper's two webhook pages disagree on its values (`buy` and `offramp` on one, `buy` and `sell` on the newer one), so normalise it before comparing. Onramper also says the statuses sent can vary by provider. Handle the statuses you need and log the rest. Other fields include `transactionId`, `onrampTransactionId`, `onramp`, `sourceCurrency`, `targetCurrency`, `inAmount`, `outAmount`, `paymentMethod`, `walletAddress`, `transactionHash`, `partnerContext`, `statusDate`, and, on the newer page, `statusReason`, `usdConversionRate`, `partnerFee`, `isRecurringPayment` and `alternateRouteData`.
 
 ## Environment Variables
 

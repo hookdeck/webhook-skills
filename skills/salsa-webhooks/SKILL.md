@@ -34,7 +34,7 @@ Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. Salsa signs it 
 base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or more
 space-separated `v1,<signature>` entries. Use a Standard Webhooks library (`standardwebhooks` on npm and
 PyPI), which compares in constant time. Read the `webhook-*` headers, and when `webhook-id` is absent fall
-back to the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`), as Hookdeck does.
+back to the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`).
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -78,15 +78,15 @@ The body has no event id, so deduplicate on `webhook-id`, which stays the same w
 
 ## Common Event Types
 
-More than 70 events are documented, split into `LIFECYCLE` and `NOTIFICATION` categories (`attributes.category`),
+78 events are documented, split into `LIFECYCLE` and `NOTIFICATION` categories (`attributes.category`),
 and the list may not be exhaustive. The name is `data.type` in the JSON body. The examples handle these:
 
 | Event | Triggered When |
 |-------|----------------|
 | `Employer.created` / `Employer.updated` | An employer is created or updated |
-| `Employer.onboardingStatus` | An employer's onboarding status changes |
+| `Employer.onboardingStatus` | An employer completes the onboarding form |
 | `Worker.created` / `Worker.updated` | A worker is created or updated |
-| `Worker.onboardingStatus` | A worker's onboarding status changes |
+| `Worker.onboardingStatus` | A worker's onboarding status changes (`INVITED`, `STARTED`, `COMPLETED`, `INVALIDATED`) |
 | `PayrollRun.awaitingInput` | A payroll run needs compensation data from you |
 | `PayrollRun.statusChanged` | A payroll run's status changes |
 | `Notification.workerPayday` | The day a worker is paid (not sent in the sandbox for Direct Deposit workers) |

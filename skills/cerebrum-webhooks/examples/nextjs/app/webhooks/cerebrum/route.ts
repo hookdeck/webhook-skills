@@ -12,14 +12,15 @@ import { Webhook } from 'svix';
 // Signed content: `${id}.${timestamp}.${rawBody}`
 // Key: base64-decode of the secret after its `whsec_` prefix.
 // The same three values can arrive as webhook-id / webhook-timestamp /
-// webhook-signature; Hookdeck reads either set, and so does this handler.
+// webhook-signature; this handler reads either set.
 // ---------------------------------------------------------------------------
 
 // Payload schema: { id, idType, additionalMetadata, event, eventDate, svixAppId, metadata }
 // `metadata.delta` is a JSON-Patch-style change list on some order updates.
 interface CerebrumEvent {
   id: string;
-  idType: string;
+  idType: string; // order, invite, beamInput or report
+  organizationId?: string;
   additionalMetadata?: Record<string, unknown>;
   event: string; // e.g. "ORDER_STATUS_CHANGE"
   eventDate: string;
@@ -31,7 +32,7 @@ type SvixHeaders = Record<'svix-id' | 'svix-timestamp' | 'svix-signature', strin
 
 /**
  * Pick one complete set of signature headers. svix-* wins when svix-id is
- * present, otherwise webhook-* is used (the same rule Hookdeck applies).
+ * present, otherwise webhook-* is used.
  * Returns the three values under the names the svix library reads, or null
  * if any of them is missing.
  */
@@ -75,11 +76,18 @@ function handleEvent(payload: CerebrumEvent): void {
     case 'ORDER_DISPUTE_RESOLVED':
       console.log(`Order dispute resolved: ${idType} ${id}`);
       break;
+    case 'ORDER_ERROR': // opt-in: enable order.error
+      console.log(`County search dispatch failed: ${idType} ${id}`);
+      break;
 
     // --- Vouchers (vID) ----------------------------------------------------
+    // VOUCHER_ACCEPTED, VOUCHER_STARTED and VOUCHER_CANCELED are opt-in.
+    case 'VOUCHER_ACCEPTED':
     case 'VOUCHER_STARTED':
-    case 'VOUCHER_REDEEMED':
+    case 'VOUCHER_CANCELED':
+    case 'VOUCHER_REDEEMED': // id is the invite ID, not the new order ID
     case 'VOUCHER_EXPIRED':
+    case 'VOUCHER_OPTED_OUT':
       console.log(`${event}: ${idType} ${id}`);
       break;
 
@@ -92,7 +100,7 @@ function handleEvent(payload: CerebrumEvent): void {
       break;
 
     default:
-      // The documented list may not be exhaustive: acknowledge, don't fail.
+      // Cerebrum has no published policy for new event names: acknowledge and log.
       console.log(`Unhandled Cerebrum event: ${event}`);
   }
 }
@@ -128,8 +136,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Cerebrum needs a 2xx within 30 seconds. In production, enqueue the
-    // payload here and process it asynchronously.
+    // Cerebrum recommends a 2xx in under 10 seconds. In production, store the
+    // payload durably here and fetch the order or invite asynchronously.
     handleEvent(payload);
     processedMessageIds.add(messageId);
   } catch (err) {

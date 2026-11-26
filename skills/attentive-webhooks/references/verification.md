@@ -10,7 +10,7 @@ altered in transit. It is optional but **strongly recommended**.
 ## How It Works
 
 Attentive computes an HMAC-SHA256 over the **raw request body** using your
-per-webhook **signing key** (the "client secret"), hex-encodes the digest, and
+per-webhook **Signing key** (from the custom app's Webhooks tab), hex-encodes the digest, and
 sends it in the `x-attentive-hmac-sha256` header.
 
 - **Algorithm:** HMAC-SHA256
@@ -23,8 +23,8 @@ sends it in the `x-attentive-hmac-sha256` header.
 > spec. There is no `webhook-id` / `webhook-timestamp` / `webhook-signature`
 > header and **no timestamp is included in the signature**, so the signature
 > alone provides no replay protection. If you need replay protection, add your
-> own (e.g. deduplicate on a delivery/event id, or front the endpoint with an
-> event gateway).
+> own (payloads carry no event ID, so make handlers idempotent and check the
+> payload `timestamp`, or front the endpoint with an event gateway).
 
 There is **no official server-side SDK** (npm/pip) for verification — verify
 manually with your language's HMAC primitives.

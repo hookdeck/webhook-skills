@@ -1,7 +1,7 @@
 ---
 name: skovik-webhooks
 description: >
-  Receive and verify Skovik webhooks (operations platform API, signed with Standard Webhooks). Use when
+  Receive and verify Skovik webhooks (expense management platform API, signed with Standard Webhooks). Use when
   setting up Skovik webhook handlers, debugging webhook-signature verification, or handling events like
   users.created, users.updated, export_orders.completed, export_orders.failed, branches.archived, and
   misc.ping.
@@ -14,7 +14,7 @@ metadata:
 
 # Skovik Webhooks
 
-[Skovik](https://developer.skovik.com/docs/api-webhooks-receiving) is an operations platform whose API
+[Skovik](https://developer.skovik.com/reference/api-webhooks-receiving) is an expense management platform whose API
 exposes users, branches and export orders. You add webhook endpoints in the settings UI, and Skovik
 delivers each event as a JSON `POST` signed with
 [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks) headers: `webhook-id`,
@@ -35,7 +35,7 @@ Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. Skovik signs it
 base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or more
 space-separated `v1,<signature>` entries. Use a Standard Webhooks library (`standardwebhooks` on npm and
 PyPI), which compares in constant time. Read the `webhook-*` headers, and when `webhook-id` is absent fall
-back to the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`), as Hookdeck does.
+back to the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`).
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

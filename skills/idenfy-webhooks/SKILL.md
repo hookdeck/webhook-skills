@@ -81,10 +81,12 @@ the enum value below.
 | `COMPANY_REVIEW` | A KYB company verification completed |
 | `AML_MONITORING` | An AML monitoring user was checked, accepted or declined |
 
-iDenfy documents 23 event types in total (also `IDENTIFICATION_RESUBMITTED`,
+iDenfy documents 24 event types in total (also `IDENTIFICATION_RESUBMITTED`,
 `DOCUMENT_EXPIRATION`, `VIDEO_CALL_FINISHED`, `COMPANY_SUBMIT`, ...); see
-[references/overview.md](references/overview.md). Deduplicate on `scanRef` (KYC) or `id`
-(bank card): a failed delivery is retried.
+[references/overview.md](references/overview.md). A failed delivery is retried, and one KYC
+verification sends several webhooks with the same `scanRef`, so store each verification's
+latest state keyed on `scanRef` (or `id` for bank cards) with an idempotent update rather than
+dropping every later delivery for a `scanRef` you've seen.
 
 ## Environment Variables
 
@@ -121,7 +123,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — iDenfy retries non-2xx deliveries, so deduplicate on `scanRef`
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — iDenfy retries non-2xx deliveries, so make updates keyed on `scanRef` idempotent
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

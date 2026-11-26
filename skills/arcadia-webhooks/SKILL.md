@@ -1,7 +1,7 @@
 ---
 name: arcadia-webhooks
 description: >
-  Receive and authenticate Arcadia webhooks (utility data platform, Plug and Spark APIs).
+  Receive and authenticate Arcadia webhooks (utility data platform, Plug API).
   Use when setting up an Arcadia webhook endpoint, checking the custom authentication header
   Arcadia support configures, debugging 401s, or handling STATUS_CHANGE, NEW_DATA_AVAILABLE,
   EXISTING_DATA_UPDATED, DATA_DELETED and credential validation events.
@@ -74,7 +74,8 @@ if it leaks.
 ## Event Types
 
 Every payload has `id` (`whk_...`), `eventType`, `resource`, `createdAt`, `businessUnitIds`,
-`errors` and `data`. Dispatch on `eventType` (and `resource`) and de-duplicate on `id`.
+`errors` and `data`. Dispatch on `eventType` (and `resource`) and de-duplicate retries on `id`. A copy sent to
+another business unit's URL has its own `id`.
 
 | eventType | resource (example) | Sent When |
 |-----------|--------------------|-----------|
@@ -82,7 +83,7 @@ Every payload has `id` (`whk_...`), `eventType`, `resource`, `createdAt`, `busin
 | `NEW_DATA_AVAILABLE` | `METER` | New data is available for a resource |
 | `EXISTING_DATA_UPDATED` | `METER` | Existing data is updated |
 | `DATA_DELETED` | `BUSINESS_UNIT_DELETION` | A user deletes a business unit |
-| `BUSINESS_UNIT_ASSIGNMENT` | `ROOT_BUSINESS_UNIT_ACCOUNT` | An account is assigned to a business unit |
+| `BUSINESS_UNIT_ASSIGNMENT` | `ROOT_BUSINESS_UNIT_ACCOUNT` | An account is assigned to the root business unit |
 | `REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS` | `CREDENTIAL` | A real-time credential validation succeeds |
 | `REAL_TIME_CREDENTIAL_VALIDATION_FAILURE` | `CREDENTIAL` | A real-time credential validation fails |
 | `MFA_CHALLENGE_METHOD` | `MFA_METHOD_PROMPT` | The user must pick an MFA verification method |

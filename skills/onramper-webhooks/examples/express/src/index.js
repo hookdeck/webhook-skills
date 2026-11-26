@@ -21,14 +21,14 @@ function verifyOnramperSignature(rawBody, signature, secret) {
 
 /**
  * Every delivery is a transaction snapshot with no event name, so dispatch on `status`.
- * `transactionType` (buy | offramp) gives the direction.
+ * `transactionType` gives the direction: `buy`, or `offramp` or `sell` (Onramper's pages differ).
  */
 function handleEvent(tx) {
   const ref = `${tx.transactionId} (${tx.transactionType})`;
   switch (tx.status) {
     case 'completed':
       console.log(`Transaction completed: ${ref}`);
-      // TODO: fulfil the order using tx.outAmount, tx.targetCurrency, tx.transactionHash
+      // Your code: fulfil the order using tx.outAmount, tx.targetCurrency, tx.transactionHash
       break;
 
     case 'paid':
@@ -45,7 +45,7 @@ function handleEvent(tx) {
 
     case 'failed':
       console.log(`Transaction failed: ${ref}`);
-      // TODO: notify the customer or alert support
+      // Your code: notify the customer or alert support
       break;
 
     case 'canceled':

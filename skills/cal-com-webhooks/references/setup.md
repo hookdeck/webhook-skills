@@ -53,8 +53,10 @@ Each delivery includes `X-Cal-Signature-256` (hex HMAC-SHA256 of the raw body) a
 ## Delivery Notes
 
 - Respond with a 2xx quickly and do slow work asynchronously.
-- Cal.com documents retries (on network errors, 408, 429, and 5xx) only for the
-  `DELEGATION_CREDENTIAL_*` events; don't rely on retries for booking events. Put
+- Cal.com documents retries (on network errors, 408, 429, and 5xx) only for the three
+  delegation credential secret rotation events (`DELEGATION_CREDENTIAL_SECRET_ROTATED`,
+  `DELEGATION_CREDENTIAL_SECRET_ROTATION_FAILED`, `DELEGATION_CREDENTIAL_ROTATION_REQUIRED`);
+  don't rely on retries for booking events. Put
   [Hookdeck Event Gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway)
   in front of your endpoint if you need guaranteed delivery and replay.
 - `MEETING_STARTED` / `MEETING_ENDED` are scheduled at booking time and cancelled automatically if

@@ -10,7 +10,7 @@ client = TestClient(app)
 # Test data
 callback_username = "dg_user"
 callback_password = "dg:pass-123"  # contains ':' on purpose
-valid_api_key_id = "test_api_key_id_12345"
+callback_secret = "9f2c4e7a1b3d5f60"
 
 
 def basic_auth(user, password):
@@ -64,13 +64,13 @@ def setup_env():
     """Set up test environment variables"""
     os.environ["DEEPGRAM_CALLBACK_USERNAME"] = callback_username
     os.environ["DEEPGRAM_CALLBACK_PASSWORD"] = callback_password
-    os.environ["DEEPGRAM_API_KEY_ID"] = valid_api_key_id
+    os.environ.pop("DEEPGRAM_CALLBACK_SECRET", None)
     yield
     # Cleanup if needed
 
 class TestDeepgramWebhook:
-    def test_valid_basic_auth_without_dg_token(self):
-        """Test accepting valid Basic Auth when dg-token is absent"""
+    def test_valid_basic_auth(self):
+        """Test accepting valid Basic Auth"""
         response = client.post(
             "/webhooks/deepgram",
             json=valid_payload,
@@ -81,21 +81,26 @@ class TestDeepgramWebhook:
         assert data["status"] == "success"
         assert data["requestId"] == "a847f427-4ad5-4d67-9b95-db801e58251c"
 
-    def test_valid_basic_auth_with_matching_dg_token(self):
-        """Test accepting valid Basic Auth with a matching dg-token"""
-        response = client.post(
-            "/webhooks/deepgram",
-            json=valid_payload,
-            headers={"Authorization": valid_auth, "dg-token": valid_api_key_id}
-        )
-        assert response.status_code == 200
+    def test_matching_callback_secret(self):
+        """Test accepting a matching extra callback secret when one is configured"""
+        os.environ["DEEPGRAM_CALLBACK_SECRET"] = callback_secret
+        try:
+            payload = {**valid_payload, "metadata": {**valid_payload["metadata"], "extra": {"callback_secret": callback_secret}}}
+            response = client.post(
+                "/webhooks/deepgram",
+                json=payload,
+                headers={"Authorization": valid_auth}
+            )
+            assert response.status_code == 200
+        finally:
+            os.environ.pop("DEEPGRAM_CALLBACK_SECRET", None)
 
     def test_missing_authorization(self):
         """Test rejecting webhook with no Authorization header"""
         response = client.post(
             "/webhooks/deepgram",
             json=valid_payload,
-            headers={"dg-token": valid_api_key_id}
+            headers={}
         )
         assert response.status_code == 401
         assert "Invalid Basic Auth credentials" in response.json()["detail"]
@@ -109,15 +114,21 @@ class TestDeepgramWebhook:
         )
         assert response.status_code == 401
 
-    def test_invalid_dg_token(self):
-        """Test rejecting webhook with a mismatched dg-token"""
-        response = client.post(
-            "/webhooks/deepgram",
-            json=valid_payload,
-            headers={"Authorization": valid_auth, "dg-token": "invalid_token"}
-        )
-        assert response.status_code == 403
-        assert "Invalid dg-token" in response.json()["detail"]
+    def test_missing_or_wrong_callback_secret(self):
+        """Test rejecting a missing or wrong extra callback secret when one is configured"""
+        os.environ["DEEPGRAM_CALLBACK_SECRET"] = callback_secret
+        try:
+            wrong = {**valid_payload, "metadata": {**valid_payload["metadata"], "extra": {"callback_secret": "wrong"}}}
+            for payload in (valid_payload, wrong):
+                response = client.post(
+                    "/webhooks/deepgram",
+                    json=payload,
+                    headers={"Authorization": valid_auth}
+                )
+                assert response.status_code == 401
+                assert "Invalid callback secret" in response.json()["detail"]
+        finally:
+            os.environ.pop("DEEPGRAM_CALLBACK_SECRET", None)
 
     def test_minimal_payload(self):
         """Test handling webhook with minimal payload"""

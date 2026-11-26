@@ -25,7 +25,7 @@ function verifyReferralHeroSignature(rawBody, signature, secret) {
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
 
-  // Compare the base64 text exactly (case-sensitive), as Hookdeck does.
+  // Compare the base64 text exactly (case-sensitive).
   const a = Buffer.from(signature, 'utf8');
   const b = Buffer.from(expected, 'utf8');
   return a.length === b.length && crypto.timingSafeEqual(a, b);
@@ -92,7 +92,7 @@ app.post('/webhooks/referralhero', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 
-  // ReferralHero wants 200 with a blank body; anything else counts as an error.
+  // ReferralHero asks for 200 with a blank body; any non-200 status counts as an error.
   return res.status(200).end();
 });
 

@@ -16,10 +16,12 @@ The examples use clearly labelled illustrative payloads:
 | Shape | Source | Handled as |
 |-------|--------|------------|
 | `{ "data": [...], "metadata": {...} }` | Streams batch | Log item count, `metadata.dataset` and `metadata.network` |
-| `[ {...}, ... ]` | Webhooks matched items (e.g. transactions) | Log matched item count |
+| `[ {...}, ... ]` | Any array body (Quicknode documents no Webhooks payload shape) | Log item count |
 | anything else | - | Logged as an unrecognised shape |
 
-The real fields depend on the dataset you select for a stream, or the filter you configure for a webhook. See the [Quicknode docs](https://www.quicknode.com/docs/webhooks/getting-started) for the payloads of your product.
+The real fields depend on the dataset you select for a stream, or the filter you configure for a webhook. Quicknode documents the Streams envelope on its [data sources page](https://www.quicknode.com/docs/streams/data-sources#payload-structure); for a webhook, use the test payload the dashboard shows when you click **Run** on a test block.
+
+Streams also sends its metadata as headers on every delivery, including `Stream-Id`, `Stream-Dataset` and `Batch-Start-Range`, so you can tell streams apart without parsing the body.
 
 ## Headers
 
@@ -38,7 +40,7 @@ Acknowledge quickly and process in the background; deduplicate on block number o
 
 ## Compression
 
-Payload compression (gzip) must stay **off**. Quicknode signs the uncompressed JSON while the wire carries gzip bytes, so a verifier that checks the raw request body, including Hookdeck's, fails on compressed deliveries. See [verification.md](verification.md).
+Payload compression (gzip) must stay **off**. Quicknode signs the uncompressed JSON while the wire carries gzip bytes, so a verifier that checks the raw request body fails on compressed deliveries. See [verification.md](verification.md).
 
 ## Full Reference
 

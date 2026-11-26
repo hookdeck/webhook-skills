@@ -1,11 +1,12 @@
 ---
 name: openrouter-webhooks
 description: >
-  Receive and verify OpenRouter video-generation webhooks (the callback_url of a
-  video job). Use when setting up OpenRouter webhook handlers, debugging
-  X-OpenRouter-Signature verification, or handling video.generation.completed,
-  video.generation.failed, video.generation.cancelled and
-  video.generation.expired events.
+  Receive and verify OpenRouter video-generation and Batch API webhooks (the
+  callback_url of a video job or batch). Use when setting up OpenRouter webhook
+  handlers, debugging X-OpenRouter-Signature verification, or handling
+  video.generation.completed, video.generation.failed, video.generation.cancelled,
+  video.generation.expired, batch.completed, batch.failed, batch.expired and
+  batch.cancelled events.
 license: MIT
 metadata:
   author: hookdeck
@@ -23,13 +24,13 @@ metadata:
 - How do I handle `video.generation.failed`, `cancelled` or `expired` jobs?
 - Why is my OpenRouter webhook signature verification failing?
 
-> OpenRouter signs only video-generation callbacks (the callback_url of a video request). Use this source for those callbacks.
+OpenRouter sends signed callbacks for two kinds of job: video generation (`POST /api/v1/videos`) and the Batch API (`POST /api/v1/batches`). Both use the same workspace signing secret and the same `X-OpenRouter-Signature` scheme, so one receiver can verify both.
 
 OpenRouter's Broadcast "Webhook" destination (OTLP traces) is unsigned and is not covered by this skill.
 
 ## Verification (core)
 
-Every callback carries `X-OpenRouter-Signature: t=<unix seconds>,v1=<hex>`. The `v1` value is lowercase hex **HMAC-SHA256**, keyed with the workspace webhook signing secret (its UTF-8 bytes, used as-is), over the bytes `"<t>,"` (a literal **comma**, not a dot) followed by the **raw request body**.
+Once the workspace has a webhook signing secret (setting a `callback_url` doesn't create one), every callback carries `X-OpenRouter-Signature: t=<unix seconds>,v1=<hex>`. The `v1` value is lowercase hex **HMAC-SHA256**, keyed with the workspace webhook signing secret (its UTF-8 bytes, used as-is), over the bytes `"<t>,"` (a literal **comma**, not a dot) followed by the **raw request body**.
 
 ```javascript
 const crypto = require('crypto');
@@ -54,13 +55,13 @@ function verifyOpenRouterSignature(rawBody, header, secret) {
 
 Respond **204** for a valid delivery and **401** for a missing, malformed or mismatched signature. Read the raw body first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check.
 
-**Timestamp window is off by default.** OpenRouter's own receiver example rejects `t` older than 300 s, but Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries. The examples offer an opt-in: set `OPENROUTER_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
+**Timestamp window is off by default.** OpenRouter's own receiver example rejects `t` older than 300 s, but Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in: set `OPENROUTER_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Common Event Types
 
-Dispatch on the body's `type` field; the job is in `data` (`id`, `status`, `generation_id`, `model`, `unsigned_urls`, `usage`, `error`).
+Dispatch on the body's `type` field. For video, the job is in `data` (`id`, `status`, `generation_id`, `model`, `urls`, `expires_at`, `unsigned_urls`, `usage`, `error`). For batch, `data` holds only the batch `id`: fetch the batch for its status and results.
 
 | Event | Triggered When |
 |-------|----------------|
@@ -68,8 +69,12 @@ Dispatch on the body's `type` field; the job is in `data` (`id`, `status`, `gene
 | `video.generation.failed` | The job failed; see `data.error` |
 | `video.generation.cancelled` | The job was cancelled |
 | `video.generation.expired` | The job expired before completing |
+| `batch.completed` | The batch finished; some requests in it can still have errors |
+| `batch.failed` | A check failed, or the provider rejected the batch |
+| `batch.expired` | The provider didn't finish before `expires_at` |
+| `batch.cancelled` | The provider cancelled the batch |
 
-Each delivery also has an `X-OpenRouter-Idempotency-Key` header (e.g. `job_test-completed`); use it to deduplicate retries. The retry schedule is not documented.
+Each delivery also has an `X-OpenRouter-Idempotency-Key` header (`<jobId>-<status>` or `<batch id>-<status>`); use it to deduplicate retries. Batch events also carry a stable event `id` in the body. The retry schedule is not documented.
 
 ## Environment Variables
 
@@ -87,11 +92,11 @@ OPENROUTER_WEBHOOK_TOLERANCE_SECONDS=0
 npx hookdeck-cli listen 3000 openrouter --path /webhooks/openrouter
 ```
 
-Use the printed public HTTPS URL as the `callback_url` of a `POST /api/v1/videos` request (or as the workspace default callback URL).
+Use the printed public HTTPS URL as the `callback_url` of a `POST /api/v1/videos` or `POST /api/v1/batches` request (or as the matching workspace default URL).
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - How video callbacks work, events, payload shape
+- [references/overview.md](references/overview.md) - How video and batch callbacks work, events, payload shape
 - [references/setup.md](references/setup.md) - Signing secret and `callback_url` configuration
 - [references/verification.md](references/verification.md) - Signature verification details and gotchas
 

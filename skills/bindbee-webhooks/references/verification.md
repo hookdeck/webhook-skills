@@ -14,7 +14,7 @@ Version 2 deliveries follow the [Standard Webhooks](https://www.standardwebhooks
 - **Algorithm:** HMAC-SHA256, output encoded as standard base64
 - **Key:** the signing secret's raw UTF-8 bytes
 
-Hookdeck's Bindbee source also accepts the same three values under `svix-id` / `svix-timestamp` / `svix-signature` when `webhook-id` is absent, and the examples do the same.
+The examples also accept the same three values under `svix-id` / `svix-timestamp` / `svix-signature` when `webhook-id` is absent.
 
 ## How Do I Verify Without a Library?
 

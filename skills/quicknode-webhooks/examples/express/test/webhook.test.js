@@ -52,7 +52,7 @@ describe('Quicknode webhook handler', () => {
     expect(res.status).toBe(200);
   });
 
-  it('accepts a valid Webhooks array', async () => {
+  it('accepts a valid array body', async () => {
     const res = await post(delivery(webhookMatches));
     expect(res.status).toBe(200);
   });

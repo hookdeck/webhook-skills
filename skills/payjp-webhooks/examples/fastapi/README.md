@@ -7,7 +7,7 @@ PAY.JP does not sign payloads, so there is no HMAC to verify. A FastAPI dependen
 whole `X-Payjp-Webhook-Token` header with your account's webhook token using `hmac.compare_digest`
 on bytes (both sides encoded, so non-ASCII input never raises), before the body is parsed. A static
 token authenticates the sender, not the body, and gives no replay protection: use HTTPS, dedupe on
-the event `id`, and rotate the token if it leaks.
+the event `id`, and keep the token secret.
 
 ## Prerequisites
 

@@ -1,6 +1,6 @@
 # Speed Webhooks - Express Example
 
-Minimal example of receiving [Speed](https://www.tryspeed.com) webhooks with signature verification. Speed signs deliveries in the [Standard Webhooks](https://www.standardwebhooks.com) layout, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead, as Hookdeck does. Speed's secret starts with `wsec_`, which the handler turns into `whsec_` before giving it to the library.
+Minimal example of receiving [Speed](https://www.tryspeed.com) webhooks with signature verification. Speed signs deliveries in the [Standard Webhooks](https://www.standardwebhooks.com) layout, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead. Speed's secret starts with `wsec_`, which the handler turns into `whsec_` before giving it to the library.
 
 ## Prerequisites
 

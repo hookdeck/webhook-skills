@@ -49,56 +49,53 @@ export async function POST(request: NextRequest) {
   console.log(`Received Flexport event ${type} (id: ${event.id})`);
 
   // Dispatch on the milestone identifier (/object#event format).
-  // NOTE: only /shipment#created and /shipment_leg#departed are confirmed
-  // against Flexport's milestone reference — the other cases below are
-  // illustrative, so verify the exact identifiers for your account before
-  // relying on them.
+  // All of these are documented types on Flexport's Milestones page.
   switch (type) {
     case '/shipment#created':
       console.log('Shipment created:', data.resource?.id);
-      // TODO: create internal shipment/order record
+      // Your code: create internal shipment/order record
       break;
 
     case '/shipment#booking_confirmed':
       console.log('Booking confirmed for shipment:', data.shipment?.id);
-      // TODO: notify stakeholders, update ETAs
+      // Your code: notify stakeholders, update ETAs
       break;
 
     case '/shipment#delivered_in_full':
       console.log('Shipment delivered in full:', data.shipment?.id);
-      // TODO: close out order, trigger billing
+      // Your code: close out order, trigger billing
       break;
 
     case '/shipment_leg#departed':
-      console.log('Shipment leg departed:', data.location?.name);
-      // TODO: update in-transit status, notify customer
+      console.log('Shipment leg departed:', data.location?.place?.name);
+      // Your code: update in-transit status, notify customer
       break;
 
     case '/shipment_leg#arrived':
-      console.log('Shipment leg arrived:', data.location?.name);
-      // TODO: trigger customs / last-mile workflow
+      console.log('Shipment leg arrived:', data.location?.place?.name);
+      // Your code: trigger customs / last-mile workflow
       break;
 
     case '/document#document_created':
       console.log('Document created:', data.resource?.id);
-      // TODO: sync commercial invoice / BOL / packing list
+      // Your code: sync commercial invoice / BOL / packing list
       break;
 
     case '/invoice#invoice_payment_made':
       console.log('Invoice payment made:', data.resource?.id);
-      // TODO: reconcile accounts payable
+      // Your code: reconcile accounts payable
       break;
 
     case '/purchase_order#acknowledged':
       console.log('Purchase order acknowledged:', data.resource?.id);
-      // TODO: advance procurement workflow
+      // Your code: advance procurement workflow
       break;
 
     default:
       console.log(`Unhandled event type: ${type}`);
   }
 
-  // Return 200 promptly to acknowledge receipt (Flexport's retry behavior is not
-  // documented, so do not rely on a failed delivery being re-sent)
+  // Return 200 promptly: Flexport retries a delivery a number of times
+  // when it doesn't get one, so a slow response can bring the Event back.
   return NextResponse.json({ received: true });
 }

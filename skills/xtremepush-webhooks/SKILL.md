@@ -4,7 +4,7 @@ description: >
   Receive and verify Xtremepush webhooks. Use when setting up Xtremepush
   customer engagement webhook handlers, debugging X-Xtremepush-Signature
   verification, or handling campaign message events like message_send and
-  message_delivery.
+  message_delivery, message_bounce and message_failure.
 license: MIT
 metadata:
   author: hookdeck
@@ -82,7 +82,7 @@ def verify_xtremepush(raw_body: bytes, signature_header: str, secret: str) -> bo
 
 ## Any HTTP method
 
-Xtremepush's docs don't name the HTTP method. Hookdeck's Xtremepush source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/xtremepush`, verify the signature first for every method, and treat a missing body as zero bytes (a verified GET with no body gets `200`, not an invalid-JSON error).
+Xtremepush's docs don't name the HTTP method. Allow the method the sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/xtremepush`, verify the signature first for every method, and treat a missing body as zero bytes (a verified GET with no body gets `200`, not an invalid-JSON error).
 
 ## Setup
 
@@ -98,6 +98,9 @@ Dispatch on the body's top-level `event` field (default body: `event`, `time`, `
 |-------|----------------|
 | `message_send` | A campaign message is sent to a recipient |
 | `message_delivery` | A campaign message is delivered to a recipient |
+| `message_bounce` | An email message bounces (adds `failure_status_code` and `is_permanent`) |
+| `message_complaint` | A recipient marks an email message as spam (adds `failure_status_code` and `is_permanent`) |
+| `message_failure` | A campaign message fails (`error_message`; email adds `failure_status_code` and `is_permanent`) |
 
 Handle these and log the rest. Each connection's payload can be edited ("Custom format"), so a customised connection may rename or drop `event`. Read every field defensively (check types before reading into the parsed body). See [references/overview.md](references/overview.md).
 

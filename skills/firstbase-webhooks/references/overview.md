@@ -25,18 +25,30 @@ Notifications are sent per resource type: orders, return orders and inventory or
 
 ## Event Payload Structure
 
+Firstbase's documented example:
+
 ```json
 {
-  "eventType": "CREATED",
-  "id": "ord_12345"
+  "eventId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "eventType": "UPDATED",
+  "resourceType": "ORDER",
+  "resourceId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-The example is illustrative: it shows the documented parts (an `eventType` of `CREATED`, `UPDATED`
-or `DELETED`, and the resource id). The exact name of the id field and how the resource type is
-conveyed are not confirmed here, so capture one real delivery (for example with
-`npx hookdeck-cli listen 3000 firstbase --path /webhooks/firstbase`) and adjust the handler's
-`payload.id` reads to match.
+- `eventId`: a unique UUID for the event. Firstbase says the same event may be delivered more than
+  once during retries, so deduplicate on it.
+- `eventType`: `CREATED`, `UPDATED` or `DELETED`.
+- `resourceType`: `ORDER`, `RETURN_ORDER` or `INVENTORY_ORDER`.
+- `resourceId`: the UUID of the order, return or inventory order.
+
+The granular event selected on the webhook (for example order shipped or delivered) decides
+whether a notification is sent but isn't in the payload. Fetch the resource from the Firstbase API
+(`GET /api/v1/orders/{orderId}`, `/api/v1/returns/{returnId}` or
+`/api/v1/inventory-orders/{inventoryOrderId}`) and read its status.
+
+The **Test** button sends `{"type": "webhook.test", "timestamp": "..."}` instead, with no
+`eventType`. Return a `2xx` for it.
 
 ## Full Event Reference
 

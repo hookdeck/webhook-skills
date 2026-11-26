@@ -12,8 +12,7 @@ notes: >
   NEXTCLOUD_WEBHOOK_HEADER (default 'Authorization') and the expected value from
   NEXTCLOUD_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
   typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
-  'Bearer ' prefix. This is what Hookdeck's Nextcloud source does (API key verification: header name
-  + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  'Bearer ' prefix. Hookdeck's Nextcloud source checks this header too. Missing header or mismatch: 401. Compare in constant time: Node checks
   lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
   sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
   on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
@@ -23,9 +22,8 @@ notes: >
   if present). Hookdeck's source type is NEXTCLOUD, labelled 'Nextcloud'. The request method is
   user-chosen, so the examples must not be POST-only: accept POST, PUT, PATCH, GET and DELETE
   (httpMethod is a free string) on the webhook route (Next.js: export a handler for each), and
-  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Nextcloud source pre-selects
-  POST without managing the method, so any other method the sender uses must also be allowed on the
-  source. Body: {event: {class, ...}, user: {uid, displayName}, time}; event.class like
+  handle an empty body. Say in SKILL.md and setup.md that the Hookdeck source must allow
+  whichever method the sender uses (link https://hookdeck.com/docs/sources#custom-methods). Body: {event: {class, ...}, user: {uid, displayName}, time}; event.class like
   OCP\Files\Events\Node\NodeCreatedEvent, NodeWrittenEvent, NodeDeletedEvent,
   OCP\Calendar\Events\CalendarObjectCreatedEvent. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works; parse the body only after the credential

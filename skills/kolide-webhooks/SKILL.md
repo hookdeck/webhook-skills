@@ -65,24 +65,25 @@ A missing, empty, malformed, or mismatching `Authorization` value gets a `401`.
 
 ## Setup with Hookdeck
 
-Hookdeck's `KOLIDE` source type (labelled "1Password Device Trust (Kolide)") verifies this signature: HMAC, SHA-256, header `authorization`, hex encoding. Paste the endpoint's signing secret into the source and register the Hookdeck source URL as the endpoint URL. See [references/setup.md](references/setup.md).
+Hookdeck's `KOLIDE` source type (labelled "1Password Device Trust (Kolide)") verifies this signature. Paste the endpoint's signing secret into the source and register the Hookdeck source URL as the endpoint URL. See [references/setup.md](references/setup.md).
 
 ## Event Envelope and Types
 
-Every event is `{ event, id, timestamp, data }`. Branch on the top-level `event` field and dedupe on `id`. Delivery retries, timeout, and accepted status codes are not documented, so return `200` quickly and keep handlers idempotent.
+Every event is `{ event, id, timestamp, data }`. Branch on the top-level `event` field and dedupe on `event` plus `id` (the docs don't define `id`, and their examples reuse one `id` across event types). Delivery retries, timeout, and accepted status codes are not documented, so return `200` quickly and keep handlers idempotent.
 
 | Event | Triggered When |
 |-------|----------------|
-| `devices.created` | A device is created |
-| `devices.registered` | A device is registered to an owner |
-| `devices.destroyed` | A device is deleted |
+| `devices.created` | A device enrolls in Device Trust |
+| `devices.registered` | An end user registers a device |
+| `devices.destroyed` | A device is removed from Device Trust |
 | `device_trust.status_changed` | A device's trust status changes (for example to `blocked`) |
 | `issues.new` | A check finds a new issue on a device |
 | `issues.resolved` | An issue is resolved |
-| `auth_logs.success` / `auth_logs.failure` | A device-trust authentication succeeds or fails |
+| `auth_logs.success` / `auth_logs.failure` | An SSO sign-in through Device Trust completes, or is started but never finished |
 | `audit_log.recorded` | An admin action is recorded in the audit log |
 | `admin_users.created` | An admin user is created |
 | `requests.registration` / `requests.issue_exemption` | An end user asks to register a device or for an issue exemption |
+| `agent_updates.beta_released` / `agent_updates.beta_promoted_to_stable` | An agent version is released to beta, or promoted from beta to stable (one event per component and platform) |
 | `webhook.test` | You send the test event from the admin console |
 
 See [references/overview.md](references/overview.md) for payload shapes.

@@ -11,8 +11,7 @@ notes: >
   of the secret after the whsec_ prefix, base64 output. The secret (NEEDLE_WEBHOOK_SECRET) is shown
   once when the webhook is added and starts with whsec_. Verify with the standardwebhooks library
   (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp and
-  webhook-signature. This matches Hookdeck's Needle source (Standard Webhooks, headers_prefix
-  'webhook', whsec_ secret base64-decoded, every v1 entry tried). The library always enforces a
+  webhook-signature. The library always enforces a
   fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the
   original timestamp, so the library rejects late retries after 5 minutes, and point to a manual
   verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the

@@ -117,7 +117,7 @@ Two naming differences between the Call **API** and Call **events**:
 
 ## Complete Event Catalog
 
-All 67 events currently published in Aircall's API reference.
+All 78 events published in Aircall's API reference (re-read 2026-11-26).
 
 ### Call events (19)
 
@@ -185,9 +185,13 @@ tagged *during* the call (with mandatory call tagging enabled).
 | Event | Triggered When |
 |-------|----------------|
 | `number.created` | A number is created |
-| `number.opened` | A number enters business hours |
-| `number.closed` | A number leaves business hours |
+| `number.opened` | A number opens (legacy routing only) |
+| `number.closed` | A number closes (legacy routing only) |
 | `number.deleted` | A number is deleted |
+
+`number.opened` and `number.closed` are deprecated (30-05-2025) and are never sent for
+numbers that use Smartflows, where time-based routing uses the Time Rule and Date Rule
+widgets instead.
 
 ### Contact events (3)
 
@@ -200,7 +204,7 @@ tagged *during* the call (with mandatory call tagging enabled).
 In contact webhook payloads, `created_at` and `updated_at` are UTC strings
 (`YYYY-MM-DDTHH:mm:ssZ`), not integers.
 
-### Message events (6)
+### Message events (9)
 
 | Event | Triggered When |
 |-------|----------------|
@@ -227,6 +231,28 @@ branch on which field is present.
 
 `group_message.*` payloads include `group_conversation_id` and a `participants` array of
 phone numbers.
+
+#### WhatsApp username message events (3)
+
+| Event | Triggered When |
+|-------|----------------|
+| `whatsapp_username_message.sent` | A WhatsApp message is sent in a conversation identified by a BSUID |
+| `whatsapp_username_message.received` | A WhatsApp message is received in a BSUID conversation |
+| `whatsapp_username_message.status_updated` | A BSUID WhatsApp message's delivery status changes |
+
+### Conversation events (4) — limited availability
+
+| Event | Triggered When |
+|-------|----------------|
+| `conversation.created` | A new Conversation starts |
+| `conversation.closed` | A Conversation is closed (`reason` says how) |
+| `conversation.reopened` | A closed Conversation is reopened |
+| `conversation.assigned` | A Conversation is assigned or reassigned |
+
+Any company can subscribe, but events are only sent where Aircall has enabled
+Conversations. Aircall's docs say these events have no event id of their own: spot a
+duplicate by comparing `data.id`, `event` and `data.updated_at`, and keep the event with
+the most recent `data.updated_at` when they arrive out of order.
 
 ### Conversation Intelligence events (12)
 
@@ -256,6 +282,20 @@ Some require the **AI Assist** add-on.
 | `ai_voice_agent.escalated` | The AI voice agent escalates to a human |
 | `ai_voice_agent.summary` | An AI voice agent summary is produced |
 
+### Outbound Campaign events (2)
+
+| Event | Triggered When |
+|-------|----------------|
+| `outbound_campaign.outcome_recorded` | A campaign call attempt gets an outcome recorded |
+| `outbound_campaign.status_changed` | A campaign moves to a new lifecycle status (`previous_status` included) |
+
+### AI Messaging Agent events (2)
+
+| Event | Triggered When |
+|-------|----------------|
+| `ai_messaging_agent.escalated` | The AI Messaging Agent hands a conversation to a human |
+| `ai_messaging_agent.de_escalated` | A pending escalation is resolved |
+
 ### Analytics events (2)
 
 | Event | Triggered When |
@@ -281,10 +321,9 @@ your side too.
 - **5-second timeout.** Aircall's HTTP requests to external servers time out after 5
   seconds. Acknowledge with 200 immediately and process asynchronously.
 - **Failure = non-2xx or timeout.** Aircall retries a failed event up to **50 times**.
-  Aircall's own docs give three different thresholds: "retry the event up to 50 times"
-  (API reference), "disables the webhook after 50 consecutive failures" (best-practices
-  guide), and "after 10 failed requests" (older webhooks tutorial). Treat any sustained
-  failure as a risk of deactivation rather than counting on 50.
+  Aircall's docs word it two ways: "retry the event up to 50 times" (API reference) and
+  "disables the webhook after 50 consecutive failures" (best-practices guide). Treat any
+  sustained failure as a risk of deactivation rather than counting on 50.
 - **Automatic deactivation.** If failures persist after all retries, the webhook is
   disabled and a notification appears on the Aircall Dashboard.
 - **Automatic re-enable.** Once disabled, Aircall keeps retrying failed events for up to

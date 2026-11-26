@@ -2,7 +2,8 @@
 
 ## How Does Voiceflow Sign Webhooks?
 
-Voiceflow organization events are delivered through Svix, so every delivery carries three headers:
+Voiceflow's webhooks (organization events and session lifecycle events) are delivered through
+Svix, so every delivery carries three headers:
 
 | Header | Contents |
 |--------|----------|
@@ -10,9 +11,9 @@ Voiceflow organization events are delivered through Svix, so every delivery carr
 | `svix-timestamp` | Unix timestamp in seconds when the message was sent |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Voiceflow source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+Svix implements Standard Webhooks, and its docs say the headers can be white-labelled to the
+`webhook-` prefix. The examples here read the `svix-*` headers and fall back to the `webhook-*`
+headers when `svix-id` is absent.
 
 The algorithm:
 
@@ -140,17 +141,17 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDKs.** See the Hookdeck section above.
-- **One secret per organization webhook URL.** A secret from another organization won't verify these deliveries; a regenerated secret's predecessor works for 24 hours.
-- **The project-level session webhook** doesn't document this signing scheme and may fail
-  verification. Use organization event webhooks. See [setup.md](setup.md).
+- **One secret per endpoint.** The organization endpoint and each project's session endpoint
+  have their own secret, so one scope's secret won't verify the other's deliveries. A regenerated
+  secret's predecessor works for 24 hours. See [setup.md](setup.md).
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Every request fails with "Invalid signature" | Wrong secret (or wrong environment's secret), or the body was parsed/re-serialized before verification |
-| "Missing required webhook headers" | The URL is the project-level session webhook, or a proxy dropped the `svix-*` headers |
+| Every request fails with "Invalid signature" | Wrong secret (the other scope's, or another project's), or the body was parsed/re-serialized before verification |
+| "Missing required webhook headers" | A proxy dropped the `svix-*` headers, or the request didn't come from Voiceflow |
 | Fails only after deploys or proxies | A proxy or middleware rewrote the body |
 | "Timestamp too old" on retries or replays | The SDK's fixed 5-minute window; use the manual verifier |
 | "Timestamp too old" on first delivery | Server clock drift |

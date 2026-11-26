@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 // Only the body is signed, so there is no replay window to check.
 // https://support.1password.com/device-trust-webhooks/
 
-// Hex is case-insensitive (Hookdeck's source compares it that way too). Check the format
+// Hex is case-insensitive. Check the format
 // first: Buffer.from(x, 'hex') silently drops bad characters.
 function verifyKolide(rawBody, authorization, secret) {
   if (!secret || typeof authorization !== 'string') return false;

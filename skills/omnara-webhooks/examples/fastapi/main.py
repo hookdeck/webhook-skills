@@ -32,7 +32,7 @@ async def omnara_webhook(request: Request):
     timestamp = request.headers.get(f"{prefix}-timestamp")
     signature = request.headers.get(f"{prefix}-signature")
     if not (msg_id and timestamp and signature):
-        # Omnara only signs when event_webhook.signing_secret_id is set on the agent
+        # Omnara only signs when the subscription has a signing secret
         raise HTTPException(status_code=400, detail="Missing required webhook headers")
 
     # Verify the RAW body: the exact bytes Omnara signed, whatever the content type

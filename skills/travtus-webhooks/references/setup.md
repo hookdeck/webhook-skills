@@ -38,7 +38,7 @@ header. The response is `{ "url": "..." }`. In the portal:
 ## How Do I Send a Test Event?
 
 Use the portal's **Testing** tab to send example events to your endpoint, then open the message
-to see the payload, attempts and status. Test events are signed like real deliveries.
+to see the payload, attempts and status.
 
 ## Replaying and Recovering Failed Messages
 

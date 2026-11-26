@@ -7,13 +7,13 @@ import crypto from 'crypto';
 // OpnForm signs deliveries only when a webhook secret is set on the integration:
 //   X-Webhook-Signature: sha256=<lowercase hex HMAC-SHA256 of the raw body>
 // The key is the secret as UTF-8 bytes. Nothing else is signed (no timestamp), so there is no
-// replay window; use submission_id for idempotency.
+// replay window. A retry or an edit to the submission resends the same submission_id, so upsert on it.
 // https://docs.opnform.com/api-reference/integrations/webhook-security
 
 function verifyOpnform(rawBody: Buffer, signatureHeader: string | null, secret: string): boolean {
   if (!secret || !signatureHeader) return false;
 
-  // The prefix is optional: Hookdeck's OpnForm source accepts the bare digest too
+  // The prefix is optional: accept the bare digest too
   let sig = signatureHeader.trim();
   if (sig.startsWith('sha256=')) sig = sig.slice('sha256='.length);
   // Buffer.from(x, 'hex') silently drops invalid characters, so check the shape first.
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Every delivery is a form submission; there is no event name to switch on.
-  // submission_id identifies it: use it to drop duplicates (see webhook-handler-patterns)
+  // submission_id identifies it. Upsert on it: a retry or an edit resends it with the latest answers.
   const { form_id, form_title, submission_id, submission } = payload;
   const fieldCount = isObject(submission) ? Object.keys(submission).length : 0;
   const title = typeof form_title === 'string' ? form_title : 'unknown form';

@@ -21,7 +21,7 @@ raw_request_body  — exact JSON bytes in the POST body (no re-encoding)
 
 "Compare the result (hex) to `X-Signature` using a constant-time comparison."
 
-> MICEtribe signs webhooks only when the webhook has a signing secret. Set one on the webhook and paste it here.
+> MICEtribe signs a delivery only when the webhook has a signing secret, so set one on every webhook.
 
 ## Implementation
 
@@ -68,7 +68,7 @@ FastAPI: `await request.body()`. See [examples/fastapi](../examples/fastapi/).
 
 ## Timestamp Tolerance (opt-in)
 
-`X-Timestamp` is Unix seconds. MICEtribe lists "reject old timestamps (optional), e.g. older than 5 minutes" as a recommendation. The examples **don't reject old timestamps by default**: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries (MICEtribe's own retries go out up to 12 hours later, too). To opt in, set `MICETRIBE_WEBHOOK_TOLERANCE_SECONDS` to a positive number (unset or `0` = off); a non-numeric `X-Timestamp` is then rejected. Dedupe on `registration_id` + `meta.trigger` + `X-Request-Id` for replay protection instead.
+`X-Timestamp` is Unix seconds. MICEtribe lists "reject old timestamps (optional), e.g. older than 5 minutes" as a recommendation. The examples **don't reject old timestamps by default**: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries (MICEtribe's own retries go out up to 12 hours later, too). To opt in, set `MICETRIBE_WEBHOOK_TOLERANCE_SECONDS` to a positive number (unset or `0` = off); a non-numeric `X-Timestamp` is then rejected. Dedupe on `registration_id` + `meta.trigger` + `X-Request-Id`, or on a hash of the raw body, for replay protection instead.
 
 ## Common Gotchas
 

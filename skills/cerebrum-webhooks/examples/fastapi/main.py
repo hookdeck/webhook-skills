@@ -9,7 +9,7 @@ Cerebrum delivers webhooks through Svix (Standard Webhooks):
 Signed content: f"{id}.{timestamp}.{raw_body}"
 Key: base64-decode of the secret after its `whsec_` prefix.
 The same three values can arrive as webhook-id / webhook-timestamp /
-webhook-signature; Hookdeck reads either set, and so does this handler.
+webhook-signature; this handler reads either set.
 """
 
 import json
@@ -36,8 +36,7 @@ processed_message_ids: set = set()
 def get_signature_headers(headers: Mapping[str, str]) -> Optional[Dict[str, str]]:
     """Pick one complete set of signature headers.
 
-    svix-* wins when svix-id is present, otherwise webhook-* is used (the same
-    rule Hookdeck applies). Returns the three values under the names the svix
+    svix-* wins when svix-id is present, otherwise webhook-* is used. Returns the three values under the names the svix
     library reads, or None if any of them is missing.
     """
     prefix = "svix" if headers.get("svix-id") else "webhook"
@@ -89,7 +88,7 @@ async def verified_cerebrum_event(request: Request) -> Dict[str, Any]:
 
 
 def handle_event(payload: Dict[str, Any]) -> None:
-    """Payload: {id, idType, additionalMetadata, event, eventDate, svixAppId, metadata}.
+    """Payload: {id, idType, organizationId, additionalMetadata, event, eventDate, svixAppId, metadata}.
 
     `metadata.delta` is a JSON-Patch-style change list on some order updates.
     """
@@ -104,9 +103,20 @@ def handle_event(payload: Dict[str, Any]) -> None:
         logger.info("%s: %s %s%s", event, id_type, obj_id, f" ({len(delta)} changes)" if delta else "")
     elif event == "ORDER_DISPUTE_RESOLVED":
         logger.info("Order dispute resolved: %s %s", id_type, obj_id)
+    elif event == "ORDER_ERROR":  # opt-in: enable order.error
+        logger.info("County search dispatch failed: %s %s", id_type, obj_id)
 
     # --- Vouchers (vID) -------------------------------------------------------
-    elif event in ("VOUCHER_STARTED", "VOUCHER_REDEEMED", "VOUCHER_EXPIRED"):
+    # VOUCHER_ACCEPTED, VOUCHER_STARTED and VOUCHER_CANCELED are opt-in.
+    # For VOUCHER_REDEEMED, id is the invite ID, not the new order ID.
+    elif event in (
+        "VOUCHER_ACCEPTED",
+        "VOUCHER_STARTED",
+        "VOUCHER_CANCELED",
+        "VOUCHER_REDEEMED",
+        "VOUCHER_EXPIRED",
+        "VOUCHER_OPTED_OUT",
+    ):
         logger.info("%s: %s %s", event, id_type, obj_id)
 
     # --- Monitoring and Beam --------------------------------------------------
@@ -116,7 +126,7 @@ def handle_event(payload: Dict[str, Any]) -> None:
         logger.info("Beam input created: %s %s", id_type, obj_id)
 
     else:
-        # The documented list may not be exhaustive: acknowledge, don't fail.
+        # Cerebrum has no published policy for new event names: acknowledge and log.
         logger.info("Unhandled Cerebrum event: %s", event)
 
 
@@ -128,8 +138,8 @@ async def cerebrum_webhook(request: Request, payload: Dict[str, Any] = Depends(v
         return {"received": True, "duplicate": True}
 
     try:
-        # Cerebrum needs a 2xx within 30 seconds. In production, enqueue the
-        # payload here and process it asynchronously.
+        # Cerebrum recommends a 2xx in under 10 seconds. In production, store the
+        # payload durably here and fetch the order or invite asynchronously.
         handle_event(payload)
         processed_message_ids.add(message_id)
     except Exception:

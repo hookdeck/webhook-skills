@@ -5,12 +5,12 @@
 - A Typefully account with API access
 - A publicly reachable HTTPS endpoint (use the Hookdeck CLI while developing)
 
-Typefully's API documentation describes the events, payload and signature, and says webhooks are managed from your **API settings**. It doesn't document the exact screen or API call used to create one, so follow what your API settings page offers.
+Typefully's API documentation describes the events, payload and signature. Its [help center](https://support.typefully.com/en/articles/8718287-typefully-api) says to configure webhook URLs in **Settings → API** by clicking **+ Add webhook**. The public API has no endpoint for creating webhooks, and neither page says where the secret is shown.
 
 ## Get Your Webhook Secret
 
-1. Open Typefully's API settings.
-2. Create (or open) the webhook for your endpoint and copy its secret.
+1. Open **Settings → API** in Typefully.
+2. Click **+ Add webhook** (or open the existing webhook) and copy its secret.
 3. Store it as `TYPEFULLY_WEBHOOK_SECRET`. The examples use the string as-is (UTF-8); don't decode it.
 
 ## Register Your Endpoint

@@ -26,6 +26,7 @@ ORDER_TOPICS = {
     "ORDER_DELIVERED",
     "ORDER_REFUNDED",
     "ORDER_CANCELLED",
+    "ORDER_CANCELED",  # Violet's docs spell this topic both ways
     "ORDER_FAILED",
 }
 MERCHANT_TOPICS = {
@@ -59,7 +60,7 @@ def verify_violet_signature(raw_body: bytes, signature_header: str | None, secre
         return False
     digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     expected = base64.b64encode(digest)
-    # Compare the base64 strings exactly (as Hookdeck does), as bytes: a value whose last
+    # Compare the base64 strings exactly, as bytes: a value whose last
     # character carries stray low bits decodes to the same digest but is not what Violet sends
     return hmac.compare_digest(signature_header.encode("ascii"), expected)
 
@@ -103,7 +104,7 @@ def handle_event(topic: str, body: dict[str, Any]) -> None:
         currency_text = currency if isinstance(currency, str) else ""
         print(f"{topic}: transfer {entity_id} {amount_text} {currency_text}".strip() + suffix)
     else:
-        # 52 documented events: handle the ones you need and log the rest
+        # 56 documented events: handle the ones you need and log the rest
         print(f"Unhandled Violet topic: {topic}")
 
 
@@ -112,6 +113,8 @@ async def violet_webhook(
     raw_body: bytes = Depends(verified_body),
     x_violet_topic: str | None = Header(default=None),
     x_violet_event_id: str | None = Header(default=None),
+    x_violet_event_id_source: str | None = Header(default=None),
+    x_violet_recovery_event_key: str | None = Header(default=None),
 ):
     # Only the header names the event: without it the body cannot be classified
     if not x_violet_topic:
@@ -124,8 +127,10 @@ async def violet_webhook(
     if not isinstance(body, dict):
         raise HTTPException(status_code=400, detail="Body must be a JSON object")
 
-    # X-Violet-Event-Id identifies the event: use it for idempotency (retries and resends repeat it)
-    print(f"Violet event {x_violet_event_id or '(no id)'}")
+    # Dedupe key: recovery case events carry a stable X-Violet-Recovery-Event-Key (their
+    # X-Violet-Event-Id can change), and a resend carries the original ID in X-Violet-Event-Id-Source
+    dedupe_key = x_violet_recovery_event_key or x_violet_event_id_source or x_violet_event_id
+    print(f"Violet event {dedupe_key or '(no id)'}")
     handle_event(x_violet_topic, body)
 
     # Respond 2XX within 10 seconds; do slow work asynchronously

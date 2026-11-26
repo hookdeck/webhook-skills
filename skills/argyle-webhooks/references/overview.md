@@ -10,7 +10,7 @@ every user of the API key. When the subscription has a `secret`, each delivery i
 
 ## Common Event Types
 
-The top-level `event` field names the subscribed event as `<resource>.<action>`. Argyle documents 46
+The top-level `event` field names the subscribed event as `<resource>.<action>`. Argyle documents 47
 event types; the examples handle these 14 and log everything else.
 
 | Event | Triggered When | Common Use Cases |

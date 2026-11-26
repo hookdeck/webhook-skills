@@ -16,7 +16,7 @@ app = FastAPI(title="Dots Webhook Handler")
 
 def resolve_headers(headers: Mapping[str, str]) -> Optional[Tuple[str, str, str]]:
     """Dots delivers through Svix (svix-* headers). Fall back to the Standard Webhooks
-    webhook-* names when svix-id is absent, the same way Hookdeck does. Never mix the two sets."""
+    webhook-* names when svix-id is absent. Never mix the two sets."""
     prefix = "svix" if headers.get("svix-id") else "webhook"
     msg_id = headers.get(f"{prefix}-id")
     timestamp = headers.get(f"{prefix}-timestamp")

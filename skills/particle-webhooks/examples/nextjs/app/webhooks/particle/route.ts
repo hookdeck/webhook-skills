@@ -11,12 +11,12 @@ function handleEvent(payload: ParticlePayload): string {
   switch (event) {
     case 'temperature':
       console.log(`Temperature ${data} from ${coreid} at ${publishedAt}`);
-      // TODO: store the reading (parseFloat(data))
+      // Your code: store the reading (parseFloat(data))
       return 'temperature';
 
     case 'motion-detected':
       console.log(`Motion detected on ${coreid} at ${publishedAt}`);
-      // TODO: raise an alert
+      // Your code: raise an alert
       return 'motion-detected';
 
     default:

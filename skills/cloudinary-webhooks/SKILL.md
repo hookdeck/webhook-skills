@@ -18,7 +18,7 @@ metadata:
 **Cloudinary** sends webhook **notifications** to a URL you register, telling your
 app when assets are uploaded, eager transformations finish, moderation completes,
 assets are deleted or renamed, folders change, and more. Each POST is a JSON body
-signed with your **account API Secret** and delivered with two headers:
+signed with an **API secret** from your product environment and delivered with two headers:
 `x-cld-signature` (a hex digest) and `x-cld-timestamp` (a unix timestamp).
 
 ## When to Use This Skill
@@ -56,8 +56,8 @@ if (!valid) return res.status(401).send('Invalid signature');
 ```
 
 Cloudinary computes the signature as a **plain hex digest** of
-`rawBody + timestamp + api_secret` using **sha1** (default) or **sha256** (an
-opt-in account setting) — it is not a keyed HMAC, though Cloudinary's docs
+`rawBody + timestamp + api_secret` using **sha1** (the SDK default) or **sha256** (Cloudinary
+accepts either) — it is not a keyed HMAC, though Cloudinary's docs
 sometimes call it "HMAC-SHA1". The SDK abstracts this; see
 [references/verification.md](references/verification.md) for the exact scheme and
 a manual fallback.
@@ -68,7 +68,7 @@ a manual fallback.
 
 | `notification_type` | Fires When | Notable fields |
 |---------------------|------------|----------------|
-| `upload` | An asset finishes uploading (async/eager or large uploads) | `public_id`, `secure_url`, `version` |
+| `upload` | An asset is uploaded | `public_id`, `secure_url`, `version` |
 | `eager` | Eager (async) transformations finish generating | `public_id`, `eager` |
 | `delete` | One or more assets are deleted | `resources` |
 | `rename` | An asset is renamed | `from_public_id`, `to_public_id` |
@@ -78,20 +78,26 @@ a manual fallback.
 | `delete_folder` | A folder is deleted | `folder_path` |
 
 Other notification types include `resource_context_changed`,
-`resource_metadata_changed`, `access_control_changed`, and `move`. Every
-notification carries a `notification_type`, a `timestamp`, and a `signature` in
-the body — but **authentication uses the `x-cld-signature` / `x-cld-timestamp`
-headers**, not the in-body fields. See [references/overview.md](references/overview.md).
+`resource_metadata_changed`, `access_control_changed`, and `move`; Cloudinary's
+[triggers reference](https://cloudinary.com/documentation/admin_api_triggers#event_types_table)
+lists all 28. Every default notification body carries `notification_type`; there
+is no signature in the body, so **authenticate with the `x-cld-signature` /
+`x-cld-timestamp` headers**. See [references/overview.md](references/overview.md).
+
+A trigger whose `auth_scheme` is `eddsa_v2` sends only `X-Cld-Signature_v2`
+(EdDSA) and no `x-cld-signature`, so the API-secret check below can't verify it.
+Keep triggers on `default` or `legacy_hmac` to use this skill's verification.
 
 ## Environment Variables
 
 ```bash
-CLOUDINARY_API_SECRET=your_account_api_secret   # account API Secret (Console → Settings → API Keys); the api_secret in CLOUDINARY_URL
+CLOUDINARY_API_SECRET=your_account_api_secret   # API secret of the webhook signing key (Console → Settings → API Keys)
 # CLOUDINARY_SIGNATURE_ALGORITHM=sha1           # sha1 (default) or sha256 if enabled on your account
 ```
 
-The signing secret is your **account API Secret** — there is no separate
-per-webhook signing secret.
+The signing secret is the API secret of the API key selected for webhook
+notifications on the Console's Webhook Notifications page, or of the oldest active
+key if none is selected. There is no separate per-webhook signing secret.
 
 ## Local Development
 

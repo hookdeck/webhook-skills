@@ -1,6 +1,6 @@
 # sajn Webhooks - FastAPI Example
 
-Minimal example of receiving [sajn](https://sajn.se) webhooks with signature verification. sajn signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it reads the `svix-*` headers instead, as Hookdeck does.
+Minimal example of receiving [sajn](https://sajn.se) webhooks with signature verification. sajn signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it reads the `svix-*` headers instead.
 
 ## Prerequisites
 
@@ -45,7 +45,7 @@ The tests sign payloads the way sajn does (`base64(HMAC-SHA256(base64decode(secr
 npx hookdeck-cli listen 8000 sajn --path /webhooks/sajn
 ```
 
-Create the sajn webhook with the printed URL (**Inställningar > Utvecklare > Webhooks**, or `POST /api/v1/webhooks`), subscribe to events such as `document.completed`, then call `POST /api/v1/webhooks/{id}/test` to send a signed `webhook.test`.
+Create the sajn webhook with the printed URL (the **Webhooks** tab in Konsol, or `POST /api/v1/webhooks`), subscribe to events such as `document.completed`, then call `POST /api/v1/webhooks/{id}/test` to send a signed `webhook.test`.
 
 ## Notes
 

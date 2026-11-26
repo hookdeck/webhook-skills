@@ -1,0 +1,25 @@
+name: millicast
+displayName: Dolby OptiView Real-time (Millicast)
+docs:
+  webhooks: https://optiview.dolby.com/docs/millicast/webhooks/
+  verification: https://optiview.dolby.com/docs/millicast/webhooks/
+  events: https://optiview.dolby.com/docs/millicast/webhooks/feeds/
+notes: >
+  Dolby OptiView Real-time Streaming (formerly Millicast) webhooks, created in the Streaming
+  Dashboard (Webhooks > CREATE) with the hook types to send. Header x-millicast-signature:
+  sha1=<hex HMAC-SHA1 of the raw body>, keyed with the base64-DECODED Webhook Secret (docs:
+  Buffer.from(webhookSecret, 'base64')). JSON hooks share {type, event, timestamp, data}: types
+  feeds, recordings, media, transcoder, viewerConnection; feeds events started/ended with data
+  feedId, accountId, name, streamId, active, started/ended. Thumbnail hooks POST the JPEG itself
+  (Content-Type image/jpeg, x-millicast-stream-id and other headers) signed the same way, so the
+  raw bytes must be kept. POST; no retries; order not guaranteed. Renewing the secret can't be
+  undone. No published vector; examples use a synthetic secret, including a binary JPEG vector.
+  Hookdeck source type MILLICAST (HMAC alias, sha1, hex, secret_encoding base64; the sha1= value
+  goes through the signature parser; verification optional; no timestamp window).
+testScenario:
+  events:
+    - feeds started
+    - feeds ended
+    - thumbnail
+catalog:
+  summary: 'Verify Dolby OptiView Real-time (Millicast) webhooks (`x-millicast-signature: sha1=<hex>`, HMAC-SHA1 of the raw body keyed with the base64-decoded secret), handle feed events and binary JPEG thumbnails'

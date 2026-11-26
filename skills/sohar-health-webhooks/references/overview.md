@@ -16,7 +16,9 @@ them through [Svix](https://www.svix.com/), and every delivery is signed (see
 | Delivery | No retry schedule, timeout or ordering guarantee is stated in Sohar Health's docs |
 
 Don't hard-code a retry schedule or assume event order. Deduplicate on `svix-id` (the same on
-every retry of a message) and, for resource updates, on the resource id plus `status`.
+every retry of a message), and make resource updates idempotent. Don't dedupe on a resource id plus
+`status` alone: a Flow Run can send several `flow.updated` events with the same `status` and a
+different `stateId`.
 
 ## Common Event Types
 

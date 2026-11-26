@@ -53,7 +53,7 @@ function verifyMightyNetworksRequest(headers, secret = process.env.MIGHTY_NETWOR
 - Header: `Authorization: Bearer <API key>`. The scheme matches in any case (RFC 9110), the key
   after it is compared exactly: don't trim or alter it.
 - Store only the **bare key** in `MIGHTY_NETWORKS_WEBHOOK_SECRET`. If the stored value itself
-  starts with `Bearer ` (case-insensitive), strip it, as Hookdeck does.
+  starts with `Bearer ` (case-insensitive), strip it.
 - Missing header, wrong scheme or mismatch: `401`. A body that isn't a JSON object: `400`.
   Handled: `200`. Any 2xx within 10 seconds counts as delivered.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
@@ -93,7 +93,7 @@ dispatching. Dedupe on `event_id`: a non-2xx response is retried up to 5 times o
 | `EventCanceled` | An event is canceled |
 | `ReportedContentCreated` | A post, comment or chat is reported |
 
-[references/overview.md](references/overview.md) lists all 48 events.
+[references/overview.md](references/overview.md) lists all 49 events.
 
 ## Environment Variables
 
@@ -103,7 +103,7 @@ MIGHTY_NETWORKS_WEBHOOK_SECRET=your-api-key   # the API key you configured with 
 
 ## Setup in Hookdeck
 
-Hookdeck's Mighty Networks source (`MIGHTY_NETWORKS`) checks the `Authorization` header for you.
+Hookdeck's Mighty Networks source (`MIGHTY_NETWORKS`) checks the key for you.
 Paste the API key you configured with the webhook in Mighty Networks.
 
 ## Local Development

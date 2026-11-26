@@ -82,7 +82,7 @@ Other body fields: `involvedObject` (`kind`, `name`, `namespace`, `uid`), `messa
 | `Gotk-Component` | Controller that raised the event, e.g. `kustomize-controller` |
 | `Content-Type` | `application/json` |
 
-Requests are `POST`. Hookdeck verifies `sha256` only; Flux notes the default hash "may change in the future", so a delivery signed with another hash fails.
+Requests are `POST`. The examples verify `sha256` only; Flux notes the default hash "may change in the future", so a delivery signed with another hash fails.
 
 ## Environment Variables
 

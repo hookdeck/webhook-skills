@@ -179,11 +179,7 @@ required fields and there is no unauthenticated or URL-token option:
 | Audience | The subscription's `--push-auth-token-audience`, or the full push endpoint URL if the subscription sets none |
 | Service Account Email | The subscription's `--push-auth-service-account` |
 
-Hookdeck verifies the JWT signature and the `iss` / `aud` / `email` /
-`email_verified` claims, but **deliberately ignores `exp`**: it re-verifies
-stored requests on retry, and enforcing expiry would fail a request that was
-valid when it arrived. Your own endpoint is in a different position — it sees
-each request once, live — so the examples here **do** let the library enforce
+Your own endpoint sees each request once, live, so the examples here **do** let the library enforce
 `exp`. Do not copy the gateway's expiry behaviour into a direct receiver.
 
 ## Reference Materials

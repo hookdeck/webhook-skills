@@ -31,7 +31,7 @@ See [examples/express/](../examples/express/), [examples/nextjs/](../examples/ne
 
 ## Does the Timestamp Need a Tolerance Window?
 
-Not by default. ZITADEL doesn't document a replay window, and Hookdeck retries and replays resend the original headers and timestamp; Hookdeck's own ZITADEL source applies no tolerance. A fixed window would reject legitimate redeliveries.
+Not by default. ZITADEL doesn't document a replay window, and Hookdeck retries and replays resend the original headers and timestamp. A fixed window would reject legitimate redeliveries.
 
 The examples offer an opt-in: set `ZITADEL_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds) and signatures older or newer than that fail. Unset, `0` or an invalid value leaves it off. Prefer idempotency (for example on `aggregateID` plus `sequence` for events) to protect against replays.
 

@@ -4,7 +4,8 @@
 
 - An Ayrshare account and API key
 - A public HTTPS endpoint (use the Hookdeck CLI tunnel for local development)
-- A signing secret you generate yourself (e.g. `openssl rand -hex 32`)
+- A long random signing secret (Ayrshare recommends 32 random bytes encoded as
+  base64url; the dashboard can generate one)
 
 ## Set the Signing Secret
 

@@ -8,7 +8,7 @@ endpoint so you can drive monitoring, alerting, cost tracking, audit logging and
 
 Requests are unsigned by default. You authenticate them with a header credential you configure
 (API Key Header or Bearer Token). Vellum can optionally add an HMAC signature
-(`X-Vellum-Timestamp`, `X-Vellum-Signature`); Hookdeck's Vellum source and this skill don't
+(`X-Vellum-Timestamp`, `X-Vellum-Signature`) once you provide an HMAC token; this skill doesn't
 verify it. Vellum's docs don't name the HTTP method, so the examples accept GET, POST, PUT, PATCH
 and DELETE.
 

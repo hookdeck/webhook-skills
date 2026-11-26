@@ -126,10 +126,10 @@ Aircall has no replay protection, so a tolerance check would only cause false re
 | `message.status_updated` | Outbound message status changes | Delivery tracking |
 | `contact.created` / `contact.updated` | Contact changes | CRM sync |
 | `user.connected.v2` / `user.disconnected.v2` | Agent opens/closes Workspace | Presence dashboards |
-| `number.opened` / `number.closed` | Number enters/leaves business hours | Routing rules |
+| `number.opened` / `number.closed` | Number opens/closes (legacy routing only; deprecated, never sent for Smartflows numbers) | Routing rules |
 | `transcription.created` / `summary.created` | AI artifacts ready (AI Assist add-on) | Conversation intelligence |
 
-> **Full catalog** (all 67 events, including User V1 vs V2 and AI Voice Agent): [references/overview.md](references/overview.md)
+> **Full catalog** (all 78 events, including User V1 vs V2, Conversations and AI agents): [references/overview.md](references/overview.md)
 
 Use **User V2** events (`user.created.v2`, …). V1 events are deprecated — Aircall's docs
 say "This version of User events V1 will be deprecated soon. Please migrate to User
@@ -144,9 +144,8 @@ events V2."
 - **Upsert on `call.id`** — many events fire for one call; key your records on `data.id`.
 - **Auto-disable**: a non-2xx or timeout is a failure; Aircall retries up to **50 times**,
   then disables the webhook. It keeps retrying failed events for **12 hours**; a success
-  in that window automatically re-enables it. Aircall's docs disagree on the threshold
-  (50 retries, 50 consecutive failures, or 10 failed requests in an older tutorial), so
-  don't rely on the exact number.
+  in that window automatically re-enables it. The best-practices page words the threshold
+  as "50 consecutive failures"; treat any sustained failure as a risk of deactivation.
 - **HTTPS required.** No IP allowlist — "Aircall does not provide a list of static IP
   addresses to whitelist."
 

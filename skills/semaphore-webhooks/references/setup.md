@@ -56,9 +56,7 @@ as the webhook endpoint.
 
 - Paste the `WEBHOOK_SECRET` value as the source's webhook secret. Without a secret on the
   notification, deliveries are unsigned and fail verification.
-- **Methods:** Semaphore's docs don't name the HTTP method. Hookdeck's Semaphore CI source pre-selects
-  POST without managing the method, so any other method Semaphore uses must also be allowed on the
-  source.
+- **Methods:** Semaphore sends `POST` unless the notification's `action` is `PUT` or `PATCH`. If you set `action`, allow that method on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - Semaphore's default response timeout is 500 ms and it retries only on timeouts, so respond
   quickly and process the delivery afterwards.
 

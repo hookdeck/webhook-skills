@@ -2,30 +2,22 @@
 
 ## Prerequisites
 
-- A Mailcoach account (hosted) or install (self-hosted) with access to settings
+- A Mailcoach account with access to your team's settings
 - A public HTTPS endpoint (or a Hookdeck source URL)
 
-## Get Your Secret
+## Create the Webhook and Get Your Secret
 
-You choose the secret yourself:
+1. In Mailcoach, open your team's **Settings > Webhooks** and click **Create webhook**.
+2. Enter a name and your receiver's HTTPS URL: your server, or the Hookdeck source URL when you route through Event Gateway. The sample handlers in `examples/` listen on `POST /webhooks/mailcoach`.
+3. On the webhook's details page, copy the generated secret and store it privately as `MAILCOACH_WEBHOOK_SECRET`.
+4. To receive only some events, clear **Use for all events**, choose the types, and save.
+5. For a Hookdeck source, create a source of the Mailcoach type and paste the same secret into it.
 
-1. In Mailcoach, open the **Webhooks** screen in settings.
-2. Create a webhook (or open an existing one) and go to its details page.
-3. Enter a secret (a long random string) and store it as `MAILCOACH_WEBHOOK_SECRET`.
-
-Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification.
-
-## Register Your Endpoint
-
-1. Enter your server URL, or the Hookdeck source URL when you route through the Event Gateway. The sample handlers in `examples/` listen on `POST /webhooks/mailcoach`.
-2. Optionally choose which event types the webhook receives on its details page (`UnconfirmedSubscriberCreatedEvent`, `SubscribedEvent`, `UnsubscribedEvent`, `CampaignSentEvent`).
-3. In the Hookdeck dashboard create a source of the Mailcoach type and paste the **same secret** into its verification settings. Hookdeck manages the method as POST.
-
-Self-hosted extras (in `config/mailcoach.php`): `webhooks.logs` to keep a log of calls, `webhooks.selectable_event_types_enabled` for per-webhook event selection, and `webhooks.maximum_attempts` with `opt_in_features.disable_failed_webhooks` to disable a webhook after consecutive failures. Each needs the related migrations published and run.
+Webhook URLs and event selection are configured in the interface; Mailcoach's API doesn't manage webhook settings.
 
 ## Test Mode vs Live Mode
 
-Mailcoach documents no separate test mode for webhooks. Subscribe a test address to a list, unsubscribe it, or send a small campaign to trigger events.
+Mailcoach documents no separate test mode for webhooks. Subscribe a test address to a list, unsubscribe it, or send a small campaign to trigger events, then check **Webhook logs** on the webhook's details page.
 
 ## Local Development
 

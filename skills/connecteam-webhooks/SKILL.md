@@ -58,7 +58,7 @@ function verifyConnecteamRequest(headers, secret = process.env.CONNECTEAM_WEBHOO
 
 Only the Chat webhook guide names the method (`POST`, with `User-Agent: connecteam`); the setup page doesn't. The examples accept GET, POST, PUT, PATCH and DELETE on the route, check the credential first for every method, and return 200 for an empty body.
 
-Hookdeck's Connecteam source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source.
+Hookdeck's Connecteam source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must also be allowed on the source.
 
 ## Event Types
 

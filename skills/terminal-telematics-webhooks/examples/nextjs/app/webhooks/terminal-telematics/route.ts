@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const type: string | undefined = typeof event?.type === 'string' ? event.type : undefined;
   const detail = event?.detail ?? {};
   const action = type?.split('.')[1];
-  // The delivery id (svix-id) is stable across retries: use it to deduplicate
+  // Terminal keeps the payload `id` the same across retries: deduplicate on it
   console.log(`Received Terminal webhook ${id}: ${type} (${event?.id})`);
 
   switch (type) {

@@ -37,7 +37,7 @@ const channel = await openmeter.notifications.channels.create({
 - **Custom:** you may pass your own `signingSecret` when creating or updating the
   channel. It must match `^(whsec_)?[a-zA-Z0-9+/=]{32,100}$`: base64-encoded
   random bytes with an optional `whsec_` prefix. **Keep the `whsec_` prefix.**
-  Svix/Standard Webhooks libraries and Hookdeck use the prefix to know the rest is
+  Svix/Standard Webhooks libraries use the prefix to know the rest is
   base64 to be decoded into the HMAC key.
 
 Store it as `OPENMETER_WEBHOOK_SECRET`.

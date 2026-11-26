@@ -1,85 +1,85 @@
 ---
 name: auth0-webhooks
 description: >
-  Receive and verify Auth0 webhooks delivered via Custom Log Streams (HTTP).
-  Use when setting up an Auth0 log stream HTTP endpoint, validating the
-  configured Authorization token, or handling batched authentication log
-  events like s (success login), f (failed login), ss (signup), and sepft
-  (password-grant token exchange).
+  Receive and verify Auth0 webhooks delivered by Event Streams. Use when
+  setting up an Auth0 event stream with a webhook destination, checking the
+  bearer Authorization header, or handling CloudEvents-shaped events like
+  user.created, user.updated, user.deleted and organization.member.added.
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.2.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
 # Auth0 Webhooks
 
-Auth0 (by Okta) does not send classic per-event webhooks. Instead you create a
-**Custom Log Stream (HTTP)** that POSTs tenant log events to your endpoint.
-Set the stream's **Content Format** to **JSON Array** and each request body is
-a JSON array of log records, which is what the examples here parse.
+Auth0 **Event Streams** send real-time events about your tenant (users,
+organizations, groups, roles and connections) to a webhook endpoint you
+control. Each request is an HTTP `POST` carrying one CloudEvents-shaped JSON
+object: `type` says what happened and `data.object` holds the entity.
+
+Auth0's separate **Custom Log Streams** export tenant logs (logins, failed
+logins and other `data.type` codes) in batches. They are a different product;
+see [references/log-streams.md](references/log-streams.md).
 
 ## When to Use This Skill
 
-- How do I receive Auth0 webhooks / Custom Log Stream events?
-- How do I secure an Auth0 log stream HTTP endpoint?
-- How do I validate the Auth0 Authorization token on incoming requests?
-- How do I handle batched arrays of Auth0 log events?
-- Why does Auth0 keep retrying my log stream endpoint?
+- How do I receive Auth0 Event Streams events on a webhook?
+- How do I secure an Auth0 event stream webhook endpoint?
+- How do I check the Authorization header Auth0 sends?
+- How do I handle `user.created`, `user.updated` and `user.deleted`?
+- Why did my Auth0 event stream stop delivering?
 
 ## Verification (core)
 
-Auth0 log streams have **no HMAC signature**. You secure the endpoint with a
-static shared secret: configure an **Authorization** header value on the log
-stream, then compare it against the incoming `Authorization` header on every
-request using a **timing-safe** comparison. Always serve the endpoint over
-HTTPS.
+Auth0 Event Streams **don't sign** requests. Each stream's webhook destination
+has an authorization method (`bearer`, `basic` or `custom_header`). With
+bearer, Auth0 sends `Authorization: Bearer <token>` on every request, where
+`<token>` is the value you set on the stream. Compare the whole header with a
+**timing-safe** check, and serve the endpoint over HTTPS (Auth0 requires an
+`https://` endpoint).
 
 ```javascript
 const crypto = require('crypto');
 
-// Compare the incoming Authorization header against the configured token.
-function verifyAuth0Token(headerValue, expectedToken) {
-  if (!headerValue || !expectedToken) return false;
+// Compare the incoming Authorization header with "Bearer <your token>".
+function verifyAuth0Authorization(headerValue, token) {
+  if (!headerValue || !token) return false;
   const a = Buffer.from(headerValue);
-  const b = Buffer.from(expectedToken);
+  const b = Buffer.from(`Bearer ${token}`);
   if (a.length !== b.length) return false;   // timingSafeEqual requires equal length
   return crypto.timingSafeEqual(a, b);
 }
 ```
 
-Then process the payload (a JSON **array** of log records with the JSON Array
-content format) and return `2xx` quickly. Auth0 **retries on any non-2xx** response, so acknowledge first and do
-slow work asynchronously.
+Then return a `2xx` quickly. Auth0 makes four attempts in total (retries after
+1s, 2s and 4s), and a `4xx` response fails the event with no retry.
 
-> **For complete handlers with route wiring, batch iteration, event dispatch, and tests**, see:
+> **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
 > - [examples/nextjs/](examples/nextjs/)
 > - [examples/fastapi/](examples/fastapi/)
 
 ## Common Event Types
 
-Each record's type is in `event.data.type` (a short log event type code):
+| Event | Fires when |
+|-------|------------|
+| `user.created` | A user account is created |
+| `user.updated` | A user's profile or metadata changes |
+| `user.deleted` | A user account is deleted |
+| `organization.member.added` | A user is added to an organization |
+| `organization.member.deleted` | A user is removed from an organization |
+| `group.created` | A group is created |
+| `role.created` | A role is created |
 
-| Code | Description |
-|------|-------------|
-| `s` | Success Login |
-| `f` | Failed Login |
-| `ss` | Success Signup |
-| `fs` | Failed Signup |
-| `sepft` | Success Exchange (Password for Access Token) |
-| `seacft` | Success Exchange (Authorization Code for Access Token) |
-| `feacft` | Failed Exchange (Authorization Code for Access Token) |
-| `slo` | Success Logout |
-
-> **For the full list of codes**, see [Auth0 Log Event Type Codes](https://auth0.com/docs/deploy-monitor/logs/log-event-type-codes).
+> **For the full list**, see the [Auth0 Event Catalog](https://auth0.com/docs/events).
 
 ## Environment Variables
 
 ```bash
-# The value you set as the log stream's Authorization header (shared secret).
-AUTH0_LOG_STREAM_TOKEN=your-long-random-secret
+# The token you set as the event stream's bearer authorization.
+AUTH0_EVENT_STREAM_TOKEN=your-long-random-secret
 ```
 
 ## Local Development
@@ -89,11 +89,14 @@ AUTH0_LOG_STREAM_TOKEN=your-long-random-secret
 npx hookdeck-cli listen 3000 auth0 --path /webhooks/auth0
 ```
 
+Use the printed URL as the event stream's webhook endpoint.
+
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Auth0 log streams and common event codes
-- [references/setup.md](references/setup.md) - Create a Custom Log Stream in the Auth0 Dashboard
-- [references/verification.md](references/verification.md) - Authorization token validation details and gotchas
+- [references/overview.md](references/overview.md) - Event Streams, the event envelope and delivery behaviour
+- [references/setup.md](references/setup.md) - Create an event stream with a webhook destination
+- [references/verification.md](references/verification.md) - Authorization header checks and gotchas
+- [references/log-streams.md](references/log-streams.md) - Custom Log Streams, Auth0's separate log export
 
 ## Attribution
 
@@ -109,7 +112,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing of redelivered batches
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing of redelivered events
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

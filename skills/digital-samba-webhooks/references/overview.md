@@ -2,7 +2,7 @@
 
 ## What Are Digital Samba Webhooks?
 
-Digital Samba is an embedded video conferencing platform. Webhooks are created through its REST API (`POST /webhooks`) with an endpoint URL and the list of `events` to receive. Digital Samba then POSTs a JSON payload to that URL when they occur. Requests are not signed. If the webhook has an `authorization_header` secret, it is sent on every request as `Authorization: Bearer <secret>`.
+Digital Samba is an embedded video conferencing platform. Webhooks are created in the dashboard's Webhooks section or through its REST API (`POST /webhooks`) with an endpoint URL and the list of `events` to receive. Digital Samba then POSTs a JSON payload to that URL when they occur. Requests are not signed. If the webhook has an `authorization_header` secret, it is sent on every request as `Authorization: Bearer <secret>`.
 
 ## Common Event Types
 

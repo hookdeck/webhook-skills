@@ -14,7 +14,7 @@ metadata:
 
 # Metabase Webhooks
 
-Metabase can send the results of a saved question to a webhook when an alert fires. The request is
+Metabase can send the results of a saved question to a webhook when an alert fires. The default request is
 a `POST` with a JSON body. Webhooks are **not signed**: there is no signature header and no
 timestamp. Instead you choose an authentication method on the webhook, and this skill covers
 **HTTP Basic**, where Metabase sends `Authorization: Basic base64(username:password)` on every
@@ -32,7 +32,7 @@ request, up front, and your endpoint compares it with the credentials you chose.
 
 **Choose Basic authentication on the Metabase webhook.** (Bearer, API key and query-param options
 are not covered here.) Use the same username and password in `METABASE_WEBHOOK_USERNAME` and
-`METABASE_WEBHOOK_PASSWORD`.
+`METABASE_WEBHOOK_PASSWORD`. The examples accept `POST`. To receive the alert JSON with a `PUT` channel, enable `PUT` on the Hookdeck source and add a `PUT` route to your receiver. Hookdeck delivers `GET` without a body. Keep `POST` enabled for the admin form’s **Send a test** button.
 
 ## Verification (core)
 
@@ -58,7 +58,8 @@ function verifyMetabaseRequest(headers, username, password) {
 
 - Header: `Authorization: Basic base64(username:password)`; the scheme is case-insensitive.
 - Return `401` for a missing or malformed header or a mismatch, `400` for a body that isn't a JSON
-  object, `200` once handled. Credentials arrive on the **first** request (Metabase sends them
+  object, `200` once handled. An authenticated request with an **empty body** is the webhook form's
+  **Send a test** button: return `200`, or the test shows as failed. Credentials arrive on the **first** request (Metabase sends them
   preemptively), so there is no challenge round-trip to support.
 - Read the body raw (`express.raw({ type: '*/*', limit: '10mb' })`) and authenticate before
   parsing it. Alerts embed a base64 PNG, so raise Express's default 100kb body limit.
@@ -110,7 +111,9 @@ Metabase can't reach `localhost`. Tunnel with the Hookdeck CLI (no account requi
 npx hookdeck-cli listen 3000 metabase --path /webhooks/metabase
 ```
 
-Use the printed URL as the webhook URL in Metabase, then use **Send a test alert**.
+Use the printed URL as the webhook URL in Metabase. The webhook form's **Send a test** button posts
+with no body; for a full payload, create an alert on a question that returns results and click
+**Send now**.
 
 ## Resources
 

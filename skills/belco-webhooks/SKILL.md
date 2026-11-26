@@ -88,14 +88,13 @@ quickly and process asynchronously.
 ## Environment Variables
 
 ```bash
-BELCO_WEBHOOK_SECRET=your_webhook_secret   # the `secret` property of the Webhook object returned by the API
+BELCO_WEBHOOK_SECRET=your_webhook_secret   # shown on the webhook's overview in the dashboard; `secret` on the API's Webhook object
 ```
 
 ## Setup with Hookdeck
 
 Create the Hookdeck source with the **Belco** type and paste the webhook's `secret` into the source's
-webhook verification settings. Hookdeck verifies `x-hook-signature` (HMAC-SHA256, hex) and Belco's
-`POST` delivery.
+webhook verification settings. Hookdeck verifies the signature.
 
 ## Local Development
 

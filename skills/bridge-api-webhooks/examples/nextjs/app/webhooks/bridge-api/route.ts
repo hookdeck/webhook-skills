@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       break;
 
     case 'item.refreshed':
-      console.log(`Item refreshed: ${content?.item_id} (status ${content?.status})`);
+      console.log(`Item refreshed: ${content?.item_id} (status_code ${content?.status_code})`);
       break;
 
     case 'item.account.created':

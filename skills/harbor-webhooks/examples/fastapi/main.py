@@ -71,7 +71,7 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "PUSH_ARTIFACT":
         print(f"Artifact pushed to {repo}")
-        # TODO: trigger a build or deployment for the pushed artifact
+        # Your code: trigger a build or deployment for the pushed artifact
 
     elif event_type == "PULL_ARTIFACT":
         print(f"Artifact pulled from {repo}")
@@ -81,7 +81,7 @@ def handle_event(payload: dict) -> None:
 
     elif event_type == "SCANNING_COMPLETED":
         print(f"Scan completed for {repo}")
-        # TODO: inspect scan_overview severity and gate promotion
+        # Your code: inspect scan_overview severity and gate promotion
 
     elif event_type == "SCANNING_STOPPED":
         print(f"Scan stopped for {repo}")
@@ -91,7 +91,7 @@ def handle_event(payload: dict) -> None:
 
     elif event_type == "QUOTA_EXCEED":
         print(f"Project quota exceeded at {repo}")
-        # TODO: alert the project owners
+        # Your code: alert the project owners
 
     elif event_type == "QUOTA_WARNING":
         print(f"Project quota near threshold at {repo}")

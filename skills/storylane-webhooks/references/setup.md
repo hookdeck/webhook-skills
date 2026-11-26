@@ -8,8 +8,11 @@
 ## Register Your Endpoint
 
 1. In Storylane, open **Settings > Alerts** and create or edit a demo alert.
-2. Choose the webhook destination and enter your endpoint URL.
-3. Use the **Test webhook** button to send a sample `demo_viewed` delivery.
+2. Turn on **Webhooks** and paste your endpoint URL. Add custom headers if your receiver needs them.
+3. Use the **Test webhook** button to confirm the endpoint works, then **Save**.
+
+For RepX conversations, open **Settings > Integrations** in the RepX dashboard, paste the URL and
+click **Send test webhook**.
 
 ## Get Your Webhook Verification Secret
 
@@ -20,8 +23,7 @@ hex- or base64-decoded.
 
 ## Setup with Hookdeck
 
-Paste the Webhook Verification Secret into the Hookdeck source's webhook verification settings
-(Storylane source: HMAC-SHA256, header `x-storylane-signature`, base64).
+Paste the Webhook Verification Secret into the Hookdeck source's webhook verification settings.
 
 ## Local Development
 

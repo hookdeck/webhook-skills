@@ -40,27 +40,27 @@ def handle_event(payload: dict) -> None:
 
     if event == "Booking.Created":
         print("Booking created")
-        # TODO: handle Booking.Created
+        # Add your Booking.Created handling here
 
     elif event == "Booking.Updated":
         print("Booking updated")
-        # TODO: handle Booking.Updated
+        # Add your Booking.Updated handling here
 
     elif event == "Booking.Cancelled":
         print("Booking cancelled")
-        # TODO: handle Booking.Cancelled
+        # Add your Booking.Cancelled handling here
 
     elif event == "Customer.Created":
         print("Customer created")
-        # TODO: handle Customer.Created
+        # Add your Customer.Created handling here
 
     elif event == "Redemption.Created":
         print("Redemption created")
-        # TODO: handle Redemption.Created
+        # Add your Redemption.Created handling here
 
     elif event == "PaymentLink.Created":
         print("Payment link created")
-        # TODO: handle PaymentLink.Created
+        # Add your PaymentLink.Created handling here
 
     else:
         print(f"Unhandled event: {event}")

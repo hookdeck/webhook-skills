@@ -62,7 +62,7 @@ Missing headers or a bad signature: respond `400` (or `401`). In Express, read t
 ## Event Envelope
 
 ```json
-{ "uid": "evt_...", "event_type": "subscription.created",
+{ "uid": "...", "event_type": "subscription.created",
   "event_timestamp": 1792922400, "data": { } }
 ```
 

@@ -43,14 +43,14 @@ Server runs on http://localhost:3000 and accepts `GET`, `POST`, `PUT`, `PATCH` a
 npm test
 ```
 
-The tests use an illustrative payload (Estuary has no fixed event schema) with correct, wrong and
+The tests use the example bodies printed in Estuary's docs (it has no fixed event schema) with correct, wrong and
 missing headers across all methods. To try it by hand:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/estuary \
   -H "Content-Type: application/json" \
   -H "Authorization: $ESTUARY_WEBHOOK_SECRET" \
-  -d '{"materialization_name":"acmeCo/orders/to-warehouse","run_id":"run-0001"}'
+  -d '{"materialization":"acmeCo/example/database-views","runId":"2024-01-15T08:30:00.000Z"}'
 ```
 
 ## Receive Estuary Webhooks Locally
@@ -59,7 +59,7 @@ curl -X POST http://localhost:3000/webhooks/estuary \
 npx hookdeck-cli listen 3000 estuary --path /webhooks/estuary
 ```
 
-Use the printed URL as the trigger `url`. Hookdeck's Estuary source pre-selects `POST`; also allow
+Use the printed URL as the trigger `url`. Hookdeck's Estuary source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); also allow
 `PUT` or `PATCH` on it if your trigger uses them.
 
 ## How It Works
@@ -69,5 +69,5 @@ Use the printed URL as the trigger `url`. Hookdeck's Estuary source pre-selects 
 1. The body is read raw with `express.raw({ type: '*/*' })`, so any content type works.
 2. The configured header is compared with `ESTUARY_WEBHOOK_SECRET` for every method. Failure returns `401`.
 3. An empty body is fine; JSON is parsed after the check, anything else is kept as text.
-4. There is no vendor event field: the handler tells a trigger body (`materialization_name`) from any other document.
+4. There is no vendor event field: the handler tells an HTTP Webhook connector batch (a JSON array of documents) from a trigger body.
 5. It returns `200 {"received": true}`.

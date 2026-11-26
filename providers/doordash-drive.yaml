@@ -7,8 +7,7 @@ notes: >
   Delivery API. Despite the 'Basic Auth' label in the Developer Portal, DoorDash sends whatever text
   you enter as the Authorization header (often a bare token, not base64 user:pass); OAuth is the
   other option and isn't covered. One endpoint per environment (Sandbox/Production). No signature.
-  The credential is the Authorization header. Hookdeck's DoorDash Drive source compares the WHOLE
-  Authorization header value to the configured key, so the examples read
+  The credential is the Authorization header. The examples read
   DOORDASH_DRIVE_AUTHORIZATION = the full value as DoorDash Drive sends it (e.g. '<the exact text
   you entered>'), including the scheme prefix, and compare the whole Authorization header to it; do
   not strip or parse the prefix (Coterie pattern). Don't decode it as HTTP Basic. Missing header or

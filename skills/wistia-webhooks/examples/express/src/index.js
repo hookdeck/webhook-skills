@@ -26,18 +26,18 @@ function handleEvent(event) {
   switch (event.type) {
     case 'media.created':
       console.log('Media created:', event.payload.media?.id);
-      // TODO: Record the media as uploaded
+      // Your code: Record the media as uploaded
       break;
     case 'media.processing':
       console.log('Media processing:', event.payload.media?.id);
       break;
     case 'media.ready':
       console.log('Media ready:', event.payload.media?.id);
-      // TODO: Publish the video; it is ready for playback
+      // Your code: Publish the video; it is ready for playback
       break;
     case 'media.failed':
       console.log('Media failed:', event.payload.media?.id);
-      // TODO: Mark the media as failed and notify the uploader
+      // Your code: Mark the media as failed and notify the uploader
       break;
     case 'media.updated':
       console.log('Media updated:', event.payload.media?.id, event.payload.previous_attributes);
@@ -50,7 +50,7 @@ function handleEvent(event) {
       break;
     case 'media.deleted':
       console.log('Media deleted:', event.payload.media?.id);
-      // TODO: Remove the media from your catalog
+      // Your code: Remove the media from your catalog
       break;
     case 'media.translation_created':
       console.log('Translation created:', event.payload.media?.id);
@@ -69,7 +69,7 @@ function handleEvent(event) {
       break;
     case 'viewing_session.turnstile.converted':
       console.log('Form converted:', event.payload.viewing_session?.id);
-      // TODO: Send the lead to your CRM
+      // Your code: Send the lead to your CRM
       break;
     case 'viewing_session.call_to_action.converted':
       console.log('Call to action converted:', event.payload.viewing_session?.id);
@@ -79,7 +79,7 @@ function handleEvent(event) {
       break;
     case 'live_event.registration':
       console.log('Live event registration:', event.payload.live_event?.id);
-      // TODO: Add the registrant to your system
+      // Your code: Add the registrant to your system
       break;
     default:
       console.log(`Unhandled event type: ${event.type}`);

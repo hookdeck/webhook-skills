@@ -19,27 +19,27 @@ function handleEvent(payload: JsonObject): void {
   switch (event) {
     case 'document.ready':
       console.log(`Document ready: ${id} (${name})`);
-      // TODO: mark the document as searchable
+      // Your code: mark the document as searchable
       break;
 
     case 'document.error':
       console.log(`Document failed: ${id} (${name}): ${str(data.error)}`);
-      // TODO: alert and surface the error
+      // Your code: alert and surface the error
       break;
 
     case 'document.deleted':
       console.log(`Document deleted: ${id}`);
-      // TODO: remove local records
+      // Your code: remove local records
       break;
 
     case 'ingest_job.ready':
       console.log(`Ingest job ready: ${id} (${name})`);
-      // TODO: mark the import as complete
+      // Your code: mark the import as complete
       break;
 
     case 'ingest_job.error':
       console.log(`Ingest job failed: ${id} (${name}): ${str(data.error)}`);
-      // TODO: alert and retry
+      // Your code: alert and retry
       break;
 
     default:

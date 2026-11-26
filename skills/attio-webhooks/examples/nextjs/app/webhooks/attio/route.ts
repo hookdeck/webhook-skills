@@ -28,52 +28,52 @@ function handleEvent(event: AttioEvent) {
   switch (event.event_type) {
     case 'record.created':
       console.log(`Record created: ${id.record_id} (object ${id.object_id})`);
-      // TODO: Sync the new record to your system
+      // Sync the new record to your system
       break;
 
     case 'record.updated':
       console.log(`Record updated: ${id.record_id} (attribute ${id.attribute_id})`);
-      // TODO: Fetch the record and sync the changed attribute
+      // Fetch the record and sync the changed attribute
       break;
 
     case 'record.deleted':
       console.log(`Record deleted: ${id.record_id}`);
-      // TODO: Remove the record downstream
+      // Remove the record downstream
       break;
 
     case 'record.merged':
       console.log(`Record ${event.duplicate_record_id} merged into ${id.record_id}`);
-      // TODO: Re-point references to the merged record
+      // Re-point references to the merged record
       break;
 
     case 'list-entry.created':
       console.log(`List entry created: ${id.entry_id} in list ${id.list_id}`);
-      // TODO: Start pipeline automation
+      // Start pipeline automation
       break;
 
     case 'list-entry.updated':
       console.log(`List entry updated: ${id.entry_id} (attribute ${id.attribute_id})`);
-      // TODO: React to stage/status changes
+      // React to stage/status changes
       break;
 
     case 'list-entry.deleted':
       console.log(`List entry deleted: ${id.entry_id} from list ${id.list_id}`);
-      // TODO: Clean up pipeline state
+      // Clean up pipeline state
       break;
 
     case 'note.created':
       console.log(`Note created: ${id.note_id} on record ${event.parent_record_id}`);
-      // TODO: Mirror the note
+      // Mirror the note
       break;
 
     case 'task.created':
       console.log(`Task created: ${id.task_id}`);
-      // TODO: Create a ticket or reminder
+      // Create a ticket or reminder
       break;
 
     case 'comment.created':
       console.log(`Comment created: ${id.comment_id} in thread ${event.thread_id}`);
-      // TODO: Notify a channel
+      // Notify a channel
       break;
 
     default:

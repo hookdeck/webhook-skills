@@ -43,27 +43,27 @@ function handleOxapayCallback(event) {
   switch (event.status) {
     case 'Paying':
       console.log(`Payment ${event.track_id} (${event.type}) paying: awaiting network confirmation`);
-      // TODO: Mark the order as payment in progress; do NOT deliver goods yet
+      // Your code: Mark the order as payment in progress; do NOT deliver goods yet
       break;
 
     case 'Paid':
       console.log(`Payment ${event.track_id} (${event.type}) paid: ${event.amount} ${event.currency}`);
-      // TODO: Fulfil the order (look it up by event.order_id)
+      // Your code: Fulfil the order (look it up by event.order_id)
       break;
 
     case 'Confirming':
       console.log(`Payout ${event.track_id} confirming, tx ${event.tx_hash}`);
-      // TODO: Mark the payout as sent and awaiting confirmation
+      // Your code: Mark the payout as sent and awaiting confirmation
       break;
 
     case 'Confirmed':
       console.log(`Payout ${event.track_id} confirmed, tx ${event.tx_hash}`);
-      // TODO: Mark the payout as completed
+      // Your code: Mark the payout as completed
       break;
 
     case 'Failed':
       console.log(`Payout ${event.track_id} failed`);
-      // TODO: Alert and release or retry the payout
+      // Your code: Alert and release or retry the payout
       break;
 
     default:

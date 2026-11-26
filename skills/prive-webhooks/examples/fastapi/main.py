@@ -14,8 +14,9 @@ load_dotenv()
 
 app = FastAPI()
 
-# Prive documents no topic header or body field, so each webhook subscribes to
-# one topic and gets its own endpoint path. Map path slug -> topic.
+# Every payload is {topic, idempotencyKey, data}, so the body names its topic.
+# Each webhook also subscribes to one topic, so a path per topic works as a
+# second check. Map path slug -> topic.
 TOPICS = {
     "subscriptions-created": "subscriptions/created",
     "subscriptions-line-removed": "subscriptions/line_removed",
@@ -49,27 +50,23 @@ def verify_prive_signature(raw_body: bytes, header: Optional[str], secret: Optio
 
 
 def handle_event(topic: Optional[str], payload) -> None:
-    ident = payload.get("id") if isinstance(payload, dict) else None
+    data = payload.get("data") if isinstance(payload, dict) else None
+    ident = data.get("id") if isinstance(data, dict) else None
 
     if topic == "subscriptions/created":
         print(f"Subscription created: {ident}")
-        # TODO: onboarding, CRM sync, etc.
     elif topic == "subscriptions/line_removed":
         print(f"Subscription line removed: {ident}")
     elif topic == "subscriptions/status/updated":
         print(f"Subscription status updated: {ident}")
-        # TODO: handle pause / cancel / reactivate
     elif topic == "orders/created":
         print(f"Order created: {ident}")
-        # TODO: sync to OMS, trigger fulfillment
     elif topic == "billingAttempts/created":
         print(f"Billing attempt created: {ident}")
     elif topic == "billingAttempts/success":
         print(f"Billing attempt succeeded: {ident}")
-        # TODO: record revenue
     elif topic == "billingAttempts/failed":
         print(f"Billing attempt failed: {ident}")
-        # TODO: dunning, customer outreach
     elif topic == "paymentMethod/updated":
         print(f"Payment method updated: {ident}")
     elif topic == "subscriptionActivities/created":
@@ -77,7 +74,7 @@ def handle_event(topic: Optional[str], payload) -> None:
     elif topic == "subscription/customAttributes/updated":
         print(f"Subscription custom attributes updated: {ident}")
     else:
-        print("Webhook received (topic not identified by path)")
+        print(f"Unhandled topic: {topic}")
 
 
 async def receive(request: Request, topic: Optional[str]) -> dict:
@@ -98,8 +95,11 @@ async def receive(request: Request, topic: Optional[str]) -> dict:
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # 3. Dispatch on the topic implied by the endpoint path
-    handle_event(topic, payload)
+    # 3. Dispatch on the body's topic; a per-topic path must agree with it
+    body_topic = payload.get("topic") if isinstance(payload, dict) else None
+    if topic and body_topic and body_topic != topic:
+        raise HTTPException(status_code=400, detail="Topic does not match path")
+    handle_event(body_topic or topic, payload)
 
     return {"received": True}
 

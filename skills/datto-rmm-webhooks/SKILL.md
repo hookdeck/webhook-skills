@@ -13,8 +13,9 @@ metadata:
 
 # Datto RMM Webhooks
 
-Datto RMM sends an HTTP POST when a monitor alert is raised and, optionally, when it is
-resolved. Requests are **not signed**. You authenticate them with a secret header that you add
+Datto RMM sends an HTTP request when a monitor alert is raised and, optionally, when it is
+resolved. Its docs don't name the method; a test error they quote mentions a POST request, so
+the examples handle `POST`. Requests are **not signed**. You authenticate them with a secret header that you add
 to the Global Webhook yourself (**Add Header**), and your endpoint compares that header with the
 value it has stored. The body is a template you write, using `[variable]` substitutions.
 

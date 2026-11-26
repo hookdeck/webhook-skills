@@ -64,10 +64,9 @@ events, and acknowledges anything else with `200`:
 
 - `pull_request.queued`, `.submitted`, `.testing`, `.pending_failure`, `.failed`, `.canceled`, `.merged`
 - `pull_request_batch.queued`, `.submitted`, `.testing`, `.pending_failure`, `.failed`, `.canceled`, `.merged`
-- `test_case.status_changed`, `v2.test_case.status_changed`
+- `v2.test_case.status_changed`
 - `test_case.monitor_status_changed`
-- `test_case.quarantining_setting_changed`, `v2.test_case.quarantining_setting_changed`
-- `test_case.investigation_completed`
+- `v2.test_case.quarantining_setting_changed`
 
 ## Timestamp Window
 

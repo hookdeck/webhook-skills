@@ -37,7 +37,7 @@ metadata:
 | Signed content | `{webhook-id}.{webhook-timestamp}.{raw body}` (Svix scheme) |
 | Secret | Per subscription, `whsec_...`, from `GET /v1/subscriptions/{id}/secret` → `data.secretKey` |
 | Key | Base64-decode the part after `whsec_` |
-| Timestamp | Reject if more than ~5 minutes off |
+| Timestamp | Pleo gives no tolerance; the Standard Webhooks library rejects more than 5 minutes off by default |
 | Alternatives | Basic auth or custom headers, set on the subscription (fallbacks only) |
 
 ## Verification (core)

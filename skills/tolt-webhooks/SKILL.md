@@ -36,7 +36,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -90,7 +90,7 @@ are no delete events). The name is `type` in the JSON body.
 | Event | Triggered When |
 |-------|----------------|
 | `partner.created` | A partner joins your program |
-| `partner.updated` | A partner's details change, or they are approved, rejected or suspended |
+| `partner.updated` | A partner's details change, they are approved, rejected or suspended, or tags are added or removed through the API |
 | `link.created` | A referral link is created |
 | `link.updated` | A referral link is edited |
 | `customer.created` | A referred visitor signs up and is bound to a partner |
@@ -126,6 +126,17 @@ npx hookdeck-cli listen 3000 tolt --path /webhooks/tolt
 
 Add the tunnel URL as an endpoint under Settings > Webhooks in the Tolt dashboard and pick the
 events you want, then trigger one (for example, create a partner) to see it arrive.
+
+Tolt's own CLI can also forward your organization's webhooks to localhost and send sample events.
+It re-signs them with a local `whsec_` secret that it prints, so set that as `TOLT_WEBHOOK_SECRET`
+locally:
+
+```bash
+npm install -g @tolt/cli
+tolt --api-url https://platform.tolt.com login   # API key from Settings > Integrations > Tolt API
+tolt listen --forward-to http://localhost:3000/webhooks/tolt
+tolt trigger commission.created                  # in a second terminal
+```
 
 ## Reference Materials
 

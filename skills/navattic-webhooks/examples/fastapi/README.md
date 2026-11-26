@@ -36,8 +36,8 @@ uvicorn main:app --reload --port 8000
 ```
 
 Server runs on http://localhost:8000. The route `/webhooks/navattic` accepts `GET`, `POST`, `PUT`,
-`PATCH` and `DELETE`, because Navattic's docs don't name the method. Hookdeck's Navattic source
-pre-selects `POST` without managing the method, so allow any other method on the source too.
+`PATCH` and `DELETE`, because Navattic's docs don't name the method. If you receive through
+Hookdeck, allow the method Navattic uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

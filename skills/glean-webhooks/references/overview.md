@@ -15,39 +15,39 @@ inputs it accepts. The Triggers API is experimental and requires the
 ## Event Types
 
 Presets are per-datasource and their ids are **per deployment**: discover them
-with `GET /api/trigger-presets` instead of hardcoding. Glean documents no fixed
-list of webhook event strings, so dispatch on the payload fields instead.
+with `GET /api/trigger-presets` instead of hardcoding. The delivery body itself
+has two variants, discriminated by `event_type` in the `triggerEvent` callback of
+Glean's [Platform API OpenAPI spec](https://github.com/gleanwork/open-api/blob/main/final_specs/platform.yaml):
 
 | `event_type` | Triggered When | Common Use Cases |
 |--------------|----------------|------------------|
+| `DOCUMENT_CHANGE` | A document matching the trigger changes; `reason` says why (e.g. `REVIEW_REQUESTED`) | Review queues, ticket and message alerts |
 | `CONTENT_SCHEDULE` | A schedule preset fires, e.g. a calendar event starts in `time_offset_seconds` | Meeting prep, reminders |
 
-Other presets deliver document-change events; handle unknown `event_type` values
-in a default branch and read `reason`, `title` and `view_url` for context.
+Keep a default branch for `event_type` values you do not handle.
 
 ## Event Payload Structure
 
-Illustrative only: Glean's public docs don't publish a delivery body schema, and the
-customer-meeting-prep cookbook page doesn't show one. The JSON below is the test fixture
-(`fixtures/delivery.json`) from that recipe's source in the `gleanwork/glean-cookbook` repo, so
-confirm the field names against a real delivery before relying on them:
+The spec's example for a document change:
 
 ```json
 {
   "version": "1",
-  "trigger_id": "spec-7d2f1a8b3c9e0546",
-  "trigger_name": "b4c8e2a60d1f47539a7c3e5b1d8f0264",
-  "datasource": "GOOGLECALENDAR",
-  "doc_type": "event",
-  "event_type": "CONTENT_SCHEDULE",
-  "reason": "",
-  "doc_id": "GOOGLECALENDAR_Event_A1B2C3D4E5F60718293A4B5C6D7E8F90",
-  "title": "Platform weekly — metrics review",
-  "view_url": "https://www.google.com/calendar/event?eid=...",
-  "event_time": "2026-08-25T18:30:00Z",
-  "time_offset_seconds": 1800
+  "trigger_id": "trigger_test_123",
+  "event_type": "DOCUMENT_CHANGE",
+  "datasource": "GITHUB",
+  "reason": "REVIEW_REQUESTED",
+  "doc_type": "pull",
+  "doc_id": "GITHUB_pull_123",
+  "view_url": "https://github.com/acme/payments-api/pull/123",
+  "title": "Add retry backoff to the crawler",
+  "event_time": "2025-04-23T11:00:00Z"
 }
 ```
+
+A `CONTENT_SCHEDULE` delivery has the same fields plus `time_offset_seconds`
+(for example `1800`). Email and Slack document changes can also carry `content`,
+`content_truncated` and `facets`.
 
 ## Headers
 

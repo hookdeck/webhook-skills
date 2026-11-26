@@ -22,17 +22,17 @@ Dispatch on the top-level `action`. There are 11:
 |----------|------------|----------------|
 | `scheduled` | `subAction: tikTokPublished` | A scheduled post is processed (not sent for immediate posts); TikTok finishes publishing |
 | `social` | `type`: `link`, `unlink`, `refresh` | A social account is linked, unlinked or must be refreshed |
-| `messages` | `subAction`: `messageCreated`, `messageEdited`, `messageRead`, `reactionCreated` | A message arrives, is edited, read or reacted to |
+| `messages` | `subAction`: `messageCreated`, `messageEdited`, `messageRead`, `reactionCreated`, `reactionDeleted` | A message arrives, is edited, read or reacted to |
 | `batch` | `type: batch`, `batchType` | A batch export is ready (`url` expires at `urlExpires`) |
 | `feed` | | A new item appears in a registered RSS feed |
 | `mentions` | `subAction: mention` | Your Instagram account is mentioned |
 | `comments` | `subAction: comment` | A comment is created on connected content (Facebook, Instagram, Threads) |
 | `automations` | `type`: `automation.triggered`, `automation.completed` | An automation fires or finishes |
-| `demo` | `type`: `upgradeWarning`, `upgrade` | Demo plan limit events |
+| `demo` | `type`: `upgradeWarning`, `upgrade` | A Demo User Profile converts in two days, or has converted |
 | `suspended` | `type`: `suspend`, `unsuspend` | A profile is suspended or reinstated |
-| `ads` | `type`: `created`, `spendSynced`, `accountConnected`, `accountDisconnected`, `accountRevoked` | Ad or ad account events |
+| `ads` | `type`: `created`, `campaignCreated`, `statusChanged`, `reviewChanged`, `spendSynced`, `accountConnected`, `accountDisconnected`, `accountRevoked` | Ad or ad account events |
 
-Not every payload carries a `subAction` (the documented `messages` example has
+Not every payload carries a `subAction` (the WhatsApp `messages` example has
 none), so treat it as optional.
 
 ## Payload Fields
@@ -42,7 +42,7 @@ Common envelope fields (the exact set varies by action):
 | Field | Meaning |
 |-------|---------|
 | `action` | The registration category |
-| `hookId` | Identifies one delivery of an event; identical on every retry. Dedupe on it |
+| `hookId` | Identifies one delivery of an event; identical on every retry, new on a re-notification |
 | `refId` | User Reference ID of the profile |
 | `url` | Your webhook URL |
 | `created` | ISO 8601 time of the event |
@@ -62,8 +62,10 @@ Messages events add `message`, `senderId`, `senderDetails.name`, `conversationId
 - Not retried: any other `4xx`.
 - At least once. Two delivery metadata headers identify each transmission:
   `X-Ayrshare-Delivery-Id` (unique per attempt) and `X-Ayrshare-Delivery-Attempt`
-  (`0` on the first send). Dedupe on `hookId`, not on the delivery id, and hold
-  claims for 24 hours or more.
+  (`0` on the first send). Claim `hookId`, not the delivery id, to catch retries,
+  and a key built from the payload (for `messages`, `id` with `subAction`) to catch
+  the same event notified again with a new `hookId`. Hold both claims for 24 hours
+  or more.
 
 ## Full Event Reference
 

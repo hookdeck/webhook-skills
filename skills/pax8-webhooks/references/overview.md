@@ -25,9 +25,10 @@ The Subscribing to Events page lists six categories, with event display names (n
 | Subscription | Subscription Created, Subscription Updated, Subscription Cancelled, Subscription Vendor Mapping Updated, Subscription Commitment Term Updated, Subscription Purchase Order Updated |
 | User | User Created, User Deleted, User Marked Active, User Marked Inactive, User Info Updated, User Account Reassigned, User Country Changed, User Account Name Changed, User Partner Type Changed, Company User Promoted to Partner User |
 
-The only topic identifiers the docs show are `SUBSCRIPTION` and `PRODUCT`, and the only action
-is `CREATE` (on `SUBSCRIPTION`). The examples assume `INVOICE`, `CLIENT`, `QUOTE` and `USER` for
-the other categories; how the other display names map to actions is not documented. Pax8 adds topics
+The topic identifiers the docs print are `SUBSCRIPTION`, `INVOICE` and `PRODUCT`, and the
+actions are `CREATE` (on `SUBSCRIPTION`) and `CREATED` (on `INVOICE`, in the integrator guide).
+The client, quote and user topic strings, and how the display names map to actions, are not
+documented. Pax8 adds topics
 continuously, so call `GET /webhooks/topic-definitions` for the authoritative list of topics,
 actions and filterable fields (for example `vendorId` with operator `IN`). Create calls
 referencing anything not in that catalog are rejected.
@@ -40,26 +41,51 @@ webhook to get different notifications for the same topic.
 | Item | Value |
 |------|-------|
 | Method and body | `POST`, JSON |
-| Timeout | No response within 10 seconds = failed |
+| Timeout | No response within 10 seconds = failed (the integrator guide asks for a 2xx within 5 seconds) |
 | Attempts | 3 (initial + 2 automatic retries). The docs give the back-off as "10 s → 30 s → 60 s", three intervals for two retries, so the exact spacing is unclear |
 | Final failure | Log status `FAILED`; logs kept for 30 days |
 | Alerts | One email to `contactEmail` after `errorThreshold` consecutive failures (default 10, max 20) |
 | Manual retry | `POST /webhooks/{webhookId}/logs/{logId}/retry` |
+| Duplicates | The integrator guide says the same event may be delivered more than once in rare cases |
 | Permissions | No events are emitted if the account lacks permission to the Events object |
 
 ## What Does a Pax8 Payload Look Like?
 
-The documentation elides the `samplePayload`, so the body shape is not specified. This is an
-**illustrative** payload used by the examples' tests; check a real delivery (or the test
-endpoint `POST /webhooks/{id}/topics/{topic}/test`) for the actual fields:
+The guides don't print a notification body (the `samplePayload` in the topic-definitions
+example is elided), but the Webhooks API reference types it as `WebhookPayload`:
+
+| Field | Description from the reference |
+|-------|--------------------------------|
+| `accountId` | Account ID associated with the event (UUID) |
+| `url` | URL where the webhook was sent |
+| `webhookId` | Webhook ID that sent this payload (UUID) |
+| `sentAt` | Timestamp when the webhook was sent (date-time) |
+| `webhookTopic` | The webhook topic information: `id`, `topic`, `filters` (each an `action` and `conditions`) |
+| `payloadData` | The actual event data (an object whose fields aren't documented) |
+
+The integrator guide adds that payloads carry only basic event information (event type, relevant
+IDs, timestamp), so call the Pax8 API for the full record. The example handlers route on
+`webhookTopic.topic` and log anything else. Their tests use this shape with placeholder values:
 
 ```json
-{ "topic": "SUBSCRIPTION", "action": "CREATE", "id": "00000000-0000-0000-0000-000000000000" }
+{
+  "accountId": "00000000-0000-0000-0000-00000000000a",
+  "url": "https://example.com/webhooks/pax8",
+  "webhookId": "00000000-0000-0000-0000-00000000000b",
+  "sentAt": "2026-01-01T00:00:00Z",
+  "webhookTopic": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "topic": "SUBSCRIPTION",
+    "filters": [{ "action": "CREATE", "conditions": [] }]
+  },
+  "payloadData": {}
+}
 ```
 
-The example handlers read `topic` and `action` if present as strings, and log anything else
-as unclassified instead of failing.
+Send `POST /webhooks/{id}/topics/{topic}/test` to see a real body for each topic.
 
 ## Full Reference
 
-See Pax8's guide: https://devx.pax8.com/docs/how-to-use-webhook-apis
+- Pax8's guide: https://devx.pax8.com/docs/how-to-use-webhook-apis
+- Integrator guide: https://devx.pax8.com/docs/how-to-use-webhooks-as-a-3rd-party-integrator
+- Get topic definitions (WebhookPayload schema): https://devx.pax8.com/reference/gettopicdefinitions

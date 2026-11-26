@@ -44,21 +44,22 @@ async def require_knowbe4_auth(request: Request) -> None:
 
 
 def handle_event(payload: dict) -> None:
-    """The body is defined by your own webhook configuration and KnowBe4 documents no event
-    field. ILLUSTRATIVE: this example reads an `event_type` string, e.g. the UI label
-    "Phish Failure Removed". Inspect a real delivery and adapt.
+    """KnowBe4 documents no event field or body schema. Route on the Custom Data you add to
+    each webhook: KnowBe4's own examples use the key "System" with "KnowBe4" (KSAT) and
+    "PhishER". Inspect a real delivery before you read other fields.
     """
-    event_type = payload.get("event_type")
-    if not isinstance(event_type, str):
-        event_type = None
+    system = payload.get("System")
 
-    if event_type == "Phish Failure Removed":
-        print("KSAT: phish failure removed")
-        # TODO: update the user's risk record in your system
+    if system == "KnowBe4":
+        print("KSAT webhook payload received")
+        # Handle the phishing, training or general events you selected
+
+    elif system == "PhishER":
+        print("PhishER webhook payload received")
+        # Handle the reported-message data types you selected
 
     else:
-        print(f"KnowBe4 payload received{f' ({event_type})' if event_type else ''}")
-        # TODO: route PhishER message data or other KSAT events here
+        print("KnowBe4 payload received without the expected Custom Data")
 
 
 @app.post("/webhooks/knowbe4", dependencies=[Depends(require_knowbe4_auth)])

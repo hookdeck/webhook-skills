@@ -41,7 +41,7 @@ def verify(raw_body: bytes, header: str, secret: str) -> bool:
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Paypercut recommends checking `t` against a 300-second window, but Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window rejects legitimate retries. The examples offer an opt-in `PAYPERCUT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). When it is set, `t` must be an integer and within that many seconds of now. Make your handler idempotent either way (`Paypercut-Delivery-Id`).
+Not by default. Paypercut recommends checking `t` against a 300-second window, but Hookdeck retries and replays resend the original headers and timestamp, so a fixed window rejects legitimate retries. The examples offer an opt-in `PAYPERCUT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). When it is set, `t` must be an integer and within that many seconds of now. Make your handler idempotent either way (`Paypercut-Delivery-Id`).
 
 ## Common Gotchas
 

@@ -22,7 +22,7 @@ notes: >
   SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so a 5-minute
   window rejects late retries, and point to references/verification.md, which shows where the window
   can be dropped or widened. A legacy X-AgentCard-Signature: sha256=... header signs the body alone;
-  Hookdeck uses AgentCard-Signature, so the examples verify AgentCard-Signature only and say the
+  The examples verify AgentCard-Signature only and say the
   legacy header is not used. Events include card.created, card.updated, card.closed,
   transaction.authorized, approval.requested, checkout_authorization.approved, balance.low. Hookdeck
   setup (say this in SKILL.md's setup section and in references/setup.md): Paste the endpoint's whole

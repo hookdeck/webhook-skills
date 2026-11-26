@@ -23,7 +23,7 @@ def _env(monkeypatch, caplog):
 
 
 def sign(body, secret=SECRET) -> str:
-    """x-modem-signature = HMAC-SHA512 hex of the raw body (as Hookdeck's Modem Pay source checks it)."""
+    """x-modem-signature = HMAC-SHA512 hex of the raw body."""
     if isinstance(body, str):
         body = body.encode()
     return hmac.new(secret.encode(), body, hashlib.sha512).hexdigest()
@@ -98,16 +98,16 @@ class TestWebhookEndpoint:
 
     @pytest.mark.parametrize(
         "name",
-        ["charge.updated", "payment_intent.created", "customer.created", "transfer.succeeded", "transfer.failed"],
+        ["charge.failed", "payment_intent.created", "customer.created", "transfer.succeeded", "transfer.failed"],
     )
     def test_handles_events(self, name):
         body = event(name)
         assert post(body, sign(body)).status_code == 200
 
-    def test_acknowledges_unknown_events(self, caplog):
-        body = event("charge.expired")
+    def test_acknowledges_unhandled_events(self, caplog):
+        body = event("invoice.created")
         assert post(body, sign(body)).status_code == 200
-        assert "Unhandled Modem Pay event: charge.expired" in caplog.text
+        assert "Unhandled Modem Pay event: invoice.created" in caplog.text
 
     def test_verifies_raw_bytes_not_reserialised_json(self):
         body = '{ "payload": {"id": "x", "amount": 10},\n  "event": "charge.succeeded" }'

@@ -5,7 +5,7 @@ import { computeSignature, verifyConfigCatWebhook } from '../lib/verify';
 const SECRET = 'configcat_whsk_VN3juirnVh5pNvCKd81RYRYchxUX4j3NykbZG2fAy88=';
 const URL = 'http://localhost:3000/webhooks/configcat';
 
-// Published vector from ConfigCat's docs (also verified against Hookdeck's CONFIGCAT source)
+// Published vector from ConfigCat's docs
 const VECTOR = {
   body: 'examplebody',
   id: 'b616ca659d154a5fb907dd8475792eeb',
@@ -116,10 +116,21 @@ describe('ConfigCat webhook route', () => {
     expect((await route.POST(req('POST', headers, body))).status).toBe(401);
   });
 
-  it('rejects two comma-separated signatures (single key only)', async () => {
+  it('accepts two comma-separated signatures when either matches (key rotation)', async () => {
+    const body = Buffer.from('{}');
+    for (const first of [true, false]) {
+      const headers = sign(body);
+      const valid = headers['x-configcat-webhook-signature-v1'];
+      headers['x-configcat-webhook-signature-v1'] = first ? `${valid},${VECTOR.signature}` : `${VECTOR.signature},${valid}`;
+      expect((await route.POST(req('POST', headers, body))).status).toBe(200);
+    }
+  });
+
+  it('rejects a signature list where no entry matches', async () => {
     const body = Buffer.from('{}');
     const headers = sign(body);
-    headers['x-configcat-webhook-signature-v1'] += `,${VECTOR.signature}`;
+    const other = computeSignature('configcat_whsk_other', 'wh-1', headers['x-configcat-webhook-timestamp'], body);
+    headers['x-configcat-webhook-signature-v1'] = `${other},${VECTOR.signature}`;
     expect((await route.POST(req('POST', headers, body))).status).toBe(401);
   });
 

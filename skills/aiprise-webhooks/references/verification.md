@@ -168,9 +168,12 @@ leading/trailing whitespace and copy-paste errors.
 
 ## Retry Behaviour
 
-AiPrise's callback retry schedule is not documented. Build your handler to be
-idempotent (dedupe on `verification_session_id`) so redelivered callbacks are safe,
-and return a `2xx` quickly to acknowledge receipt.
+AiPrise retries a failed callback up to three times with exponential backoff
+([changelog](https://docs.aiprise.com/changelog/changelog-feb-28-mar-7-2026)), and team
+members can retry one by hand from the callback logs. The intervals aren't documented.
+Return a `2xx` quickly and make handlers idempotent. Don't deduplicate on
+`verification_session_id` alone: one session produces many different events. Apply each
+event as a state change you can repeat safely, such as setting a case's status.
 
 ## Full Documentation
 

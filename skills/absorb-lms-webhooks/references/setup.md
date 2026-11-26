@@ -10,7 +10,8 @@
 
 1. Open the **Admin Experience**.
 2. From the Admin Interface, open the **Account** menu (top right) and click **Client Settings**.
-3. Click **New Webhook** and fill in the form:
+3. Click the **Webhooks** tile, then **Add new webhook** (older portals show a **New Webhook**
+   button on the Client Settings page instead), and fill in the form:
    - **Name**: internal, for recordkeeping
    - **Events**: pick one or more events from the drop-down
    - **URL**: your listener URL

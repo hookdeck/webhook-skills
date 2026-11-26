@@ -60,9 +60,8 @@ install):
 npx hookdeck-cli listen 3000 kibana --path /webhooks/kibana
 ```
 
-Choose Basic authentication on the Kibana Webhook connector. Hookdeck's Kibana source pre-selects
-POST without managing the method, so allow any other method the connector uses on the source too.
-Hookdeck never sends a 401 challenge, so the credentials must arrive with each request.
+Choose Basic authentication on the Kibana Webhook connector. Hookdeck's Kibana source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method the connector uses on the source too.
+There is no 401 challenge round trip, so the credentials must arrive with each request.
 
 ## How It Works
 

@@ -20,8 +20,9 @@ official `@envoy/envoy-integrations-sdk` `EnvoySignatureVerifier`
 Webhooks.
 
 > The docs page also shows a Ruby line hashing `timestamp + token`
-> (`OpenSSL::HMAC.hexdigest(..., api_key, '%s%s' % [timestamp, token])`). That is
-> Mailgun-style and does not describe Envoy webhooks; ignore it.
+> (`OpenSSL::HMAC.hexdigest(..., api_key, '%s%s' % [timestamp, token])`). It
+> contradicts the prose above it and the SDK, and Envoy sends no timestamp or
+> token to sign, so ignore it.
 
 ## Implementation
 

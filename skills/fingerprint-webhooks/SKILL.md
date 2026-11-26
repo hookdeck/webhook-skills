@@ -22,7 +22,7 @@ Receive Fingerprint identification results and Smart Signals.
 
 ## Setup
 
-Create a webhook in the Fingerprint dashboard, enable signature protection, and save the symmetric key shown at creation. Send an identification request to produce a delivery.
+Create a webhook under **Dashboard > Webhooks** and copy the signing key from the success modal; Fingerprint shows it only once. Click **Send test event**, or run an identification request, to produce a delivery.
 
 Set `FINGERPRINT_WEBHOOK_SECRET` in the server environment. Read [setup](references/setup.md) before enabling delivery.
 

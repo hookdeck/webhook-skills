@@ -62,7 +62,7 @@ def verify_clickpost_request(headers, configured=None) -> bool:
 
 - **`Token`, not `Bearer`.** A `Bearer` header is rejected.
 - **Scheme is case-insensitive** (RFC 9110); the token itself is case-sensitive.
-- **Store the bare secret.** If the configured value starts with `Token `, it is stripped, as Hookdeck does.
+- **Store the bare secret.** If the configured value starts with `Token `, it is stripped.
 - **Don't trim the secret.** Whitespace is part of the value.
 - **Bytes, not str, in Python.** `hmac.compare_digest` on non-ASCII `str` raises; encode both sides.
 - **Fail closed.** If `CLICKPOST_WEBHOOK_SECRET` is unset, reject everything.

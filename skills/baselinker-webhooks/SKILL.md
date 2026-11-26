@@ -72,8 +72,7 @@ Every HMAC-based source in that same spec carries a `webhook_secret_key`.
 BaseLinker sits in the small cohort of zero-property auth schemas alongside AWS
 SNS, Microsoft Graph, Microsoft SharePoint, Monday, Strava, Tikkie, Ethoca and
 Zift. There is also **no handshake/challenge/ack step**: unlike Trello (which uses
-HEAD as a verification probe), a BaseLinker HEAD request resolves no challenge
-controller and goes straight to ingestion.
+HEAD as a verification probe), a BaseLinker HEAD request is an ordinary delivery.
 
 **What to do instead** — defence in depth, none of it provided by the platform:
 
@@ -106,8 +105,7 @@ function verifyUrlToken(query, expected) {
 
 ## The Payload: Query Params on a Bodyless HEAD
 
-The only query params **actually observed** (in Hookdeck's Baselinker ingestion
-fixtures) are:
+The only query params **actually observed** are:
 
 | Param | Observed example | Notes |
 |-------|------------------|-------|
@@ -158,8 +156,7 @@ Never `res.json(...)` / `NextResponse.json(...)` / return a dict from FastAPI on
 this route.
 
 Because of that rule, when you route BaseLinker through Hookdeck the request id
-comes back in the **`x-hookdeck-request-id` response header** (exposed via
-`Access-Control-Expose-Headers`) rather than in a body — use it to correlate a
+comes back in the **`x-hookdeck-request-id` response header** rather than in a body — use it to correlate a
 delivery with its dashboard entry.
 
 ## Fetching the Order Detail (`X-BLToken`)
@@ -199,10 +196,7 @@ npx hookdeck-cli listen 3000 baselinker --path /webhooks/baselinker
 ```
 
 No account required — the CLI creates a guest account on first run and gives you a
-public HTTPS URL plus a web UI for inspecting requests. When you create a
-Baselinker **Source** in Hookdeck, its `allowed_http_methods` is seeded to
-`["HEAD"]`. That seeding is an **unmanaged default**: it sets the initial
-selection only, stays editable, and is not re-applied on later updates.
+public HTTPS URL plus a web UI for inspecting requests. When you create a Baselinker **Source** in Hookdeck, allow **HEAD** on it ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Reference Materials
 

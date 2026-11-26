@@ -10,23 +10,20 @@ notes: >
   Basic Auth. Header X-Lettermint-Signature: t=<unix seconds>,v1=<hex>. v1 = lowercase hex
   HMAC-SHA256 over "<t>.<raw body>" (t exactly as sent), keyed with the whole webhook secret
   (whsec_..., prefix included, UTF-8 bytes, not base64-decoded: NOT Standard Webhooks, so no
-  svix/standardwebhooks libraries). The header may carry several v1 entries (key rotation): any may
-  match; ignore other keys. Require exactly 64 hex characters and compare in constant time; hex is
+  svix/standardwebhooks libraries). The header may carry several v1 entries (Lettermint's SDKs accept any
+  match); ignore other keys. Require exactly 64 hex characters and compare in constant time; hex is
   case-insensitive. Missing or invalid signature -> 401 (Lettermint does not retry 4xx other than
   408/429). Timestamp window is opt-in (LETTERMINT_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off)
-  because retries and Hookdeck replays keep the original t; Lettermint's SDKs use 300 seconds and also
-  require X-Lettermint-Delivery to equal t, which Hookdeck does not check. Setup note (Hookdeck shows
+  because deliveries Hookdeck retries or replays keep the original t; Lettermint's SDKs use 300 seconds and also require X-Lettermint-Delivery to equal t. Setup note (Hookdeck shows
   it too): "Paste the whole secret, including the whsec_ prefix. Lettermint uses it as a plain HMAC
   key." Envelope: id, event, timestamp, context, data (outbound message events add sandbox and
-  sandbox_result); dispatch on event, also sent as X-Lettermint-Event. 17 documented events:
+  sandbox_result); dispatch on event, also sent as X-Lettermint-Event. 18 documented events:
   message.created, message.sent, message.delivered, message.auto_replied, message.hard_bounced,
   message.soft_bounced, message.spam_complaint, message.failed, message.suppressed,
   message.policy_rejected, message.unsubscribed, message.opened, message.clicked, suppression.added,
-  suppression.removed, message.inbound, webhook.test. Delivery: POST, 30 s timeout; timeouts, 408, 429
+  suppression.removed, message.inbound, inbound.rejected, webhook.test. Delivery: POST, 30 s timeout; timeouts, 408, 429
   and 5xx retried with exponential backoff (12 attempts over about 14 hours); 20 consecutive
-  no-response deliveries pause the webhook for 1 minute (doubling up to 5). Hookdeck source type
-  LETTERMINT (HMAC, sha256, header x-lettermint-signature, hex, delimiter ".",
-  prefix_data_with_timestamp, method POST).
+  retryable failures (timeouts, 5xx) pause the webhook for 1 minute (doubling up to 5). Hookdeck source type LETTERMINT.
 testScenario:
   events:
     - "message.delivered"

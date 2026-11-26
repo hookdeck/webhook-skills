@@ -19,7 +19,7 @@ app = FastAPI()
 # OpnForm signs deliveries only when a webhook secret is set on the integration:
 #   X-Webhook-Signature: sha256=<lowercase hex HMAC-SHA256 of the raw body>
 # The key is the secret as UTF-8 bytes. Nothing else is signed (no timestamp), so there is no
-# replay window; use submission_id for idempotency.
+# replay window. A retry or an edit to the submission resends the same submission_id, so upsert on it.
 # https://docs.opnform.com/api-reference/integrations/webhook-security
 
 
@@ -27,7 +27,7 @@ def verify_opnform(raw_body: bytes, signature_header, secret: str) -> bool:
     if not secret or not signature_header:
         return False
 
-    # The prefix is optional: Hookdeck's OpnForm source accepts the bare digest too
+    # The prefix is optional: accept the bare digest too
     sig = signature_header.strip()
     if sig.startswith("sha256="):
         sig = sig[len("sha256="):]
@@ -64,7 +64,7 @@ async def opnform_webhook(raw_body: bytes = Depends(verified_body)):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
     # Every delivery is a form submission; there is no event name to switch on.
-    # submission_id identifies it: use it to drop duplicates (see webhook-handler-patterns)
+    # submission_id identifies it. Upsert on it: a retry or an edit resends it with the latest answers.
     submission = payload.get("submission")
     field_count = len(submission) if isinstance(submission, dict) else 0
     title = payload.get("form_title")

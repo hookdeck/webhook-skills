@@ -8,7 +8,7 @@ const { verifyNexthinkRequest } = require('../src/index');
 
 // Illustrative template: Nexthink adds no event field; "event" is chosen by the template author
 const triggered = { event: 'alert triggered', monitor: 'High CPU (illustrative)' };
-const recovered = { event: 'alert recovered', monitor: 'High CPU (illustrative)' };
+const highPriority = { event: 'high priority alert', monitor: 'High CPU (illustrative)' };
 
 function send(method, body, headers = {}, contentType = 'application/json') {
   const req = request(app)[method]('/webhooks/nexthink').set(headers);
@@ -29,7 +29,7 @@ describe('Nexthink webhook', () => {
   });
 
   it.each(['post', 'put', 'patch'])('accepts %s', async (method) => {
-    const res = await send(method, recovered, { Authorization: AUTH });
+    const res = await send(method, highPriority, { Authorization: AUTH });
     expect(res.status).toBe(200);
   });
 

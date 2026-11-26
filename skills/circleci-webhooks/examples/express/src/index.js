@@ -148,9 +148,9 @@ function handleEvent(eventType, payload) {
       console.log(`  ${url}`);
 
       if (status === 'success') {
-        // TODO: promote the build, deploy, mark the commit green.
+        // Your code: promote the build, deploy, mark the commit green.
       } else if (status === 'failed' || status === 'error') {
-        // TODO: alert the team, open an incident, record a DORA failure.
+        // Your code: alert the team, open an incident, record a DORA failure.
       }
       break;
     }
@@ -166,7 +166,7 @@ function handleEvent(eventType, payload) {
           (durationMs !== null ? ` in ${Math.round(durationMs / 1000)}s` : '')
       );
 
-      // TODO: record job timings, track flaky tests, ingest artifacts.
+      // Your code: record job timings, track flaky tests, ingest artifacts.
       break;
     }
 

@@ -7,7 +7,7 @@
 
 ## Get Your Signing Secret
 
-Argyle does not generate a secret. You choose it:
+You choose the secret yourself and set it on the subscription:
 
 > Set a secret on the Argyle webhook subscription. Without one, deliveries are unsigned and fail verification.
 
@@ -31,7 +31,7 @@ See [Argyle's webhook guide](https://docs.argyle.com/api-guide/webhooks).
 Argyle's docs don't name the HTTP method. Accept GET, POST, PUT, PATCH and DELETE on your route, as the
 examples do, and verify the signature first for every method.
 
-Hookdeck's Argyle source pre-selects POST without managing the method, so any other method the sender
+Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender
 uses must also be allowed on the source.
 
 ## Local Development

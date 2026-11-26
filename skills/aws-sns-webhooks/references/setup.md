@@ -95,8 +95,9 @@ There is no signing secret to keep private, so anyone could POST a validly
 
 ## Local Development
 
-SNS must reach your endpoint over the public internet. Use the Hookdeck CLI
-tunnel — no account required:
+SNS must reach your endpoint over the public internet. To use the Hookdeck CLI,
+first create a Hookdeck source with the **AWS SNS** source type named
+`aws-sns`, then forward it:
 
 ```bash
 npx hookdeck-cli listen 3000 aws-sns --path /webhooks/aws-sns

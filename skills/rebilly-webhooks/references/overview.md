@@ -54,7 +54,7 @@ and `webhook-signature` headers, and a `User-Agent` of the form `Rebilly/<releas
 
 Rebilly retries unless the response is exactly HTTP 200 (not 202 or 204), and also when there is no
 response within 20 seconds. Retries come after about 5 minutes, then about 1, 2, 4, 8 and 16 hours,
-up to 6 retries. Webhooks may be delayed or delivered more than once, and ordering isn't guaranteed.
+up to 6 retries. Webhooks may be delayed or delivered more than once, and Rebilly doesn't document delivery order.
 
 ## Full Event Reference
 

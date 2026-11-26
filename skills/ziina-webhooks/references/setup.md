@@ -13,7 +13,7 @@ You choose the secret yourself; no format is documented. Store it as `ZIINA_WEBH
 
 ## Register Your Endpoint
 
-Webhooks are configured through the API, not a dashboard. Call `POST /webhook` (see the [webhook API reference](https://docs.ziina.com/api-reference/webhook/index) for the base URL and authentication) with a JSON body:
+Ziina documents the API as the way to set the webhook. Call `POST /webhook` (see the [webhook API reference](https://docs.ziina.com/api-reference/webhook/index) for the base URL and authentication) with a JSON body:
 
 ```json
 { "url": "https://your-domain.com/webhooks/ziina", "secret": "your_chosen_secret" }

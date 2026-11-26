@@ -22,7 +22,7 @@ Receive Ryft payment-session, payout and account notifications.
 
 ## Setup
 
-Use the Ryft Portal profile menu > Developer > Webhooks, or the Webhook API, to register the endpoint and obtain its secret. Configure test and live credentials separately.
+Use the Ryft Portal profile menu > Developer > Webhooks, or the Webhook API, to register the endpoint. `POST /webhooks` returns the endpoint's secret only when the endpoint is created, so store it then.
 
 Set `RYFT_WEBHOOK_SECRET` in the server environment. Read [setup](references/setup.md) before enabling delivery.
 

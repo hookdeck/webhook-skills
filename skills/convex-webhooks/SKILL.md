@@ -4,7 +4,7 @@ description: >
   Receive and verify Convex webhook log stream events. Use when setting up a
   Convex webhook log stream endpoint, debugging x-webhook-signature
   verification, or handling log events such as verification, console,
-  function_execution, audit_log and scheduler_stats.
+  function_execution, audit_log, scheduler_stats and s3_export_stats.
 license: MIT
 metadata:
   author: hookdeck
@@ -63,7 +63,7 @@ Respond `401` for a missing, malformed or mismatched signature. In Express use `
 
 ## Common Event Types
 
-There is no event header. The body is a **JSON array** of events (or one JSON object per line for JSONL streams); loop over it and dispatch on each event's `topic`. Every event also has `timestamp` (Unix ms) and `convex` (deployment metadata).
+There is no event header. Each stream has a format: **JSON** sends one array of events per request, **JSONL** one event object per line (the dashboard preselects JSONL for a new stream). Both arrive with `Content-Type: application/json`, so read the raw body, then loop over the events and dispatch on each event's `topic`. Every event also has `timestamp` (Unix ms) and `convex` (deployment metadata). A stream gets every topic unless you pick some under **Topics**.
 
 | Topic | Description |
 |-------|-------------|
@@ -76,6 +76,8 @@ There is no event header. The body is a **JSON array** of events (or one JSON ob
 | `concurrency_stats` | Per-minute function concurrency statistics |
 | `storage_api_bandwidth` | A file download from the storage HTTP API (`egress_bytes`) |
 | `ai_gateway_usage` | Usage for an AI Gateway inference (`inference_id`, `cost`) |
+| `s3_export_stats` | S3 export status (`status`, `lag_seconds`, `last_error`); S3 Export is in beta |
+| `custom_audit` | Audit logs from your functions; opt-in, for testing (Enterprise, dedicated deployments) |
 
 See [references/overview.md](references/overview.md) for payload details.
 
@@ -89,7 +91,7 @@ Delivery is best effort and batched: events can be dropped under high throughput
 
 ## Setup with Hookdeck
 
-In the Convex dashboard open Deployment Settings > Integrations, add a Webhook log stream with your Hookdeck source URL, and copy the HMAC secret it shows into the Hookdeck source's signing secret (Convex source type). See [references/setup.md](references/setup.md).
+In the Convex dashboard open Deployment Settings > Integrations, add a Webhook log stream with your Hookdeck source URL and set **Format** to **JSON**, so each request is one JSON array. Then copy the HMAC secret it shows into the Hookdeck source's signing secret (Convex source type). See [references/setup.md](references/setup.md).
 
 ## Environment Variables
 

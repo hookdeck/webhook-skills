@@ -10,20 +10,19 @@ notes: >
   within a 10 s timeout. Up to 6 attempts (first plus five retries, about 8.5 h in all); retries keep
   the same X-Coassemble-Delivery ID and payload. Manual replay afterwards. Coassemble says:
   'X-Coassemble-Signature HMAC SHA-256 signature in the format sha256=<hex>' 'sha256 =
-  HMAC_SHA256(secret, "<timestamp>.<raw_request_body>")' SIGNATURE SCHEME (it must match Hookdeck's
-  COASSEMBLE source exactly: HMAC controller, algorithm sha256, header x-coassemble-signature,
-  encoding hex, signed_content_template "{header:x-coassemble-timestamp}.{body}"). The
+  HMAC_SHA256(secret, "<timestamp>.<raw_request_body>")' SIGNATURE SCHEME (algorithm sha256, header x-coassemble-signature,
+  encoding hex, signed content "{x-coassemble-timestamp header}.{raw body}"). The
   X-Coassemble-Signature header carries `sha256=<hex>`. The signature is lowercase hex HMAC-SHA256,
   keyed with the secret, over: the X-Coassemble-Timestamp header value, then a literal ".", then the
-  raw request body bytes. Build the signed message as BYTES, exactly as Hookdeck's template does:
+  raw request body bytes. Build the signed message as BYTES:
   literal separators as UTF-8, header values as the exact header string encoded latin1 (Node
   Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
   re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
   decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
   The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Strip a leading `sha256=` before validating
-  the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  the digest; accept the value with or without the
   prefix. Secret: the endpoint's signing secret, used as UTF-8. Env var: COASSEMBLE_WEBHOOK_SECRET.
   Validate the signature's format before decoding it (exact length and alphabet), then compare in
   constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
@@ -31,14 +30,13 @@ notes: >
   Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
   Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
   NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
-  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  timestamp, so a fixed window would reject legitimate
   retries. Offer an opt-in tolerance (an env var such as COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS, unset
   or 0 = off) and say so in SKILL.md and verification.md (X-Coassemble-Timestamp is Unix seconds).
   Retries keep the same X-Coassemble-Delivery ID and payload; use it to dedupe. Events: dispatch on
   the body's `type` field. Documented event types (7): course.created, course.commenced,
   course.completed, quiz.completed, quiz.failed, migration.progress, migration.completed. Handle a few
-  common ones and log the rest. Method: POST. Hookdeck's Coassemble source manages the method as POST,
-  so the examples handle POST on the webhook route. Express examples must read the raw body with
+  common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

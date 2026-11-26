@@ -22,30 +22,30 @@ function verifyTextureSignature(rawBody, signature, secret) {
 function handleEvent(event) {
   switch (event.type) {
     case 'device.discovered':
-      console.log(`Device discovered: ${event.deviceId}`);
-      // TODO: register the device in your system
+      console.log(`Device discovered: ${event.data?.deviceId}`);
+      // Your code: register the device in your system
       break;
 
     case 'device.updated':
-      console.log(`Device updated: ${event.deviceId}`);
-      // TODO: sync device state
+      console.log(`Device updated: ${event.data?.deviceId}`);
+      // Your code: sync device state
       break;
 
     case 'device.disconnected':
-      console.log(`Device disconnected: ${event.deviceId}`);
+      console.log(`Device disconnected: ${event.data?.deviceId}`);
       break;
 
     case 'command.succeeded':
-      console.log(`Command succeeded for device ${event.deviceId}`);
+      console.log(`Command succeeded for device ${event.data?.deviceId}`);
       break;
 
     case 'command.failed':
-      console.log(`Command failed for device ${event.deviceId}`);
-      // TODO: retry or alert
+      console.log(`Command failed for device ${event.data?.deviceId}`);
+      // Your code: retry or alert
       break;
 
     case 'command.overridden':
-      console.log(`Command overridden for device ${event.deviceId}`);
+      console.log(`Command overridden for device ${event.data?.deviceId}`);
       break;
 
     case 'customer.created':

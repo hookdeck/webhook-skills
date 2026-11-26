@@ -14,27 +14,27 @@ function handleEvent(payload: Cin7CorePayload): void {
   switch (EventType) {
     case 'Sale/Created':
       console.log('Sale created');
-      // TODO: sync the new sale to your system
+      // Sync the new sale to your system
       break;
 
     case 'Sale/OrderAuthorised':
       console.log('Sale order authorised');
-      // TODO: start fulfilment
+      // Start fulfilment
       break;
 
     case 'Sale/ShipmentAuthorised':
       console.log('Sale shipment authorised');
-      // TODO: notify the customer / update tracking
+      // Notify the customer / update tracking
       break;
 
     case 'Purchase/OrderAuthorised':
       console.log('Purchase order authorised');
-      // TODO: sync the purchase to accounting
+      // Sync the purchase to accounting
       break;
 
     case 'Product/Updated':
       console.log('Product updated');
-      // TODO: refresh your catalogue
+      // Refresh your catalogue
       break;
 
     default:
@@ -56,8 +56,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    return NextResponse.json({ error: 'Expected a JSON object' }, { status: 400 });
+  // Stock/AvailableStockLevelChanged and Task/Overdue send a JSON array with no
+  // EventType. Give those webhooks their own URL and handle them by route.
+  if (Array.isArray(payload)) {
+    console.log(`Array body with ${payload.length} row(s)`);
+    return NextResponse.json({ received: true });
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Expected a JSON object or array' }, { status: 400 });
   }
 
   try {

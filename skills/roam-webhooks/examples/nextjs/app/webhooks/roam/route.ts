@@ -56,7 +56,7 @@ function handleEvent(event: RoamEvent) {
       console.log(`Unhandled Roam event: ${event.type}`);
   }
 
-  // TODO: acknowledge first, then do the real work in a background job
+  // In production, acknowledge first and do the real work in a background job
 }
 
 export async function POST(request: NextRequest) {

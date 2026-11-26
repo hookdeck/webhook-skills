@@ -9,7 +9,7 @@
 
 Create one webhook config per event, in the epilot UI or with the Webhooks API. A config has:
 
-- **Event** (`eventName`): one of the values from `GET /v1/webhooks/events` for your organization, for example `customer_request_created`, the Automation Trigger Webhook, a portal activity, or an Event Catalog `event_*` event
+- **Event** (`eventName`): one of the values from `GET /v1/webhooks/events` for your organization, for example a Core Event such as `event_FileCreated`, a Custom Event, the Automation Trigger Webhook or a portal activity
 - **URL** and **HTTP method** (the API examples use POST; if you pick another, allow it on the Hookdeck source too)
 - **Authentication** (optional, see below)
 - **Filter**, an optional **JSONata** expression to reshape the body, and a **retry policy**
@@ -41,7 +41,7 @@ If you receive `binary_multipart` file deliveries through Hookdeck, signature ve
 
 ## Which Header Names Does epilot Send?
 
-`webhook-id`, `webhook-timestamp` and `webhook-signature`. The examples also accept the same values under `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent, which is how Hookdeck reads them.
+`webhook-id`, `webhook-timestamp` and `webhook-signature`. The examples also accept the same values under `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent.
 
 ## Local Development
 
@@ -54,4 +54,4 @@ No account required. Use the printed URL as the webhook URL, then trigger the ev
 
 ## Monitoring and Replay
 
-Events are logged for 4 weeks and can be replayed. A replay sends the original `webhook-timestamp`, so the library's 5-minute window rejects it. See [verification.md](verification.md) for the manual verifier with a configurable window.
+Events are logged for 4 weeks and can be replayed, one at a time or up to 100 at once through the API. A replay resends the same payload and creates a new event record; epilot's docs don't say whether it is signed again, so a replay of an older event can fail the library's 5-minute window. See [verification.md](verification.md) for the manual verifier with a configurable window.

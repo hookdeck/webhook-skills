@@ -14,7 +14,7 @@ import pytest
 
 # SaladCloud shows the secret as bare base64 (no "whsec_" prefix). The HMAC key
 # is its base64 decoding. The standardwebhooks library also accepts the
-# "whsec_" + secret form that Hookdeck needs, and derives the same key.
+# "whsec_" + secret form, and derives the same key.
 KEY = b"salad-test-signing-key-0123456789"
 SECRET = base64.b64encode(KEY).decode()
 

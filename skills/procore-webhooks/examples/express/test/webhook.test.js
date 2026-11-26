@@ -7,7 +7,7 @@ process.env.PROCORE_AUTHORIZATION = AUTH;
 const app = require('../src/index');
 const { verifyProcoreRequest } = require('../src/index');
 
-// Illustrative v2 payload; field names are not confirmed against the developer docs
+// v2.0 payload fields as listed in Procore's How Webhooks Work page; values are made up
 const payload = (eventType) => ({
   id: 'evt_1',
   ulid: '01H8XYZ0000000000000000000',

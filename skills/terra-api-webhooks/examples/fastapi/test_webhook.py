@@ -62,6 +62,10 @@ class TestSignatureVerification:
         assert res.status_code == 200
         assert res.json() == {"received": True}
 
+    def test_accepts_x_terra_signature(self):
+        body = event("activity")
+        assert post(body, {"X-Terra-Signature": sign(body)}).status_code == 200
+
     def test_accepts_any_matching_v1_and_ignores_v0(self):
         body = event("sleep")
         t = int(time.time())

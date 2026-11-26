@@ -4,8 +4,8 @@
 
 Belco (belco.io) is a customer-service inbox for e-commerce (chat, email, phone). Webhooks notify
 your integration in real time about call and conversation activity. Each delivery is an HTTPS
-`POST` with a JSON body and an `x-hook-signature` header. Webhooks are created per shop through the
-REST API.
+`POST` with a JSON body and an `x-hook-signature` header. Webhooks are created per shop, in the
+dashboard (Settings > Developers > Webhooks) or through the REST API.
 
 ## Common Event Types
 
@@ -41,7 +41,8 @@ The event name is the body's top-level `eventName` field. No header names the ev
 
 - `requestId` is unique per event: use it to deduplicate retries.
 - `payload.shopId` identifies the shop. Conversation events carry `conversation` and
-  `conversation_item`; call events carry `call` (`direction`, `status`, `from`, `to`).
+  `conversation_item`. Belco publishes no sample payload for the four `call.*` events, so log a
+  real one before relying on its fields.
 
 ## Delivery
 

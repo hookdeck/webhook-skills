@@ -30,7 +30,7 @@ documented method (its samples are Python and Node.js).
 - **Status codes**: missing, empty, malformed or mismatched signature is `401`. A signed body that is
   not a JSON object is `400`.
 - **`X-SendX-Signature-Alg`** is always `hmac-sha256`. SendX's own Python sample rejects other values;
-  the examples may log it but do not depend on it, and neither does Hookdeck.
+  the examples may log it but do not depend on it.
 - **Wrong key**: intermittent failures usually mean a personal or project key rather than the Team API Key.
 - **Proxies**: make sure a reverse proxy does not strip the custom `X-SendX-*` headers.
 

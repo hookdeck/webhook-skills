@@ -43,19 +43,19 @@ def handle_event(event: dict) -> None:
 
     if event_type == "processingAccount.status.changed":
         print(f"Processing account {data.get('processingAccountId')} status: {data.get('status')}")
-        # TODO: update onboarding state
+        # Update onboarding state
 
     elif event_type == "processingAccount.riskStatus.changed":
         print(f"Processing account {data.get('processingAccountId')} risk status: {data.get('riskStatus')}")
-        # TODO: alert risk and support teams
+        # Alert risk and support teams
 
     elif event_type == "processingAccount.signature.signed":
         print(f"Processing account {data.get('processingAccountId')} signed: {data.get('signed')}")
-        # TODO: continue onboarding
+        # Continue onboarding
 
     elif event_type == "terminalOrder.status.changed":
         print(f"Terminal order status changed: {json.dumps(data)}")
-        # TODO: update fulfilment status
+        # Update fulfilment status
 
     else:
         print(f"Unhandled event: {event_type}")

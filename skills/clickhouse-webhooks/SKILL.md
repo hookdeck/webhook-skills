@@ -69,7 +69,7 @@ documents no event names. Generic webhooks support these template variables:
 | Variable | Contains |
 |----------|----------|
 | `{{title}}` | Alert title |
-| `{{body}}` | Alert description |
+| `{{body}}` | Alert message (rendered Markdown) |
 | `{{link}}` | Link to the search or chart the alert is attached to |
 
 The examples use this **illustrative** body template (yours may differ):

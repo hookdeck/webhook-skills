@@ -75,7 +75,11 @@ async def oh_dear_webhook(event: dict = Depends(verified_event)):
     elif _UPTIME_FAILED_RE.fullmatch(event_type):
         print(f"Uptime check failed: {event.get('result_url')}")
     elif _UPTIME_RECOVERED_RE.fullmatch(event_type):
-        print(f"Uptime check recovered: {event.get('result_url')}")
+        # Partial connectivity after downtime uses the same type with run.result "warning"
+        if _as_dict(event.get("run")).get("result") == "warning":
+            print(f"Uptime partly restored (warning): {event.get('result_url')}")
+        else:
+            print(f"Uptime check recovered: {event.get('result_url')}")
     elif event_type == "certificateExpiresSoonNotification":
         print("Certificate expires soon")
     elif event_type == "brokenLinksFoundNotification":

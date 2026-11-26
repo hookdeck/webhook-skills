@@ -39,7 +39,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -66,9 +66,9 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-Each endpoint has its own signing secret, shown for the endpoint in the dashboard's **Developer**
-section (Svix). Agntix doesn't print the secret's form, but Svix secrets start with `whsec_`. Keep
-the full value in `AGNTIX_WEBHOOK_SECRET`. Handlers fail closed: with the variable unset (or not a
+Agntix's docs don't say where the dashboard shows the signing secret: look on the endpoint you
+added under **Developer**. They don't print the secret's form either, but Svix secrets start with
+`whsec_`. Keep the full value in `AGNTIX_WEBHOOK_SECRET`, the variable Agntix's own samples read. Handlers fail closed: with the variable unset (or not a
 `whsec_` value) they return 500 instead of accepting anything. A missing header or bad signature
 gets a 400.
 

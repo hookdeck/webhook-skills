@@ -98,13 +98,13 @@ async def whoop_webhook(request: Request):
     # Payloads are thin: fetch the record from the v2 API using `id`.
     # For recovery.* events, `id` is the UUID of the associated sleep.
     if event_type == "sleep.updated":
-        # TODO: GET /v2/activity/sleep/{id}
+        # Next, GET /v2/activity/sleep/{id} with the user's access token
         print(f"Sleep {object_id} created or updated")
     elif event_type == "workout.updated":
-        # TODO: GET /v2/activity/workout/{id}
+        # Next, GET /v2/activity/workout/{id} with the user's access token
         print(f"Workout {object_id} created or updated")
     elif event_type == "recovery.updated":
-        # TODO: fetch the recovery for sleep {id}
+        # Next, GET the sleep for its cycle_id, then /v2/cycle/{cycle_id}/recovery
         print(f"Recovery for sleep {object_id} created or updated")
     else:
         # sleep.deleted, workout.deleted, recovery.deleted and anything new

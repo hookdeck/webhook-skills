@@ -211,9 +211,7 @@ Documented:
   `44.196.66.47`, `54.69.216.81`, `52.37.95.20`, `52.24.103.36`. A firewall aid Formstack
   can change without notice — **not a verification mechanism**.
 - **Status**: `status.formstack.com`.
-- **Method is always POST.** Hookdeck's `FORMSTACK` source type treats the HTTP method as
-  *managed* and fixes it to `POST`, so a Hookdeck source for Formstack will not accept
-  another verb. Build the handler for POST only.
+- **Method is always POST.** Build the handler for POST only.
 
 Observed on real deliveries but not documented:
 

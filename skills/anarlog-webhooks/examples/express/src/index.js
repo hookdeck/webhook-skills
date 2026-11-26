@@ -55,12 +55,12 @@ app.post('/webhooks/anarlog',
     }
 
     const event = payload && typeof payload === 'object' ? payload.event : undefined;
-    // Use payload.id (or the x-anarlog-delivery header) to dedupe retries
+    // Use payload.id to dedupe retries: Anarlog says to store it so retries are processed once
     switch (event) {
       case 'meeting.completed': {
         const meeting = payload.data?.meeting;
         console.log(`Meeting completed: ${meeting?.title} (${meeting?.id})`);
-        // TODO: Archive the transcript, create a CRM activity, notify a channel
+        // Your logic here: archive the transcript, create a CRM activity, notify a channel
         break;
       }
 
@@ -68,7 +68,7 @@ app.post('/webhooks/anarlog',
         const meeting = payload.data?.meeting;
         const actionItems = meeting?.action_items ?? [];
         console.log(`Summary generated for ${meeting?.title}: ${actionItems.length} action items`);
-        // TODO: Post the summary, create tasks from action items
+        // Your logic here: post the summary, create tasks from action items
         break;
       }
 

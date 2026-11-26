@@ -1,11 +1,11 @@
 # General Translation Webhooks - FastAPI Example
 
-Minimal example of receiving [General Translation](https://generaltranslation.com) webhooks with signature verification. Deliveries are signed with Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and verified with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent the handler falls back to the `svix-*` header names, as Hookdeck does.
+Minimal example of receiving [General Translation](https://generaltranslation.com) webhooks with signature verification. Deliveries are signed with Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and verified with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent the handler falls back to the `svix-*` header names.
 
 ## Prerequisites
 
 - Python 3.9+
-- A General Translation organization on the Starter or Enterprise plan
+- A General Translation organization on the Enterprise plan
 - The signing secret (`whsec_...`) of your webhook endpoint
 
 ## Setup

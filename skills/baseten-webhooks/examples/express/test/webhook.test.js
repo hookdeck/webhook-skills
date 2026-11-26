@@ -11,7 +11,7 @@ const successEvent = {
   request_id: '9876543210abcdef1234567890fedcba',
   model_id: 'abc123',
   deployment_id: 'def456',
-  type: 'async_request_completed',
+  type: 'async_predict_completed',
   time: '2024-04-30T01:01:08.883423Z',
   data: { output: 'model response here' },
   errors: [],

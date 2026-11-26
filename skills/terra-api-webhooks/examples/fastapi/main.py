@@ -28,11 +28,12 @@ load_dotenv()
 logger = logging.getLogger("terra-api-webhooks")
 app = FastAPI()
 
-# Terra signs every delivery in the terra-signature header:
+# Terra signs every delivery in the X-Terra-Signature header (Terra still sends a deprecated
+# Terra-Signature duplicate, so the handler falls back to it):
 #   t=<unix seconds>,v1=<hex>[,v0=<hex>]
-# v1 is HMAC-SHA256 (lowercase hex) of "<t>.<raw body>", keyed with the destination's signing secret
+# v1 is HMAC-SHA256 (lowercase hex) of "<t>.<raw body>", keyed with the webhook's signing secret
 # (UTF-8 bytes, used as-is). The header can carry several v1 values; any match is enough. Ignore v0.
-# https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks
+# https://docs.tryterra.co/destinations/webhooks
 
 # Optional replay window in seconds. Off by default (0): retries and replays, including
 # Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
@@ -108,14 +109,14 @@ def verify_terra(raw_body: bytes, signature_header, secret: str) -> bool:
 
 
 async def verified_body(request: Request) -> bytes:
-    """Dependency: read the raw bytes and check terra-signature before anything is parsed."""
+    """Dependency: read the raw bytes and check X-Terra-Signature before anything is parsed."""
     secret = os.getenv("TERRA_WEBHOOK_SECRET")
     if not secret:
         logger.error("TERRA_WEBHOOK_SECRET is not set")
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
     raw_body = await request.body()
-    if not verify_terra(raw_body, request.headers.get("terra-signature"), secret):
+    if not verify_terra(raw_body, request.headers.get("x-terra-signature") or request.headers.get("terra-signature"), secret):
         logger.error("Terra webhook signature verification failed")
         raise HTTPException(status_code=401, detail="Invalid signature")
     return raw_body

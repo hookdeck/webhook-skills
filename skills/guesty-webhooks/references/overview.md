@@ -32,7 +32,7 @@ From Guesty's [Subscribe to webhooks](https://open-api-docs.guesty.com/docs/webh
 
 - **Reservations:** `reservation.created.v2`, `reservation.updated.v2`, `reservation.new`, `reservation.updated`, `reservation_update_shortlist`
 - **Messages:** `reservation.messageReceived`, `reservation.messageSent`
-- **Payments:** `payments.authenticationRequired`, `payments.authorizationHoldFailed`, `payments.disputes`, `payments.failed`, `payments.method.received`, `payments.overcharged`, `payments.overcharge.expected`, `payments.invalidPaymentMethod`, `payments.overdue`, `payments.received`, `payments.refunded`
+- **Payments:** `payments.authenticationRequired`, `payments.authenticationFailed`, `payments.authorizationHoldFailed`, `payments.disputes`, `payments.failed`, `payments.invalidPaymentMethod`, `payments.invalidBcomCard`, `payments.invalidSecondBcomCard`, `payments.method.received`, `payments.overcharged`, `payments.overcharge.expected`, `payments.overdue`, `payments.received`, `payments.refunded`, `payments.refund.failed`, `reservation.payments.updated`
 - **Listings:** `listing.new`, `listing.updated`, `listing.removed`
 - **Calendar:** `listing.calendar.updated`, `calendar.updated.v2`
 - **Tasks:** `task.created`, `task.updated`, `task.deleted`
@@ -42,13 +42,18 @@ From Guesty's [Subscribe to webhooks](https://open-api-docs.guesty.com/docs/webh
 Event names are case-sensitive and mix conventions (`reservation_update_shortlist`,
 `guest-folio.created`, `payments.method.received`). Copy them exactly. The
 legacy reservation events (`reservation.new`, `reservation.updated`,
-`reservation_update_shortlist`) are being phased out by the end of February 2027
-and new subscriptions to them may need allowlist approval from Guesty.
+`reservation_update_shortlist`) will be retired on 1 March 2027, and new
+subscriptions to them may need allowlist approval from Guesty. Guesty is also
+deprecating `listing.calendar.updated` in favour of `calendar.updated.v2`.
 
 ## Event Payload Structure
 
-The event name is always in the top-level `event` field. The object lives under
-a key that depends on the event family.
+The event name is in the top-level `event` field. The object lives under a key
+that depends on the event family. Two documented shapes show no `event` key:
+the `calendar.updated.v2` example (`listingId`, `accountId`, `currency`,
+`dateRange`) and the guest folio example that `guest-folio.created` and
+`guest-folio.updated` share (`reservationId` plus folio totals and
+`invoiceItems`). Log a real delivery before routing those on `event`.
 
 Reservation v2:
 
@@ -122,4 +127,5 @@ with different content.
 - [Property (listing) webhooks](https://open-api-docs.guesty.com/docs/webhooks-listings)
 - [Guest webhooks](https://open-api-docs.guesty.com/docs/webhooks-guests)
 - [Payment webhooks](https://open-api-docs.guesty.com/docs/webhooks-payments)
+- [Financial webhooks](https://open-api-docs.guesty.com/docs/financial-webhooks)
 - [Reservation webhooks migration guide](https://open-api-docs.guesty.com/docs/reservation-webhooks-migration-guide)

@@ -1,10 +1,10 @@
 name: cronofy
 displayName: Cronofy
 docs:
-  webhooks: https://docs.cronofy.com/developers/api/push-notifications/
-  verification: https://docs.cronofy.com/developers/push-notifications/authentication/
-  events: https://docs.cronofy.com/developers/api/push-notifications/
-  api: https://docs.cronofy.com/developers/api/
+  webhooks: https://docs.cronofy.com/api-reference/calendar-control/push-notifications/
+  verification: https://docs.cronofy.com/api-reference/authorization/webhook-authentication/
+  events: https://docs.cronofy.com/api-reference/calendar-control/push-notifications/
+  api: https://docs.cronofy.com/api-reference/
 notes: >
   Cronofy is a calendar API / scheduling infrastructure platform (cronofy.com,
   docs.cronofy.com). DO NOT confuse it with Calendly (calendly.com), which is a
@@ -14,7 +14,8 @@ notes: >
   Never cite Calendly headers, event names, or docs in this skill.
 
   SURFACE (variant resolved): Hookdeck's CRONOFY source type links directly to
-  https://docs.cronofy.com/developers/push-notifications/authentication/ —
+  https://docs.cronofy.com/developers/push-notifications/authentication/ (which
+  since moved to /api-reference/authorization/webhook-authentication/) —
   verified 2026-08-27 from the hookdeck.com/docs/sources listing. So this skill
   targets Cronofy PUSH NOTIFICATIONS (notification channels), not Smart Invites,
   not Real-Time Scheduling, not the Embedded Scheduler. Cronofy's docs state
@@ -76,7 +77,7 @@ notes: >
   channel is closed automatically and no further notifications are sent. This
   makes ack-fast-then-process-async the correct pattern and worth calling out
   prominently — a slow handler does not just drop one event, it eventually kills
-  the channel. (Event Triggers, the separate beta surface, use a 7-second
+  the channel. (Event Triggers, a separate surface, use a 7-second
   timeout instead of 5 — do not generalize the 5s figure to that surface.)
   Cronofy does NOT send push notifications for changes caused by your own API
   calls, so do not build reconciliation logic that assumes echo-back.
@@ -132,9 +133,8 @@ notes: >
     gdpr_requested                   - the account invoked GDPR right-to-be-
                                        forgotten and wants their data removed.
 
-  IMPORTANT: the docs sentence says "There are currently five types" and then
-  lists SIX. The prose count is stale; the enumerated list is authoritative. Use
-  all six names above and do NOT repeat the "five" figure. Cronofy explicitly
+  The docs say "There are currently six types" (they said five until late 2026
+  while listing six). Cronofy explicitly
   instructs: "your code should be tolerant of others, by ignoring them, so if
   more are introduced in future your integration will not fail" — the handler
   MUST have a default branch that ignores unknown types and still returns 2xx.
@@ -155,14 +155,18 @@ notes: >
 
   DO NOT ASSERT (nothing in the docs supports these — hedge or omit):
   - Any source IP allowlist / CIDR ranges for Cronofy's senders.
-  - Any header other than Cronofy-HMAC-SHA256 and Content-Type. There is no
+  - Any push-notification header other than Cronofy-HMAC-SHA256 and
+    Content-Type (Event Triggers alone add Cronofy-Notification-ID and
+    Cronofy-Notification-Attempt). There is no
     Cronofy-Signature, no X-Cronofy-*, no delivery-id / request-id header, and no
     timestamp header. Do not invent one.
   - Any replay-protection mechanism. Because there is no timestamp and no nonce
     in the signed content, Cronofy push notifications are REPLAYABLE by design.
-    Say so honestly and recommend idempotency keyed on channel_id +
-    changes_since (or on the downstream Read Events result) rather than
-    pretending a timestamp check is possible.
+    Say so honestly and recommend making the downstream Read Events sync
+    idempotent (upsert on event_uid) rather than pretending a timestamp check
+    is possible. Do not recommend channel_id + changes_since or channel_id +
+    type as dedupe keys: recurring types carry no changes_since, so those keys
+    drop real notifications.
   - Payload fields beyond notification.type, notification.changes_since,
     channel.channel_id, channel.callback_url, channel.filters.calendar_ids and
     channel.filters.only_managed.

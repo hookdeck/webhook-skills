@@ -275,19 +275,28 @@ request until `AZURE_EVENT_GRID_ALLOW_UNAUTHENTICATED=true` is set explicitly.
 
 ## Local Development
 
+Event Grid validates the endpoint the moment you create the subscription. With
+Hookdeck, create a source with the **Azure Event Grid** type in the dashboard
+first, then forward it to your server with the Hookdeck CLI:
+
 ```bash
-# Start tunnel (no account needed)
-npx hookdeck-cli listen 3000 azure-event-grid --path /webhooks/azure-event-grid
+hookdeck login
+hookdeck listen 3000 <your-azure-event-grid-source-name> --path /webhooks/azure-event-grid
 ```
 
-Use the printed HTTPS URL as the event subscription's endpoint. Notes:
+Use that source's URL as the event subscription's endpoint. Notes:
 
-- Self-signed certificates are **not supported** for validation — a CA-signed
-  certificate is required. A tunnel gives you one.
-- If you return 200 without echoing the code, the subscription goes to
-  `AwaitingManualAction`: GET the `validationUrl` within **10 minutes** or the
-  state becomes `Failed` and you must recreate the subscription. That URL uses
-  **port 553** — firewalls blocking 553 break the manual handshake.
+- A source with the Azure Event Grid type answers the CloudEvents `OPTIONS`
+  preflight, so CloudEvents subscriptions validate without your handler.
+- Hookdeck answers each request itself and can't return your handler's
+  response to Azure, so for an **Event Grid schema** subscription your
+  `validationResponse` never reaches Event Grid. The subscription goes to
+  `AwaitingManualAction`: open the `validationUrl` from the logged validation
+  event within **10 minutes**, or the state becomes `Failed` and you must
+  recreate the subscription. That URL uses **port 553**, so firewalls blocking
+  553 break the manual handshake.
+- Self-signed certificates are **not supported** for validation; a CA-signed
+  certificate is required. A Hookdeck source URL has one.
 
 ## Reference Materials
 

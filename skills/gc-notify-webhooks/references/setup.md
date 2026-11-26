@@ -23,7 +23,7 @@ Hookdeck shows this note for the source:
 
 > Paste the bearer token you set for the callback in GC Notify.
 
-Paste just the token. Hookdeck matches the `Bearer ` scheme itself.
+Paste just the token, without `Bearer `.
 
 ## Register Your Endpoint
 
@@ -31,7 +31,8 @@ Paste just the token. Hookdeck matches the `Bearer ` scheme itself.
 2. Go to the **API integration** page and select **Callbacks**.
 3. Enter your callback URL (e.g. `https://example.com/webhooks/gc-notify`).
 4. Enter the bearer token.
-5. Save. GC Notify sends a health check (`{"health_check": "true"}`) to the URL.
+5. Save. GC Notify sends a health check (a `health_check` key, with your bearer token) to the URL,
+   and won't save it if your endpoint answers with a 4xx.
 
 The same page lets you test your API's response time. Keep responses under 1 second.
 

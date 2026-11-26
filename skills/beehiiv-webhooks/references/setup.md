@@ -19,7 +19,7 @@
 
 ## Test Your Endpoint
 
-Create a test subscriber or trigger one of the selected events, then check your handler logs. Failed deliveries can be resent from the endpoint's details page.
+Create a test subscriber or trigger one of the selected events, then check your handler logs. beehiiv's docs don't describe a way to resend a delivery.
 
 ## Using Hookdeck
 

@@ -78,7 +78,7 @@ class TestHmacMode:
         assert response.status_code == 400
 
     def test_old_timestamp_accepted_by_default(self, hmac_mode, monkeypatch):
-        # Retries and replays keep the original timestamp, so the window is off by default
+        # A Hookdeck retry or replay keeps the original timestamp, so the window is off by default
         monkeypatch.delenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
         old = int(time.time()) - 86400
         response = post(TRACK_PAYLOAD, generate_signature(TRACK_PAYLOAD, TEST_SECRET, old))

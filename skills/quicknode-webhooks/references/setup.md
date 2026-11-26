@@ -31,6 +31,6 @@ Then point the stream or webhook at the Hookdeck URL and check that deliveries r
 
 ## Using Hookdeck as the Source
 
-In Hookdeck, create a source of type **Quicknode** and paste the security token. Hookdeck verifies the same signature (HMAC SHA-256, `x-qn-signature`, hex) before forwarding.
+In Hookdeck, create a source of type **Quicknode** and paste the security token. Hookdeck verifies the signature before forwarding.
 
 > Keep payload compression (gzip) off on the stream or webhook: Quicknode signs the uncompressed body.

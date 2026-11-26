@@ -12,7 +12,7 @@ export const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Dots delivers through Svix (svix-* headers). Fall back to the Standard Webhooks
-// webhook-* names when svix-id is absent, the same way Hookdeck does. Never mix the two sets.
+// webhook-* names when svix-id is absent. Never mix the two sets.
 function resolveHeaders(headers) {
   const prefix = headers['svix-id'] ? 'svix' : 'webhook';
   const id = headers[`${prefix}-id`];

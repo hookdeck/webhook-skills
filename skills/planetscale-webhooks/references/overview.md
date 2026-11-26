@@ -2,7 +2,7 @@
 
 ## What Are PlanetScale Webhooks?
 
-A PlanetScale webhook sends an HTTP `POST` to a URL you configure when something happens in your PlanetScale organization. They report the life cycle of your database cluster (branches, deploy requests, backups, storage, access requests), not table-level changes: they are not MySQL triggers and do not fire on `INSERT`, `UPDATE` or `DELETE`.
+A PlanetScale webhook sends an HTTP `POST` to a URL you configure when something happens in your PlanetScale organization. They report the life cycle of your database cluster (branches, deploy requests, backups, storage, Postgres maintenance, access requests), not table-level changes: they are not MySQL triggers and do not fire on `INSERT`, `UPDATE` or `DELETE`.
 
 Webhooks belong to a **database** (up to 5 per database). You create them in the dashboard, with the `pscale webhook` CLI command, or with the webhooks API. Each webhook has its own secret.
 
@@ -37,9 +37,14 @@ Documented but only logged by the examples (the handler's default branch):
 | `deploy_request.errored` | The deploy request stopped due to an error | Vitess |
 | `deploy_request.reverted` | The deploy request was reverted | Vitess |
 | `deploy_request.closed` | The deploy request was closed | Vitess |
-| `keyspace.storage` | A Vitess keyspace reached a storage threshold | Vitess |
+| `keyspace.storage` | A Vitess keyspace on Metal reached a storage threshold | Vitess |
+| `maintenance.scheduled` | Restart-required maintenance was scheduled (at least 7 days ahead) | Postgres |
+| `maintenance.started` | Scheduled maintenance started in the branch's maintenance window | Postgres |
+| `maintenance.completed` | Scheduled maintenance finished (can arrive without `maintenance.started` if nothing was left to change) | Postgres |
+| `maintenance.failed` | Scheduled maintenance couldn't finish and will be tried again in a later window | Postgres |
+| `maintenance.canceled` | Scheduled maintenance was canceled | Postgres |
 
-That is 21 events including `webhook.test`.
+That is 26 events including `webhook.test`.
 
 ## Event Payload Structure
 
@@ -65,7 +70,7 @@ Every delivery has the same envelope:
 ```
 
 - `timestamp`: Unix seconds.
-- `resource`: the same shape as the matching API response (a branch, deploy request, backup, ...). `cluster.storage` carries `branch_name`, `storage_percentage` and a `storage` array instead.
+- `resource`: the same shape as the matching API response (a branch, deploy request, backup, ...). `cluster.storage` carries `branch_name`, `storage_percentage` and a `storage` array instead, and `keyspace.storage` adds `keyspace_name` and a `shards` array.
 - Treat every field as untrusted after verification and check types before reading nested values.
 
 ## Delivery

@@ -74,8 +74,8 @@ curl -X POST http://localhost:3000/webhooks/tikkie \
 npx hookdeck-cli listen 3000 tikkie --path /webhooks/tikkie
 ```
 
-Register the printed URL with `POST /paymentrequestssubscription`. Hookdeck's
-Tikkie source has no signature to verify, so this handler's checks still apply.
+Register the printed URL with `POST /paymentrequestssubscription`. Tikkie
+sends no signature, so this handler's checks still apply.
 
 ## Endpoint
 

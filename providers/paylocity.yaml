@@ -1,0 +1,25 @@
+name: paylocity
+displayName: Paylocity
+docs:
+  webhooks: https://developer.paylocity.com/integrations/reference/webhooks-api-overview
+  verification: https://developer.paylocity.com/integrations/reference/webhooks-authentication
+  events: https://developer.paylocity.com/integrations/reference/webhooks-api-overview
+notes: >
+  Paylocity Webhooks API (Early Access, approved participants only). Subscriptions are created with
+  POST /apiHub/webhooks/v1/subscriptions and auth.type HMAC; the base64 secret is returned once
+  (auth.hmac.key1.secret; up to two keys). Headers x-pcty-timestamp (unix seconds) and
+  x-pcty-signature: keyId=<uuid>:signature=<hex>, one comma-separated pair per active key during
+  rotation; each is lowercase hex HMAC-SHA256 of "<timestamp>.<raw body>" keyed with the
+  base64-DECODED secret. Docs recommend rejecting timestamps more than 300 seconds off; examples
+  make that opt-in (PAYLOCITY_TIMESTAMP_TOLERANCE_SECONDS). POST, CloudEvents-style payload (id,
+  type, time, data), e.g. employee.assignment.v1. Retries: about 24 h for unreachable endpoints,
+  up to 72 h for Paylocity-side errors, none for 400/404/409/422/500. No published test vector;
+  examples use synthetic keys. Hookdeck source type PAYLOCITY (HMAC alias, secret_encoding base64,
+  signed_content_template {header:x-pcty-timestamp}.{body}; every signature= pair is tried, so
+  either rotation secret verifies; verification optional; no timestamp window).
+testScenario:
+  events:
+    - employee.assignment.v1
+    - employee.assignment.status.v1
+catalog:
+  summary: 'Verify Paylocity webhooks (`x-pcty-signature: keyId=...:signature=<hex>`, HMAC-SHA256 of `<timestamp>.<body>` keyed with the base64-decoded secret, either key during rotation), handle employee events'

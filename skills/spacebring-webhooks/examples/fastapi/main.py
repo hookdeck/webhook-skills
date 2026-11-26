@@ -77,7 +77,7 @@ async def spacebring_webhook(request: Request):
         key = next((k for k in RESOURCE_KEYS if isinstance(event.get(k), dict)), None)
         return event[key].get("id") if key else event.get("id")
 
-    if event_type in ("booking.created", "booking.updated", "booking.deleted", "booking.paid"):
+    if event_type in ("booking.created", "booking.updated", "booking.upcoming", "booking.deleted", "booking.paid"):
         print(f"Booking {event_type.split('.')[1]}: {resource_id()}")
     elif event_type in ("company.created", "company.deleted"):
         print(f"Company {event_type.split('.')[1]}: {resource_id()}")

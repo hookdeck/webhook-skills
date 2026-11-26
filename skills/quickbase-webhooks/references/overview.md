@@ -29,19 +29,21 @@ changes in selected fields, or to records matching field criteria after the chan
 | Message header | Up to 10 name/value pairs, e.g. `Content-Type: application/json` |
 | Message body | A template you write, with field references and markers. UTF-8 encoded |
 
-Because the body is your own template, there is no fixed payload schema. Add a literal such as
-`"event": "record_added"` to it if your handler needs to tell triggers apart.
+Because the body is your own template, there is no fixed payload schema. Add
+`"action": "%action%"` to it if your handler needs to tell triggers apart: Quickbase replaces the
+`%action%` marker with `Add`, `Replace` or `Delete`, depending on what triggered the webhook.
 
-## Illustrative Payload
+## Example Template
 
-Not a Quickbase schema: the field names below are examples of what you might write in the template.
+Not a Quickbase schema: the field names below are what you might write in the template.
+`[Record ID#]` is a field reference, and `%action%` and `%dbName%` are markers.
 
 ```json
-{ "event": "record_modified", "record_id": 42, "table": "Projects" }
+{ "action": "%action%", "record_id": "[Record ID#]", "table": "%dbName%" }
 ```
 
-The examples in this skill dispatch on `event` with the values `record_added`, `record_modified`
-and `record_deleted`, and acknowledge anything else (including XML, RAW text or an empty body).
+The examples in this skill dispatch on `action` with the values `Add`, `Replace` and `Delete`, and
+acknowledge anything else (including XML, RAW text or an empty body).
 
 ## Authentication
 
@@ -52,3 +54,4 @@ No signature. Add a secret header in the Message header list and compare it on y
 
 - [Configure a webhook](https://help.quickbase.com/docs/configure-a-webhook)
 - [API_Webhooks_Create](https://help.quickbase.com/docs/api-webhooks-create)
+- [Markers, user tokens and field references](https://help.quickbase.com/docs/markers-user-tokens-and-field-references)

@@ -56,8 +56,9 @@ In Python use `hmac.compare_digest` on **bytes** (encode both sides) so a non-AS
 
 ## Setup and Test Events
 
-Create the webhook in the Admin Experience under **Account > Client Settings > New Webhook**,
-choose the events, enter your URL and save. The **Secret Key** is generated only after the
+Create the webhook in the Admin Experience under **Account > Client Settings**, then the
+**Webhooks** tile and **Add new webhook** (older portals show a **New Webhook** button on Client
+Settings). Choose the events, enter your URL and save. The **Secret Key** is generated only after the
 webhook is saved; reopen it to copy the key into `ABSORB_WEBHOOK_SECRET`. Full steps in
 [references/setup.md](references/setup.md).
 
@@ -71,7 +72,8 @@ sandbox portal (for example create a user) to check your setup end to end.
 The payload is deliberately lean: it names the event and carries IDs (the learner's User ID,
 the Admin ID for admin events, and the Client ID and Correlation ID of the transaction). Call
 the Absorb Integration API for the full record. **Dispatch on `eventName`**, which is the
-event's display name with the spaces removed.
+event's display name with the spaces removed. Only `UserCreated` and `CertificateAwarded` are
+shown on the wire in Absorb's docs, so compare the other names case-insensitively.
 
 | `eventName` | Triggered When |
 |-------------|----------------|

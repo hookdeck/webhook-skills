@@ -33,7 +33,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -65,7 +65,7 @@ Privy's docs don't print its format, but Svix secrets start with `whsec_`. Keep 
 `PRIVY_WEBHOOK_SECRET` (Privy's own samples name it `PRIVY_WEBHOOK_SIGNING_SECRET`). Handlers
 fail closed: with the variable unset they return 500 instead of accepting anything. They also
 return 500 for a secret that doesn't start with `whsec_`, because the svix library always
-base64-decodes the secret (Hookdeck would use such a secret as raw UTF-8 bytes). Missing
+base64-decodes the secret. Missing
 headers or a bad signature return 400.
 
 Privy's `@privy-io/node` SDK also offers `privy.webhooks().verify`, but it needs the app ID and app
@@ -79,12 +79,13 @@ it can't be configured. Hookdeck retries and replays resend the **original** `sv
 the library rejects any retry or replay that happens more than 5 minutes after the original
 delivery. If you verify behind Hookdeck (or replay old events), use the manual verifier in
 [references/verification.md](references/verification.md), where the window can be dropped or
-widened. Deduplicate on `svix-id` (and `idempotency_key` where present) instead of relying on the
-timestamp.
+widened. Deduplicate on the payload's `event_id` instead of relying on the timestamp. Funds
+events have no `event_id`, so use `idempotency_key` for them, and `user_op_hash` plus `caip2` for
+`user_operation.completed`. `svix-id` identifies a redelivery of the same webhook.
 
 ## Common Event Types
 
-70 events are documented (the list may not be exhaustive). The name is `type` in the JSON body.
+71 events are documented (the list may not be exhaustive). The name is `type` in the JSON body.
 The examples handle these:
 
 | Event | Triggered When |

@@ -39,17 +39,17 @@ function handleNotification(payload: AcumaticaNotification): void {
   switch (classifyChange(payload)) {
     case 'inserted':
       console.log(`[${tenant}] ${query}: ${payload.Inserted?.length} row(s) inserted`);
-      // TODO: create the records downstream (payload.Inserted)
+      // Create the records downstream (payload.Inserted)
       break;
 
     case 'deleted':
       console.log(`[${tenant}] ${query}: ${payload.Deleted?.length} row(s) deleted`);
-      // TODO: remove or archive the records (payload.Deleted)
+      // Remove or archive the records (payload.Deleted)
       break;
 
     case 'updated':
       console.log(`[${tenant}] ${query}: rows updated`);
-      // TODO: compare payload.Deleted (old values) with payload.Inserted (new values)
+      // Compare payload.Deleted (old values) with payload.Inserted (new values)
       break;
 
     default:

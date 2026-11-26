@@ -7,7 +7,7 @@ handler with signature verification.
 
 - Node.js 18+
 - Airwallex account with a webhook endpoint secret
-  (Web app → Settings → Developer → Webhooks)
+  (Web app → Developer → Webhooks)
 
 ## Setup
 
@@ -49,8 +49,8 @@ Use the Hookdeck CLI (no account required):
 npx hookdeck-cli listen 3000 airwallex --path /webhooks/airwallex
 ```
 
-Register the printed HTTPS URL in the Airwallex web app, then trigger or re-send
-an event.
+Register the printed HTTPS URL as a webhook under Developer → Webhooks in the
+Airwallex web app, then re-trigger a past event from Settings → Developer → Events.
 
 ## How verification works
 

@@ -61,7 +61,6 @@ async def belco_webhook(request: Request):
     if not isinstance(payload, dict):
         payload = {}
     conversation = payload.get("conversation") or {}
-    call = payload.get("call") or {}
 
     event_name = event.get("eventName")
     if event_name == "conversation.created":
@@ -73,7 +72,8 @@ async def belco_webhook(request: Request):
     elif event_name == "conversation.closed":
         print(f"Conversation closed: {conversation.get('_id')}")
     elif event_name in ("call.created", "call.queued", "call.answered", "call.closed"):
-        print(f"{event_name}: {call.get('direction')} call, status {call.get('status')}")
+        # Your code: Belco publishes no call payload sample, so log one before reading its fields.
+        print(f"{event_name} on shop {payload.get('shopId')}")
     else:
         print(f"Unhandled Belco event: {event_name}")
 

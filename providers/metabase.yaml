@@ -22,7 +22,9 @@ notes: >
   zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
   new-relic skills if present). Hookdeck's source type is METABASE, labelled 'Metabase'. Hookdeck
   shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
-  same thing: "Choose Basic authentication on the Metabase webhook." Body: {type: 'alert', alert_id,
+  same thing: "Choose Basic authentication on the Metabase webhook. POST is the default.
+  If the channel uses GET or PUT, select that method on this source." The examples accept POST. Explain that PUT can carry the alert JSON,
+  whereas Hookdeck delivers GET without a body (https://hookdeck.com/docs/sources#get-and-head). Body: {type: 'alert', alert_id,
   alert_creator_id, alert_creator_name, data: {type: 'question', question_id, question_name,
   question_url, visualization (base64 PNG), raw_data}, sent_at}. POST JSON. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only

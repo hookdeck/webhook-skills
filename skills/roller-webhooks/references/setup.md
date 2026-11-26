@@ -47,4 +47,5 @@ curl -X POST http://localhost:3000/webhooks/roller \
 
 ## Rotating the Key
 
-Register the webhook again with a new `apiKey` and update `ROLLER_WEBHOOK_API_KEY`.
+Send a new `authentication.apiKey` with the [update webhook](https://docs.roller.app/docs/api/rest/operations/update-webhook)
+request (`PUT /webhooks/{webhookId}`) and update `ROLLER_WEBHOOK_API_KEY` at the same time.

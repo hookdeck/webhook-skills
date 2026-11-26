@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const timestamp = request.headers.get(`${prefix}-timestamp`);
   const signature = request.headers.get(`${prefix}-signature`);
   if (!id || !timestamp || !signature) {
-    // Omnara only signs when event_webhook.signing_secret_id is set on the agent
+    // Omnara only signs when the subscription has a signing secret
     return NextResponse.json({ error: 'Missing required webhook headers' }, { status: 400 });
   }
 

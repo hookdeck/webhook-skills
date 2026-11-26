@@ -54,10 +54,10 @@ function handleEvent(payload) {
           `Visitor session closed at ${payload.timestamp}: ${session.mostRecentDemoName} ` +
             `(${endUser?.mostRecentEmail ?? 'unknown visitor'}, ${companyAccount?.name ?? 'no account'})`
         );
-        // TODO: push the session to your CRM, notify sales
+        // Push the session to your CRM or notify sales here
       } else if (kind === 'account') {
         console.log(`Account session closed at ${payload.timestamp}: ${payload.data.name ?? payload.data.id}`);
-        // TODO: update the account in your system
+        // Update the account in your system here
       } else {
         console.log('session_closed with unrecognised data shape');
       }

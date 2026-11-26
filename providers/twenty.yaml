@@ -9,18 +9,15 @@ notes: >
   created, updated or deleted. Delivery (from the docs): 2xx acknowledges (docs); the sender's axios
   timeout is 5 s. Retries are not documented. Twenty says: 'Create the string: `{timestamp}:{JSON
   payload}`' 'const expectedSignature = crypto.createHmac("sha256",
-  secret).update(stringToSign).digest("hex");' SIGNATURE SCHEME (it must match Hookdeck's TWENTY
-  source exactly: HMAC controller, algorithm sha256, header x-twenty-webhook-signature, encoding hex,
-  signed_content_template "{header:x-twenty-webhook-timestamp}:{body}"). The
+  secret).update(stringToSign).digest("hex");' SIGNATURE SCHEME: The
   X-Twenty-Webhook-Signature header carries the bare lowercase hex digest, no prefix. The signature is
   lowercase hex HMAC-SHA256, keyed with the secret, over: the X-Twenty-Webhook-Timestamp header value,
-  then a literal ":", then the raw request body bytes. Build the signed message as BYTES, exactly as
-  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  then a literal ":", then the raw request body bytes. Build the signed message as BYTES: literal separators as UTF-8, header values as the exact header string
   encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
   trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
   Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
   JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
   secret set on the webhook in Twenty (Settings > Developers > Webhooks), used as UTF-8. Env var:
@@ -30,7 +27,7 @@ notes: >
   silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
   base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
   or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
-  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  replays resend the original headers and timestamp, so a
   fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   TWENTY_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
   (X-Twenty-Webhook-Timestamp is Date.now(), Unix MILLISECONDS). The separator is a COLON. Twenty's
@@ -38,8 +35,7 @@ notes: >
   that same string, so the raw body is the signed text and the examples must sign the raw body.
   X-Twenty-Webhook-Nonce is sent but not signed. Events: dispatch on the body's `eventName`
   (<object>.created / .updated / .deleted for any object, custom objects included, e.g.
-  person.created, company.updated, opportunity.updated, note.created). Method: POST. Hookdeck's Twenty
-  source manages the method as POST, so the examples handle POST on the webhook route. Express
+  person.created, company.updated, opportunity.updated, note.created). Method: POST. The examples handle POST on the webhook route. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Hookdeck's source type is TWENTY, labelled 'Twenty'. Hookdeck

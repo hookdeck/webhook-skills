@@ -60,13 +60,13 @@ function dedupeKey(payload) {
 async function handleTicketCreated(ticket) {
   // Placeholder values arrive as strings; coerce what you need.
   console.log(`Ticket created: #${ticket.id} "${ticket.subject ?? ''}" from ${ticket.requester_email ?? 'unknown'}`);
-  // TODO: create the record in your system. Re-fetch the ticket from
+  // Create the record in your system here. Re-fetch the ticket from
   // GET https://<domain>.freshdesk.com/api/v2/tickets/{id} before acting on it.
 }
 
 async function handleTicketUpdated(ticket) {
   console.log(`Ticket updated: #${ticket.id} status=${ticket.status ?? 'n/a'} priority=${ticket.priority ?? 'n/a'}`);
-  // TODO: sync the change, upserting on ticket.id.
+  // Sync the change here, upserting on ticket.id.
 }
 
 /**

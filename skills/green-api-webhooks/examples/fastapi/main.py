@@ -40,9 +40,9 @@ async def require_green_api_authorization(
 
 
 def handle_notification(body: dict) -> None:
-    """Dispatch on typeWebhook. GREEN-API retries undelivered notifications every
-    minute for up to 24 hours, so make these handlers idempotent (e.g. dedupe on
-    idMessage)."""
+    """Dispatch on typeWebhook. GREEN-API makes delivery attempts at a 1-minute
+    interval and guarantees delivery within 24 hours, so make these handlers
+    idempotent (e.g. dedupe on idMessage)."""
     type_webhook = body.get("typeWebhook")
     sender_data = body.get("senderData") or {}
     instance_data = body.get("instanceData") or {}
@@ -52,30 +52,30 @@ def handle_notification(body: dict) -> None:
         text = (message_data.get("textMessageData") or {}).get("textMessage")
         suffix = f": {text}" if text else ""
         print(f"Incoming {message_data.get('typeMessage')} {body.get('idMessage')} from {sender_data.get('chatId')}{suffix}")
-        # TODO: route to your bot / inbox, auto-reply, etc.
+        # Route to your bot or inbox, or send an auto-reply.
 
     elif type_webhook == "outgoingMessageReceived":
         print(f"Message {body.get('idMessage')} sent from phone to {sender_data.get('chatId')}")
-        # TODO: sync conversations sent outside your app
+        # Sync conversations sent outside your app.
 
     elif type_webhook == "outgoingAPIMessageReceived":
         print(f"Message {body.get('idMessage')} sent via API to {sender_data.get('chatId')}")
-        # TODO: log/audit API sends
+        # Log or audit API sends.
 
     elif type_webhook == "outgoingMessageStatus":
         print(f"Message {body.get('idMessage')} to {body.get('chatId')} is {body.get('status')}")
-        # TODO: update delivery/read status; handle "failed" and "noAccount" (always sent)
+        # Update delivery/read status. "failed" and "noAccount" can't be switched off.
 
     elif type_webhook == "stateInstanceChanged":
         print(f"Instance {instance_data.get('idInstance')} state: {body.get('stateInstance')}")
-        # TODO: alert when notAuthorized or blocked
+        # Alert when the state is notAuthorized or blocked.
 
     elif type_webhook == "statusInstanceChanged":
         print(f"Instance {instance_data.get('idInstance')} socket: {body.get('statusInstance')}")
 
     elif type_webhook == "incomingCall":
         print(f"Incoming call {body.get('idMessage')} from {body.get('from')}")
-        # TODO: missed-call auto-reply
+        # Send a missed-call auto-reply.
 
     else:
         print(f"Unhandled typeWebhook: {type_webhook}")
@@ -95,7 +95,7 @@ async def green_api_webhook(request: Request):
         handle_notification(body)
     except Exception as err:  # noqa: BLE001
         print(f"Error handling notification: {err}")
-        # Non-2xx makes GREEN-API retry in a minute.
+        # GREEN-API's docs don't say which status codes count as delivered.
         raise HTTPException(status_code=500, detail="Processing error")
 
     return {"received": True}

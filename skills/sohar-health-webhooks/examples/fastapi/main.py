@@ -66,7 +66,7 @@ async def sohar_health_webhook(request: Request):
     # Bodies are flat: `event` plus the resource id (verificationId | discoveryId | flowRunId).
     # `status` is the resource's state, not the event type. Sandbox events carry a `sandbox.` prefix.
     event_type = event.get("event")
-    # No retry schedule or ordering is documented: deduplicate on svix-id (or resource id + status)
+    # No retry schedule or ordering is documented: deduplicate on svix-id and keep updates idempotent
     print(f"Received Sohar Health webhook {event_type}")
 
     if event_type in ("verification.updated", "sandbox.verification.updated"):

@@ -60,8 +60,7 @@ function verifyProject44Request(headers, env = process.env) {
   protection** (no signature, no timestamp). Use HTTPS only, make the handler idempotent (use
   `eventId`), and rotate the credential if it leaks.
 - The webhook method is configurable (`GET`, `POST`, `PUT`, `PATCH`; `POST` is the default), so the
-  examples accept all four and tolerate an empty body. Hookdeck's project44 source pre-selects
-  only `POST`: allow any other method you use on the source.
+  examples accept all four and tolerate an empty body. Allow the method you use on the Hookdeck source too ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, and parse JSON only
   after the credential check.
 

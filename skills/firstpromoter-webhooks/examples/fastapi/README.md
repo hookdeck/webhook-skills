@@ -7,7 +7,7 @@ FirstPromoter does not sign payloads, so there is no HMAC to verify. You add a c
 the webhook subscription; the handler compares that header's whole value with your stored
 secret using a constant-time comparison. A FastAPI dependency rejects the request before the body is read, and the body is read raw so any content type works.
 
-Covers Webhooks v2 only: add a custom header to the subscription and enter it here. Legacy webhooks cannot send custom headers.
+This covers Webhooks v2 only. Legacy webhooks can't send custom headers, so they carry nothing to check.
 
 A static shared credential authenticates the sender, not the body, and gives no replay
 protection: use HTTPS, rotate the credential if it leaks, and dedupe on `event_id` (the example

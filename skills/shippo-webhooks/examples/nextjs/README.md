@@ -46,7 +46,7 @@ The tests sign payloads with Shippo's algorithm, `hex(HMAC-SHA256(secret, "{t}.{
 1. The handler reads the **raw** request body (`await request.text()`). It doesn't parse JSON before verifying.
 2. It parses `t` and `v1` from `Shippo-Auth-Signature: t=<timestamp>,v1=<hex>`.
 3. It computes `HMAC-SHA256(secret, "{t}.{body}")` as hex and compares it timing-safely.
-4. The timestamp check is off by default, because retries and replays (including Hookdeck's) carry the original timestamp. Set `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older timestamps. A value that isn't a whole number is treated as `0`, with a warning at startup.
+4. The timestamp check is off by default, because Shippo documents no tolerance and a Hookdeck retry or replay carries the original timestamp. Set `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older timestamps. A value that isn't a whole number is treated as `0`, with a warning at startup.
 
 Handled events: `track_updated`, `transaction_created`, `transaction_updated`, `batch_created`, `batch_purchased`, `automations_label_resolved`.
 

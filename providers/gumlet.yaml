@@ -9,9 +9,7 @@ notes: >
   you will receive it back as x-gumlet-token inside the request header with each request.' No
   signature: requests are unsigned. Gumlet sends the webhook's Secret Token as plain text in the
   x-gumlet-token header on every request. The examples read GUMLET_WEBHOOK_SECRET, look the
-  x-gumlet-token header up case-insensitively and compare its WHOLE value to the secret. This is
-  what Hookdeck's Gumlet source does (API key verification, header x-gumlet-token, exact whole
-  value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  x-gumlet-token header up case-insensitively and compare its WHOLE value to the secret. Hookdeck's source checks this header too. In the examples, a missing header or mismatch returns 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
   SKILL.md and verification.md must say plainly that a static shared credential authenticates the

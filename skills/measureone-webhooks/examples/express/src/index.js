@@ -40,28 +40,28 @@ function handleEvent(payload) {
     case 'datarequest.report_complete':
     case 'datarequest.report_available': // deprecated
       console.log(`Report ready (${event}): ${ids} report_uri=${payload.report_uri}`);
-      // TODO: fetch the report from payload.report_uri
+      // Your code: fetch the report from payload.report_uri
       break;
 
     case 'datarequest.report_update_available':
       console.log(`Report updated: ${ids}`);
-      // TODO: re-fetch the report; datarequest.report_complete follows when it is complete
+      // Your code: re-fetch the report; datarequest.report_complete follows when it is complete
       break;
 
     case 'datarequest.report_error':
       console.log(`Report error: ${ids} reasons=${JSON.stringify(payload.reason_codes)}`);
-      // TODO: ask the individual to provide better documents
+      // Your code: ask the individual to provide better documents
       break;
 
     case 'datarequest.items_available':
     case 'datarequest.items_processed':
       console.log(`Items ready (${event}): ${ids}`);
-      // TODO: pull payload.items
+      // Your code: pull payload.items
       break;
 
     case 'datarequest.no_items':
       console.log(`No items: ${ids}`);
-      // TODO: tell the individual nothing was found
+      // Your code: tell the individual nothing was found
       break;
 
     case 'datarequest.updates_available': // deprecated
@@ -71,7 +71,7 @@ function handleEvent(payload) {
 
     case 'datarequest.refresh_failed':
       console.log(`Refresh failed: ${ids} reasons=${JSON.stringify(payload.reason_codes)}`);
-      // TODO: ask the individual to reconnect their account
+      // Your code: ask the individual to reconnect their account
       break;
 
     case 'datasource.connected':
@@ -91,7 +91,7 @@ function handleEvent(payload) {
     case 'session.terminated':
     case 'session.no_login':
       console.log(`Session event (${event}): ${ids} session=${payload.session_id} reason=${payload.reason_code}`);
-      // TODO: follow up with the individual
+      // Your code: follow up with the individual
       break;
 
     case 'item.created':
@@ -105,7 +105,7 @@ function handleEvent(payload) {
 
     case 'individual.purged':
       console.log(`Individual purged: individual=${individualId}`);
-      // TODO: delete the individual's data on your side
+      // Your code: delete the individual's data on your side
       break;
 
     default:

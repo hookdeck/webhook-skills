@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     case 'moderation':
       // A moderation result is available (manual or add-on moderation).
       console.log('Moderation result:', public_id, notification.moderation_status);
-      // TODO: Approve/reject the asset based on moderation_status.
+      // Your code: approve or reject the asset based on moderation_status.
       break;
 
     case 'resource_tags_changed':
@@ -115,6 +115,6 @@ export async function POST(request: NextRequest) {
       console.log(`Unhandled Cloudinary notification_type: ${notification_type}`);
   }
 
-  // Respond 2xx quickly. A non-2xx makes Cloudinary retry.
+  // Respond 200 quickly. Cloudinary retries any response other than 200 OK.
   return NextResponse.json({ received: true });
 }

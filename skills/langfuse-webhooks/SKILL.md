@@ -3,7 +3,7 @@ name: langfuse-webhooks
 description: >
   Receive and verify Langfuse webhooks. Use when setting up a Langfuse prompt-management
   webhook endpoint, verifying the x-langfuse-signature header (t=,v1= HMAC-SHA256),
-  debugging signature failures, or handling prompt version created, updated and deleted events.
+  debugging signature failures, or handling prompt version created, updated and deleted events and alert notifications.
 license: MIT
 metadata:
   author: hookdeck
@@ -69,25 +69,34 @@ function verifyLangfuseSignature(rawBody /* Buffer */, header, secret) {
 
 ## Event Types
 
-Dispatch on the body's `action` field. `type` is always `"prompt-version"` today.
+Route on the body's `type` first, then on `action` for prompt versions.
 
-| `action` | Sent When |
+| `type` | Sent When |
+|--------|-----------|
+| `prompt-version` | A prompt automation fires; `action` says what happened (below) |
+| `monitor-alert` | An alert automation fires because an alert's severity changed; no `action`, the alert is in `payload` |
+
+| `action` (prompt-version) | Sent When |
 |----------|-----------|
 | `created` | A prompt version is created |
 | `updated` | A prompt version's labels or tags change (two deliveries: the version gaining and the version losing the label/tag) |
 | `deleted` | A prompt version is deleted |
 
-Only `created` is shown in Langfuse's documented payload; the lowercase spelling of `updated` and
-`deleted` follows the automation UI (Created / Updated / Deleted). Log and acknowledge anything else.
-The payload carries `id`, `timestamp`, `type`, `apiVersion`, `action` and a `prompt` object
+Langfuse's docs print a `created` prompt body and a `monitor-alert` body; the lowercase `updated`
+and `deleted` values match the enum in Langfuse's open-source code. Project notification channels
+(failed exports, deactivated evaluators) can post `type: "project-notification"` with an `event`
+object, which the docs don't print. Log and acknowledge any `type` or `action` you don't handle.
+The prompt payload carries `id`, `timestamp`, `type`, `apiVersion`, `action` and a `prompt` object
 (`name`, `version`, `labels`, `tags`, `prompt`, `config`, `commitMessage`, ...). See
 [references/overview.md](references/overview.md).
 
 ## Delivery
 
-POST with a JSON body. A `2xx` confirms receipt; otherwise Langfuse may retry with exponential
-back-off until it succeeds. No timeout or attempt limit is documented, so make the handler
-idempotent (key on the payload `id` plus `action`) and respond quickly.
+POST with a JSON body. A `2xx` confirms receipt; otherwise Langfuse retries with exponential
+back-off, and after 5 consecutive failed deliveries it disables the automation's trigger (re-enable
+it on the Automations page). Langfuse's open-source worker waits 10 seconds per attempt and makes
+4 attempts a few hundred milliseconds apart (self-hosting defaults). Respond quickly and make the
+handler idempotent: key on the payload `id`, which stays the same when a delivery is retried.
 
 ## Environment Variables
 

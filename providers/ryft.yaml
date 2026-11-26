@@ -15,15 +15,13 @@ notes: >
   signature = "12443c521a6900579d09b1b29cf17b679f7745eb32a8018e46f44bb27103f865";
   verifier.IsValid(...).ShouldBeTrue();' From the docs (registry summary): `Signature: <hex>` =
   lowercase hex HMAC-SHA256(webhook secret as ASCII, raw body as UTF-8). Bare value. The guide names
-  neither the encoding nor the key bytes; both come from Ryft's .NET SDK verifier. SIGNATURE SCHEME
-  (it must match Hookdeck's RYFT source exactly: HMAC controller, algorithm "sha256", header_key
-  "signature", encoding "hex"). The Signature header carries the bare lowercase hex digest, no prefix.
+  neither the encoding nor the key bytes; both come from Ryft's .NET SDK verifier. SIGNATURE SCHEME: HMAC-SHA256, header signature, hex encoding. The Signature header carries the bare lowercase hex digest, no prefix.
   Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The signature is
   lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
   timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
   exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
   before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  Hex is compared case-insensitively: require exactly 64 hex characters, lowercase
   both sides (or decode both to bytes) before the constant-time compare. Secret: The webhook
   endpoint's secret. Use it as UTF-8 bytes. Env var: RYFT_WEBHOOK_SECRET. Validate the signature's
   format before decoding it (exact length and alphabet), then compare in constant time: Node checks
@@ -39,7 +37,7 @@ notes: >
   PayoutMethod.created, PayoutMethod.updated, PayoutMethod.deleted, Payout.created,
   Payout.status_updated, PaymentSession.captured, PaymentSession.capture_failed,
   PaymentSession.approved, PaymentSession.declined (and 22 more). Handle a few common ones and log the
-  rest. Method: POST. Hookdeck's Ryft source manages the method as POST, so the examples handle POST
+  rest. Method: POST. The examples handle POST
   on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so
   any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
   FastAPI: await request.body()); parse the body only after the check. After verifying, treat every
@@ -47,7 +45,7 @@ notes: >
   type before reading into it (Express/Next.js: typeof / Array.isArray; FastAPI: isinstance(x, dict) /
   isinstance(x, list) before .get() or iterating), so a wrong-typed field is ignored or answered with
   400, never a 500. Never say Hookdeck verifies 'at the edge'; say Hookdeck's source verifies the
-  signature. PUBLISHED TEST VECTOR (verified against Hookdeck's controller): the vendor's docs give a
+  signature. PUBLISHED TEST VECTOR: the vendor's docs give a
   worked example, saved verbatim as JSON (secret, body string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/ryft.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

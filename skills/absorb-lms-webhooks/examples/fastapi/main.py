@@ -29,29 +29,32 @@ def verify_absorb_signature(raw_body: bytes, signature, secret=None) -> bool:
 
 def handle_event(body: dict) -> None:
     event_name = body.get("eventName")
+    # Absorb's docs show only UserCreated and CertificateAwarded on the wire, so the casing
+    # of the other names is untested. Compare case-insensitively.
+    key = str(event_name or "").lower()
 
-    if event_name == "UserCreated":
+    if key == "usercreated":
         print("User created", body)
-        # TODO: GET the new learner from the Absorb Integration API and sync it
+        # GET the new learner from the Absorb Integration API and sync it
 
-    elif event_name == "OnlineCourseActivated":
+    elif key == "onlinecourseactivated":
         print("Online course activated", body)
 
-    elif event_name in ("EnrollmentCompletedbyAdmin", "EnrollmentCompletedbyLearner"):
+    elif key in ("enrollmentcompletedbyadmin", "enrollmentcompletedbylearner"):
         print(f"Enrollment completed ({event_name})", body)
-        # TODO: mark the course complete in your system
+        # Mark the course complete in your system
 
-    elif event_name == "CertificateAwarded":
+    elif key == "certificateawarded":
         print("Certificate awarded", body)
-        # TODO: fetch the certificate and notify the learner
+        # Fetch the certificate and notify the learner
 
-    elif event_name == "CompetencyAwarded":
+    elif key == "competencyawarded":
         print("Competency awarded", body)
 
-    elif event_name == "CourseCreditsAwarded":
+    elif key == "coursecreditsawarded":
         print("Course credits awarded", body)
 
-    elif event_name in ("UserEnrolledinCoursebyAdmin", "UserEnrolledinCoursebyLearner"):
+    elif key in ("userenrolledincoursebyadmin", "userenrolledincoursebylearner"):
         print(f"User enrolled in course ({event_name})", body)
 
     else:

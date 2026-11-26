@@ -33,7 +33,7 @@ HMAC-SHA256 signature of the raw request body in `x-server-authorization-hmac-sh
 
 Paste the HMAC secret from your Deliverect integration settings. Before certification, Deliverect signs with the channelLink or locationId value instead. Some Deliverect calls are GET requests, so also allow GET on this source if your integration receives them.
 
-Hookdeck's Deliverect source pre-selects POST without managing the method, so any other method
+Hookdeck's Deliverect source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method
 the sender uses (GET, PUT, PATCH, DELETE) must also be allowed on the source.
 
 ## Verification (core)
@@ -86,7 +86,7 @@ integration type in the [Deliverect docs](https://developers.deliverect.com).
 | `snooze_unsnooze` | `snoozeUnsnoozeURL` | Items snoozed or unsnoozed |
 | `busy_mode` | `busyModeURL` | Location paused or put online |
 
-Each operational webhook expects a `200 OK`. Retry and timeout behaviour is not documented on the pages this skill was built from.
+Each operational webhook expects a `200 OK`, and the busy mode response should echo the store's new `status` (the examples do this). Deliverect retries only when the connection times out or is refused (3 retries, after 5, 10 and 20 seconds); any HTTP response ends delivery, and so does a read timeout (30 seconds by default, 60 at most). See the [Retry Policy](https://developers.deliverect.com/page/retry-policy).
 
 ## Environment Variables
 

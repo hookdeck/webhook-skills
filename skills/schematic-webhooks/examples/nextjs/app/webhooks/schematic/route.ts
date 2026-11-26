@@ -65,7 +65,7 @@ interface SchematicEvent {
 }
 
 function handleEvent(event: SchematicEvent, eventId: string | null) {
-  // TODO: drop the event if eventId is already in your store (when eventId is set).
+  // Your code: drop the event if eventId is already in your store (when eventId is set).
   // Keep handlers fast: Schematic expects a 2xx within 5 seconds.
   const { action } = event;
 

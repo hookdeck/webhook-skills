@@ -1,0 +1,32 @@
+name: chatbase
+displayName: Chatbase
+docs:
+  webhooks: https://chatbase.co/docs/developer-guides/webhooks
+  verification: https://chatbase.co/docs/developer-guides/webhooks#receiving-the-request
+  events: https://chatbase.co/docs/developer-guides/webhooks#event-types
+notes: >
+  AI agent platform. This skill covers Chatbase Action webhooks only, configured on an Action's
+  Destinations section (Collect Leads, Collect Data), Settings > Webhooks (custom forms) or Phone >
+  Connections (call summaries): header x-chatbase-signature = hex HMAC-SHA1 of the raw request body,
+  no prefix, no timestamp, 40 hex characters, compared case-insensitively in constant time. Body is
+  { eventType, chatbotId, payload }. Event types are leads.submit, "{action name}_collect_data.submit",
+  "{action name}_custom_form.submit" and phone_call.summary; match the two Action-named ones by suffix.
+  The docs do not say where the secret is shown; Chatbase's sample reads SECRET_KEY. Don't log payload
+  personal data (names, emails, phone numbers, call summaries). Out of scope, mention only, no code:
+  the HIPAA conversation webhook (Settings > HIPAA; v1= hex HMAC-SHA256 over the X-Chatbase-Timestamp
+  value, a "." and the raw body), Helpdesk trigger webhooks (X-Chatbase-Signature, scheme
+  undocumented) and MCP Events (Standard Webhooks with the MCP client's own secret).
+testScenario:
+  events:
+    - leads.submit
+    - phone_call.summary
+catalog:
+  summary: 'Verify Chatbase Action webhooks (`x-chatbase-signature`: hex HMAC-SHA1 of the raw body), handle leads.submit, phone_call.summary, custom form and Collect Data submissions'
+  marketplace:
+    description: Verify Chatbase Action webhook signatures (x-chatbase-signature, hex HMAC-SHA1 of the raw body), handle leads.submit, phone_call.summary, {action}_custom_form.submit and {action}_collect_data.submit events.
+    keywords:
+    - webhooks
+    - chatbase
+    - ai-agents
+    - chatbots
+    - leads

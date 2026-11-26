@@ -12,21 +12,16 @@ notes: >
   has separate outgoing webhooks with a different body; they are out of scope. NO SIGNATURE: Better
   Stack does not sign these webhooks. The create-webhook API's custom_webhook_template_attributes are
   http_method, auth_username, auth_password, headers_template and body_template; none is a signing
-  secret. A webhook can carry two kinds of static credential, and Hookdeck's Better Stack source
-  (verification is optional) offers both: (1) BASIC AUTH, the default: 'auth_username: The username
+  secret. A webhook can carry two kinds of static credential, and Hookdeck's Better Stack source offers both: (1) BASIC AUTH, the default: 'auth_username: The username
   to use for basic authentication. Set both auth_username and auth_password, or neither.' The user
-  enters the same username and password on the Hookdeck source. Hookdeck parses 'Authorization:
-  Basic base64(username:password)' and compares username and password; the header must be on the
-  request (Hookdeck never answers with a 401 challenge). Better Stack's docs do NOT say whether the
+  enters the same username and password on the Hookdeck source. Event Gateway checks the username and password, so the Authorization header must be on every request. Better Stack's docs do NOT say whether the
   Basic credentials are sent preemptively on the first request or only after a 401
   WWW-Authenticate challenge. Say that honestly in SKILL.md, setup.md and verification.md, and
   recommend option (2) as the more robust choice; if Basic auth deliveries are rejected, switch to
   the custom header. (2) CUSTOM HEADER (Hookdeck: 'Custom header', an API key check): a static header
   the user adds to the webhook's headers_template ('The headers to send with the webhook.', each
   header an object with name and value, e.g. { "name": "X-Better-Stack-Secret", "value": "<long
-  random secret>" }). The header name is user-chosen; Hookdeck asks for the header name (placeholder
-  X-Better-Stack-Secret) and its value, finds the header case-insensitively and compares the WHOLE
-  value verbatim (no prefix stripping, no trimming). Examples: env vars BETTER_STACK_WEBHOOK_USERNAME
+  random secret>" }). The header name is user-chosen; Hookdeck asks for the header name and its value. Examples: env vars BETTER_STACK_WEBHOOK_USERNAME
   and BETTER_STACK_WEBHOOK_PASSWORD (Basic), BETTER_STACK_WEBHOOK_HEADER (header name, default
   X-Better-Stack-Secret) and BETTER_STACK_WEBHOOK_SECRET (its exact value). Accept a request that
   passes EITHER configured method; a method that is not configured is never used, and with neither
@@ -44,9 +39,7 @@ notes: >
   leaks. Never say Hookdeck verifies 'at the edge'; say Hookdeck's source checks the credential.
   Model on the prometheus-alertmanager (two credential forms), rudderstack, new-relic and argo-cd
   skills on main. METHODS: 'The HTTP method to use when sending the webhook. One of get, post, put,
-  patch, head, or options, defaulting to post.' Hookdeck's Better Stack source pre-selects POST
-  without managing the method, so any other method the webhook uses must also be allowed on the
-  source; Hookdeck sources can allow GET, HEAD, POST, PUT and PATCH but not OPTIONS, so say a webhook
+  patch, head, or options, defaulting to post.' Any method other than POST that the webhook uses must also be allowed on the Hookdeck source (https://hookdeck.com/docs/sources#custom-methods); Hookdeck sources can allow GET, HEAD, POST, PUT and PATCH but not OPTIONS, so say a webhook
   routed through Hookdeck should not use options. The examples must NOT be POST-only: accept GET,
   HEAD, POST, PUT, PATCH and OPTIONS on the webhook route (Express: app.all or one route per method;
   Next.js: export a handler for each; FastAPI: api_route with those methods), check the credential

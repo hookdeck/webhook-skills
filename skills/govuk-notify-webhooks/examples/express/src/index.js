@@ -21,7 +21,7 @@ const BEARER = 'bearer ';
 /**
  * GOV.UK Notify does not sign callbacks. It sends `Authorization: Bearer <token>`, where the
  * token is the one you set for the callback. The secret is the BARE token; if the configured
- * value itself starts with "Bearer " (any case) that prefix is stripped, as Hookdeck does.
+ * value itself starts with "Bearer " (any case) that prefix is stripped.
  * The scheme is matched case-insensitively (RFC 9110); the token is never trimmed.
  */
 function verifyNotifyRequest(headers, secret = process.env.GOVUK_NOTIFY_WEBHOOK_SECRET) {
@@ -47,17 +47,17 @@ function handleCallback(payload) {
     case 'delivery_receipt':
       // status: delivered, permanent-failure, temporary-failure, technical-failure
       console.log(`Delivery receipt ${payload.id}: ${payload.status} (${payload.notification_type})`);
-      // TODO: update the notification by payload.reference / payload.id; retry or alert on failures
+      // Update the notification by payload.reference / payload.id; retry or alert on failures
       break;
 
     case 'received_text':
       console.log(`Text message from ${payload.source_number}: ${payload.message}`);
-      // TODO: route the reply (payload.destination_number, payload.date_received)
+      // Route the reply (payload.destination_number, payload.date_received)
       break;
 
     case 'returned_letter':
       console.log(`Letter returned: ${payload.notification_id}`);
-      // TODO: flag the address as bad (payload.reference, payload.template_name)
+      // Flag the address as bad (payload.reference, payload.template_name)
       break;
 
     default:

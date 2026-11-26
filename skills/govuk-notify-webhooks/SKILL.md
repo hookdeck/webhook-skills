@@ -53,7 +53,7 @@ function verifyNotifyRequest(headers, secret = process.env.GOVUK_NOTIFY_WEBHOOK_
 - Header: `Authorization: Bearer <token>`. Match the `Bearer` scheme case-insensitively (RFC 9110);
   compare the rest to the secret in constant time. Don't trim or alter the secret.
 - `GOVUK_NOTIFY_WEBHOOK_SECRET` holds the **bare** token. If the configured value itself starts
-  with `Bearer ` (any case), strip it, as Hookdeck does.
+  with `Bearer ` (any case), strip it.
 - Missing header, wrong scheme or mismatch: `401`. Body that isn't a JSON object: `400`. Handled: `200`.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 - **A static shared credential authenticates the sender, not the body, and gives no replay

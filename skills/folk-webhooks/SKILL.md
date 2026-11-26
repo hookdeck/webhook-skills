@@ -6,7 +6,7 @@ description: >
   whsec_ signing secret, debugging webhook-id / webhook-timestamp /
   webhook-signature verification, or handling events like person.created,
   person.updated, person.deleted, person.groups_updated, company.created,
-  company.updated, object.created, note.created and reminder.triggered.
+  company.updated, object.created, note.created, task.created and task.completed.
 license: MIT
 metadata:
   author: hookdeck
@@ -16,7 +16,7 @@ metadata:
 
 # folk Webhooks
 
-[folk](https://www.folk.app) is a CRM. Its webhooks report changes to people, companies, custom objects (such as deals), notes, reminders and person enrichments. They follow the [Standard Webhooks](https://www.standardwebhooks.com/) spec, so every delivery is signed with `webhook-id`, `webhook-timestamp` and `webhook-signature` headers, and folk recommends the official Standard Webhooks libraries for verification.
+[folk](https://www.folk.app) is a CRM. Its webhooks report changes to people, companies, custom objects (such as deals), notes, tasks, reminders (deprecated) and person enrichments. They follow the [Standard Webhooks](https://www.standardwebhooks.com/) spec, so every delivery is signed with `webhook-id`, `webhook-timestamp` and `webhook-signature` headers, and folk recommends the official Standard Webhooks libraries for verification.
 
 ## When to Use This Skill
 
@@ -80,7 +80,8 @@ Payloads are thin: `data.id` and `data.url` identify the resource (GET `data.url
 | `company.groups_updated` | A company's groups change |
 | `object.created` / `object.updated` / `object.deleted` | A custom object (for example a deal) is created, updated or deleted |
 | `note.created` / `note.updated` / `note.deleted` | A note is created, updated or deleted |
-| `reminder.created` / `reminder.updated` / `reminder.deleted` / `reminder.triggered` | A reminder changes or fires |
+| `task.created` / `task.updated` / `task.completed` / `task.deleted` | A task is created, updated (or marked as to do), marked as done or deleted |
+| `reminder.created` / `reminder.updated` / `reminder.deleted` / `reminder.triggered` | A reminder changes or fires. Deprecated, removed on February 13, 2027: move to the task events |
 | `person_enrichment.finished` | A person enrichment completes or fails |
 
 > **Full payloads:** [references/overview.md](references/overview.md) and [folk's events documentation](https://developer.folk.app/webhooks/events-and-payloads).
@@ -88,7 +89,7 @@ Payloads are thin: `data.id` and `data.url` identify the resource (GET `data.url
 ## Delivery Semantics
 
 - Return a `2xx` quickly and process asynchronously. Any other status is a failure.
-- folk retries for up to one day (immediately, 5s, 5m, 30m, 2h, 5h, 10h, 14h, 20h, 24h).
+- folk's docs say it retries for up to one day, but its schedule (immediately, 5s, 5m, 30m, 2h, 5h, 10h, 14h, 20h, 24h) runs to about 75 hours.
 - After all retries fail, or on a high error rate, folk deactivates the webhook and emails you. A `410 Gone` response deactivates it immediately.
 - Events can arrive out of order and more than once. Dedupe on `webhook-id`.
 

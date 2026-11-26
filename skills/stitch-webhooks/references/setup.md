@@ -51,7 +51,8 @@ Use the printed URL as the subscription `url`.
 ## Retries and Acknowledgement
 
 - Return HTTP `200` once the webhook is received and verified.
-- Any non-2xx response or timeout is retried by Svix with exponential backoff.
+- Stitch says a non-200 response, or an endpoint that is down, is retried on
+  Svix's retry policy with exponential backoff.
 - Processing must be **idempotent**: the same event can arrive more than once.
 - The Svix portal can resend single messages, recover failed messages, or replay
   missing ones. Svix keeps messages for 90 days.

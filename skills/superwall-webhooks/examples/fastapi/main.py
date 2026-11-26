@@ -106,8 +106,11 @@ async def superwall_webhook(request: Request):
     elif event_type == "expiration":
         print(f"Subscription expired: {product_id} {facts.get('expirationReason' if legacy else 'expiration_reason')}")
     elif event_type == "transferred":
-        # Reserved for ownership changes; documented as not sent yet
-        print(f"Subscription transferred: {product_id}")
+        # Ownership moved between users. event_data is null; the transfer block names both users.
+        # Your code: revoke access from transfer.from_app_user_id, grant it to transfer.to_app_user_id
+        transfer = event.get("transfer") or {}
+        print(f"Subscription transferred: {transfer.get('subscription_id')} "
+              f"{transfer.get('from_app_user_id')} -> {transfer.get('to_app_user_id')}")
     else:
         # Return 2xx for events you don't handle, or Superwall keeps retrying them
         print(f"Unhandled event type: {event_type}")

@@ -4,8 +4,8 @@ description: >
   Receive and verify Bridge (bridge.xyz) webhooks. Use when setting up Bridge
   webhook handlers, debugging RSA signature verification of the
   X-Webhook-Signature header, or handling stablecoin/fiat events like
-  customer.updated, kyc_link.updated, transfer.updated, and
-  virtual_account.activity.
+  customer.updated.status_transitioned, kyc_link.updated.status_transitioned,
+  transfer.updated.status_transitioned and virtual_account.activity.created.
 license: MIT
 metadata:
   author: hookdeck
@@ -25,7 +25,7 @@ you create/update the webhook — there is no HMAC shared secret and no official
 - How do I receive Bridge webhooks?
 - How do I verify the Bridge `X-Webhook-Signature` header?
 - Why is my Bridge webhook signature verification failing?
-- How do I handle `customer.updated`, `kyc_link.updated`, `transfer.updated`, or `virtual_account.activity` events?
+- How do I handle `customer.updated.status_transitioned`, `transfer.updated.status_transitioned`, or `virtual_account.activity.created` events?
 - How do I create and enable a Bridge webhook endpoint via the API?
 
 ## Verification (core)
@@ -72,19 +72,22 @@ Return a non-2xx (Bridge's docs use **400**) on failure so Bridge retries.
 
 ## Common Event Types
 
-Event names are `<category>.<action>`. You subscribe by **category** (not by
-individual event) via the `event_categories` array when creating the webhook.
+Event names are `<category>.<mutation>`, where the mutation is `created`, `updated`,
+`updated.status_transitioned` or `deleted`. A status change arrives as
+`updated.status_transitioned`; plain `updated` means other fields changed. You
+subscribe by **category** (not by individual event) via the `event_categories`
+array when creating the webhook.
 
 | Event | Category | Triggered When |
 |-------|----------|----------------|
 | `customer.created` | `customer` | A customer is created |
-| `customer.updated` | `customer` | Customer details or KYC status change |
-| `kyc_link.updated` | `kyc_link` | A KYC / ToS link status changes |
+| `customer.updated.status_transitioned` | `customer` | A customer's KYC status changes |
+| `kyc_link.updated.status_transitioned` | `kyc_link` | A KYC link's status changes |
 | `transfer.created` | `transfer` | A transfer is created |
-| `transfer.updated` | `transfer` | A transfer changes status (e.g. payment processed) |
-| `virtual_account.activity` | `virtual_account` | Funds are received/processed on a virtual account |
+| `transfer.updated.status_transitioned` | `transfer` | A transfer moves to a new state (e.g. `payment_processed`) |
+| `virtual_account.activity.created` | `virtual_account.activity` | Activity (such as a deposit) is recorded on a virtual account |
 
-> **For the full list of categories and events**, see [references/overview.md](references/overview.md) and [Bridge's webhook docs](https://apidocs.bridge.xyz/platform/additional-information/webhooks/signature).
+> **For the full list of categories and events**, see [references/overview.md](references/overview.md) and [Bridge's event structure docs](https://apidocs.bridge.xyz/platform/additional-information/webhooks/structure).
 
 ## Environment Variables
 

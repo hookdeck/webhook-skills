@@ -15,15 +15,12 @@ notes: >
   signature matches**' 'signing_bytes = bytearray(signing_secret.encode(encoding='UTF-8'))' From the
   docs (registry summary): `X-Preczn-Signature: v1=<hex>[,v1=<hex>...]`, each v1 = lowercase hex
   HMAC-SHA256(subscription signing secret as UTF-8, raw body). Several comma-separated signatures
-  appear during secret rotation; any match authenticates. SIGNATURE SCHEME (it must match Hookdeck's
-  PRECZN source exactly: HMAC controller, algorithm "sha256", header_key "x-preczn-signature",
-  encoding "hex"). The X-Preczn-Signature header carries `v1=<hex>`. Strip a leading `v1=` before
-  validating the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or
-  without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  appear during secret rotation; any match authenticates. SIGNATURE SCHEME: HMAC-SHA256, header x-preczn-signature, hex encoding. The X-Preczn-Signature header carries `v1=<hex>`. Strip a leading `v1=` before
+  validating the digest; accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: The subscription's signing secret: visible any time in the dashboard, or in the API create
   response only. Use it as UTF-8 bytes. Env var: PRECZN_WEBHOOK_SECRET. Validate the signature's
@@ -39,8 +36,7 @@ notes: >
   and only `data` changes shape. Documented event types (14): transaction.approved,
   transaction.declined, transaction.pending, transaction.errored, merchant.created, merchant.updated,
   merchant.deleted, loan.created, loan.updated, form.created, form.started, form.updated,
-  form.completed, form.expired. Handle a few common ones and log the rest. Method: POST. Hookdeck's
-  Preczn source manages the method as POST, so the examples handle POST on the webhook route. Express
+  form.completed, form.expired. Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. After verifying, treat every field of the parsed body as

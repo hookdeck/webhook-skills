@@ -2,7 +2,7 @@
 
 ## Register the Endpoint
 
-Install the Webhook integration in your GitBook organisation, configure its endpoint URL, and select events for the space or site. Configure the matching signing secret in your receiver. The guide does not specify where this secret is shown; confirm it in your installation or with GitBook.
+Install the Webhook integration in your GitBook organisation, then open its configuration in a space or site, enter the **Webhook URL**, select events and click **Save Configuration**. The **Secret** section of the same screen shows the signing secret, which GitBook generates. The URL and secret belong to the organisation's installation, so every space and site that sends to this endpoint uses the same secret. **Regenerate** replaces it once you save; update your receiver straight away.
 
 Use `POST /webhooks/gitbook`. Configure `GITBOOK_WEBHOOK_SECRET` with the same secret as the sender; keep it out of source control.
 
@@ -18,7 +18,7 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `GITBOOK` source type once it is available in your environment and configure its verification secret. Named sources answer 200 at ingress; a failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures. Hookdeck applies no timestamp tolerance.
+Choose the `GITBOOK` source type once it is available in your environment and configure its verification secret. A failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures.
 
 Set `GITBOOK_WEBHOOK_TOLERANCE_SECONDS` to a positive number to enforce an application age limit in seconds. Unset or `0` disables it. Old timestamps remain valid by default so Hookdeck retries and replays can retain the original headers.
 

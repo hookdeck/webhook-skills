@@ -16,7 +16,7 @@ client = TestClient(app)
 
 
 def sign(body: bytes, secret: str = SECRET) -> str:
-    """Same algorithm as Katana: lowercase hex HMAC-SHA256 of the raw body, keyed with the token."""
+    """Same algorithm as Katana: hex HMAC-SHA256 of the raw body, keyed with the token."""
     return hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
 
@@ -46,7 +46,7 @@ def _secret(monkeypatch):
         "sales_order.delivered",
         "purchase_order.received",
         "manufacturing_order.done",
-        "inventory.product_out_of_stock",
+        "current_inventory.product_out_of_stock",
     ],
 )
 def test_accepts_signed_event(action):

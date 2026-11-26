@@ -32,10 +32,6 @@ So, concretely:
   looking at that header you are in the wrong skill — use
   [woocommerce-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/woocommerce-webhooks).
 
-Hookdeck models it the same way: the `WORDPRESS_COM` source type (slug
-`wordpress-com`) is schema-only, `http_method_managed_post`, with **no
-verification controller** at all.
-
 ## What to Do Instead: Channel-Level Protection
 
 ### 1. A Secret Token in the Webhook URL (the main control)
@@ -116,8 +112,8 @@ publish `comment_content` straight from the payload.
 ### 4. With Hookdeck: Verify Hookdeck's Signature
 
 Route WordPress.com through Hookdeck and the Hookdeck Source URL becomes the
-secret endpoint. Hookdeck's WordPress.com source performs **no signature check**
-(there is nothing to check), but the request Hookdeck then delivers to your app
+secret endpoint. WordPress.com sends no signature, so there is nothing for Hookdeck to
+check, but the request Hookdeck then delivers to your app
 **is** signed. Verify that one:
 
 ```javascript

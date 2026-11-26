@@ -55,7 +55,7 @@ Python uses the same SDK: `from svix.webhooks import Webhook` and
 
 > **Custom secrets:** if you set your own `signingSecret` on the channel, keep the
 > `whsec_` prefix (e.g. `whsec_<base64>`). OpenMeter accepts it without the prefix,
-> but Svix/Standard Webhooks libraries and Hookdeck rely on the prefix to know the
+> but Svix/Standard Webhooks libraries rely on the prefix to know the
 > rest is base64 and must be decoded before use as the HMAC key.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

@@ -20,15 +20,13 @@ processed, a customer is created, a subscription is activated, an invoice is iss
 webhook has HTTP basic access authentication credentials, every request carries
 `Authorization: Basic base64(username:password)`, and your endpoint authenticates the request by
 checking them. Rebilly also signs every webhook (see below), but Hookdeck's Rebilly source checks
-only basic auth.
-
-Hookdeck setup note for the Rebilly source: "Set HTTP basic access authentication on the Rebilly webhook. Its JWT and Ed25519 signatures are not checked."
+only basic auth, so set basic auth on the Rebilly webhook.
 
 ## When to Use This Skill
 
 - How do I receive Rebilly webhooks?
 - How do I check the `Authorization: Basic` header on a Rebilly webhook?
-- Does Rebilly sign webhooks? (Yes, `Security-Signature` JWT and `v1a` Ed25519, but the examples check basic auth)
+- Does Rebilly sign webhooks? (Yes, `Security-Signature` JWT and `v2a` and legacy `v1a` Ed25519, but the examples check basic auth)
 - How do I handle `transaction-processed`, `subscription-activated` or `invoice-issued` events?
 - Why does my Rebilly webhook endpoint return 401, or why does Rebilly keep retrying?
 
@@ -61,28 +59,27 @@ and compare with `hmac.compare_digest` on `bytes` (encode both sides; `str` rais
 - Header: `Authorization: Basic base64(username:password)`, set on the webhook in Rebilly. Environment
   variables: `REBILLY_WEBHOOK_USERNAME` and `REBILLY_WEBHOOK_PASSWORD`.
 - Missing or malformed header, or a mismatch: `401`. Check it first, for every HTTP method.
-- Hookdeck never sends a 401 challenge (no `WWW-Authenticate` round trip), so the credentials must
-  arrive with each request.
+- The credentials must arrive with each request: Event Gateway doesn't prompt for them, and a
+  request with wrong ones still gets a 200 and is recorded as failed verification.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
-  protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
+  protection** (basic auth itself carries no signature or timestamp). Use HTTPS and rotate the
+  credential if it leaks.
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse it only after the check.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Rebilly Also Signs Webhooks
 
-Every Rebilly webhook carries a `Security-Signature` header (an RS256 JWT) and Standard Webhooks
-`v1a` Ed25519 signatures in `webhook-id`, `webhook-timestamp` and `webhook-signature`. Hookdeck's
-Rebilly source does not check them, and the examples don't either. Rebilly's 5-minute timestamp
-check would reject Hookdeck retries, which resend the original timestamp. The optional `v1a` check
-is described in [references/verification.md](references/verification.md).
+Rebilly sends a `Security-Signature` JWT and a `webhook-signature` header with Ed25519
+signatures. Rebilly recommends the organization-bound `v2a` signature for new receivers and
+continues to send `v1a` for existing receivers. Hookdeck's Rebilly source and the runnable
+examples check HTTP basic auth. For optional body verification, including deliveries replayed
+through Hookdeck, see [signature verification](references/verification.md).
 
 ## Methods
 
 A Rebilly webhook's method is one of GET, POST, PUT, PATCH or DELETE, so the handlers accept all
-five, check the credentials before anything else and handle an empty body. Hookdeck's Rebilly
-source pre-selects POST without managing the method, so any other method the webhook uses must
-also be allowed on the source.
+five, check the credentials before anything else and handle an empty body. Any method the webhook uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

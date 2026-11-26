@@ -27,8 +27,8 @@ The value is compared whole, so include the `Bearer ` prefix here if you type it
 4. Enter your URL in **Webhook URL**, e.g. `https://example.com/webhooks/axiom`.
 5. Optional: edit the body with Go template syntax (see [overview.md](overview.md)). The default
    template sends `action` (`Open` or `Closed`) and monitor data under `event`.
-6. Add the header from above. Where Axiom offers secret headers (`secretHeaders`), use that so the
-   value is hidden after saving; otherwise use `headers`.
+6. Add the header from above. If you create the notifier through Axiom's API, put it in
+   `secretHeaders`, which Axiom masks in its logs, rather than `headers`.
 7. Click **Create**, then attach the notifier to a monitor.
 
 ## Test

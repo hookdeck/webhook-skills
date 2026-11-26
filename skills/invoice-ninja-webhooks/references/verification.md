@@ -10,8 +10,7 @@ endpoint compares it with the value you stored.
 X-Webhook-Secret: 9f2c...   # name and value are both your choice
 ```
 
-There is no HMAC, timestamp or signed body. This mirrors Hookdeck's Invoice Ninja source, which
-verifies a header name plus an exact value.
+There is no HMAC, timestamp or signed body. Hookdeck's Invoice Ninja source checks the same header.
 
 ## What This Does and Doesn't Give You
 

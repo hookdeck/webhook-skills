@@ -14,7 +14,7 @@ Points that cause most failures:
 - The credential is the `Authorization` header. There is no other header to read.
 - In the examples, the key is the **whole header value including the `Bearer ` prefix**: set
   `REDO_AUTHORIZATION` to `Bearer your-subscriber-secret`. Don't strip, parse or base64-decode
-  the prefix. (Hookdeck's Redo source takes the bare secret instead.)
+  the prefix. (In Hookdeck's Redo source, paste the bare secret instead.)
 - Missing header or mismatch: respond `401`.
 
 ## What Does a Static Credential Protect?
@@ -93,7 +93,7 @@ def safe_equal(a: str, b: str) -> bool:
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Slow responses**: reply 2xx within 5 seconds and process asynchronously, or Redo retries.
 - **Hookdeck**: a Hookdeck Redo source verifies the same header. Paste the bare secret into its
-  **Subscription Secret** field; it accepts the header with or without the `Bearer ` prefix.
+  **Subscription Secret** field.
 
 ## Debugging 401s
 

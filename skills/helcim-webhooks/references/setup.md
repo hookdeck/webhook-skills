@@ -23,13 +23,13 @@ On the same **Integrations > Webhooks** page: Helcim shows your `verifierToken` 
 
 ## How Do I Use Hookdeck With Helcim?
 
-Hookdeck base64-decodes only secrets that start with `whsec_`, so paste the verifierToken into the Helcim source as `whsec_` followed by the token. Hookdeck's configuration alert for this source reads exactly:
+Paste the verifierToken into the Helcim source as `whsec_` followed by the token. Hookdeck's configuration alert for this source reads exactly:
 
 > Paste your verifierToken as whsec_ followed by the token, or verification fails.
 
-Without the prefix, Hookdeck would use the token as raw text instead of decoding it, and every delivery fails verification. Your own handler behind Hookdeck still uses the token as Helcim shows it (the library accepts it with or without `whsec_`).
+Without the prefix, every delivery fails verification. Your own handler behind Hookdeck still uses the token as Helcim shows it (the library accepts it with or without `whsec_`).
 
-Then set the Hookdeck source URL as the Deliver URL in Helcim (it must not contain "Helcim"). Hookdeck also reads `svix-*` headers when `webhook-id` is absent, and the examples do the same.
+Then set the Hookdeck source URL as the Deliver URL in Helcim (it must not contain "Helcim"). The examples also read `svix-*` headers when `webhook-id` is absent.
 
 ## How Do I Test an Endpoint?
 

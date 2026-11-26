@@ -3,7 +3,7 @@ name: optimizely-webhooks
 description: >
   Receive and verify Optimizely Feature Experimentation webhooks. Use when setting up
   Optimizely webhook handlers, debugging X-Hub-Signature verification, or handling
-  project.datafile_updated and project.ruleset_updated events.
+  project.datafile_updated, project.ruleset_updated and project.approval_* events.
 license: MIT
 metadata:
   author: hookdeck
@@ -70,8 +70,11 @@ Dispatch on the top-level `event` field of the body.
 |-------|-------------|
 | `project.datafile_updated` | An environment's datafile changed (`data` is an object with `revision`, `cdn_url`, `origin_url`, `environment`) |
 | `project.ruleset_updated` | A change-history notification (`data` is an array of change records with `change_type` and `entity.type`) |
+| `project.approval_created` | A change request is submitted for approval |
+| `project.approval_updated` | A change request is approved, rejected or withdrawn (see the `approval_status` entry in `changes`) |
+| `project.approval_archived` | A resolved change request is archived |
 
-Other change-history events (entities such as Attribute, Audience, Flag, Rule × Create, Update, Archive, Delete) follow the `project.<entity>_<action>` pattern, but the docs list only the two values above by name. Log unknown events and return `200`.
+Approval events also carry an array in `data`, one entry per change request, each with an `environment`. Other change-history events (entities such as Attribute, Audience, Flag, Rule × Create, Update, Archive, Delete) follow the `project.<entity>_<action>` pattern, but the docs name only the five values above. Log unknown events and return `200`.
 
 ## Important Headers
 

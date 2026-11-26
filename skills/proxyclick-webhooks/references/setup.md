@@ -24,8 +24,7 @@ long random password: it is the only thing authenticating the sender.
 
 The docs don't say whether Basic credentials are sent preemptively. Your endpoint should expect
 `Authorization: Basic ...` on the very first request and return a plain `401` otherwise. A
-`401` + `WWW-Authenticate` challenge flow won't work, including through Hookdeck, which verifies
-the request as received.
+`401` + `WWW-Authenticate` challenge flow won't work, including through Hookdeck.
 
 ## Local Testing
 

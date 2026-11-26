@@ -65,7 +65,7 @@ CharityStack has no official webhook SDK, so verification is manual in every fra
 
 ### Timestamp tolerance is opt-in
 
-CharityStack's guide suggests rejecting timestamps more than 5 minutes old. The examples do **not** do this by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Set `CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Webhook-Timestamp` is Unix seconds.
+CharityStack's guide suggests rejecting timestamps more than 5 minutes old. The examples do **not** do this by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Webhook-Timestamp` is Unix seconds.
 
 ### Read the raw body
 
@@ -91,8 +91,9 @@ Dispatch on the body's `type` field.
 ## Delivery Notes
 
 - Method: `POST` with a JSON body.
-- No retry or timeout policy is documented, so return a `2xx` quickly and process asynchronously. Return `2xx` for event types you don't handle.
-- `X-Webhook-ID` identifies a delivery attempt, so don't rely on it alone to deduplicate retries; deduplicate on an identifier from the event payload.
+- Any non-2xx response counts as a failed delivery. No retry or timeout policy is documented, so return a `2xx` quickly and process asynchronously. Return `2xx` for event types you don't handle.
+- The body is an envelope of `id`, `type`, `created` (Unix seconds) and `data` (the stored record).
+- `X-Webhook-ID` identifies a delivery attempt, so don't rely on it alone to deduplicate retries; deduplicate on the envelope's `id` together with `type`, and keep handlers idempotent.
 
 ## Environment Variables
 

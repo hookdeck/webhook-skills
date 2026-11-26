@@ -21,7 +21,7 @@ from main import app, verify_cronofy_webhook  # noqa: E402
 
 client = TestClient(app)
 
-# https://docs.cronofy.com/developers/push-notifications/authentication/
+# https://docs.cronofy.com/api-reference/authorization/webhook-authentication/
 WELL_KNOWN_BODY = '{"example":"well-known"}'
 DIGEST_1 = "5DxentQi5YSXODEzTVv06sRwJ3pULIz1KrYv20qxEK0="
 DIGEST_2 = "BmQmWVuZ70ILWjr1CAt5oC7YOolgnku4WZtlrKfx/6k="
@@ -99,7 +99,7 @@ class TestVerifyCronofyWebhook:
         assert not verify_cronofy_webhook(self.body.encode(), header, TEST_SECRET)
 
     def test_rejects_header_of_only_separators(self):
-        # Parity with the hookdeck/core CRONOFY controller, which filters empty candidates.
+        # Empty candidates are filtered out.
         for header in (" , ", "", ",,,"):
             assert not verify_cronofy_webhook(self.body.encode(), header, TEST_SECRET)
 

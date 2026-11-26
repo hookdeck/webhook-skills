@@ -11,10 +11,13 @@ dotenv.config({ quiet: true });
 export const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Huntress's article describes the body only as "a JSON payload describing the event".
-// Use `type` when the body has one; otherwise report the event as untyped.
+// Huntress's webhook payload reference (https://api.huntress.io/docs, "Webhooks") puts the
+// event type in the top-level `event_type`, e.g. "incident_report.created". Escalation and
+// platform action bodies also have a `type` field, which is NOT the event type, so don't
+// fall back to it. Send Test sends `event_type: "test.event"`.
 export function parseHuntressEvent(body) {
-  const type = body && typeof body.type === 'string' ? body.type : null;
+  const raw = body && body.event_type;
+  const type = typeof raw === 'string' ? raw : null;
   return { type, payload: body ?? {} };
 }
 
@@ -31,9 +34,13 @@ app.post('/webhooks/huntress', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const svixId = req.headers['svix-id'];
-  const svixTimestamp = req.headers['svix-timestamp'];
-  const svixSignature = req.headers['svix-signature'];
+  // Huntress's docs don't name the headers; Svix's guide, which they link, uses svix-*.
+  // A live Send Test delivery (2026-11-18) sent the Standard Webhooks names
+  // (webhook-id, webhook-timestamp, webhook-signature). The signed content is the
+  // same, so accept either prefix.
+  const svixId = req.headers['svix-id'] ?? req.headers['webhook-id'];
+  const svixTimestamp = req.headers['svix-timestamp'] ?? req.headers['webhook-timestamp'];
+  const svixSignature = req.headers['svix-signature'] ?? req.headers['webhook-signature'];
   if (!svixId || !svixTimestamp || !svixSignature) {
     return res.status(400).json({ error: 'Missing required webhook headers' });
   }
@@ -62,7 +69,7 @@ app.post('/webhooks/huntress', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   const { type, payload } = parseHuntressEvent(body);
-  // svix-id is stable across retries: use it to deduplicate, and log it so you can
+  // The delivery ID is stable across retries: use it to deduplicate, and log it so you can
   // match it to the Portal's "View Delivery Attempts" page
   console.log(`Received Huntress webhook ${svixId}: ${type ?? '(untyped payload)'}`);
 

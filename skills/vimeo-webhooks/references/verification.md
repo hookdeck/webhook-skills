@@ -51,7 +51,7 @@ def verify_vimeo(raw_body: bytes, signature: str | None, secret: str) -> bool:
 - **Raw body only.** Parsing JSON and re-serializing changes the bytes and breaks the HMAC.
 - **Any content type.** Read the body as raw bytes regardless of `Content-Type`.
 - **Secret mismatch.** The secret is per webhook; if you PATCH a new one, update your environment variable.
-- **No replay protection in the signature.** Nothing signed includes a time. The body has a `timestamp` field you can check for freshness, but retries re-deliver old timestamps, so rely on idempotent handlers instead.
+- **No replay protection in the signature.** Nothing signed includes a time. The body has a `timestamp` field, but Vimeo states no freshness window and documents no retry policy, so rely on idempotent handlers instead.
 - **Invalid hex.** In Node, validate the header is exactly 64 hex chars before decoding it, or compare the lowercase hex strings as UTF-8 buffers as above.
 
 ## Debugging Verification Failures

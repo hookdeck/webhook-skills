@@ -20,7 +20,7 @@ if it leaks.
 ## Implementation
 
 Store the bare key in `LEONARDO_AI_WEBHOOK_SECRET`. If the configured value itself starts with
-`Bearer ` (any case), strip it, as Hookdeck does. Require the header to start with `Bearer `
+`Bearer ` (any case), strip it. Require the header to start with `Bearer `
 (compared case-insensitively, RFC 9110), then compare the rest to the key in constant time. Don't
 trim or otherwise alter the key.
 

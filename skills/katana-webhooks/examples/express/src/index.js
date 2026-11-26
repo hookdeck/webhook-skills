@@ -10,7 +10,7 @@ const app = express();
 const METHODS = new Set(['POST', 'PUT', 'PATCH', 'GET', 'DELETE']);
 
 /**
- * Verify Katana's x-sha2-signature: lowercase hex HMAC-SHA256 of the raw body bytes,
+ * Verify Katana's x-sha2-signature: hex HMAC-SHA256 of the raw body bytes,
  * keyed with the webhook's token as UTF-8 (never hex-decoded). Nothing else is signed.
  */
 function verifyKatanaSignature(rawBody, signature, secret = process.env.KATANA_WEBHOOK_SECRET) {
@@ -30,27 +30,27 @@ function handleEvent(payload) {
   switch (action) {
     case 'sales_order.created':
       console.log(`Sales order created: ${object && object.id}`);
-      // TODO: fetch the order from object.href and sync it
+      // Your code: fetch the order from object.href and sync it
       break;
 
     case 'sales_order.delivered':
       console.log(`Sales order delivered: ${object && object.id}`);
-      // TODO: send a shipping confirmation
+      // Your code: send a shipping confirmation
       break;
 
     case 'purchase_order.received':
       console.log(`Purchase order received: ${object && object.id}`);
-      // TODO: update inbound stock
+      // Your code: update inbound stock
       break;
 
     case 'manufacturing_order.done':
       console.log(`Manufacturing order done: ${object && object.id}`);
-      // TODO: update finished-goods inventory
+      // Your code: update finished-goods inventory
       break;
 
-    case 'inventory.product_out_of_stock':
+    case 'current_inventory.product_out_of_stock':
       console.log(`Product out of stock: ${object && object.id}`);
-      // TODO: trigger a reorder
+      // Your code: trigger a reorder
       break;
 
     default:

@@ -46,25 +46,27 @@ async def textus_webhook(request: Request):
 
     if action == "message.received":
         print("Message received:", (event.get("message") or {}).get("id"))
-        # TODO: Route the reply to your CRM or support queue.
+        # Route the reply to your CRM or support queue.
     elif action == "message.delivered":
         print("Message delivered:", (event.get("message") or {}).get("id"))
-        # TODO: Mark the outgoing message as delivered.
+        # Mark the outgoing message as delivered.
     elif action in ("message.failed", "message.unknown"):
         print(f"Message problem ({action}):", (event.get("message") or {}).get("id"))
-        # TODO: Alert or retry through another channel.
+        # Alert or retry through another channel.
     elif action == "phone_call.completed":
+        # TextUs publishes no example body for this event.
         print("Phone call completed")
-        # TODO: Log the call against the contact.
+        # Log the call against the contact.
     elif action == "contact.opted_out":
         print("Contact opted out:", event.get("optOut"))
-        # TODO: Suppress this number in your systems.
+        # Suppress this number in your systems.
     elif action == "contact.opted_in":
+        # Opt-ins use the same OptOutWebhookDelivery shape as opt-outs.
         print("Contact opted in:", event.get("optOut"))
-        # TODO: Re-enable messaging for this number.
+        # Re-enable messaging for this number.
     elif action == "contact.created":
         print("Contact created:", (event.get("contact") or {}).get("id"))
-        # TODO: Sync the new contact.
+        # Sync the new contact.
     else:
         print(f"Unhandled event: {action}")
 

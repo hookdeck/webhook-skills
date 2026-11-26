@@ -28,7 +28,7 @@ def verify_memberful_signature(raw_body: bytes, signature, secret=None) -> bool:
         return False
 
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
-    received = bytes.fromhex(signature)  # case-insensitive, as Hookdeck does
+    received = bytes.fromhex(signature)  # case-insensitive
     return hmac.compare_digest(received, expected)  # bytes, never str
 
 
@@ -48,17 +48,17 @@ def id_of(value):
 
 
 # Memberful's event reference lists these names but never shows where the name travels.
-# ASSUMPTION: a top-level `event` field. Confirm against a real delivery (Settings > Webhooks > test).
+# Memberful's WordPress plugin reads a top-level `event` field, so this does too. Confirm with a test delivery.
 def handle_event(payload: dict) -> None:
     event = text(payload.get("event"))
 
     if event == "member_signup":
         print(f"Member signed up: {id_of(payload.get('member'))}")
-        # TODO: create the member in your app
+        # Your code: create the member in your app
 
     elif event in ("member_updated", "member.deleted", "tax_id.updated", "custom_fields.updated"):
         print(f"{event}: member {id_of(payload.get('member'))}")
-        # TODO: sync or remove the member's profile
+        # Your code: sync or remove the member's profile
 
     elif event in (
         "subscription.created",
@@ -67,20 +67,20 @@ def handle_event(payload: dict) -> None:
         "subscription.reactivated",
     ):
         print(f"{event}: subscription {id_of(payload.get('subscription'))}")
-        # TODO: grant or extend the member's access
+        # Your code: grant or extend the member's access
 
     elif event == "subscription.updated":
         # `changed` maps field -> [old, new]; a plan_id entry means a plan change.
         print(f"subscription.updated: subscription {id_of(payload.get('subscription'))}")
-        # TODO: re-fetch the subscription from the API (delivery order is not guaranteed)
+        # Your code: re-fetch the subscription from the API (delivery order is not guaranteed)
 
     elif event in ("subscription.deactivated", "subscription.deleted"):
         print(f"{event}: subscription {id_of(payload.get('subscription'))}")
-        # TODO: remove the member's access
+        # Your code: remove the member's access
 
     elif event in ("order.purchased", "order.refunded", "order.suspended", "order.completed"):
         print(f"{event}: order {id_of(payload.get('order'))}")
-        # TODO: record the order or refund
+        # Your code: record the order or refund
 
     elif event in (
         "subscription_plan.created",
@@ -91,7 +91,7 @@ def handle_event(payload: dict) -> None:
         "download.deleted",
     ):
         print(f"{event} received")
-        # TODO: sync prices (subscription_plan.*) or downloads
+        # Your code: sync prices (subscription_plan.*) or downloads
 
     else:
         print(f"Unhandled event: {event} (keys: {', '.join(payload)})")

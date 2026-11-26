@@ -33,14 +33,21 @@ export function verifyPax8Request(
 
 export interface Pax8Event {
   topic: string | null;
-  action: string | null;
+  sentAt: string | null;
 }
 
 /**
- * The body is not documented (samplePayload is elided), so read topic and action
- * defensively. Both are returned upper-case, or null when absent.
+ * Pax8's Webhooks API reference types a delivery as WebhookPayload: accountId, url,
+ * webhookId, sentAt, webhookTopic ({ id, topic, filters }) and payloadData. The topic
+ * name is webhookTopic.topic. payloadData varies by topic and isn't documented, so treat
+ * the notification as a prompt to fetch current state from the Pax8 API.
  */
 export function classify(payload: Record<string, unknown>): Pax8Event {
-  const norm = (v: unknown) => (typeof v === 'string' && v ? v.toUpperCase() : null);
-  return { topic: norm(payload.topic), action: norm(payload.action) };
+  const wt = payload.webhookTopic as { topic?: unknown } | null | undefined;
+  const topic =
+    wt && typeof wt === 'object' && typeof wt.topic === 'string' && wt.topic
+      ? wt.topic.toUpperCase()
+      : null;
+  const sentAt = typeof payload.sentAt === 'string' ? payload.sentAt : null;
+  return { topic, sentAt };
 }

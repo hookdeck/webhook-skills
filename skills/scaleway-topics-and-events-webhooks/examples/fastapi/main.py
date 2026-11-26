@@ -140,7 +140,7 @@ def create_app(
                 f" (subject: {subject})" if isinstance(subject, str) else "",
                 kind,
             )
-            # TODO: process the message idempotently (keyed on msg["MessageId"])
+            # Your code: process the message idempotently (keyed on msg["MessageId"])
             return {"received": True}
 
         # UnsubscribeConfirmation: an SNS message type; Scaleway's docs don't say whether it sends one.

@@ -33,7 +33,7 @@ const crypto = require('crypto');
 const ALGS = { HMAC_SHA1_HEX: 'sha1', HMAC_SHA256_HEX: 'sha256', HMAC_SHA512_HEX: 'sha512' };
 
 function verifySumsubWebhook(rawBody, digest, digestAlg, secret) {
-  const algorithm = ALGS[digestAlg || 'HMAC_SHA256_HEX']; // absent = SHA256, unknown = reject
+  const algorithm = ALGS[digestAlg || 'HMAC_SHA256_HEX']; // missing: SHA256, as in Sumsub's C# sample; unknown: reject
   if (!digest || !secret || !algorithm) return false;
   const expected = crypto.createHmac(algorithm, secret).update(rawBody).digest('hex');
   try {

@@ -52,26 +52,26 @@ def handle_payment(payment: dict) -> None:
     if status == "authorized":
         if not captures:
             print(f"Payment authorized: {payment_id}")
-            # TODO: process the order, then send the Capture Request
+            # Your code: process the order, then send the Capture Request
         else:
             print(f"Payment captured: {payment_id}")
-            # TODO: nothing to do, this confirms your own capture
+            # Your code: nothing to do, this confirms your own capture
 
     elif status == "closed":
         if refunds:
             print(f"Payment closed with refunds: {payment_id}")
-            # TODO: record the latest entry in payment["refunds"]
+            # Your code: record the latest entry in payment["refunds"]
         else:
             print(f"Payment closed: {payment_id}")
-            # TODO: mark the order paid; never downgrade a closed payment to authorized
+            # Your code: mark the order paid; never downgrade a closed payment to authorized
 
     elif status == "rejected":
         print(f"Payment rejected: {payment_id}")
-        # TODO: cancel the order
+        # Your code: cancel the order
 
     elif status == "expired":
         print(f"Payment expired: {payment_id}")
-        # TODO: cancel the order
+        # Your code: cancel the order
 
     else:
         print(f"Unhandled payment status: {status}")
@@ -85,18 +85,18 @@ def handle_dispute(dispute: dict) -> None:
 
     if status == "pending":
         print(f"Dispute opened: {dispute_id} on payment {payment_id}")
-        # TODO: fetch the dispute and gather evidence
+        # Your code: fetch the dispute and gather evidence
 
     elif status == "arbitration":
         print(f"Dispute in arbitration: {dispute_id}")
 
     elif status == "evidence_merchant":
         print(f"Dispute evidence requested: {dispute_id}")
-        # TODO: provide supporting evidence
+        # Your code: provide supporting evidence
 
     elif status == "approved":
         print(f"Dispute approved: {dispute_id}")
-        # TODO: record the refund to the customer
+        # Your code: record the refund to the customer
 
     elif status == "declined":
         print(f"Dispute declined: {dispute_id}")

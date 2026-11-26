@@ -78,7 +78,7 @@ app.post('/webhooks/chatim', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid payload');
   }
 
-  // Use payload.eventId (or the X-Chatim-Delivery-Id header) for idempotency
+  // Use payload.eventId for idempotency, as Chatim recommends
   const data = payload.data || {};
   const visitor = data.visitor || {};
 

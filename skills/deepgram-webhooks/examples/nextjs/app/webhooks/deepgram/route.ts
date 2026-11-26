@@ -3,15 +3,15 @@ import { timingSafeEqual } from 'crypto';
 
 // Timing-safe string comparison (length-checked first, since
 // crypto.timingSafeEqual throws on buffers of different length)
-function safeEqual(a: string, b: string): boolean {
-  const ab = Buffer.from(a, 'utf8');
+function safeEqual(a: string | undefined, b: string): boolean {
+  const ab = Buffer.from(a || '', 'utf8');
   const bb = Buffer.from(b, 'utf8');
   return ab.length === bb.length && timingSafeEqual(ab, bb);
 }
 
 // Primary check: Basic Auth credentials embedded in the callback URL
-// (https://user:pass@your-domain.com/webhooks/deepgram), which Deepgram
-// sends as an Authorization: Basic header
+// (https://user:pass@your-domain.com/webhooks/deepgram). Deepgram includes
+// them when it sends the result; they arrive as an Authorization: Basic header
 function verifyBasicAuth(authHeader: string | null): boolean {
   const username = process.env.DEEPGRAM_CALLBACK_USERNAME;
   const password = process.env.DEEPGRAM_CALLBACK_PASSWORD;
@@ -32,17 +32,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Supplementary check: Deepgram does not send dg-token on every callback,
-    // so compare it only when it is present (and an API Key ID is configured)
-    const dgToken = request.headers.get('dg-token');
-    const expectedKeyId = process.env.DEEPGRAM_API_KEY_ID;
-    if (dgToken && expectedKeyId && !safeEqual(dgToken, expectedKeyId)) {
-      return NextResponse.json(
-        { error: 'Invalid dg-token' },
-        { status: 403 }
-      );
-    }
-
     // Parse the webhook payload
     // Using request.text() first to preserve raw body for potential future signature verification
     const rawBody = await request.text();
@@ -54,6 +43,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid webhook payload' },
         { status: 400 }
+      );
+    }
+
+    // Optional STT check: if you send extra=callback_secret:VALUE with each
+    // /v1/listen request, Deepgram returns it in metadata.extra.callback_secret.
+    // (dg-token is no longer a supported way to verify callbacks.)
+    const callbackSecret = process.env.DEEPGRAM_CALLBACK_SECRET;
+    if (callbackSecret && !safeEqual(payload.metadata?.extra?.callback_secret, callbackSecret)) {
+      return NextResponse.json(
+        { error: 'Invalid callback secret' },
+        { status: 401 }
       );
     }
 

@@ -29,7 +29,7 @@ def verify_sumsub_webhook(
     if not digest or not secret:
         return False
 
-    # An absent alg header means SHA256; an unknown value is rejected
+    # Sumsub always sends the alg header. If it is missing, use SHA256 as Sumsub's C# sample does; reject unknown values
     algorithm = DIGEST_ALGORITHMS.get(digest_alg or "HMAC_SHA256_HEX")
     if algorithm is None:
         return False
@@ -82,41 +82,41 @@ async def sumsub_webhook(payload: dict[str, Any] = Depends(verified_sumsub_paylo
     # Route on the body's type field (Sumsub sends no event-type header)
     if event_type == "applicantCreated":
         print(f"Applicant created, review status: {payload.get('reviewStatus')}")
-        # TODO: Link applicantId to your user record
+        # Link applicantId to your user record
 
     elif event_type == "applicantPending":
         print("Applicant submitted documents, review pending")
-        # TODO: Show "verification in progress" to the user
+        # Show "verification in progress" to the user
 
     elif event_type == "applicantReviewed":
         # reviewAnswer is GREEN (approved) or RED (rejected)
         answer = review_result.get("reviewAnswer")
         if answer == "GREEN":
             print("Applicant approved")
-            # TODO: Unlock verified features
+            # Unlock verified features
         elif answer == "RED":
             # RETRY = user can resubmit, FINAL = permanently rejected
             print(f"Applicant rejected: {review_result.get('reviewRejectType')}")
-            # TODO: Ask for resubmission or block the account
+            # Ask for resubmission or block the account
 
     elif event_type == "applicantOnHold":
         print("Applicant on hold, manual review required")
-        # TODO: Flag for compliance team
+        # Flag for compliance team
 
     elif event_type == "applicantActionPending":
         print(f"Applicant action pending: {payload.get('applicantActionId')}")
 
     elif event_type == "applicantActionReviewed":
         print(f"Applicant action reviewed: {payload.get('applicantActionId')} {review_result.get('reviewAnswer')}")
-        # TODO: Apply the action result (e.g. payment method check)
+        # Apply the action result (e.g. payment method check)
 
     elif event_type == "applicantReset":
         print("Applicant reset")
-        # TODO: Clear cached verification state
+        # Clear cached verification state
 
     elif event_type == "applicantDeleted":
         print("Applicant deleted")
-        # TODO: Remove local references to the applicant
+        # Remove local references to the applicant
 
     else:
         print(f"Unhandled event type: {event_type}")

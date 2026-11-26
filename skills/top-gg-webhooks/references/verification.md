@@ -9,7 +9,7 @@ x-topgg-signature: t=1770598034,v1=8f4b1c...e2
 ```
 
 - `t` — Unix timestamp (seconds) of when the request was signed
-- `v1` — lowercase hex HMAC-SHA256. The header may carry more than one `v1` (for example during key rotation), and may carry other keys such as `v0`, which are ignored.
+- `v1` — lowercase hex HMAC-SHA256. Top.gg documents one `t` and one `v1`; the examples still accept any matching `v1` entry and ignore unknown keys, so an extra entry can't break them.
 
 Signed string: `"<t>.<raw request body bytes>"`. Key: the webhook secret (`whs_...`) **used whole** as UTF-8 bytes. `whs_` is part of the key: don't strip it and don't hex- or base64-decode the rest. This is **not** Standard Webhooks (no `webhook-id` / `webhook-timestamp` headers), so the `standardwebhooks` and `svix` libraries will not verify it.
 
@@ -25,7 +25,7 @@ Steps:
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Hookdeck retries and replays resend the original headers, including the original `t`, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. The examples leave the check off. To opt in, set `TOP_GG_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds); unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup. With a window set, a non-numeric `t` fails.
+Top.gg's verification steps say to reject a `t` more than 5 minutes old, and its sample allows 300 seconds either way. The examples leave the check off by default, because Hookdeck retries and replays resend the original headers, including the original `t`, so a fixed window rejects legitimate late retries. Set `TOP_GG_WEBHOOK_TOLERANCE_SECONDS=300` to match Top.gg. To opt in, set `TOP_GG_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds); unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup. With a window set, a non-numeric `t` fails.
 
 ## Implementation
 
@@ -84,7 +84,7 @@ def verify_top_gg(raw_body: bytes, header: str | None, secret: str, tolerance: i
 
 ## Debugging Verification Failures
 
-- **Every request fails**: confirm `TOP_GG_WEBHOOK_SECRET` is the `whs_` secret from the project's **Webhooks** page, not a v0 `Authorization` secret, and has no surrounding whitespace.
+- **Every request fails**: confirm `TOP_GG_WEBHOOK_SECRET` is the `whs_` secret from the project's **Webhooks** page, not a v0 `Authorization` secret, and has no surrounding whitespace. If the secret was rotated through the API, the old one stopped working immediately.
 - **Only some content types fail**: something parsed the body before you read the bytes. Use the raw-body reader above.
 - **Fails behind a proxy**: make sure it forwards the body unchanged (no re-compression or re-encoding) and keeps the `x-topgg-signature` header.
 - **Quote `x-topgg-trace`** when asking Top.gg support about a delivery.

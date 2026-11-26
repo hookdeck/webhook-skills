@@ -13,11 +13,13 @@ notes: >
   (encode both sides) so a non-ASCII header gives 401, not 500. Webhook topics (create-webhook topic
   enum): subscriptions/created, subscriptions/line_removed, subscriptions/status/updated,
   orders/created, billingAttempts/created, billingAttempts/success, billingAttempts/failed,
-  paymentMethod/updated, subscriptionActivities/created, subscription/customAttributes/updated. No
-  topic header or body field is documented, so say each webhook subscribes to one topic and suggest
-  one endpoint path (or Hookdeck connection) per topic. Hookdeck setup (say this in SKILL.md's setup
-  section and in references/setup.md): Prive (now Recurly Commerce) provides the secret token. Ask
-  Prive support for it if you don't have it. Express examples must read the raw body with
+  paymentMethod/updated, subscriptionActivities/created, subscription/customAttributes/updated (the
+  Recurly Commerce API enum adds freeTrial/started and freeTrial/ended, spec-only). Per
+  https://docs.recurly.com/recurly-commerce/docs/webhooks every payload is {topic, idempotencyKey,
+  data}: dispatch on `topic`, dedupe on `idempotencyKey`, and respond 2xx within 5 seconds. Each
+  webhook subscribes to one topic, so a path per topic is an optional second check. The per-merchant
+  webhookSigningKey is issued by Recurly Support (support@recurly.com); no rotation procedure, a new
+  key is a hard cutover. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:

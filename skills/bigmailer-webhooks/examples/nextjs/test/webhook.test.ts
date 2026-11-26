@@ -87,7 +87,7 @@ describe('BigMailer webhook signature verification', () => {
     expect((await post(body, sig(header))).status).toBe(200);
   });
 
-  it('accepts when any v1 entry matches (key rotation), first or last', async () => {
+  it('accepts when any v1 entry matches, first or last', async () => {
     const body = event('click');
     const t = now();
     expect((await post(body, sig(`t=${t},v1=${mac(SECRET, t, body)},v1=${mac(OLD_SECRET, t, body)}`))).status).toBe(200);

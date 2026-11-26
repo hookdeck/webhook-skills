@@ -26,11 +26,6 @@ notes: |
   signature header, no shared secret, no HMAC, no timestamp header, no
   asymmetric signature and no documented source-IP allowlist. Any
   crypto.createHmac / hmac.new / crypto.verify over the body for Tikkie is fabricated.
-  Also CONFIRMED AGAINST HOOKDECK CORE (server/integrations/sourceTypeSchemas.ts,
-  TIKKIE entry): no VERIFICATION feature and no verification controller — only
-  `http_method_managed_post`. The core commit that added it says verbatim:
-  "Tikkie (ABN AMRO) payment notification webhooks carry no signature, so the source
-  type is listed without a verification controller".
 
   SECURITY MODEL the skill should teach instead (be honest these are mitigations,
   not cryptographic proof):
@@ -90,8 +85,7 @@ notes: |
   referenceId, createdDateTime, status (PENDING | PAID).
   Ignore unknown fields / unknown notificationType values gracefully (log + 2xx).
 
-  Hookdeck: Tikkie POSTs only; Hookdeck has no signature to verify for this source,
-  so the subscriptionId + re-fetch guidance applies equally behind Hookdeck.
+  Hookdeck: Tikkie POSTs only and sends no signature, so the subscriptionId + re-fetch guidance applies equally behind Hookdeck.
 testScenario:
   events:
     - PAYMENT

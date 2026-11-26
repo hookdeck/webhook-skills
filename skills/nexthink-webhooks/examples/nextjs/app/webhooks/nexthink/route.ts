@@ -14,12 +14,12 @@ function handleEvent(payload: unknown): void {
   switch (body.event) {
     case 'alert triggered':
       console.log(`Alert triggered: ${body.monitor}`);
-      // TODO: open a ticket or notify the on-call channel
+      // Open a ticket or notify the on-call channel
       break;
 
-    case 'alert recovered':
-      console.log(`Alert recovered: ${body.monitor}`);
-      // TODO: resolve the ticket
+    case 'high priority alert':
+      console.log(`High-priority alert: ${body.monitor}`);
+      // Page the on-call engineer
       break;
 
     default:

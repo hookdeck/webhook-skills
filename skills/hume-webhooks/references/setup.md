@@ -1,6 +1,6 @@
 # Setting Up Hume Webhooks
 
-For Hume EVI (speech-to-speech) webhooks. Paste the webhook signing key from the Developers page.
+Hume retired EVI and its webhooks on 2026-11-13, so this setup no longer applies. It is kept as a record.
 
 ## Prerequisites
 
@@ -41,4 +41,4 @@ Start a Chat that uses the Config. `chat_started` arrives when the session begin
 
 ## Hookdeck
 
-In Hookdeck, create a source of type **Hume** and paste the webhook signing key there. Hookdeck verifies `X-Hume-AI-Webhook-Signature` over `{body}.{X-Hume-AI-Webhook-Timestamp}` and forwards the request to your handler.
+In Hookdeck, create a source of type **Hume** and paste the webhook signing key there. Hookdeck verifies the signature and forwards the request to your handler.

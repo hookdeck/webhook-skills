@@ -40,23 +40,23 @@ def handle_event(event: dict) -> None:
         # message.type: text, image, video, audio, file, location, sticker
         message = event["message"]
         print(f"Message ({message['type']}) from {source.get('userId')}: {message.get('text', message['id'])}")
-        # TODO: Reply with event["replyToken"] via the Messaging API reply endpoint
+        # Reply with event["replyToken"] via the Messaging API reply endpoint
 
     elif event_type == "messageEdited":
         print(f"Message edited: {event['message']['id']}")
-        # TODO: Update the stored copy of the message (latest timestamp wins)
+        # Update the stored copy of the message (latest timestamp wins)
 
     elif event_type == "unsend":
         print(f"Message unsent: {event['unsend']['messageId']}")
-        # TODO: Delete the stored message so it can't be seen or used again
+        # Delete the stored message so it can't be seen or used again
 
     elif event_type == "follow":
         print(f"Followed by {source.get('userId')} (unblocked: {event.get('follow', {}).get('isUnblocked')})")
-        # TODO: Send a welcome message, create the user record
+        # Send a welcome message, create the user record
 
     elif event_type == "unfollow":
         print(f"Blocked by {source.get('userId')}")
-        # TODO: Stop messaging this user
+        # Stop messaging this user
 
     elif event_type == "join":
         print(f"Joined {source.get('type')}: {source.get('groupId') or source.get('roomId')}")
@@ -72,7 +72,7 @@ def handle_event(event: dict) -> None:
 
     elif event_type == "postback":
         print(f"Postback: {event['postback']['data']}")
-        # TODO: Route on postback.data (and postback.params for date/time pickers)
+        # Route on postback.data (and postback.params for date/time pickers)
 
     elif event_type == "videoPlayComplete":
         print(f"Video watched: {event['videoPlayComplete']['trackingId']}")
@@ -82,7 +82,7 @@ def handle_event(event: dict) -> None:
 
     elif event_type == "accountLink":
         print(f"Account link {event['link']['result']}, nonce: {event['link']['nonce']}")
-        # TODO: Look up the nonce and link accounts if result == "ok"
+        # Look up the nonce and link accounts if result == "ok"
 
     elif event_type == "membership":
         print(f"Membership {event['membership']['type']}: {event['membership']['membershipId']}")

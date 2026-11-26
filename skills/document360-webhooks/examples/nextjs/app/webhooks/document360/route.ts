@@ -17,32 +17,33 @@ function handleEvent(payload: Document360Payload): void {
   switch (event) {
     case 'Article published':
       console.log(`Article published: ${article}`);
-      // TODO: notify the docs team or refresh a search index
+      // Example: notify the docs team or refresh a search index
       break;
 
     case 'Article created':
       console.log(`Article created: ${article}`);
-      // TODO: add the article to a content tracker
+      // Example: add the article to a content tracker
       break;
 
     case 'Article deleted':
       console.log(`Article deleted: ${article}`);
-      // TODO: purge cache entries for every language in payload['Slugs']
+      // Example: purge cache entries for every language in payload['Slugs']
       break;
 
     case 'Article settings saved':
-      console.log(`Article settings saved: ${article}`);
-      // TODO: re-sync article metadata
+    case 'Article settings updated':
+      console.log(`${event}: ${article}`);
+      // Example: re-sync article metadata
       break;
 
     case 'Article workflow status updated':
       console.log(`Article workflow status updated: ${article}`);
-      // TODO: trigger the downstream review step
+      // Example: trigger the downstream review step
       break;
 
     case 'Extension token deleted':
       console.log(`Extension token deleted: ${payload['Extension']}`);
-      // TODO: alert the integration owner
+      // Example: alert the integration owner
       break;
 
     default:

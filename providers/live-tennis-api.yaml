@@ -3,22 +3,25 @@ displayName: 'Live Tennis API'
 docs:
   webhooks: https://docs.livetennisapi.com/push-feed-and-webhooks.html
 notes: >
-  Live Tennis API (live tennis scores). Header X-LTAPI-Signature: 'sha256=<hex>', HMAC-SHA256 hex of
-  the RAW request body keyed with the webhook secret (returned only once in the POST /webhooks 201
-  response). Require and strip the sha256= prefix. X-LTAPI-Timestamp (Unix seconds) is sent but NOT
-  signed, and X-LTAPI-Event names the frame type (score, point, break_point, break_point_result).
-  Because the timestamp isn't signed, don't build a replay check on it; if you mention one, make it
-  opt-in and say Hookdeck retries and replays keep the original request headers. Compare in constant
-  time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any
-  Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
-  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
-  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. Webhooks
-  need the ULTRA plan and direct API keys (max 3 per key); delivery is at-most-once with a ~3s
-  timeout, redirects disabled, auto-disabled after 25 consecutive failures. Express examples must read
-  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  Live Tennis API (live tennis scores). Header X-LTAPI-Signature-V1: 't=<unix seconds>,v1=<hex>'.
+  Each v1 is the hex HMAC-SHA256, keyed with the webhook secret (returned only once in the POST
+  /webhooks 201 response), of the string '<t>.<raw request body>'; accept the request if any v1
+  matches. Reject a t more than 5 minutes from the server clock, and dedupe on the body's top-level
+  delivery_id (unique per delivery), keeping each id until t + 5 minutes. The older X-LTAPI-Signature
+  ('sha256=<hex>' of the raw body alone, same secret) is deprecated since 1.13.76 (2026-10-28) and
+  sent until 2027-02-01: never fall back to it, because it doesn't cover the timestamp.
+  X-LTAPI-Timestamp repeats t, and X-LTAPI-Event names the frame type (score, score_withdrawn,
+  break_point, break_point_result, point, status). Hookdeck retries and replays keep the original
+  request headers, so a handler behind Hookdeck may need a wider window. Compare in constant time:
+  in Node, check each value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any
+  Buffer.from(x, 'hex') (invalid hex silently truncates); in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. Webhooks need the ULTRA plan and
+  direct API keys (max 3 per key); delivery is at-most-once with a ~3s timeout, redirects disabled,
+  auto-disabled after 25 consecutive failures. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'score'
     - 'point'
 catalog:
-  summary: 'Verify Live Tennis API webhook signatures (`X-LTAPI-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle `score` and `point` frames by `X-LTAPI-Event`'
+  summary: 'Verify Live Tennis API webhook signatures (`X-LTAPI-Signature-V1` `t=<unix>,v1=<hex>`, HMAC-SHA256 of `<t>.<raw body>`), handle `score`, `point` and other frames by `X-LTAPI-Event`'

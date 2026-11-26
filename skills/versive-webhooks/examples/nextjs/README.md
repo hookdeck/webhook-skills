@@ -6,7 +6,7 @@ official [`svix`](https://www.npmjs.com/package/svix) library (Versive signs del
 ## Prerequisites
 
 - Node.js 18+
-- Versive organization with a webhook set up by Versive support, and its endpoint signing secret (`whsec_...`)
+- A Versive organization where you're an owner or admin (webhooks are set up under **Organization → Connectors → Webhooks**), and the endpoint's signing secret
 
 ## Setup
 
@@ -20,8 +20,8 @@ official [`svix`](https://www.npmjs.com/package/svix) library (Versive signs del
    cp .env.example .env
    ```
 
-3. Add your Versive endpoint signing secret to `.env` as `VERSIVE_WEBHOOK_SECRET`. Versive support
-   hands it over when they set up your organization's webhook.
+3. Add your Versive endpoint signing secret to `.env` as `VERSIVE_WEBHOOK_SECRET`. Copy it from the
+   endpoint in the webhooks portal (**Organization → Connectors → Webhooks → Manage endpoints**).
 
 ## Run
 
@@ -53,17 +53,19 @@ Start a tunnel with the Hookdeck CLI (no account required):
 npx hookdeck-cli listen 3000 versive --path /webhooks/versive
 ```
 
-1. Ask Versive support to point your organization's webhook at the tunnel URL (webhooks are
-   provisioned by Versive, not self-serve).
-2. Copy the endpoint's signing secret they give you into `.env`.
-3. Complete an interview in a study to receive a real `interview.completed` delivery.
+1. In Versive, open **Organization → Connectors → Webhooks**, select **Set up webhooks**, then
+   **Manage endpoints**, and add the tunnel URL as an endpoint.
+2. Copy that endpoint's signing secret into `.env`.
+3. Complete an interview in a study to receive a real `interview.completed` delivery, or get screened
+   out by a study's screener to receive `interview.screened_out`. The portal can also replay messages.
 
 ## Event Handling
 
 The handler reads the event name from the body's top-level `event_type` field, routes these
 events, and acknowledges anything else with `200`:
 
-- `interview.completed` (the only documented event; the list may not be exhaustive)
+- `interview.completed`
+- `interview.screened_out`
 
 ## Timestamp Window
 

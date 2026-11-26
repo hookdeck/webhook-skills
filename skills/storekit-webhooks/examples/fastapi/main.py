@@ -113,11 +113,10 @@ async def storekit_webhook(request: Request):
         print(f"Opening hours updated: {as_dict(data.get('venue')).get('slug')} {data.get('source')}")
     elif event_type == "item.out_of_stock":
         print(f"Item out of stock: {as_dict(data.get('item')).get('name')} {data.get('reason')} {data.get('source')}")
-    elif event_type == "payments.payout.created":
-        print(f"Payout created: {data.get('amounts')} {data.get('estimatedArrivalDate')}")
-    elif event_type == "bill.payment.created":
-        # The docs list this event but show no payload: log what arrives
-        print(f"Bill payment created: {json.dumps(data)}")
+    elif event_type in ("account.holder.payout", "payments.payout.created"):
+        # payments.payout.created is this event's former name, no longer in storekit's docs.
+        # amounts[].value is in minor units; failed payouts send no event
+        print(f"Payout: {data.get('amounts')} {data.get('estimatedArrivalDate')}")
     elif event_type == "payment_link.created":
         link = as_dict(data.get("paymentLink"))
         print(f"Payment link created: {link.get('id')} {link.get('amount')} {link.get('currency')}")

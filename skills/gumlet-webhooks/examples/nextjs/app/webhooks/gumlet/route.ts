@@ -22,27 +22,27 @@ function handleEvent(payload: GumletPayload): void {
     case 'video.status.downloaded':
     case 'video.status.processed':
       console.log(`Video ${payload.status}: ${payload.asset_id}`);
-      // TODO: update processing progress for payload.asset_id
+      // Your code: update processing progress for payload.asset_id
       break;
 
     case 'video.status.ready':
       console.log(`Video ready: ${payload.asset_id}`);
-      // TODO: store payload.output.playback_url and publish the video
+      // Your code: store payload.output.playback_url and publish the video
       break;
 
     case 'video.status.errored':
       console.log(`Video errored: ${payload.asset_id}`);
-      // TODO: alert and retry the upload
+      // Your code: alert and retry the upload
       break;
 
     case 'video.status.deleted':
       console.log(`Video deleted: ${payload.asset_id}`);
-      // TODO: remove local records
+      // Your code: remove local records
       break;
 
     case 'video.status.repackaged':
       console.log(`Video repackaged: ${payload.asset_id}`);
-      // TODO: refresh playback info
+      // Your code: refresh playback info
       break;
 
     case 'live.video.status.created':
@@ -52,46 +52,46 @@ function handleEvent(payload: GumletPayload): void {
     case 'live.video.status.active':
     case 'live.video.status.disconnected':
       console.log(`Live stream ${payload.status}: ${payload.live_asset_id}`);
-      // TODO: update the live session state
+      // Your code: update the live session state
       break;
 
     case 'live.video.status.complete':
       console.log(`Live stream complete: ${payload.live_asset_id}`);
-      // TODO: link payload.recording_asset_id and payload.vod_collection_id
+      // Your code: link payload.recording_asset_id and payload.vod_collection_id
       break;
 
     case 'event.video.uploaded':
     case 'event.video.updated':
       console.log(`Video event: ${type}`);
-      // TODO: start downstream workflows or sync metadata
+      // Your code: start downstream workflows or sync metadata
       break;
 
     case 'event.embed.viewed':
     case 'event.embed.cta_clicked':
       console.log(`Embed event: ${type}`);
-      // TODO: record analytics
+      // Your code: record analytics
       break;
 
     case 'event.embed.form_submitted':
       console.log('Lead captured');
-      // TODO: send the lead to your CRM
+      // Your code: send the lead to your CRM
       break;
 
     case 'event.playlist.created':
     case 'event.playlist.asset':
     case 'event.playlist.deleted':
       console.log(`Playlist event: ${type}`);
-      // TODO: sync playlists
+      // Your code: sync playlists
       break;
 
     case 'event.comment.all':
       console.log('Comment event');
-      // TODO: moderate or sync comments
+      // Your code: moderate or sync comments
       break;
 
     case 'event.channel.member_joined':
       console.log('Channel member joined');
-      // TODO: onboard the member
+      // Your code: onboard the member
       break;
 
     default:

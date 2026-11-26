@@ -58,7 +58,7 @@ and the signature `7a181a32c768621eb6966107752ee70205a01f1c4403a3d13c0ff604f591f
 
 ## Debugging Verification Failures
 
-1. Confirm you are using the ServerKey of the profile that sent the request.
+1. Confirm you are using the server key that signed this transaction: the one its payment request used, or the default signature key for PayLinks and dashboard invoices.
 2. Check the `Signature` header is exactly 64 hex characters with no prefix.
 3. Log the body length and compare with what was sent; a mismatch means middleware changed the body.
 4. Confirm the request is a callback or IPN and not the browser Return URL.

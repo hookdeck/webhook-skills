@@ -29,16 +29,18 @@ If you paste the value with a `Bearer ` prefix, the examples strip it, so both f
 ## Test
 
 Use the dashboard's webhook test: Ship24 sends a message with dummy tracking events to your URL.
-Or replay one by hand:
+Or send a trimmed copy of the API Reference's example by hand:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/ship24 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $SHIP24_WEBHOOK_SECRET" \
-  -d '{"trackings":[{"metadata":{"generatedAt":"2025-03-04T17:13:35.000Z","messageId":"test-1","topic":"tracking/events"},"tracker":{"trackingNumber":"9400115901047177598206"},"events":[{"eventId":"e1","status":"In transit","occurrenceDatetime":"2025-03-04T17:12:57"}]}]}'
+  -d '{"trackings":[{"metadata":{"generatedAt":"2025-03-04T17:13:35.000Z","messageId":"356a7f93-3ce5-4b49-b560-156537283df9","topic":"tracking/events"},"tracker":{"trackerId":"26148317-7502-d3ac-44a9-546d240ac0dd","trackingNumber":"9400115901047177598206"},"events":[{"eventId":"ee8ebe96-4eae-4a91-9a99-8f3afa6a0f46","status":"Delivered to the addressee","occurrenceDatetime":"2025-03-04T17:12:57"}]}]}'
 ```
 
 ## Network Notes
 
-Ship24 doesn't publish a signature or an IP range for webhooks. Serve the endpoint over HTTPS and
-rotate the Webhook Secret if it leaks.
+Ship24 doesn't sign webhooks. It sends them from `54.161.7.2`, but requests sent with **Test your
+integration** don't come from that IP, so set up the Webhook URL before you restrict by IP
+([Sending behavior](https://docs.ship24.com/webhooks/delivery)). Serve the endpoint over HTTPS and
+keep the Webhook Secret out of logs and source control.

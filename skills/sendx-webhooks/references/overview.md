@@ -38,13 +38,18 @@ The webhook's subscription toggles are `contactCreated`, `unsubscribed`, `droppe
 
 ## Payload Structure
 
-The body is JSON with a top-level integer `type`. SendX's docs do not document the other fields, so
-treat every field as untrusted and check its type before reading it.
+The body is flat JSON with a top-level integer `type`. The Webhook Object page also lists `time`
+(documented as milliseconds since the epoch, though its example `1686304219037565000` is
+nanosecond-scale), `data` (a string) and nullable IDs: `provider_message_id`, `campaign_id`,
+`drip_step_id`, `rss_exec_id`, `tag_id`, `link`, `list_id`, `contact_id`, `contact_email`,
+`custom_field_id`, `template_id`, `popup_id`, `landing_page_id`, `form_id`, `segment_id`,
+`automation_id`, `drip_id`, `rss_id`, `ab_test_id`, `workflow_id`, `workflow_node_id` and
+`workflow_email_id`. Treat every field as untrusted and check its type before reading it.
 
 ## Delivery
 
-Respond in under 5 seconds (advice from the docs, not a stated timeout). Retries exist (see the
-attempt header) but the schedule is not documented.
+Respond with a `200` in under 5 seconds (advice from the docs, not a stated timeout). Retries exist
+(see the attempt header) but the schedule is not documented.
 
 ## Full Event Reference
 

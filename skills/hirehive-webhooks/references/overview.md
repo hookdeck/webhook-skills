@@ -24,7 +24,7 @@ HireHive's pages print no HTTP method or `Content-Type`; they say they follow St
 
 HireHive's overview shows `data` as `....`, so the example is not valid JSON and the fields inside `data` aren't documented there. Inspect a real delivery (the request log or the Hookdeck CLI) before reading specific fields.
 
-There is no event id in the body. The `webhook-id` header is unique per message and stable across retries, so it is the idempotency key. No header carries the event type.
+The overview lists no event id in the body. HireHive's per-event pages, rendered from its OpenAPI schemas, also list `id` and `version` fields and put the resource under `data.object`, with no example values, so check a real delivery. The `webhook-id` header is unique per message and, under the Standard Webhooks spec, stable across retries, so it is the idempotency key. No header carries the event type.
 
 ## Common Event Types
 
@@ -52,7 +52,7 @@ The examples route all 19 documented events:
 | `interview.updated` | An interview is updated | Reschedule the entry |
 | `interview.cancelled` | An interview is cancelled | Remove the entry |
 
-HireHive says the list may not be exhaustive, so acknowledge and ignore types you don't recognise.
+HireHive may add event types, so acknowledge and ignore types you don't recognise.
 
 ## Delivery Behaviour
 

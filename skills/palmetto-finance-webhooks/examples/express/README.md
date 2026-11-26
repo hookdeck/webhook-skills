@@ -52,7 +52,7 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/palmetto-finance \
   -H "Content-Type: application/json" \
   -H "apiKey: $PALMETTO_FINANCE_WEBHOOK_SECRET" \
-  -d '{"event":"accountCreated","accountId":"acct_1","programType":"solar"}'
+  -d '{"event":"accountCreated","accountId":"palmetto-finance-account-id","programType":"solar"}'
 ```
 
 ## Receive Webhooks Locally

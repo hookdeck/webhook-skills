@@ -7,7 +7,7 @@
 
 ## Hookdeck Source
 
-Hookdeck's source type is `CYERA` (labelled "Cyera"); it manages the method as `POST`. Hookdeck
+Hookdeck's source type is `CYERA` (labelled "Cyera"). Hookdeck
 shows this note for the source:
 
 For Cyera Privacy's privacy-request webhooks. Paste the Webhook Secret from the webhook integration.
@@ -26,7 +26,7 @@ For Cyera Privacy's privacy-request webhooks. Paste the Webhook Secret from the 
 1. In the same integration, set the webhook URL to your endpoint, for example
    `https://example.com/webhooks/cyera`, or the Hookdeck source URL.
 2. When Cyera sends a `health_check`, confirm your endpoint answers `200` (it verifies the signature first).
-3. When an access, deletion or opt-out request arrives, confirm your endpoint answers `201`.
+3. When a new access, deletion or opt-out request arrives, confirm your endpoint answers `201` (and `200` for a reminder).
 
 ## Local Development
 
@@ -42,8 +42,9 @@ integration's webhook URL field.
 | Delivery | Respond |
 |----------|---------|
 | `health_check` | `200` |
-| `access`, `deletion`, `opt_out` | `201` once the request is created, then report completion with a `PUT` to `webhook_callback_url` (API key) |
+| `access`, `deletion`, `opt_out` | `201` once the request is created (`200` for a `:reminder` topic), then report completion with a `PUT` to `webhook_callback_url` (API key) |
 | `readiness_check` | `200` (the docs name `200` for health checks and reminders and give no code for readiness checks); send the answer with a `PUT` to `webhook_callback_url` |
+| `identifiers` | `200` (the docs name `200` for reminders and give no code for `identifiers:create`); send the identifiers and `results_token` with a `PUT` to `webhook_callback_url` |
 | Request not created | `4xx` / `5xx` |
 
 ## Rotating the Secret

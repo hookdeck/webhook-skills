@@ -26,9 +26,8 @@ def default_tolerance() -> int:
     """Staleness window in seconds; 0 (the default) disables the check.
 
     Ardoq's own examples reject deliveries older than 5 minutes, but Hookdeck
-    retries and replays resend the ORIGINAL headers and timestamp (and Hookdeck
-    applies no tolerance itself), so a fixed window would reject legitimate
-    retries. Set ARDOQ_WEBHOOK_TOLERANCE_SECONDS to opt in. Read at call time so
+    retries and replays resend the ORIGINAL headers and timestamp, so a fixed
+    window would reject legitimate retries. Set ARDOQ_WEBHOOK_TOLERANCE_SECONDS to opt in. Read at call time so
     it can be changed without a restart in tests.
     """
     try:
@@ -100,17 +99,17 @@ def handle_ardoq_event(event: dict[str, Any]) -> str:
 
     if resource_type == "component":
         print(f"Component {event.get('resource-id')} {event_type}")
-        # TODO: sync the component into your CMDB / catalog
+        # Sync the component into your CMDB or catalog here
         return label
 
     if resource_type == "reference":
         print(f"Reference {event.get('resource-id')} {event_type}")
-        # TODO: update dependency links between components
+        # Update dependency links between components here
         return label
 
     if resource_type == "tag":
         print(f"Tag {data.get('name') or event.get('resource-id')} {event_type}")
-        # TODO: re-classify the tagged components (data["components"])
+        # Re-classify the tagged components (data["components"]) here
         return label
 
     print(f"Unhandled Ardoq resource-type: {resource_type}")

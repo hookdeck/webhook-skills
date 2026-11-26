@@ -2,7 +2,7 @@
 name: junction-webhooks
 description: >
   Receive and verify Junction webhooks (health-data API for wearables, lab testing and
-  continuous queries, formerly Vital; delivered via Svix). Use when setting up Junction
+  continuous queries; delivered via Svix). Use when setting up Junction
   webhook handlers, debugging svix-signature verification, or handling events like
   provider.connection.created, daily.data.sleep.created, historical.data.workouts.created,
   and labtest.order.updated.
@@ -15,7 +15,7 @@ metadata:
 
 # Junction Webhooks
 
-Junction (junction.com, formerly Vital) delivers webhooks through [Svix](https://www.svix.com/),
+Junction (junction.com) delivers webhooks through [Svix](https://www.svix.com/),
 which implements Standard Webhooks. Every delivery is an HTTP `POST` with a JSON body and three
 signature headers: `svix-id`, `svix-timestamp`, and `svix-signature`. The event name is the
 top-level `event_type` field, and the payload is under `data`, next to `team_id`, `user_id` and
@@ -36,7 +36,7 @@ Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HM
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-separated `v1,<signature>` entries. Use the official `svix` library, which compares in
 constant time. Read the `svix-*` headers, and when `svix-id` is absent fall back to the `webhook-*`
-headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), as Hookdeck does.
+headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -80,13 +80,14 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-About 185 events are documented. The name is `event_type` in the JSON body. The examples handle these:
+Junction's Event Catalog lists 243 events. The name is `event_type` in the JSON body. The examples handle these:
 
 | Event | Triggered When |
 |-------|----------------|
 | `provider.connection.created` | A user connects a provider through Junction Link |
 | `provider.connection.error` | A provider connection fails (for example, expired credentials) |
 | `provider.device.created` | A device is added (also `provider.device.updated`) |
+| `historical.data.{resource}.in_progress` | One chunk of a resource's historical backfill has completed (data-less) |
 | `historical.data.{resource}.created` | The historical backfill for a resource has completed (data-less) |
 | `daily.data.{resource}.created` | New data for a resource is discovered (also `.updated`) |
 | `labtest.order.created` | A lab test order is created (also `labtest.order.updated`) |

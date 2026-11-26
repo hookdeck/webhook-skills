@@ -18,8 +18,8 @@
 
 ## Where Do I Find the Signing Secret?
 
-Each endpoint has its own signing secret in the Developer section (Svix). Store the full value
-separately from your code, in a secret manager:
+Agntix's docs don't say where the dashboard shows the signing secret: look on the endpoint you
+added under **Developer**. Store the full value separately from your code, in a secret manager:
 
 ```bash
 AGNTIX_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx

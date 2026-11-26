@@ -24,7 +24,7 @@ metadata:
 
 ## Verification (core)
 
-ComplyCube sends `ComplyCube-Signature: <hex>`: the bare lowercase hex **HMAC-SHA256 of the raw
+ComplyCube sends `ComplyCube-Signature: <hex>`: the bare hex **HMAC-SHA256 of the raw
 request body**, keyed with the webhook's secret (UTF-8 bytes, used as-is). There is no prefix, no
 timestamp and it is not the Standard Webhooks spec; only the body is signed. Verify over the **raw
 bytes before parsing**, validate the hex shape (64 chars) before decoding, then compare in constant time.
@@ -77,7 +77,7 @@ The event name is the body's `type` field (no header names the event). `resource
 | `workflow.session.completed` | A workflow session completed |
 
 A completed check fires both `check.completed` and the outcome-specific type if you subscribed to
-both. The full list of 25 types is in [references/overview.md](references/overview.md).
+both. The full list of 26 types is in [references/overview.md](references/overview.md).
 
 ## Delivery Behaviour
 
@@ -95,8 +95,7 @@ COMPLYCUBE_WEBHOOK_SECRET=your_webhook_secret   # Returned once, when the webhoo
 ## Setup with Hookdeck
 
 Create the webhook in ComplyCube with your Hookdeck source URL, then paste the webhook secret into
-the Hookdeck source's webhook verification settings (HMAC, SHA-256, header `ComplyCube-Signature`,
-hex). Hookdeck accepts the delivery quickly, which keeps you inside the 15-second window and avoids
+the Hookdeck source's webhook verification settings. Hookdeck accepts the delivery quickly, which keeps you inside the 15-second window and avoids
 the webhook being disabled.
 
 ## Local Development

@@ -23,7 +23,7 @@ metadata:
 
 ## Verification (core)
 
-PlanetScale signs the **raw request body** with HMAC-SHA256, keyed with the webhook's secret, and sends the **bare lowercase hex digest** in `X-PlanetScale-Signature`. There is no `sha256=` prefix, no timestamp and no list of signatures: compare the whole header value as one digest.
+PlanetScale signs the **raw request body** with HMAC-SHA256, keyed with the webhook's secret, and sends the **bare hex digest** in `X-PlanetScale-Signature`. There is no `sha256=` prefix, no timestamp and no list of signatures: compare the whole header value as one digest.
 
 - The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
 - Sign **bytes**: the body exactly as received. Never `JSON.parse` / `JSON.stringify` before verifying (the docs' JavaScript sample does `JSON.stringify(req.body)`, which does not match byte-for-byte; the Python sample uses the raw body, and so should you).
@@ -80,7 +80,7 @@ The event name is the body's top-level `event` field (there is no event-name hea
 | `cluster.storage` | A Postgres database reached a storage threshold (60/75/85/90/95%) |
 | `database.access_request` | PlanetScale staff opens an access request |
 
-PlanetScale documents 21 events in total, including `branch.primary_promoted`, `branch.out_of_memory`, `branch.schema_recommendation`, `branch.sleeping`, `branch.start_maintenance`, `deploy_request.pending_cutover`, `deploy_request.schema_applied`, `deploy_request.errored`, `deploy_request.reverted`, `deploy_request.closed` and `keyspace.storage`. See [references/overview.md](references/overview.md).
+PlanetScale documents 26 events in total, including `branch.primary_promoted`, `branch.out_of_memory`, `branch.schema_recommendation`, `branch.sleeping`, `branch.start_maintenance`, `deploy_request.pending_cutover`, `deploy_request.schema_applied`, `deploy_request.errored`, `deploy_request.reverted`, `deploy_request.closed`, `keyspace.storage` and five Postgres maintenance events (`maintenance.scheduled`, `maintenance.started`, `maintenance.completed`, `maintenance.failed`, `maintenance.canceled`). See [references/overview.md](references/overview.md).
 
 > **For the full event reference**, see [PlanetScale webhook events](https://planetscale.com/docs/api/webhook-events).
 
@@ -93,7 +93,7 @@ PlanetScale documents 21 events in total, including `branch.primary_promoted`, `
 
 ## Delivery Behaviour
 
-Respond `2xx` within **2 seconds** or the delivery is marked failed; redirects are not followed; webhooks that repeatedly fail are disabled. No retry policy is documented, so do the work asynchronously and dedupe on your side (there is no delivery ID header; derive a key from `event`, `resource.id` and `timestamp`). Each database can have up to 5 webhooks. Deliveries come from `3.209.149.66`, `3.215.97.46` and `34.193.111.15`.
+Respond `2xx` within **2 seconds** or the delivery is marked failed; redirects are not followed; webhooks that repeatedly fail are disabled. No retry policy is documented, so do the work asynchronously and make side effects idempotent. There is no event or delivery ID, and storage events carry no `resource.id`, so compare the resource's state (`resource.state`, `updated_at`) with what you've stored rather than relying on a composite key. Each database can have up to 5 webhooks. Deliveries come from `3.209.149.66`, `3.215.97.46` and `34.193.111.15`.
 
 ## Environment Variables
 
@@ -105,7 +105,7 @@ PLANETSCALE_WEBHOOK_SECRET=your_webhook_secret   # Database Settings > Webhooks 
 
 In the dashboard open your database, then **Settings → Webhooks → Add webhook**, enter an `https://` URL, pick events and save. Use **… → Show secret** to copy the secret (one per webhook), and **… → Test webhook** to send `webhook.test`. Webhooks can also be managed with `pscale webhook` or the API. See [references/setup.md](references/setup.md).
 
-When using Hookdeck, paste the webhook secret into the PlanetScale source's webhook secret field: Hookdeck's source verifies `X-PlanetScale-Signature` with the same HMAC-SHA256 hex scheme.
+When using Hookdeck, paste the webhook secret into the PlanetScale source's webhook secret field: Hookdeck's source verifies the same signature.
 
 ## Local Development
 

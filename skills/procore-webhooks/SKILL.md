@@ -75,10 +75,11 @@ Each event has a **resource name** (the Procore API resource, e.g. RFIs) and an 
 | `update` | A resource record is updated |
 | `delete` | A resource record is deleted |
 
-The v2 payload is described as carrying fields like `id`, `ulid`, `timestamp`, `user_id`,
-`company_id`, `project_id`, `api_version`, `event_type`, `resource_name` and `resource_id`. The
-Procore support article confirms only the resource name, resource ID, event type and timestamp;
-the developer docs are not readable here, so treat the payload in the examples as illustrative.
+Payload formats v2.0 (legacy) and v3.0 carry `id`, `ulid`, `timestamp`, `metadata`, `user_id`,
+`company_id`, `project_id`, `api_version`, `event_type`, `resource_name` and `resource_id`; v3.0
+adds `related_resources`. v4.0, which Procore recommends for new hooks, uses string IDs, renames
+`event_type` to `reason` (which can hold more than the three values above) and `resource_name` to
+`resource_type`. The examples read either spelling.
 
 ## Environment Variables
 
@@ -117,7 +118,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Dedupe on resource name, resource ID and event type
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Dedupe on the event `ulid` or `id`, as Procore recommends
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

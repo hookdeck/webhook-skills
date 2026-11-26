@@ -10,7 +10,7 @@ Companies (Accounts), Contacts, Assets (Configuration Items), Tickets and Ticket
 
 ## Event Types
 
-Autotask does not send an event-name string. Dispatch on `EntityType` plus `Action`:
+Autotask does not send an event-name string. Each webhook belongs to one entity, so dispatch on `Action` and give each entity its own webhook URL:
 
 | `Action` | Triggered When | Common Use Cases |
 |----------|----------------|------------------|
@@ -19,7 +19,7 @@ Autotask does not send an event-name string. Dispatch on `EntityType` plus `Acti
 | `Delete` | A record is deleted | Remove the record downstream |
 | `Deactivated` | The webhook is deactivated (for example after repeated delivery failures) | Re-enable the webhook, alert an admin |
 
-`EntityType` values used in the examples: `Company`, `Contact`, `Ticket`, `TicketNote`.
+Autotask's sample callout on [Creating a webhook](https://www.autotask.net/help/developerhelp/Content/APIs/Webhooks/Webhooks_Creating.htm) shows `EntityType: "Account"` for a company webhook, and `PersonId` where the field table says `PersonID`. The other entities' `EntityType` values aren't printed.
 
 ## Event Payload Structure
 

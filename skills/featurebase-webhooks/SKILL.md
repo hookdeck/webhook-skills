@@ -64,7 +64,7 @@ Rules that matter:
 - Read the raw body: `express.raw({ type: '*/*' })` in Express, `await request.arrayBuffer()` in Next.js, `await request.body()` in FastAPI.
 - Check the signature is exactly 64 hex characters before decoding. Compare the whole header value as one digest, with a constant-time comparison.
 - Missing or empty headers, a malformed signature or a mismatch: respond `401`.
-- **Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. Featurebase's own sample rejects timestamps older than 5 minutes. If you receive directly and want that, opt in with `FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). `X-Webhook-Timestamp` is Unix seconds.
+- **Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Featurebase's own sample rejects timestamps older than 5 minutes. If you receive directly and want that, opt in with `FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). `X-Webhook-Timestamp` is Unix seconds.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -74,7 +74,7 @@ Dispatch on the body's `topic` field; `data.item` holds the changed object and u
 
 ## Delivery
 
-Featurebase needs `200`, `201`, `202` or `204` within 5 seconds (the API can raise the timeout to 30 seconds); anything else is a failure. It retries up to 3 times, pauses a webhook after 100 consecutive failures and disables it after 500 failures or 3 pauses in 24 hours. Events are not kept while a webhook is paused or disabled. The event `id` (`notif_...`) is the same on every retry, so dedupe on it.
+Featurebase needs `200`, `201`, `202` or `204` within 5 seconds (the API can raise the timeout to 30 seconds); anything else is a failure. It retries up to 3 times, pauses a webhook after 100 consecutive failures and disables it after 500 failures or 3 pauses in 24 hours. Events are not kept while a webhook is paused or disabled. Featurebase says to store each event `id` (`notif_...`) and skip ones you have already processed.
 
 ## Environment Variables
 

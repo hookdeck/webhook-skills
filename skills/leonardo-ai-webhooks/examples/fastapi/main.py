@@ -18,7 +18,7 @@ BEARER = re.compile(r"bearer ", re.IGNORECASE)  # auth schemes are case-insensit
 def verify_leonardo_request(headers, configured=None) -> bool:
     """Leonardo.Ai does not sign payloads. If a webhook callback API key is set, every
     callback carries "Authorization: Bearer <key>". The configured secret is the bare
-    key; a pasted "Bearer <key>" is tolerated (stripped) like Hookdeck does.
+    key; a pasted "Bearer <key>" is tolerated (stripped).
     A static credential authenticates the sender, not the body, and has no replay protection.
     """
     if configured is None:
@@ -49,7 +49,7 @@ def handle_event(payload: dict) -> None:
         images = generation.get("images") or []
         # Don't log the whole payload: the documented sample embeds the callback key.
         print(f"Generation {generation.get('id')} {generation.get('status')}: {len(images)} image(s)")
-        # TODO: download images[].url, update your job record, notify the user
+        # Next: download images[].url, update your job record, notify the user
 
     else:
         print(f"Unhandled event: {event_type}")

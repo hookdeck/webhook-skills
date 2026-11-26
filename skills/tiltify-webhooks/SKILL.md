@@ -57,7 +57,7 @@ Tiltify has no official webhook SDK, so verification is manual in every framewor
 
 ### Timestamp tolerance is opt-in
 
-Tiltify's guide says the timestamp should be within a minute of now. The examples do **not** enforce this by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Set `TILTIFY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Tiltify-Timestamp` is ISO-8601 with microseconds.
+Tiltify's guide says the timestamp should be within a minute of now. The examples do **not** enforce this by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `TILTIFY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Tiltify-Timestamp` is ISO-8601 with microseconds.
 
 ### Read the raw body
 
@@ -85,7 +85,8 @@ Dispatch on the body's `meta.event_type`. The format is `<scope>:<locality>:<eve
 - Method: `POST` with a JSON body (`Content-Type: application/json`).
 - Return a `2xx` to acknowledge. Failures are retried 12 times (2 s doubling to 512 s, then 900 s; about an hour in all). After the 12th retry Tiltify **deactivates the endpoint**, and you must re-enable it in the dashboard or through the API.
 - Return `2xx` for event types you don't handle, so unknown events never count as failures.
-- `meta.id` identifies the event; deduplicate on it.
+- Skip a `meta.id` you've already processed, and upsert donations on `data.id`: Tiltify doesn't say whether a retry or a dashboard Resend keeps the same `meta.id`.
+- Delivery order isn't documented. Compare `meta.generated_at` with what you stored before you overwrite a record.
 
 ## Environment Variables
 

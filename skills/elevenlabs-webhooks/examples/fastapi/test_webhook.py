@@ -39,13 +39,13 @@ class TestElevenLabsWebhookHandler:
         payload = json.dumps({
             "type": "post_call_transcription",
             "data": {
-                "call_id": "test_call_123",
+                "conversation_id": "test_conversation_123",
                 "transcript": {
                     "text": "Test transcription",
                     "segments": []
                 }
             },
-            "event_timestamp": "2024-01-20T10:30:00Z"
+            "event_timestamp": 1739537297
         })
 
         sig_data = generate_test_signature(payload, os.environ['ELEVENLABS_WEBHOOK_SECRET'])
@@ -65,8 +65,8 @@ class TestElevenLabsWebhookHandler:
     def test_invalid_webhook_signature(self):
         payload = json.dumps({
             "type": "post_call_transcription",
-            "data": {"call_id": "test_call_123"},
-            "event_timestamp": "2024-01-20T10:30:00Z"
+            "data": {"conversation_id": "test_conversation_123"},
+            "event_timestamp": 1739537297
         })
 
         response = client.post(
@@ -84,8 +84,8 @@ class TestElevenLabsWebhookHandler:
     def test_missing_signature_header(self):
         payload = json.dumps({
             "type": "post_call_transcription",
-            "data": {"call_id": "test_call_123"},
-            "event_timestamp": "2024-01-20T10:30:00Z"
+            "data": {"conversation_id": "test_conversation_123"},
+            "event_timestamp": 1739537297
         })
 
         response = client.post(
@@ -100,8 +100,8 @@ class TestElevenLabsWebhookHandler:
     def test_expired_timestamp(self):
         payload = json.dumps({
             "type": "post_call_transcription",
-            "data": {"call_id": "test_call_123"},
-            "event_timestamp": "2024-01-20T10:30:00Z"
+            "data": {"conversation_id": "test_conversation_123"},
+            "event_timestamp": 1739537297
         })
 
         # Create signature with timestamp 40 minutes ago
@@ -128,7 +128,7 @@ class TestElevenLabsWebhookHandler:
         payload = json.dumps({
             "type": "voice_removed",
             "data": {"voice_id": "test_voice_456"},
-            "event_timestamp": "2024-01-20T10:30:00Z"
+            "event_timestamp": 1739537297
         })
 
         sig_data = generate_test_signature(payload, os.environ['ELEVENLABS_WEBHOOK_SECRET'])
@@ -149,7 +149,7 @@ class TestElevenLabsWebhookHandler:
         payload = json.dumps({
             "type": "voice_removal_notice",
             "data": {"voice_id": "test_voice_789"},
-            "event_timestamp": "2024-01-20T10:30:00Z"
+            "event_timestamp": 1739537297
         })
         sig_data = generate_test_signature(payload, os.environ['ELEVENLABS_WEBHOOK_SECRET'])
 
@@ -177,7 +177,7 @@ class TestElevenLabsWebhookHandler:
             payload = json.dumps({
                 "type": event_type,
                 "data": {"test_id": f"test_{event_type}"},
-                "event_timestamp": "2024-01-20T10:30:00Z"
+                "event_timestamp": 1739537297
             })
 
             sig_data = generate_test_signature(payload, os.environ['ELEVENLABS_WEBHOOK_SECRET'])

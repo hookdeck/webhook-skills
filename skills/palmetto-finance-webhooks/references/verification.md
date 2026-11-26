@@ -10,10 +10,11 @@ registration endpoint, and sends it on every webhook in a header.
 apiKey: <server API key>
 ```
 
-Other Palmetto pages call the header `api_key`, so the name is configurable here
-(`PALMETTO_FINANCE_WEBHOOK_HEADER`, default `apiKey`). Check a delivery to see which one your
-requests use. Not covered by Hookdeck's Palmetto Finance source or this skill: **client
-headers** (`clientId` and `clientSecret`) and **client basic authorization** (`Authorization:
+The registration section of Palmetto's guide calls the header `api_key`, and the API
+reference's example request carries both `api_key` and `apiKey` with the same value, so the name
+is configurable here (`PALMETTO_FINANCE_WEBHOOK_HEADER`, default `apiKey`). Not covered by this
+skill: **client headers** (`clientId` and `clientSecret` in the guide, `client_id` and
+`client_secret` in the API reference) and **client basic authorization** (`Authorization:
 Basic base64(clientId:clientSecret)`).
 
 There is no HMAC, timestamp or prefix. The raw body is not part of the check, but authenticate
@@ -29,8 +30,7 @@ credential if it leaks.
 ## Implementation
 
 Compare the **whole** header value in constant time. Don't strip or parse a `Bearer ` prefix: if
-the header value is `Bearer abc`, the expected secret is `Bearer abc`. This matches Hookdeck's
-Palmetto Finance source (API key verification: header name plus exact whole header value).
+the header value is `Bearer abc`, the expected secret is `Bearer abc`.
 
 ### Node.js
 
@@ -74,12 +74,11 @@ def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> b
 ## Common Gotchas
 
 - **The key is shown once.** If you didn't store it at registration, create a new registration.
-- **Header name.** `apiKey` by default; some pages say `api_key`. Look at a real request. Some
+- **Header name.** `apiKey` by default; the API reference example also shows `api_key`. Some
   proxies drop headers containing underscores, so prefer `apiKey` where you can.
-- **Check every method first.** The subscription's `httpMethod` may be GET, PUT, PATCH or
-  DELETE, and those often have no body. Authenticate before looking at the body.
-- **Hookdeck's source pre-selects POST** without managing the method. If your subscription uses
-  another method, allow it on the source too.
+- **Check every method first.** The subscription's `httpMethod` may be `PUT` rather than
+  `POST`, and a request without a body should still be authenticated. Authenticate before looking at the body.
+- **Hookdeck source methods.** Allow your subscription's method on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `compare_digest` on bytes, never `str` (non-ASCII
   raises).
@@ -97,6 +96,6 @@ def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> b
 | 401 but the key looks right | Wrong header name: try `api_key`, or a proxy stripped the header |
 | 401 with a `Bearer` value | The whole value, prefix included, must be in the secret |
 | 401 only on GET or DELETE | The check ran after body handling, or the method isn't routed |
-| Hookdeck rejects non-POST | Allow the subscription's method on the Hookdeck source |
+| Non-POST deliveries fail through Hookdeck | Allow the subscription's method on the Hookdeck source |
 | 400 after authentication | Body isn't a JSON object |
 | Deliveries stop | 10 failures disabled the subscription; re-enable it and replay skipped events |

@@ -63,11 +63,13 @@ async def fiber_ai_webhook(
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # Fiber AI documents no event-type field or header (one endpoint per event type is the
-    # reliable way to tell events apart). Read `type` defensively if present; job.changed
-    # carries a `profiles` array and is recognised by that shape.
-    event_type = event.get("type")
-    if not isinstance(event_type, str):
+    # Fiber AI sends no event type in the body or headers, and a body `type` field means
+    # something else (the saved search type, or PROFILE / COMPANY on batch_live_enrich).
+    # Subscribe one endpoint per event type and name the type in its URL, for example
+    # https://example.com/webhooks/fiber-ai?event=reveal.completed. Only job.changed can be
+    # recognised by shape: it carries a `profiles` array.
+    event_type = request.query_params.get("event")
+    if not event_type:
         event_type = "job.changed" if isinstance(event.get("profiles"), list) else "unknown"
     print(f"Received Fiber AI webhook: {event_type} ({svix_id})")
 
@@ -75,11 +77,11 @@ async def fiber_ai_webhook(
         print(f"Reveal finished: {event.get('task_id')} success={event.get('success')}")
     elif event_type == "batch_live_enrich.completed":
         # Reports per-outcome counts (completed / failed / not_found / malformed), no `error`
-        print(f"Batch live enrich finished: {event.get('task_id')}")
+        print(f"Batch live enrich finished: {event.get('job_id')} success={event.get('success')}")
     elif event_type == "batch_contact_enrich.completed":
         print(f"Batch contact enrich finished: {event.get('task_id')} success={event.get('success')}")
     elif event_type == "mosaic.completed":
-        print(f"File repair finished: {event.get('task_id')} success={event.get('success')}")
+        print(f"Mosaic run finished: {event.get('run_id')} success={event.get('success')}")
     elif event_type == "audience.enrichment_completed":
         print(f"Audience enrichment finished: {event.get('audience_id')} success={event.get('success')}")
     elif event_type == "tracker.signal_detected":

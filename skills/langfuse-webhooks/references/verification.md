@@ -85,7 +85,7 @@ Full handlers with tests: [Express](../examples/express/), [Next.js](../examples
 - **Hex is case-insensitive.** Lowercase it (or decode both sides) before comparing.
 - **Multiple `v1` entries.** Accept if any matches.
 - **Timestamp window is off by default.** Hookdeck retries and replays resend the original headers
-  and timestamp, and Hookdeck itself applies no tolerance, so rejecting old `t` would drop
+  and timestamp, so rejecting old `t` would drop
   legitimate retries. Set `LANGFUSE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to opt in; it
   rejects when `|now - t|` exceeds it or `t` is not an integer. Rely on idempotency (payload `id`
   plus `action`) for replay protection otherwise.

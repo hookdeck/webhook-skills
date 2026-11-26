@@ -34,7 +34,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. HireHive's pages never show the secret's format; the `whsec_` prefix is what its "creating a webhook" video displays. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI), which HireHive's docs use in their code sample:
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. HireHive's pages never show the secret's format; the `whsec_` prefix is what its "creating a webhook" video displays. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI), which HireHive's docs use in their code sample:
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -50,7 +50,7 @@ function verifyHireHive(rawBody, headers, secret = process.env.HIREHIVE_WEBHOOK_
 }
 ```
 
-The library always enforces a fixed **5-minute timestamp window**. Hookdeck retries and replays resend the original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old. HireHive's own last retries come 14 to 24 hours after the previous attempt, so this matters. If you receive through Hookdeck and need late retries to pass, use the manual verifier in [references/verification.md](references/verification.md), which can drop or widen the window. In Express, read the body with `express.raw({ type: '*/*' })` so any content type verifies, and parse JSON only after the check.
+The library always enforces a fixed **5-minute timestamp window**. Hookdeck retries and replays resend the original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old. HireHive's own retries should pass: under the Standard Webhooks spec each retry carries a new attempt timestamp, though HireHive doesn't say so itself. If you receive through Hookdeck and need late retries to pass, use the manual verifier in [references/verification.md](references/verification.md), which can drop or widen the window. In Express, read the body with `express.raw({ type: '*/*' })` so any content type verifies, and parse JSON only after the check.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -105,7 +105,7 @@ Each webhook has its own secret, so use one per endpoint.
 npx hookdeck-cli listen 3000 hirehive --path /webhooks/hirehive
 ```
 
-Set the printed URL as the webhook URL in HireHive, then trigger an event (for example create a job). No challenge or validation request is sent when you save a webhook.
+Set the printed URL as the webhook URL in HireHive, then trigger an event (for example create a job). HireHive documents no challenge or validation request when you save a webhook.
 
 ## Reference Materials
 

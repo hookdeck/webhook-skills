@@ -73,7 +73,7 @@ app.post(
     switch (event.triggerEvent) {
       case 'BOOKING_CREATED':
         console.log(`Booking created: ${data.uid} "${data.title}" at ${data.startTime}`);
-        // TODO: Create CRM record, send custom confirmation, etc.
+        // Create CRM record, send custom confirmation, etc.
         break;
 
       case 'BOOKING_REQUESTED':
@@ -82,12 +82,12 @@ app.post(
 
       case 'BOOKING_RESCHEDULED':
         console.log(`Booking rescheduled: ${data.rescheduleUid} -> ${data.uid} at ${data.startTime}`);
-        // TODO: Update calendar / CRM with the new time
+        // Update calendar / CRM with the new time
         break;
 
       case 'BOOKING_CANCELLED':
         console.log(`Booking cancelled: ${data.uid} (${data.cancellationReason || 'no reason'})`);
-        // TODO: Release resources, issue refunds, etc.
+        // Release resources, issue refunds, etc.
         break;
 
       case 'BOOKING_REJECTED':
@@ -96,7 +96,7 @@ app.post(
 
       case 'BOOKING_PAID':
         console.log(`Booking paid: ${data.uid} (payment ${data.paymentId})`);
-        // TODO: Mark order as paid
+        // Mark order as paid
         break;
 
       case 'MEETING_STARTED':
@@ -105,7 +105,7 @@ app.post(
 
       case 'MEETING_ENDED':
         console.log(`Meeting ended: ${data.uid}`);
-        // TODO: Send follow-up email, survey, invoice
+        // Send follow-up email, survey, invoice
         break;
 
       case 'RECORDING_READY':

@@ -72,21 +72,20 @@ def within_tolerance(timestamp: str) -> bool:
 
 
 def handle_event(payload: Dict[str, Any]) -> None:
-    # BugSmash's docs list these events but document no delivery body, so the
-    # field carrying the event name is unknown. This reads `event`, then `type`,
-    # from an ILLUSTRATIVE payload ({"event": "new_comment", "data": {...}}).
-    # Check a real delivery (POST /webhook/test) and adjust.
+    # BugSmash's help center example bodies are flat JSON objects that name the
+    # event in `event`. Replies appear under two names: the API subscribes to
+    # `comment_replied`, while the help center's reply body carries
+    # `new_reply_on_comment`, so both are handled. `type` is a fallback only.
     event_type = payload.get("event") or payload.get("type")
-    data = payload.get("data", payload)
 
     if event_type == "new_comment":
-        logger.info("New comment %s", data)
-    elif event_type == "comment_replied":
-        logger.info("Comment replied %s", data)
+        logger.info("New comment %s", payload)
+    elif event_type in ("comment_replied", "new_reply_on_comment"):
+        logger.info("Comment replied %s", payload)
     elif event_type == "status_changed":
-        logger.info("Status changed %s", data)
+        logger.info("Status changed %s", payload)
     elif event_type == "comment_updated":
-        logger.info("Comment updated %s", data)
+        logger.info("Comment updated %s", payload)
     else:
         logger.info("Unhandled BugSmash event: %s", event_type)
 

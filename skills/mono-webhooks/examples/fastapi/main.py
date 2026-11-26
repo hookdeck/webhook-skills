@@ -50,31 +50,31 @@ def handle_event(payload: dict) -> None:
 
     if event == "mono.events.account_connected":
         print(f"Account connected: {data.get('id')}")
-        # TODO: store data["id"] for the customer (data["meta"]["ref"]) and start retrieving data
+        # Store data["id"] for the customer (data["meta"]["ref"]) and start retrieving data
 
     elif event == "mono.events.account_updated":
         print(f"Account updated: {(data.get('account') or {}).get('_id')}")
-        # TODO: sync data["account"] and check data["meta"]["data_status"]
+        # Sync data["account"] and check data["meta"]["data_status"]
 
     elif event == "mono.events.account_unlinked":
         print("Account unlinked")
-        # TODO: remove the stored account
+        # Remove the stored account
 
     elif event == "direct_debit.payment_successful":
         print(f"Payment successful: {obj.get('reference')}")
-        # TODO: fulfil the order for data["object"]["reference"]
+        # Fulfil the order for data["object"]["reference"]
 
     elif event == "direct_debit.payment_failed":
         print(f"Payment failed: {obj.get('reference')}")
-        # TODO: notify the customer and offer a retry
+        # Notify the customer and offer a retry
 
     elif event == "direct_debit.payment_cancelled":
         print(f"Payment cancelled: {obj.get('reference')}")
-        # TODO: release held stock
+        # Release held stock
 
     elif event == "direct_debit.payment_abandoned":
         print(f"Payment abandoned: {obj.get('reference')}")
-        # TODO: expire the pending payment
+        # Expire the pending payment
 
     else:
         print(f"Unhandled event: {event}")

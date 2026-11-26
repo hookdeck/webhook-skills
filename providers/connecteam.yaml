@@ -12,8 +12,7 @@ notes: >
   webhooks can set it. No signature: requests are unsigned. Connecteam sends the webhook's secretKey
   as plain text in the x-webhook-secret header on every request. The examples read
   CONNECTEAM_WEBHOOK_SECRET, look the x-webhook-secret header up case-insensitively and compare its
-  WHOLE value to the secret. This is what Hookdeck's Connecteam source does (API key verification,
-  header x-webhook-secret, exact whole value). Missing header or mismatch: 401. Compare in constant
+  WHOLE value to the secret. Hookdeck's source checks this header too. In the examples, a missing header or mismatch returns 401. Compare in constant
   time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
   digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
   str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
@@ -26,9 +25,7 @@ notes: >
   guide names the method (POST, with User-Agent: connecteam); the setup page doesn't. The examples
   must not be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express:
   app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route with those
-  methods), check the credential first for every method, and handle an empty body. Say in SKILL.md
-  and setup.md that Hookdeck's Connecteam source pre-selects POST without managing the method, so
-  any other method the sender uses must also be allowed on the source. Body: most features send
+  methods), check the credential first for every method, and handle an empty body. Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Body: most features send
   {requestId, company, activityType, eventTimestamp, eventType, data}; Time Activity is flat
   (userId, timeClockId, timeActivity at the root, plus webhookVersion). Dispatch on eventType
   (user_created, user_updated, user_archived, form_submission, clock_in, clock_out, shift_created,

@@ -26,7 +26,7 @@ metadata:
 
 Every Column delivery carries `Column-Signature`: the bare lowercase **hex** HMAC-SHA256 of the **raw request body**, keyed with the signing secret of the endpoint that received it (Dashboard → Webhook settings; each endpoint has its own secret). No prefix, no timestamp, no list of values. Only the body is signed.
 
-Column's docs don't state the output encoding. Hex is what Hookdeck's Column source uses, and two production integrations (hackclub/hcb, formancehq/payments) confirm it.
+Column's docs don't state the output encoding. Two production integrations (hackclub/hcb, formancehq/payments) confirm hex.
 
 ### Verification (Node.js)
 
@@ -68,7 +68,7 @@ Column signs the body only. There is no timestamp to check and no replay window 
 
 ## Event Types
 
-Column sends 212 documented event types, named `{category}.{action}` or `{category}.{sub_category}.{action}`. Dispatch on the body's top-level `type` field; no header names the type. The examples handle these and log the rest:
+Column sends 213 documented event types, named `{category}.{action}` or `{category}.{sub_category}.{action}`. Dispatch on the body's top-level `type` field; no header names the type. The examples handle these and log the rest:
 
 | `type` | Fires |
 |--------|-------|

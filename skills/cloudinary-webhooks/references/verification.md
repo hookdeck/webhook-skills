@@ -15,8 +15,8 @@ API Secret, concatenated in that order:
 signature = hexdigest( ALGORITHM( raw_body + timestamp + api_secret ) )
 ```
 
-`ALGORITHM` is **sha1** (Cloudinary's default) or **sha256** (an opt-in account
-setting).
+`ALGORITHM` is **sha1** (the SDK default) or **sha256**; Cloudinary accepts either
+unless support has limited the account to SHA-256.
 
 > **It is a plain digest, not a keyed HMAC.** Cloudinary's documentation sometimes
 > refers to this as "HMAC-SHA1", but the official SDK computes a plain
@@ -25,13 +25,15 @@ setting).
 > official SDK, this detail is abstracted away; it matters only if you implement
 > verification manually (see below).
 
-The signing secret is your **account API Secret** — the `api_secret` in
-`CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>`. There is no
-separate per-webhook signing secret.
+The signing secret is the API secret of the API key selected for webhook
+notifications in the Console, or of the oldest active key if none is selected (the
+`api_secret` in `CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>`
+for a single-key environment). There is no separate per-webhook signing secret.
 
-> **The body also contains a `timestamp` and a `signature` field.** Ignore them
-> for authentication — verify the **`x-cld-signature` / `x-cld-timestamp`
-> headers** against the raw body.
+> **`auth_scheme` matters.** Triggers on `default` send `x-cld-signature`,
+> `x-cld-timestamp` and an EdDSA `X-Cld-Signature_v2`; `legacy_hmac` sends the
+> first two; `eddsa_v2` sends only `x-cld-timestamp` and `X-Cld-Signature_v2`, so
+> the API-secret check on this page can't verify it.
 
 ## Implementation
 
@@ -87,8 +89,8 @@ returns a boolean; when `algorithm` is `None` it uses `cloudinary.config().signa
 
 ### Manual Verification (fallback)
 
-If you cannot use the SDK, compute the digest yourself. Because sha1 is the
-default and sha256 is an opt-in account setting, you can compute both and accept
+If you cannot use the SDK, compute the digest yourself. Cloudinary accepts both
+SHA-1 and SHA-256 digests, so you can compute both and accept
 either — each still requires the secret, so accepting both does not weaken
 authentication:
 
@@ -147,16 +149,17 @@ keep both as above for robustness).
   received. `JSON.parse` then `JSON.stringify` will re-order/re-format keys and
   break verification. Read the raw body first (`express.raw()`,
   `await request.text()`, `await request.body()`), verify, then parse.
-- **Authenticate with the headers, not the body fields.** The body also carries a
-  `timestamp` and `signature`; verification uses `x-cld-signature` and
-  `x-cld-timestamp`.
+- **Authenticate with the headers.** There's no signature in the body;
+  verification uses `x-cld-signature` and `x-cld-timestamp`.
 - **Signature is hex, timestamp is unix seconds.** Pass the timestamp as a number
   (`Number(...)` / `int(...)`).
 - **Match the algorithm.** sha1 by default; set sha256 only if your account
   enables it. A sha256-signed notification will not verify against a sha1 digest.
 - **Freshness window.** The SDK rejects timestamps older than `valid_for` (default
   7200s). For a normal synchronous handler, keep the default.
-- **The signing secret is the account API Secret** — not a per-webhook secret.
+- **Use the right key's secret** — the dedicated webhook API key's, or the oldest
+  active key's. A disabled key also breaks notifications.
+- **Check the trigger's `auth_scheme`** — `eddsa_v2` sends no `x-cld-signature`.
 
 ## Debugging Verification Failures
 

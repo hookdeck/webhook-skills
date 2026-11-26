@@ -38,16 +38,15 @@ SANDBOX_5YC47N2ZQHJ004124.2026-07-24T10:00:00Z.{"notifyType":"PAYMENT_RESULT",..
 
 ### Signature encoding gotcha (READ THIS)
 
-The `signature=` value is **base64URL** encoded (`base64UrlEncode`), using the
-URL-safe alphabet (`-`/`_`), **not** standard base64. It is frequently also
-**percent-encoded** on the wire (you'll see `%2F`, `%2B`, `%3D`). To decode
-robustly:
+Antom's docs define the signature as `urlEncode(base64Encode(sha256withRSA(...)))`
+and verification as `sha256withRSA_verify(base64Decode(urlDecode(<target_signature>)), ...)`,
+so on the wire you'll see `%2F`, `%2B`, `%3D`. To decode:
 
-1. `decodeURIComponent(...)` to undo any percent-encoding.
-2. Normalize URL-safe chars to standard base64 (`-`→`+`, `_`→`/`).
+1. `decodeURIComponent(...)` to undo the URL-encoding.
+2. Optionally normalize URL-safe chars (`-`→`+`, `_`→`/`), which is harmless.
 3. base64-decode to raw bytes.
 
-Skipping step 1 or 2 makes verification fail with an otherwise-correct key.
+Skipping step 1 makes verification fail with an otherwise-correct key.
 
 ## Implementation
 
@@ -125,64 +124,41 @@ def verify_alipay_signature(method, uri, client_id, request_time, raw_body, sign
         return False
 ```
 
-## Signing the Acknowledgement Response
+## The Acknowledgement Response
 
-Antom is unusual: it **verifies your ack**, so you must sign your 200 response
-with **your merchant private key** over the same two-line format, using the
-**response** time:
-
-```
-<HTTP-METHOD> <URI>\n<Client-Id>.<Response-Time>.<ResponseBody>
-```
-
-Return these response headers:
-
-- `Client-Id: <your client id>`
-- `Response-Time: <ISO 8601 now>`
-- `Signature: algorithm=RSA256,keyVersion=1,signature=<base64url sig>`
-
-Node example:
-
-```javascript
-const { createSign } = require('crypto');
-
-function signAlipayResponse({ method, uri, clientId, responseTime, body, privateKey }) {
-  const content = `${method} ${uri}\n${clientId}.${responseTime}.${body}`;
-  const signer = createSign('RSA-SHA256');
-  signer.update(content, 'utf8');
-  signer.end();
-  const sig = signer.sign(privateKey).toString('base64url');
-  return `algorithm=RSA256,keyVersion=1,signature=${sig}`;
-}
-```
-
-The response body is always:
+Antom's docs say **no digital signature is required** when you return the
+acknowledgement. Return HTTP 200 with `Content-Type: application/json` and this
+body, with fixed values:
 
 ```json
-{ "result": { "resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "Success" } }
+{ "result": { "resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "success" } }
 ```
+
+Antom's example response headers also include `client-id` and `response-time`.
+Until Antom receives this body it resends the notification.
 
 ## Common Gotchas
 
 - **Raw body only.** Sign/verify the exact bytes received. Re-serializing parsed
   JSON reorders keys and changes whitespace → signature mismatch.
-- **base64URL, not base64.** The signature uses the URL-safe alphabet and is
-  often percent-encoded. URL-decode and normalize before decoding (see above).
+- **URL-decode first.** The signature is base64, then URL-encoded. URL-decode it
+  before base64-decoding (see above).
 - **Two-line content, single periods.** Line 1 is `METHOD URI`; line 2 joins
   `Client-Id`, time, and body with single `.` — no spaces, no trailing newline.
 - **The URI is the path Antom POSTed to.** Match your route path (and query
   string, if any) exactly — e.g. `/webhooks/alipay`.
-- **Sign the ack.** Missing/incorrect response signature is treated as a failed
-  delivery and triggers retries.
-- **`notifyType`, not `type`.** Branch on `notifyType` + `result.resultStatus`;
-  there is no `type` field.
+- **Return the fixed ack body.** Anything else and Antom resends the
+  notification. The ack needs no signature.
+- **No single `type` field.** The type is in `notifyType`, `authorizationNotifyType`,
+  `disputeNotificationType` or `subscriptionNotificationType`, depending on the
+  notification API.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Always fails, key is correct | Signature not URL-decoded / not treated as base64URL |
+| Always fails, key is correct | Signature not URL-decoded before base64-decoding |
 | Fails only for some payloads | Body was parsed & re-serialized; use the raw body |
 | Fails after a proxy/CDN | Line 1 URI doesn't match the actual request path/query |
 | Fails intermittently | Using the wrong key (sandbox vs production, or your key vs Antom's) |
-| Antom keeps retrying despite 200 | Ack response not signed, or wrong `Response-Time`/`Client-Id` |
+| Antom keeps resending despite 200 | Response body isn't the fixed `result` acknowledgement |

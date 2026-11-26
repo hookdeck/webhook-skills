@@ -15,7 +15,7 @@ metadata:
 
 # Prividium Webhooks
 
-[Prividium](https://docs.prividium.zksync.io) is ZKsync's private, permissioned chain product. Its webhook service sends a signed HTTPS request to your endpoint when on-chain activity matches a subscription: an **event webhook** watches one contract and one `topic0`, an **address webhook** watches one or more addresses. Webhooks are created in the admin UI or through `/api/v1/event-webhook` and `/api/v1/address-webhook` on your deployment's permissions API, so the sender's host differs per deployment. Signatures follow [Standard Webhooks](https://standardwebhooks.com/), so each delivery carries `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
+[Prividium](https://docs.prividium.com) is ZKsync's private, permissioned chain product. Its webhook service sends a signed HTTPS request to your endpoint when on-chain activity matches a subscription: an **event webhook** watches one contract and one `topic0`, an **address webhook** watches one or more addresses. Webhooks are created in the admin UI or through `/api/v1/event-webhook` and `/api/v1/address-webhook` on your deployment's permissions API, so the sender's host differs per deployment. Signatures follow [Standard Webhooks](https://standardwebhooks.com/), so each delivery carries `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
 
 ## When to Use This Skill
 
@@ -34,7 +34,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries (several during key rotation) |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -66,7 +66,7 @@ Check a real delivery from your deployment (for example in the Hookdeck CLI's we
 
 ## Delivery Semantics
 
-Prividium states that `webhook-id` is stable across retries and should be your idempotency key: persist it before applying side effects and treat a repeat as a duplicate. The docs don't describe the retry schedule, a response deadline or ordering, so don't depend on any. A failed verification should get a 4xx (`400` for missing headers, `401` for a bad signature) and no processing. The webhook service can suspend a webhook after repeated delivery failures or an HTTP `410 Gone`; resume it with **Activate** in the admin UI once the endpoint is healthy.
+Prividium states that `webhook-id` is stable across retries and should be your idempotency key: persist it before applying side effects and treat a repeat as a duplicate. Prividium's docs don't describe the retry schedule, a response deadline or ordering, so don't depend on any (the vendor's local-webhooks Docker defaults are 10 attempts with backoff from 30 seconds to 30 minutes; see [references/overview.md](references/overview.md)). A failed verification should get a 4xx (`400` for missing headers, `401` for a bad signature) and no processing. The webhook service can suspend a webhook after repeated delivery failures or an HTTP `410 Gone`; resume it with **Activate** in the admin UI once the endpoint is healthy.
 
 ## Environment Variables
 
