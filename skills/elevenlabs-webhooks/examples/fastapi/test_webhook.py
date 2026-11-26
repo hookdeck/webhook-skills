@@ -165,6 +165,21 @@ class TestElevenLabsWebhookHandler:
         assert response.status_code == 401
         assert "Invalid signature" in response.json()["detail"]
 
+    def test_non_utf8_body_rejected(self):
+        sig_data = generate_test_signature("{}", os.environ['ELEVENLABS_WEBHOOK_SECRET'])
+
+        response = client.post(
+            "/webhooks/elevenlabs",
+            content=b"\xff\xfe",
+            headers={
+                "ElevenLabs-Signature": sig_data['header'],
+                "Content-Type": "application/json"
+            }
+        )
+
+        assert response.status_code == 401
+        assert "Invalid signature" in response.json()["detail"]
+
     def test_all_event_types(self):
         event_types = [
             "post_call_transcription",

@@ -94,7 +94,8 @@ async def elevenlabs_webhook(
         # Return 200 to acknowledge receipt
         return {"status": "ok"}
 
-    except BadRequestError as e:
+    except (BadRequestError, UnicodeDecodeError) as e:
+        # A body that isn't UTF-8 can't carry a valid ElevenLabs signature
         logger.error(f"Webhook verification failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
