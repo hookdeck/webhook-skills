@@ -436,7 +436,7 @@
     },
     {
       "name": "aiprise-webhooks",
-      "description": "Receive and verify AiPrise webhooks (callbacks). Use when setting up AiPrise identity/KYC/KYB callback handlers, debugging X-HMAC-SIGNATURE verification, or handling verification results like APPROVED, DECLINED, REVIEW, and UNKNOWN.",
+      "description": "Receive and verify AiPrise webhooks (callbacks). Use when setting up AiPrise identity/KYC/KYB callback handlers, debugging X-HMAC-SIGNATURE verification, or handling case, profile and token sharing events or verification results like APPROVED, DECLINED and REVIEW.",
       "source": "./skills/aiprise-webhooks",
       "strict": false,
       "skills": [
@@ -2057,7 +2057,7 @@
     },
     {
       "name": "bridge-xyz-webhooks",
-      "description": "Receive and verify Bridge (bridge.xyz) webhooks. Use when setting up Bridge webhook handlers, debugging RSA signature verification of the X-Webhook-Signature header, or handling stablecoin/fiat events like customer.updated, kyc_link.updated, transfer.updated, and virtual_account.activity.",
+      "description": "Receive and verify Bridge (bridge.xyz) webhooks. Use when setting up Bridge webhook handlers, debugging RSA signature verification of the X-Webhook-Signature header, or handling stablecoin/fiat events like customer.updated.status_transitioned, kyc_link.updated.status_transitioned, transfer.updated.status_transitioned and virtual_account.activity.created.",
       "source": "./skills/bridge-xyz-webhooks",
       "strict": false,
       "skills": [
@@ -3414,7 +3414,7 @@
     },
     {
       "name": "community-webhooks",
-      "description": "Receive and verify Community (community.com) SMS platform webhooks. Use when setting up a Community webhook handler, debugging `community-signature` HMAC-SHA256 verification, or handling message.inbound, message.outbound, member.created, member.updated, and member.deleted events.",
+      "description": "Receive and verify Community (community.com) SMS platform webhooks. Use when setting up a Community webhook handler, debugging `community-signature` HMAC-SHA256 verification, or handling message.inbound, message.outbound, member.created, member.updated, member.deleted, and member.opted_out events.",
       "source": "./skills/community-webhooks",
       "strict": false,
       "skills": [
@@ -4073,7 +4073,7 @@
     },
     {
       "name": "deepgram-webhooks",
-      "description": "Receive and verify Deepgram transcription callbacks (Basic Auth / dg-token).",
+      "description": "Receive and verify Deepgram transcription callbacks (Basic Auth / extra secret).",
       "source": "./skills/deepgram-webhooks",
       "strict": false,
       "skills": [
@@ -4627,7 +4627,7 @@
     },
     {
       "name": "ebay-webhooks",
-      "description": "Receive and verify eBay Notification API webhooks (Platform Notifications / Event Notifications). Use when setting up an eBay webhook endpoint, passing the endpoint challenge validation, debugging the x-ebay-signature ECDSA verification, fetching the public key with getPublicKey, or handling events like MARKETPLACE_ACCOUNT_DELETION.",
+      "description": "Receive and verify eBay Notification API webhooks (event notifications, not the Trading API's SOAP Platform Notifications). Use when setting up an eBay webhook endpoint, passing the endpoint challenge validation, debugging the x-ebay-signature ECDSA verification, fetching the public key with getPublicKey, or handling events like MARKETPLACE_ACCOUNT_DELETION.",
       "source": "./skills/ebay-webhooks",
       "strict": false,
       "skills": [
@@ -4948,7 +4948,7 @@
     },
     {
       "name": "facebook-webhooks",
-      "description": "Receive and verify Facebook (Meta Graph API) webhooks. Use when setting up Facebook webhook handlers, completing the GET verification handshake, debugging X-Hub-Signature-256 signature verification, or handling Page, Instagram, and Messenger events like feed, mention, comments, and messages.",
+      "description": "Receive and verify Facebook (Meta Graph API) webhooks. Use when setting up Facebook webhook handlers, completing the GET verification handshake, debugging X-Hub-Signature-256 signature verification, or handling Page, User, permissions and ad account events like feed, mention and leadgen.",
       "source": "./skills/facebook-webhooks",
       "strict": false,
       "skills": [
