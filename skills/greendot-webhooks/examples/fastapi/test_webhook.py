@@ -11,12 +11,21 @@ from fastapi.testclient import TestClient
 import main
 
 REQUEST_ID = "req-abc-123"
+# Trimmed from Green Dot's documented transaction example (Webhook Events page).
 PAYLOAD = json.dumps(
     {
-        "eventType": "transaction",
-        "programCode": "MYPROGRAM",
-        "eventId": "evt-1",
-        "data": {"accountId": "acct_123", "amount": 42.5},
+        "accounts": [
+            {
+                "accountIdentifier": "f8e47e10-9ff9-449d-b3bc-d075947c9ff6",
+                "events": [
+                    {
+                        "eventIdentifier": "4c579f23-bbd9-4033-96d9-4605eff580b1",
+                        "eventType": "transaction",
+                        "eventDateTime": "2026-06-22T03:56:08.370Z",
+                    }
+                ],
+            }
+        ]
     }
 )
 

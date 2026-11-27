@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import crypto from 'crypto';
 
-// Svix-style secrets are 'whsec_' + a base64-encoded key. Throwaway test key.
+// Lithic secrets are 'whsec_' + a base64-encoded key. Throwaway test key.
 const WEBHOOK_SECRET = 'whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw';
 vi.stubEnv('LITHIC_WEBHOOK_SECRET', WEBHOOK_SECRET);
 vi.stubEnv('LITHIC_API_KEY', 'test-api-key');
@@ -110,9 +110,9 @@ describe('POST /webhooks/lithic', () => {
   it('returns 200 for a valid signature', async () => {
     const { POST } = await import('../app/webhooks/lithic/route');
     const payload = JSON.stringify({
-      token: 'evt_valid',
       event_type: 'card.created',
-      payload: { token: 'card_123' },
+      card_token: '00000000-0000-0000-0000-000000000001',
+      replacement_for: null,
     });
     const headers = signPayload(payload);
 
@@ -132,9 +132,8 @@ describe('POST /webhooks/lithic', () => {
     const { POST } = await import('../app/webhooks/lithic/route');
     for (const eventType of EVENT_TYPES) {
       const payload = JSON.stringify({
-        token: `evt_${eventType.replace(/\./g, '_')}`,
         event_type: eventType,
-        payload: { token: 'obj_1' },
+        token: 'obj_1',
       });
       const headers = signPayload(payload);
 

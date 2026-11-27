@@ -41,14 +41,14 @@ async def handle_webhook(request: Request):
     signature = request.headers.get("Webhook-Signature", "")
 
     if not verify_signature(raw_body, signature, WEBHOOK_SECRET):
-        # Any non-2xx makes GoCardless retry; 498 is the documented "invalid token".
+        # 498 is GoCardless's documented response to a bad signature: it's logged, not retried.
         return Response(content="Invalid signature", status_code=498)
 
     payload = json.loads(raw_body)
     events = payload.get("events", [])
 
-    # A webhook is a BATCH of events (up to 250). Delivery is at-least-once and a manual retry replays the whole batch
-    # on any non-2xx, so handlers must be idempotent on event["id"].
+    # A webhook is a BATCH of events (up to 250). Delivery is at-least-once and the same event can
+    # appear in more than one webhook, so handlers must be idempotent on event["id"].
     for event in events:
         handle_event(event)
 
@@ -67,7 +67,7 @@ def handle_event(event: dict) -> None:
     if resource_type == "payments":
         if action == "confirmed":
             print(f"Payment {links.get('payment')} confirmed")
-            # TODO: mark the payment as collected, fulfil the order, etc.
+            # Your code: mark the payment as collected, fulfil the order, etc.
         elif action == "paid_out":
             print(f"Payment {links.get('payment')} paid out")
         elif action == "failed":
@@ -84,7 +84,7 @@ def handle_event(event: dict) -> None:
             print(f"Mandate {links.get('mandate')} is active")
         elif action == "cancelled":
             print(f"Mandate {links.get('mandate')} cancelled:", details.get("description"))
-            # TODO: suspend the customer's subscription/membership, etc.
+            # Your code: suspend the customer's subscription/membership, etc.
         elif action == "failed":
             print(f"Mandate {links.get('mandate')} failed")
         elif action == "expired":
@@ -95,9 +95,7 @@ def handle_event(event: dict) -> None:
     elif resource_type == "payouts":
         if action == "paid":
             print(f"Payout {links.get('payout')} paid")
-            # TODO: reconcile the payout against collected payments.
-        elif action == "bounced":
-            print(f"Payout {links.get('payout')} bounced")
+            # Your code: reconcile the payout against collected payments.
         else:
             print(f"Unhandled payouts action: {action}")
 

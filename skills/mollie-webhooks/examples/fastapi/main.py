@@ -70,8 +70,8 @@ def verify_mollie_signature(
 ) -> bool:
     """Verify a next-gen X-Mollie-Signature against the raw body.
 
-    During a secret rotation Mollie sends the header twice for 24 hours. Starlette
-    exposes repeated headers via `headers.getlist()`; a proxy may also join them as
+    Mollie's rotation example shows the header sent twice. Starlette exposes
+    repeated headers via `headers.getlist()`; a proxy may also join them as
     "sha256=<a>, sha256=<b>". Accept if any value matches.
     """
     if not secret:
@@ -95,7 +95,7 @@ def handle_event(event: dict) -> None:
 
     if event_type == "payment.paid":
         print(f"Payment {entity_id} paid")
-        # TODO: fulfill the order
+        # Your code: fulfill the order
     elif event_type == "payment.authorized":
         print(f"Payment {entity_id} authorized (capture to collect)")
     elif event_type in ("payment.canceled", "payment.expired", "payment.failed"):
@@ -118,7 +118,7 @@ def handle_payment(payment: dict) -> None:
 
     if status == "paid":
         print(f"Payment {payment_id} paid: {payment.get('amount')}")
-        # TODO: fulfill the order, send a receipt
+        # Your code: fulfill the order, send a receipt
     elif status == "authorized":
         print(f"Payment {payment_id} authorized (capture to collect)")
     elif status == "canceled":

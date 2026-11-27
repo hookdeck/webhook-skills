@@ -4,14 +4,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const TOLERANCE_SECONDS = 300; // 5-minute replay window
+const TOLERANCE_SECONDS = 300; // 5 minutes, the tolerance Orb's SDKs use
 
 /**
  * Verify an Orb webhook signature.
  *
  * Orb signs `v1:{X-Orb-Timestamp}:{rawBody}` with HMAC-SHA256 using your
  * per-endpoint signing secret. The hex digest arrives in `X-Orb-Signature`
- * prefixed with `v1=`.
+ * prefixed with `v1=`. During a secret rotation the header can carry several
+ * space-separated signatures; the delivery is valid if any one matches.
  */
 export function verifyOrbSignature(
   rawBody: string,
@@ -21,23 +22,22 @@ export function verifyOrbSignature(
 ): boolean {
   if (!signatureHeader || !timestamp || !secret) return false;
 
-  const provided = signatureHeader.startsWith('v1=')
-    ? signatureHeader.slice(3)
-    : signatureHeader;
+  const expected = Buffer.from(
+    crypto
+      .createHmac('sha256', secret)
+      .update(`v1:${timestamp}:${rawBody}`)
+      .digest('hex'),
+    'hex'
+  );
 
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(`v1:${timestamp}:${rawBody}`)
-    .digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(provided, 'hex'),
-      Buffer.from(expected, 'hex')
-    );
-  } catch {
-    return false;
-  }
+  return signatureHeader.split(' ').some((entry) => {
+    const provided = entry.startsWith('v1=') ? entry.slice(3) : entry;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(provided, 'hex'), expected);
+    } catch {
+      return false;
+    }
+  });
 }
 
 export function isTimestampFresh(
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
   switch (event.type) {
     case 'customer.created':
       console.log('Customer created:', event.customer?.id, `(${styleNote})`);
-      // TODO: Sync customer to CRM
+      // Your code: Sync customer to CRM
       break;
 
     case 'customer.credit_balance_dropped':
@@ -132,22 +132,22 @@ export async function POST(request: NextRequest) {
         'threshold:',
         event.properties?.balance_threshold
       );
-      // TODO: Trigger top-up reminder
+      // Your code: Trigger top-up reminder
       break;
 
     case 'subscription.created':
       console.log('Subscription created:', event.subscription?.id);
-      // TODO: Provision access
+      // Your code: Provision access
       break;
 
     case 'subscription.started':
       console.log('Subscription started:', event.subscription?.id);
-      // TODO: Activate entitlements
+      // Your code: Activate entitlements
       break;
 
     case 'subscription.ended':
       console.log('Subscription ended:', event.subscription?.id);
-      // TODO: Revoke access
+      // Your code: Revoke access
       break;
 
     case 'subscription.plan_changed':
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
         'from plan:',
         event.properties?.previous_plan_id
       );
-      // TODO: Update entitlements
+      // Your code: Update entitlements
       break;
 
     case 'subscription.usage_exceeded':
@@ -167,13 +167,13 @@ export async function POST(request: NextRequest) {
         'metric:',
         event.properties?.billable_metric_id
       );
-      // TODO: Notify customer / throttle
+      // Your code: Notify customer / throttle
       break;
 
     case 'invoice.issued':
       // A standard payload omits line items — fetch the invoice if you need them.
       console.log('Invoice issued:', event.invoice?.id, `(${styleNote})`);
-      // TODO: Record receivable, email invoice
+      // Your code: Record receivable, email invoice
       break;
 
     case 'invoice.payment_succeeded':
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         'via:',
         event.properties?.payment_provider
       );
-      // TODO: Mark paid internally
+      // Your code: Mark paid internally
       break;
 
     case 'invoice.payment_failed':
@@ -193,12 +193,12 @@ export async function POST(request: NextRequest) {
         'via:',
         event.properties?.payment_provider
       );
-      // TODO: Start dunning
+      // Your code: Start dunning
       break;
 
     case 'data_exports.transfer_success':
       console.log('Data export delivered:', event.id);
-      // TODO: Kick off downstream ETL
+      // Your code: Kick off downstream ETL
       break;
 
     default:

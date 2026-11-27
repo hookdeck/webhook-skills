@@ -45,9 +45,9 @@ def handle_event(event: dict) -> None:
     elif topic == "event:klaviyo.unsubscribed_from_email_marketing":
         print(f"Unsubscribed from email marketing: {external_id}")
     elif topic == "event:klaviyo.sent_sms":
-        print(f"SMS sent: {external_id}")
+        print(f"Inbound SMS from profile: {external_id}")
     elif topic == "event:klaviyo.received_sms":
-        print(f"Inbound SMS received: {external_id}")
+        print(f"SMS received by recipient: {external_id}")
     elif topic == "event:klaviyo.submitted_review":
         print(f"Review submitted: {external_id}")
     else:

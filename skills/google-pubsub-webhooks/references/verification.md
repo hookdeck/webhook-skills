@@ -96,8 +96,9 @@ const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client();
 
 async function verifyPushJwt(authorizationHeader) {
+  // RFC 9110: the auth scheme is case-insensitive.
   const [scheme, token] = String(authorizationHeader || '').split(' ');
-  if (scheme !== 'Bearer' || !token) return null;
+  if (!token || scheme.toLowerCase() !== 'bearer') return null;
 
   let claims;
   try {
@@ -112,8 +113,10 @@ async function verifyPushJwt(authorizationHeader) {
     return null;
   }
 
-  if (claims.iss !== 'https://accounts.google.com') return null;
-  if (claims.email !== process.env.PUBSUB_SERVICE_ACCOUNT_EMAIL) return null;
+  // Google's own sample accepts both issuer forms.
+  if (!['https://accounts.google.com', 'accounts.google.com'].includes(claims.iss)) return null;
+  if (String(claims.email || '').toLowerCase()
+      !== process.env.PUBSUB_SERVICE_ACCOUNT_EMAIL.trim().toLowerCase()) return null;
   if (claims.email_verified !== true) return null;
   return claims;
 }
@@ -133,7 +136,7 @@ _request = google_requests.Request()
 
 def verify_push_jwt(authorization_header):
     scheme, _, token = (authorization_header or "").partition(" ")
-    if scheme != "Bearer" or not token:
+    if scheme.lower() != "bearer" or not token:
         return None
 
     try:
@@ -145,9 +148,11 @@ def verify_push_jwt(authorization_header):
         print("Pub/Sub OIDC verification failed:", exc)
         return None
 
-    if claims.get("iss") != "https://accounts.google.com":
+    # Google's own sample accepts both issuer forms.
+    if claims.get("iss") not in ("https://accounts.google.com", "accounts.google.com"):
         return None
-    if claims.get("email") != os.environ["PUBSUB_SERVICE_ACCOUNT_EMAIL"]:
+    expected = os.environ["PUBSUB_SERVICE_ACCOUNT_EMAIL"].strip().lower()
+    if str(claims.get("email") or "").lower() != expected:
         return None
     if claims.get("email_verified") is not True:
         return None

@@ -40,15 +40,17 @@ npm test
 
 ### Receive real webhooks locally
 
-Use the Hookdeck CLI to tunnel Front webhooks to your local server (no account required):
+Create a Front source in Hookdeck Event Gateway (source type **Front**, with your app's
+signing key), then forward it to your local server with the Hookdeck CLI, where `frontapp`
+is the source's name:
 
 ```bash
 npx hookdeck-cli listen 3000 frontapp --path /webhooks/frontapp
 ```
 
-Use the printed HTTPS URL as the endpoint in your Front app's webhook configuration. Front
-will send an `X-Front-Challenge` validation request first — this handler echoes it
-automatically.
+Use the source's URL as the Webhook URL in your Front app. When you save the Webhook feature,
+Front sends an `X-Front-Challenge` validation request to that URL and only saves the feature
+if the request is answered.
 
 ## Endpoint
 

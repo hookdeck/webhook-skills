@@ -26,7 +26,7 @@ def verify_meraki_webhook(raw_body: bytes, secret: str) -> bool:
     field. TLS (HTTPS with a CA-trusted cert) is the real transport protection.
 
     The shared secret is OPTIONAL in Meraki: leave it blank on the HTTP server
-    and deliveries carry no ``sharedSecret`` at all. So handle the two cases
+    and deliveries carry no secret value. So handle the two cases
     explicitly rather than comparing "" to "" and silently passing:
       - No secret configured -> accept, but warn that TLS is the only protection.
       - Secret configured    -> the payload MUST carry a matching ``sharedSecret``.
@@ -77,19 +77,19 @@ async def meraki_webhook(request: Request):
     # Dispatch on alertTypeId (stable id), not alertType (human label)
     if alert_type_id == "motion_alert":
         print(f"Motion detected on device {payload.get('deviceSerial')}")
-        # TODO: capture snapshot, notify security, etc.
+        # Your code: capture snapshot, notify security, etc.
 
     elif alert_type_id == "settings_changed":
         print(f"Settings changed in {payload.get('networkName')}")
-        # TODO: audit the change, alert compliance, etc.
+        # Your code: audit the change, alert compliance, etc.
 
     elif alert_type_id == "sensor_alert":
         print(f"Sensor alert on {payload.get('deviceSerial')}: {payload.get('alertData')}")
-        # TODO: create incident, page facilities, etc.
+        # Your code: create incident, page facilities, etc.
 
     elif alert_type_id == "stopped_reporting":
         print(f"Device(s) stopped reporting in {payload.get('networkName')}")
-        # TODO: open uptime incident, page on-call, etc.
+        # Your code: open uptime incident, page on-call, etc.
 
     else:
         print(f"Unhandled alert type: {alert_type_id}")

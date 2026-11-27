@@ -2,8 +2,8 @@
 name: openai-webhooks
 description: >
   Receive and verify OpenAI webhooks. Use when setting up OpenAI webhook
-  handlers for fine-tuning jobs, batch completions, or async events like
-  fine_tuning.job.completed, batch.completed, or realtime.call.incoming.
+  handlers for background responses, batches, fine-tuning jobs and other async events like
+  response.completed, batch.completed, fine_tuning.job.succeeded or realtime.call.incoming.
 license: MIT
 metadata:
   author: hookdeck
@@ -45,9 +45,13 @@ function verifyOpenAISignature(payload, webhookId, webhookTimestamp, webhookSign
     return false;
   }
 
-  // Extract version and signature
-  const [version, signature] = webhookSignature.split(',');
-  if (version !== 'v1') {
+  // The header holds one or more space-delimited "v1,<base64>" entries
+  // (several while an old secret is still valid). Accept a match on any.
+  const signatures = webhookSignature
+    .split(' ')
+    .filter((entry) => entry.startsWith('v1,'))
+    .map((entry) => entry.slice(3));
+  if (signatures.length === 0) {
     return false;
   }
 
@@ -65,11 +69,12 @@ function verifyOpenAISignature(payload, webhookId, webhookTimestamp, webhookSign
     .update(signedContent, 'utf8')
     .digest('base64');
 
-  // Timing-safe comparison
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  // Timing-safe comparison against each entry
+  const expected = Buffer.from(expectedSignature);
+  return signatures.some((signature) => {
+    const received = Buffer.from(signature);
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  });
 }
 
 // CRITICAL: Use express.raw() for webhook endpoint - OpenAI needs raw body
@@ -116,7 +121,7 @@ app.post('/webhooks/openai',
         console.log('Batch expired:', event.data.id);
         break;
       case 'realtime.call.incoming':
-        console.log('Realtime call incoming:', event.data.id);
+        console.log('Realtime call incoming:', event.data.call_id);
         break;
       default:
         console.log('Unhandled event:', event.type);
@@ -155,9 +160,10 @@ def verify_openai_signature(
     if timestamp_diff > 300 or timestamp_diff < -300:
         return False
 
-    # Extract version and signature
-    version, signature = webhook_signature.split(',', 1)
-    if version != 'v1':
+    # The header holds one or more space-delimited "v1,<base64>" entries
+    # (several while an old secret is still valid). Accept a match on any.
+    signatures = [entry[3:] for entry in webhook_signature.split(' ') if entry.startswith('v1,')]
+    if not signatures:
         return False
 
     # Create signed content
@@ -176,7 +182,7 @@ def verify_openai_signature(
         ).digest()
     ).decode('utf-8')
 
-    return hmac.compare_digest(signature, expected_signature)
+    return any(hmac.compare_digest(signature, expected_signature) for signature in signatures)
 
 @app.post("/webhooks/openai")
 async def openai_webhook(
@@ -220,9 +226,11 @@ async def openai_webhook(
 | `batch.failed` | Batch API job failed |
 | `batch.cancelled` | Batch API job was cancelled |
 | `batch.expired` | Batch API job expired |
-| `realtime.call.incoming` | Realtime API incoming call |
+| `realtime.call.incoming` | Incoming SIP call ready to accept with the Realtime API (`data.call_id`) |
+| `response.completed` | Background response finished |
+| `eval.run.succeeded` | Eval run finished |
 
-> **For full event reference**, see [OpenAI Webhook Events](https://platform.openai.com/docs/guides/webhooks/events)
+> **For full event reference**, see [OpenAI Webhook Events](https://developers.openai.com/api/reference/resources/webhooks). Most events carry only the object's ID in `data.id`; retrieve the object from the API for details.
 
 ## Environment Variables
 

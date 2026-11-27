@@ -118,7 +118,7 @@ then process the event, and cover every documented trigger in their tests.
 | 12 | `taskDelayed` (threshold, seconds) | 28 | `routePlanAssigned` |
 | 13 | `taskCloned` | 29 | `routePlanDelayed` |
 | 14 | `smsRecipientResponseMissed` | 30 | `predictedTaskDelay` (threshold, seconds) |
-| 15 | `workerCreated` | | |
+| 15 | `workerCreated` | 31 | `taskPredictedEta` (threshold, seconds) |
 
 IDs 11 and 21 aren't documented. For trigger 30, the trigger table says
 `predictedTaskDelay` but the sample payload says `taskPredictedDelay`, so
@@ -133,7 +133,8 @@ accept both names or route on `triggerId`. See
    seconds and **disables the webhook after 300 consecutive failures**.
 4. **Treat every field as optional.** Fields that don't apply to a trigger
    arrive as `null`, and `data` can be `{}`.
-5. **Mind the units.** `time` is milliseconds; `etaSeconds` and `delay` are seconds.
+5. **Mind the units.** `time` is milliseconds and `etaSeconds` is seconds. Onfleet
+   doesn't state the unit of `taskDelayed`'s `delay`, so check it against your threshold.
 6. **Acknowledge unknown triggers.** Log them and return `200`.
 
 ## Environment Variables

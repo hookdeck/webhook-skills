@@ -49,7 +49,7 @@ Your handler should still verify it with timing-safe comparison.
 ## Test Your Webhook
 
 1. Go back to **Settings → Webhooks** and open your webhook.
-2. The **Activity** tab lists every recent event with the request payload, response status, and response body.
+2. The **Activity** tab lists recent events with the HTTP status code and the payload.
 3. Click **Replay** next to any past delivery to send the same payload again — this is the easiest way to debug locally.
 
 > Replays use the webhook's **current** target URL and secret, not the ones at the time of the original delivery.

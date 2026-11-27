@@ -59,7 +59,7 @@ def activity_event(event_type: str = "activity.sent", event_id: str = None) -> b
                 "email_id": "6892766a8d52ba62543d5e71",
                 "type": event_type.replace("activity.", ""),
                 "subject": "Test email",
-                "email": "test@mailersend.com",
+                "recipient": "test@mailersend.com",
                 "tags": ["test", "test2"],
                 # MailerSend sends an empty ARRAY when there is nothing to report
                 "meta": [],

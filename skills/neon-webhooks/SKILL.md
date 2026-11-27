@@ -1,10 +1,11 @@
 ---
 name: neon-webhooks
 description: >
-  Receive and verify Neon Auth webhooks. Use when setting up Neon webhook
-  handlers, debugging Ed25519 / detached JWS signature verification, or handling
-  Neon Auth events like user.created, user.before_create, send.otp,
-  send.magic_link, or phone_number.verified.
+  Receive and verify Neon Auth (Managed Better Auth) webhooks. Use when setting
+  up Neon webhook handlers, debugging Ed25519 / detached JWS signature
+  verification, or handling Neon Auth events like user.created,
+  user.before_create, send.otp, send.magic_link, phone_number.verified, or
+  organization.invitation.created.
 license: MIT
 metadata:
   author: hookdeck
@@ -20,7 +21,7 @@ metadata:
 - How do I verify Neon webhook signatures?
 - Why is my Neon webhook signature verification failing?
 - Understanding Neon Auth event types and blocking vs non-blocking events
-- Handling `user.created`, `user.before_create`, `send.otp`, `send.magic_link`, or `phone_number.verified`
+- Handling `user.created`, `user.before_create`, `send.otp`, `send.magic_link`, `phone_number.verified`, or the `organization.invitation.*` events
 
 ## Verification (core)
 
@@ -71,6 +72,8 @@ Enforce a timestamp tolerance (e.g. 5 minutes) against `X-Neon-Timestamp` to blo
 | `X-Neon-Event-Id` | Event UUID — use for idempotency |
 | `X-Neon-Delivery-Attempt` | Delivery attempt number (`1`, `2`, or `3`) |
 
+Neon also sends each header with a `Neon-Better-Auth-` prefix (for example `Neon-Better-Auth-Signature`). Read those names if your endpoint is a Neon Function, because Neon strips client-set `X-Neon-*` headers from requests to functions.
+
 ## Common Event Types
 
 | Event | Type | Fires When |
@@ -80,8 +83,10 @@ Enforce a timestamp tolerance (e.g. 5 minutes) against `X-Neon-Timestamp` to blo
 | `user.before_create` | **Blocking** | Just before a user is written — validate/reject signups |
 | `user.created` | Non-blocking | A user account has been created (sync to CRM/analytics) |
 | `phone_number.verified` | Non-blocking | A user's phone number has been verified |
+| `organization.invitation.created` | Non-blocking | An organization invitation is created |
+| `organization.invitation.accepted` | Non-blocking | A user accepts an invitation and joins the organization |
 
-**Blocking events pause the auth flow** until your endpoint returns a `2xx` (or times out) — respond fast and do heavy work asynchronously.
+**Blocking events pause the auth flow** until your endpoint responds (or times out), so respond fast and do heavy work asynchronously. For `send.otp` and `send.magic_link`, any `2xx` passes and the body is ignored. **`user.before_create` needs a JSON answer**: return `2xx` with `{"allowed": true}`, or `{"allowed": false, "error_message": "...", "error_code": "..."}` to reject. A failed delivery or any other response rejects the signup.
 
 > **For full event reference**, see [Neon Auth webhooks](https://neon.com/docs/auth/guides/webhooks).
 

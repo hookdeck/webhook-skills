@@ -26,11 +26,14 @@ Example:
 
 ```json
 {
-  "store_id": 123456,
-  "event": "order/paid",
-  "id": 999888
+  "store_id": 123,
+  "event": "product/created",
+  "id": 1948209
 }
 ```
+
+Most events also send `event_launch_ts`, the Unix time in seconds the event was
+launched (not `app/suspended`, `app/resumed` or `theme/updated`).
 
 To act on the event, **fetch the full resource** from the REST API using the
 `store_id` and `id`, authenticated with that store's access token:
@@ -51,7 +54,7 @@ User-Agent: MyApp (contact@example.com)
 | `order/updated` | Order modified | Re-sync order state |
 | `order/packed` | Order marked as packed | Logistics updates |
 | `order/fulfilled` | Order fulfilled/shipped | Send tracking to customer |
-| `order/pending` | Order awaiting payment | Payment reminders |
+| `order/pending` | Payment status returns to pending (e.g. a retried payment) | Payment reminders |
 | `product/created` | New product added | Sync to external catalog |
 | `product/updated` | Product modified | Update external listings, pricing |
 | `product/deleted` | Product removed | Remove from external catalog |
@@ -65,28 +68,35 @@ User-Agent: MyApp (contact@example.com)
 | `app/suspended` | App suspended for a store | Pause processing |
 | `app/resumed` | App resumed for a store | Resume processing |
 
-### LGPD / data-removal events
+### LGPD / data-removal webhooks
 
-Nuvemshop also emits mandatory data-handling events for compliance:
+Apps must also handle three required privacy webhooks. Their URLs are set in the
+app's Partners Portal settings, not with `POST /webhooks`, and their documented
+bodies have no `event` field, so give each its own URL:
 
-| Event | Meaning |
+| Webhook | Meaning |
 |-------|---------|
-| `store/redact` | Delete all data for a store (48h after uninstall) |
-| `customers/redact` | Delete a specific customer's data |
-| `customers/data_request` | Provide a customer's stored data |
+| `app/store_redact` | Delete the store's data after the merchant uninstalls your app |
+| `customer/redact` | Erase a customer's data |
+| `customers/data_request` | Send the merchant the data you hold on a customer |
+
+Older docs called the first two `store/redact` and `customers/redact`.
 
 ## Full Event Reference
 
 For the complete, current list of events, see
-[Nuvemshop's webhook documentation](https://tiendanube.github.io/api-documentation/resources/webhook).
+[Nuvemshop's webhook documentation](https://nuvemshop.dev/en-US/api/resources/2026-11/webhook).
 
 ## Delivery & Retries
 
 - Nuvemshop waits **3 seconds** for a `2XX` response.
 - On timeout or non-2XX, it retries: once immediately, then at ~5, 10, and 15
-  minutes, then exponential backoff (previous wait ×1.4) for up to **18
-  attempts over 48 hours**.
+  minutes, then exponential backoff (previous wait ×1.4) for up to **16
+  notifications over 48 hours**.
 - A `2XX` response stops further retries.
 
-Because the same event can be delivered multiple times, handle events
-**idempotently** — dedupe on `store_id` + `event` + `id`.
+Because the same event can be delivered multiple times with the same content,
+handle events **idempotently**. Don't dedupe on `store_id` + `event` + `id` alone:
+two real changes to one order both send `order/updated` with the same three
+values. Include `event_launch_ts` where it's sent, or make the work idempotent by
+re-reading the resource's current state.

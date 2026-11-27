@@ -122,6 +122,7 @@ import base64
 from fastapi import FastAPI, Request, HTTPException
 import jwt
 
+app = FastAPI()
 webhook_secret = os.environ.get("FUSIONAUTH_WEBHOOK_SECRET")
 
 def verify_fusionauth_webhook(raw_body: bytes, signature_jwt: str, secret: str) -> bool:
@@ -174,7 +175,7 @@ async def fusionauth_webhook(request: Request):
 | `user.registration.delete` | User registration deleted |
 | `user.email.verified` | User email address verified |
 
-> **For full event reference**, see [FusionAuth Webhook Events](https://fusionauth.io/docs/extend/events-and-webhooks/events/)
+> **For full event reference**, see [FusionAuth Webhook Events](https://fusionauth.io/docs/events/reference/)
 
 ## Important Headers
 

@@ -90,50 +90,50 @@ app.post('/webhooks/gemini',
       case 'batch.succeeded':
         console.log(`Batch succeeded: ${event.data.id}`);
         console.log(`Output: ${event.data.output_file_uri}`);
-        // TODO: Download output, fan out results
+        // Your code: Download output, fan out results
         break;
 
       case 'batch.failed':
         console.log(`Batch failed: ${event.data.id}`);
         console.log(`Error: ${event.data.error_code} ${event.data.error_message}`);
-        // TODO: Alert team, decide whether to retry
+        // Your code: Alert team, decide whether to retry
         break;
 
       case 'batch.cancelled':
         console.log(`Batch cancelled: ${event.data.id}`);
-        // TODO: Clean up resources, update status
+        // Your code: Clean up resources, update status
         break;
 
       case 'batch.expired':
         console.log(`Batch expired: ${event.data.id}`);
-        // TODO: Resubmit or surface to user
+        // Your code: Resubmit or surface to user
         break;
 
       case 'video.generated':
         console.log(`Video generated: ${event.data.id}`);
         console.log(`Video file: ${event.data.file_name || event.data.output_file_uri}`);
-        // TODO: Fetch the rendered video, notify the user
+        // Your code: Fetch the rendered video, notify the user
         break;
 
       case 'interaction.completed':
         console.log(`Interaction completed: ${event.data.id}`);
-        // TODO: Consume LRO result, continue flow
+        // Your code: Consume LRO result, continue flow
         break;
 
       case 'interaction.requires_action':
         console.log(`Interaction requires action: ${event.data.id}`);
-        // TODO: Run the requested function call, submit the result back
+        // Your code: Run the requested function call, submit the result back
         break;
 
       case 'interaction.failed':
         console.log(`Interaction failed: ${event.data.id}`);
         console.log(`Error: ${event.data.error_code} ${event.data.error_message}`);
-        // TODO: Surface error to user
+        // Your code: Surface error to user
         break;
 
       case 'interaction.cancelled':
         console.log(`Interaction cancelled: ${event.data.id}`);
-        // TODO: Update UI / state
+        // Your code: Update UI / state
         break;
 
       default:

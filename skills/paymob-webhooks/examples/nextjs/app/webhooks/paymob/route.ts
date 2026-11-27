@@ -3,157 +3,164 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-interface SourceData {
-  pan?: string;
-  sub_type?: string;
+type CallbackType = 'TRANSACTION' | 'TOKEN';
+
+interface PaymobCallback {
   type?: string;
+  obj?: Record<string, any>;
 }
 
-interface PaymobTransaction {
-  id: number;
-  amount_cents: number;
-  created_at: string;
-  currency: string;
-  error_occured: boolean;
-  has_parent_transaction: boolean;
-  integration_id: number;
-  is_3d_secure: boolean;
-  is_auth: boolean;
-  is_capture: boolean;
-  is_refunded: boolean;
-  is_standalone_payment: boolean;
-  is_voided: boolean;
-  pending: boolean;
-  success: boolean;
-  owner: number;
-  order: { id: number };
-  source_data: SourceData;
+// The keys Paymob signs, in the documented order, per callback `type`.
+// TRANSACTION: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-transaction-callback
+// TOKEN: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-for-card-tokens
+export const HMAC_FIELDS: Record<CallbackType, string[]> = {
+  TRANSACTION: [
+    'amount_cents',
+    'created_at',
+    'currency',
+    'error_occured',
+    'has_parent_transaction',
+    'id',
+    'integration_id',
+    'is_3d_secure',
+    'is_auth',
+    'is_capture',
+    'is_refunded',
+    'is_standalone_payment',
+    'is_voided',
+    'order.id',
+    'owner',
+    'pending',
+    'source_data.pan',
+    'source_data.sub_type',
+    'source_data.type',
+    'success',
+  ],
+  TOKEN: [
+    'card_subtype',
+    'created_at',
+    'email',
+    'id',
+    'masked_pan',
+    'merchant_id',
+    'order_id',
+    'token',
+  ],
+};
+
+function isCallbackType(type: unknown): type is CallbackType {
+  return type === 'TRANSACTION' || type === 'TOKEN';
+}
+
+function getPath(obj: Record<string, any>, path: string): unknown {
+  return path
+    .split('.')
+    .reduce<any>((cur, key) => (cur == null ? undefined : cur[key]), obj);
 }
 
 /**
- * Build the ordered string Paymob signs, from a transaction object.
- * The 20 fields are concatenated in a fixed order with no separators.
- * Array.join renders booleans as "true"/"false" and numbers as their digits.
+ * The string Paymob signs: the values of the keys for the callback's `type`,
+ * read from `obj`, joined in order with no separator. String() renders
+ * booleans as "true"/"false" and numbers as their digits.
  */
-export function buildSignedString(obj: PaymobTransaction): string {
-  const s = obj.source_data || {};
-  return [
-    obj.amount_cents,
-    obj.created_at,
-    obj.currency,
-    obj.error_occured,
-    obj.has_parent_transaction,
-    obj.id,
-    obj.integration_id,
-    obj.is_3d_secure,
-    obj.is_auth,
-    obj.is_capture,
-    obj.is_refunded,
-    obj.is_standalone_payment,
-    obj.is_voided,
-    obj.order.id,
-    obj.owner,
-    obj.pending,
-    s.pan,
-    s.sub_type,
-    s.type,
-    obj.success,
-  ].join('');
+export function buildSignedString(type: string | undefined, obj: Record<string, any>): string | null {
+  if (!isCallbackType(type)) return null;
+  return HMAC_FIELDS[type]
+    .map((field) => {
+      const value = getPath(obj, field);
+      return value === undefined || value === null ? '' : String(value);
+    })
+    .join('');
 }
 
 /**
- * Verify a Paymob Transaction Processed Callback (POST).
- * HMAC-SHA512 (hex) over the concatenated fields, compared against the
- * `hmac` query parameter (NOT a header, NOT the raw body).
+ * Verify a Paymob callback: HMAC-SHA512 (hex) over the string above, compared
+ * with the `hmac` query parameter (not a header, not the raw body).
  */
 export function verifyPaymobHmac(
-  obj: PaymobTransaction,
+  body: PaymobCallback,
   hmacParam: string | null,
-  secret: string
+  secret: string | undefined
 ): boolean {
-  const expected = crypto
-    .createHmac('sha512', secret)
-    .update(buildSignedString(obj))
-    .digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(hmacParam || '')
-    );
-  } catch {
-    return false;
-  }
+  const signed = buildSignedString(body.type, body.obj || {});
+  if (signed === null || !hmacParam || !secret) return false;
+  const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex');
+  const a = Buffer.from(expected);
+  const b = Buffer.from(hmacParam.toLowerCase());
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 /**
- * Derive a transaction state from the boolean fields.
- * Paymob has no discrete event names — every callback `type` is "TRANSACTION".
+ * A transaction's state, from its booleans. Paymob sends no event name for the
+ * outcome: success false with pending false is a decline.
  */
-export function transactionState(obj: PaymobTransaction): string {
+export function transactionState(obj: Record<string, any>): string {
   if (obj.is_refunded) return 'refunded';
   if (obj.is_voided) return 'voided';
   if (obj.pending) return 'pending';
   if (obj.success && obj.is_auth && !obj.is_capture) return 'authorized';
   if (obj.is_capture) return 'captured';
-  if (obj.success && !obj.error_occured) return 'succeeded';
-  return 'failed';
+  if (obj.success) return 'succeeded';
+  return 'declined';
 }
 
 export async function POST(request: NextRequest) {
   const hmacParam = new URL(request.url).searchParams.get('hmac');
 
-  // Parse the JSON — verification needs the individual fields.
-  let body: { type?: string; obj?: PaymobTransaction };
+  // Parse the JSON: verification needs the individual fields.
+  let body: PaymobCallback;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (body.type !== 'TRANSACTION' || !body.obj) {
-    return NextResponse.json(
-      { error: 'Unexpected callback payload' },
-      { status: 400 }
-    );
+  if (!body || !body.obj || !isCallbackType(body.type)) {
+    return NextResponse.json({ error: 'Unexpected callback payload' }, { status: 400 });
   }
 
-  const obj = body.obj;
-
-  if (!hmacParam || !verifyPaymobHmac(obj, hmacParam, process.env.PAYMOB_HMAC_SECRET!)) {
+  if (!verifyPaymobHmac(body, hmacParam, process.env.PAYMOB_HMAC_SECRET)) {
     console.error('Paymob HMAC verification failed');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  const obj = body.obj;
+
+  if (body.type === 'TOKEN') {
+    // A customer saved a card. Your code: store obj.token against obj.order_id.
+    console.log(`Card token ${obj.id} for order ${obj.order_id}`);
+    return NextResponse.json({ received: true });
+  }
+
   const state = transactionState(obj);
-  console.log(`Transaction ${obj.id} (order ${obj.order.id}): ${state}`);
+  console.log(`Transaction ${obj.id} (order ${obj.order?.id}): ${state}`);
 
   switch (state) {
     case 'succeeded':
-      // TODO: mark order paid, fulfil, send receipt
+      // Your code: mark the order paid, fulfil, send a receipt
       break;
-    case 'failed':
-      // TODO: notify customer, release reservation
+    case 'declined':
+      // Your code: tell the customer, release the reservation
       break;
     case 'pending':
-      // TODO: await final callback (e.g. 3-D Secure)
+      // Your code: wait for a later callback (OTP page, kiosk or cash payment)
       break;
     case 'authorized':
-      // TODO: funds held; capture when ready
+      // Your code: funds held; capture when ready
       break;
     case 'captured':
-      // TODO: complete a prior authorization
+      // Your code: complete a prior authorization
       break;
     case 'refunded':
-      // TODO: reverse fulfilment, credit customer
+      // Your code: reverse fulfilment, credit the customer
       break;
     case 'voided':
-      // TODO: cancel an uncaptured authorization
+      // Your code: cancel an uncaptured authorization
       break;
     default:
       console.log(`Unhandled state for transaction ${obj.id}`);
   }
 
-  // Acknowledge quickly so Paymob does not retry.
+  // Acknowledge quickly; do slow work in the background.
   return NextResponse.json({ received: true });
 }

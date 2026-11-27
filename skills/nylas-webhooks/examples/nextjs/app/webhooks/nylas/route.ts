@@ -34,7 +34,7 @@ export function verifyNylasSignature(
 
 // --- Challenge handshake (endpoint verification) ---------------------------
 // When the webhook is created, Nylas GETs this URL with ?challenge=<value>.
-// Echo the exact value back as plain text with 200 within 10 seconds.
+// Echo the exact value back as plain text with 200 within 20 seconds.
 export async function GET(request: Request): Promise<Response> {
   const challenge = new URL(request.url).searchParams.get("challenge");
   return new NextResponse(challenge ?? "", {
@@ -67,15 +67,19 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // Nylas payloads follow CloudEvents 1.0: trigger in `type`, resource in `data.object`.
-  const { type, id, data } = event;
+  // `type` can carry suffixes you didn't subscribe to: `.truncated` (body
+  // removed, fetch the message by ID) and `.transformed` (customized fields).
+  const { id, data } = event;
+  const type = String(event.type).replace(/(\.(?:truncated|transformed))+$/, "");
   const object = data?.object ?? {};
-  const grantId = data?.grant_id;
+  // Some types put grant_id in `data`, most in `data.object`.
+  const grantId = data?.grant_id ?? object.grant_id;
   console.log(`Received ${type} (id: ${id}, grant: ${grantId})`);
 
   switch (type) {
     case "message.created":
       console.log("New message:", object.subject);
-      // TODO: parse the email, run automation, notify, etc.
+      // Your code: parse the email, run automation, notify, etc.
       break;
     case "message.updated":
       console.log("Message updated:", object.id);

@@ -11,10 +11,11 @@ load_dotenv()
 
 app = FastAPI()
 
-# Lithic webhooks implement the Standard Webhooks spec (powered by Svix).
+# Lithic webhooks follow the Standard Webhooks signature layout.
 # `client.webhooks.unwrap(body, headers, secret=...)` verifies the
 # `webhook-signature` HMAC-SHA256 over `{webhook-id}.{webhook-timestamp}.{body}`,
-# enforces a ~5-minute timestamp tolerance, and returns the parsed event.
+# enforces a ~5-minute timestamp tolerance (the library's default), and returns
+# the parsed event.
 # Signature verification needs the optional `standardwebhooks` dependency
 # (installed via `pip install "lithic[webhooks]"` or the requirements file).
 #
@@ -42,33 +43,35 @@ async def lithic_webhook(request: Request):
         print(f"Lithic webhook verification failed: {err}")
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # Lithic event objects carry an `event_type` (resource.action) field.
+    # The body is the resource object with `event_type` added at the top level.
+    # There is no event id in the body: the `webhook-id` header is the event token,
+    # so deduplicate on that header, not on the body's `token`.
     event_type = get_event_type(event)
 
     if event_type == "card.created":
         print("Card created")
-        # TODO: Provision the new card in your system
+        # Your code: Provision the new card in your system
     elif event_type == "card.updated":
         print("Card updated")
-        # TODO: Sync card state (e.g. PAUSED/CLOSED)
+        # Your code: Sync card state (e.g. PAUSED/CLOSED)
     elif event_type == "card_transaction.updated":
         print("Card transaction updated")
-        # TODO: Reconcile authorization / clearing state
+        # Your code: Reconcile authorization / clearing state
     elif event_type == "payment_transaction.created":
         print("Payment transaction created")
-        # TODO: Record incoming ACH / wire payment
+        # Your code: Record incoming ACH / wire payment
     elif event_type == "payment_transaction.updated":
         print("Payment transaction updated")
-        # TODO: Update payment status (settled, returned)
+        # Your code: Update payment status (settled, returned)
     elif event_type == "dispute.updated":
         print("Dispute updated")
-        # TODO: Progress the dispute workflow
+        # Your code: Progress the dispute workflow
     elif event_type == "balance.updated":
         print("Balance updated")
-        # TODO: Refresh cached balances
+        # Your code: Refresh cached balances
     elif event_type == "three_ds_authentication.created":
         print("3DS authentication created")
-        # TODO: Handle challenge / decisioning
+        # Your code: Handle challenge / decisioning
     else:
         print(f"Unhandled event type: {event_type}")
 

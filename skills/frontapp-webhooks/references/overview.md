@@ -7,14 +7,14 @@ messages arriving or being sent, conversations being assigned, moved, tagged, ar
 or commented on. Instead of polling the Front API, your endpoint receives an HTTP POST
 with a JSON payload each time a matching event occurs.
 
-Front has **two** webhook systems. This skill covers **application webhooks** (the modern
+Front has **two** webhook systems. This skill covers **application webhooks** (the
 system used by partner / Core API apps):
 
 - **Application webhooks** — configured on a Front app. Signed with HMAC-SHA256 in the
   `X-Front-Signature` header, include an `X-Front-Request-Timestamp`, use an
   `X-Front-Challenge` subscription handshake, retry up to 3 times, and auto-disable after
   repeated failures. **This is what the examples in this skill implement.**
-- **Rule webhooks** (legacy) — configured as a rule action in inbox settings. Signed with
+- **Rule webhooks** — configured as a rule action in inbox settings. Signed with
   **HMAC-SHA1** (base64) over the body only, keyed with the "API Secret" from the Webhooks
   app, 5s timeout, **no retries**. Do not conflate the two schemes.
 
@@ -46,40 +46,29 @@ another team, mass status updates, or importing historical messages.
 
 ## Event Payload Structure
 
-Application webhook payloads share a common envelope:
+Front documents the application webhook envelope like this (its own example, with
+`payload` elided):
 
 ```json
 {
   "type": "inbound_received",
   "authorization": { "id": "cmp_abc" },
-  "payload": {
-    "id": "evt_55c8c149",
-    "type": "inbound_received",
-    "emitted_at": 1615496636.24,
-    "_links": { "self": "https://api2.frontapp.com/events/evt_55c8c149" },
-    "conversation": {
-      "id": "cnv_55c8c149",
-      "subject": "Re: Order #1234",
-      "status": "unassigned",
-      "_links": { "self": "https://api2.frontapp.com/conversations/cnv_55c8c149" }
-    },
-    "source": { "_meta": { "type": "inboxes" }, "data": [] },
-    "target": { "_meta": { "type": "message" }, "data": { "id": "msg_..." } }
-  }
+  "payload": { ... }
 }
 ```
 
 Key fields:
 
-- **`type`** — the event name your handler switches on (`inbound_received`, `conversation_moved`, `assignee_changed`, …).
-- **`payload.id`** — unique event id; use it for idempotency / deduplication.
-- **`payload.emitted_at`** — when the event fired (epoch seconds).
-- **`payload.conversation`** — the conversation the event relates to.
-- **`payload.source`** — who/what caused the event (teammate, rule, inbox).
-- **`payload.target`** — what changed (message, tag, teammate, comment, …).
+- **`type`** — the webhook event type your handler switches on (`inbound_received`, `conversation_moved`, `assignee_changed`, …).
+- **`authorization.id`** — the Front company the event came from, so a published app can tell its customers apart.
+- **`payload`** — a Front [event object](https://dev.frontapp.com/reference/events#example-event-object) with its own `id`, `type`, `emitted_at`, `source`, `target` and `conversation`.
+- **`payload.id`** — the event ID. Front says event IDs are sequential and never reused, so use it for idempotency / deduplication.
+- **`payload.emitted_at`** — when Front emitted the event (epoch seconds with a fraction).
+- **`payload.source`** / **`payload.target`** — what caused the event and what it acted on, each with a `_meta.type` (for example `rule` and `teammate` when a rule assigns a conversation).
 
-> Exact envelope shape can vary by app configuration — always read `type` from the level
-> your app receives and treat other fields defensively.
+`payload.type` uses Front's Events API names (`assign`, `inbound`, `tag`, …), not the
+webhook `type` values above. Front doesn't publish which event object types each webhook
+type carries, so route on the top-level `type`.
 
 ## Full Event Reference
 

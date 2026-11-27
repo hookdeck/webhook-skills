@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Set test environment before importing the app.
-# Svix-style secrets are 'whsec_' + a base64-encoded key. Throwaway test key.
+# Lithic secrets are 'whsec_' + a base64-encoded key. Throwaway test key.
 os.environ["LITHIC_WEBHOOK_SECRET"] = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
 os.environ["LITHIC_API_KEY"] = "test-api-key"
 
@@ -99,9 +99,9 @@ def test_stale_timestamp_returns_400():
 def test_valid_signature_returns_200():
     payload = json.dumps(
         {
-            "token": "evt_valid",
             "event_type": "card.created",
-            "payload": {"token": "card_123"},
+            "card_token": "00000000-0000-0000-0000-000000000001",
+            "replacement_for": None,
         }
     )
     headers = sign_payload(payload)
@@ -115,9 +115,8 @@ def test_valid_signature_returns_200():
 def test_handles_event_types(event_type: str):
     payload = json.dumps(
         {
-            "token": f"evt_{event_type.replace('.', '_')}",
             "event_type": event_type,
-            "payload": {"token": "obj_1"},
+            "token": "obj_1",
         }
     )
     headers = sign_payload(payload)

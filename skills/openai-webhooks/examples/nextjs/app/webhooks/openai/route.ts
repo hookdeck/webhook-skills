@@ -26,9 +26,13 @@ function verifyOpenAISignature(
     return false;
   }
 
-  // Extract version and signature
-  const [version, signature] = webhookSignature.split(',');
-  if (version !== 'v1') {
+  // The header holds one or more space-delimited "v1,<base64>" entries
+  // (several while an old secret is still valid). Accept a match on any.
+  const signatures = webhookSignature
+    .split(' ')
+    .filter((entry) => entry.startsWith('v1,'))
+    .map((entry) => entry.slice(3));
+  if (signatures.length === 0) {
     return false;
   }
 
@@ -44,16 +48,12 @@ function verifyOpenAISignature(
     .update(signedContent, 'utf8')
     .digest('base64');
 
-  // Timing-safe comparison to prevent timing attacks
-  try {
-    return timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-  } catch {
-    // Buffers have different lengths
-    return false;
-  }
+  // Timing-safe comparison against each entry
+  const expected = Buffer.from(expectedSignature);
+  return signatures.some((signature) => {
+    const received = Buffer.from(signature);
+    return received.length === expected.length && timingSafeEqual(received, expected);
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -97,46 +97,42 @@ export async function POST(request: NextRequest) {
   switch (event.type) {
     case 'fine_tuning.job.succeeded':
       console.log(`Fine-tuning job succeeded: ${event.data.id}`);
-      console.log(`Fine-tuned model: ${event.data.fine_tuned_model}`);
-      // TODO: Deploy model, notify team, update database
+      // Your code: retrieve the job with client.fineTuning.jobs.retrieve(event.data.id)
       break;
 
     case 'fine_tuning.job.failed':
       console.log(`Fine-tuning job failed: ${event.data.id}`);
-      console.log(`Error: ${event.data.error?.message}`);
-      // TODO: Alert team, log error, retry if appropriate
+      // Your code: retrieve the job for its error, alert the team
       break;
 
     case 'fine_tuning.job.cancelled':
       console.log(`Fine-tuning job cancelled: ${event.data.id}`);
-      // TODO: Clean up resources, update status
+      // Your code: Clean up resources, update status
       break;
 
     case 'batch.completed':
       console.log(`Batch completed: ${event.data.id}`);
-      console.log(`Output file: ${event.data.output_file_id}`);
-      // TODO: Download results, process output, trigger next steps
+      // Your code: retrieve the batch with client.batches.retrieve(event.data.id) for its output file
       break;
 
     case 'batch.failed':
       console.log(`Batch failed: ${event.data.id}`);
-      console.log(`Error: ${event.data.errors}`);
-      // TODO: Handle errors, retry failed items
+      // Your code: retrieve the batch for its errors
       break;
 
     case 'batch.cancelled':
       console.log(`Batch cancelled: ${event.data.id}`);
-      // TODO: Clean up resources, update status
+      // Your code: Clean up resources, update status
       break;
 
     case 'batch.expired':
       console.log(`Batch expired: ${event.data.id}`);
-      // TODO: Clean up resources, handle timeout
+      // Your code: Clean up resources, handle timeout
       break;
 
     case 'realtime.call.incoming':
-      console.log(`Realtime call incoming: ${event.data.id}`);
-      // TODO: Handle incoming call, connect client
+      console.log(`Realtime call incoming: ${event.data.call_id}`);
+      // Your code: accept or reject the call with data.call_id
       break;
 
     default:

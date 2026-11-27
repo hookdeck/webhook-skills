@@ -57,6 +57,8 @@ MERAKI_WEBHOOK_SECRET=your_shared_secret   # The "Shared secret" set on the HTTP
 ## Reliability Notes
 
 - Meraki delivers alerts typically within ~90 seconds of the event.
+- Respond in under 2 seconds. A failed delivery is retried up to two times
+  (three attempts in total).
 - If delivery **consistently fails for more than 100 attempts in 24 hours**, the
   receiver is auto-disabled and admins are emailed. Acknowledge fast (`2xx`) and
   do heavy work asynchronously.

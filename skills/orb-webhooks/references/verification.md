@@ -6,8 +6,8 @@ Orb signs every webhook with HMAC-SHA256 using your **per-endpoint** signing sec
 
 | Header | Contents |
 |--------|----------|
-| `X-Orb-Signature` | `v1=<hex>` — the HMAC-SHA256 hex digest, prefixed with the version literal `v1=` |
-| `X-Orb-Timestamp` | ISO 8601 timestamp of when Orb sent the request (e.g. `2026-05-13T12:34:56.000Z`) |
+| `X-Orb-Signature` | `v1=<hex>` — the HMAC-SHA256 hex digest, prefixed with the version literal `v1=`. During a secret rotation it can carry several space-separated values |
+| `X-Orb-Timestamp` | ISO 8601 timestamp of when Orb sent the request, to milliseconds |
 
 The signed content is the literal string:
 
@@ -15,11 +15,11 @@ The signed content is the literal string:
 v1:{X-Orb-Timestamp}:{raw-body}
 ```
 
-That is: the version literal `v1`, a colon, the timestamp from `X-Orb-Timestamp` exactly as delivered, a colon, then the raw HTTP request body. Compute HMAC-SHA256 of that string with your signing secret, hex-encode, and compare to the value after `v1=` in `X-Orb-Signature`.
+That is: the version literal `v1`, a colon, the timestamp from `X-Orb-Timestamp` exactly as delivered, a colon, then the raw HTTP request body. Compute HMAC-SHA256 of that string with your signing secret, hex-encode, and compare to the value after `v1=` in `X-Orb-Signature`. If the header holds several space-separated signatures (a secret rotation), accept the delivery when any one matches.
 
 ## Implementation
 
-The official `orb-billing` SDK (npm + PyPI) does **not** currently expose a Stripe-style `unwrap()`/`constructEvent()` helper, so manual HMAC verification is the canonical path in every framework.
+Orb's Python, TypeScript, Java and Kotlin SDKs verify the signature as they parse an event: `client.webhooks.unwrap()` for expanded payloads and `unwrapStandard()` / `unwrap_standard()` for standard ones. In Go, call `client.Webhooks.VerifySignature` before parsing; in Ruby, verify it yourself. The manual HMAC below is the dependency-free path.
 
 ### Node.js (manual)
 
@@ -29,26 +29,21 @@ const crypto = require('crypto');
 function verifyOrbSignature(rawBody, signatureHeader, timestamp, secret) {
   if (!signatureHeader || !timestamp) return false;
 
-  // Strip the "v1=" prefix if present
-  const provided = signatureHeader.startsWith('v1=')
-    ? signatureHeader.slice(3)
-    : signatureHeader;
-
   const signedContent = `v1:${timestamp}:${rawBody}`;
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(signedContent)
-    .digest('hex');
+  const expected = Buffer.from(
+    crypto.createHmac('sha256', secret).update(signedContent).digest('hex'),
+    'hex'
+  );
 
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(provided, 'hex'),
-      Buffer.from(expected, 'hex')
-    );
-  } catch {
-    // Different lengths → invalid
-    return false;
-  }
+  // Several space-separated signatures can arrive during a secret rotation
+  return signatureHeader.split(' ').some((entry) => {
+    const provided = entry.startsWith('v1=') ? entry.slice(3) : entry;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(provided, 'hex'), expected);
+    } catch {
+      return false; // different lengths → invalid
+    }
+  });
 }
 ```
 
@@ -62,17 +57,20 @@ def verify_orb_signature(raw_body: bytes, signature_header: str, timestamp: str,
     if not signature_header or not timestamp:
         return False
 
-    provided = signature_header[3:] if signature_header.startswith("v1=") else signature_header
-
     signed_content = f"v1:{timestamp}:".encode() + raw_body
     expected = hmac.new(secret.encode(), signed_content, hashlib.sha256).hexdigest()
 
-    return hmac.compare_digest(provided, expected)
+    # Several space-separated signatures can arrive during a secret rotation
+    for entry in signature_header.split(" "):
+        provided = entry[3:] if entry.startswith("v1=") else entry
+        if hmac.compare_digest(provided, expected):
+            return True
+    return False
 ```
 
 ## Timestamp Tolerance (Replay Protection)
 
-Orb does not publish a fixed replay tolerance; consumers pick the window themselves. **Recommended: 5 minutes.** Reject any request where `X-Orb-Timestamp` is more than 5 minutes off your server clock.
+Orb's docs leave the threshold to you: compare `X-Orb-Timestamp` with a tolerance you configure. Orb's SDKs use **5 minutes** when they verify, so that's a sensible default. Reject any request where `X-Orb-Timestamp` is more than 5 minutes off your server clock.
 
 ```javascript
 const TOLERANCE_SECONDS = 300;
@@ -99,7 +97,7 @@ The most common cause of verification failures is using a parsed JSON body inste
 
 ### 2. The `v1=` Prefix
 
-`X-Orb-Signature` is `v1=<hex>`, not bare hex. Strip the `v1=` prefix before comparing — or compare the full header against `v1=` + computed hex.
+`X-Orb-Signature` is `v1=<hex>`, not bare hex. Strip the `v1=` prefix before comparing — or compare against `v1=` + computed hex. Split the header on spaces first: during a secret rotation it carries several signatures, and comparing the whole header fails.
 
 ### 3. Timestamp Format
 
@@ -107,7 +105,7 @@ The most common cause of verification failures is using a parsed JSON body inste
 
 ### 4. Per-Endpoint Secrets
 
-Each webhook endpoint configured in the Orb dashboard has its **own** signing secret. If you wire up multiple endpoints (sandbox, production, dev) the secrets are different. Don't reuse the account API key — verification will fail silently.
+Each webhook endpoint has its **own** secret, returned once by the Create webhook endpoint API. If you wire up several endpoints, use each one's secret. Don't use the account API key — verification will fail.
 
 ### 5. Use a Timing-Safe Comparison
 
@@ -129,4 +127,4 @@ Compare signatures with `crypto.timingSafeEqual` (Node) or `hmac.compare_digest`
 
 ## Full Documentation
 
-For complete signature verification details, see [Orb's webhook documentation](https://docs.withorb.com/integrations-and-exports/webhooks).
+For complete signature verification details, see [Orb's webhook security page](https://docs.withorb.com/integrations-and-exports/webhooks/security).

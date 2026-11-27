@@ -76,8 +76,9 @@ program. When enabled, Green Dot retries when it receives:
 - HTTP `401` / `403` — retried once the underlying cause is fixed
 
 The schedule is an initial retry within one hour, continuing for up to
-**24 hours**. Make your handler **idempotent** (dedupe on `eventId` /
-`x-GD-RequestId`) so retried deliveries are safe.
+**24 hours**. Make your handler **idempotent** (dedupe on each event's
+`eventIdentifier`, which Green Dot's transfer docs name as the deduplication key)
+so retried deliveries are safe.
 
 ## Test Mode
 

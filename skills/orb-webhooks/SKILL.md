@@ -22,7 +22,7 @@ metadata:
 
 ## Verification (core)
 
-Orb signs every webhook with HMAC-SHA256 over the literal string `v1:{X-Orb-Timestamp}:{rawBody}`. The hex digest is delivered in `X-Orb-Signature` prefixed with `v1=` (e.g. `v1=abc123…`). The ISO 8601 timestamp arrives separately in `X-Orb-Timestamp`. Use the **raw** request body — don't `JSON.parse` first.
+Orb signs every webhook with HMAC-SHA256 over the literal string `v1:{X-Orb-Timestamp}:{rawBody}`. The hex digest is delivered in `X-Orb-Signature` prefixed with `v1=` (e.g. `v1=abc123…`). The ISO 8601 timestamp arrives separately in `X-Orb-Timestamp`. Use the **raw** request body — don't `JSON.parse` first. During a secret rotation `X-Orb-Signature` can carry several space-separated signatures, and the delivery is valid when any `v1` value matches, so split the header on spaces.
 
 The `orb-billing` SDK does expose webhook helpers — `webhooks.verifySignature()`, plus `webhooks.unwrap()` and `webhooks.unwrapStandard()` which verify *and* parse (verified against `orb-billing@6.33.0`). The manual HMAC above is the dependency-free path and is what the examples use; either is fine.
 
@@ -39,16 +39,19 @@ const crypto = require('crypto');
 
 function verifyOrbSignature(rawBody, signatureHeader, timestamp, secret) {
   if (!signatureHeader || !timestamp) return false;
-  const provided = signatureHeader.startsWith('v1=') ? signatureHeader.slice(3) : signatureHeader;
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(`v1:${timestamp}:${rawBody}`)
-    .digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(provided, 'hex'), Buffer.from(expected, 'hex'));
-  } catch {
-    return false;
-  }
+  const expected = Buffer.from(
+    crypto.createHmac('sha256', secret).update(`v1:${timestamp}:${rawBody}`).digest('hex'),
+    'hex'
+  );
+  // Several space-separated signatures can arrive during a secret rotation.
+  return signatureHeader.split(' ').some((entry) => {
+    const provided = entry.startsWith('v1=') ? entry.slice(3) : entry;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(provided, 'hex'), expected);
+    } catch {
+      return false;
+    }
+  });
 }
 ```
 
@@ -60,11 +63,15 @@ import hmac, hashlib
 def verify_orb_signature(raw_body: bytes, signature_header: str, timestamp: str, secret: str) -> bool:
     if not signature_header or not timestamp:
         return False
-    provided = signature_header[3:] if signature_header.startswith("v1=") else signature_header
     expected = hmac.new(
         secret.encode(), f"v1:{timestamp}:".encode() + raw_body, hashlib.sha256
     ).hexdigest()
-    return hmac.compare_digest(provided, expected)
+    # Several space-separated signatures can arrive during a secret rotation.
+    for entry in signature_header.split(" "):
+        provided = entry[3:] if entry.startswith("v1=") else entry
+        if hmac.compare_digest(provided, expected):
+            return True
+    return False
 ```
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
@@ -79,7 +86,7 @@ def verify_orb_signature(raw_body: bytes, signature_header: str, timestamp: str,
 | `customer.created` | New customer created |
 | `customer.credit_balance_dropped` | Prepaid credit balance fell below a threshold |
 | `subscription.created` | New subscription created |
-| `subscription.started` | Subscription's billing period started |
+| `subscription.started` | Subscription began |
 | `subscription.ended` | Subscription ended |
 | `subscription.plan_changed` | Subscription moved to a different plan |
 | `subscription.usage_exceeded` | Usage crossed a configured threshold |
@@ -93,10 +100,10 @@ def verify_orb_signature(raw_body: bytes, signature_header: str, timestamp: str,
 ## Environment Variables
 
 ```bash
-ORB_WEBHOOK_SECRET=your_webhook_signing_secret   # Per-endpoint secret from Orb dashboard
+ORB_WEBHOOK_SECRET=your_webhook_signing_secret   # The endpoint's secret
 ```
 
-The webhook signing secret is configured per webhook endpoint in the Orb dashboard — it is **not** your account API key.
+Each webhook endpoint has its own secret — it is **not** your account API key. The Create webhook endpoint API returns it once, and no other endpoint returns it again. Orb's SDKs read `ORB_WEBHOOK_SECRET` by default.
 
 ## Local Development
 

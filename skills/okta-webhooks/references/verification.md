@@ -107,7 +107,8 @@ def is_authorized(auth_header: str, secret: str) -> bool:
 - **Timing-safe comparison.** Use `crypto.timingSafeEqual` (Node) or
   `hmac.compare_digest` (Python). A plain `===`/`==` leaks length and content
   timing. Guard against unequal-length buffers so `timingSafeEqual` doesn't throw.
-- **Return `2xx` fast.** Okta retries on non-`2xx` or timeouts. Acknowledge first,
+- **Return `2xx` fast.** Okta's default timeout is three seconds, it retries a `5xx` at most
+  once and never retries a `4xx`. Acknowledge first,
   process asynchronously.
 - **Multiple events per POST.** Iterate `data.events[]` — a single request can
   carry several events.

@@ -5,7 +5,7 @@ the per-event **HMAC signature** (POST). Both are covered here.
 
 ## Part 1 — Subscription Handshake (GET)
 
-When a subscription is created, updated, or renewed, Oura sends a `GET` to your callback URL:
+When you create a subscription, Oura sends a `GET` to your callback URL:
 
 ```
 GET /webhooks/oura?verification_token=<your-token>&challenge=<random>
@@ -35,7 +35,7 @@ Each event `POST` carries two headers:
 | Header | Value |
 |--------|-------|
 | `x-oura-signature` | HMAC-SHA256 hex digest, **UPPERCASE** |
-| `x-oura-timestamp` | Unix timestamp used in the signed content |
+| `x-oura-timestamp` | Timestamp prepended to the signed content (Oura's example: `1234567890`) |
 
 ### Algorithm
 

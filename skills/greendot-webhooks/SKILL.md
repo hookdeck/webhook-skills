@@ -66,12 +66,12 @@ proxy — there is no application-level token to check.
 > check. Authenticity comes from the OAuth Bearer token (and/or mTLS). See
 > [TODO.md](TODO.md).
 >
-> Green Dot also sends an `API-Key` header (your program's own static key,
-> echoed back) on every delivery — it is not a signature, so don't treat it as
+> Green Dot also sends an `API-Key` header (your program's API key,
+> the same value on every delivery) — it is not a signature, so don't treat it as
 > proof of authenticity beyond weak defense-in-depth on top of the Bearer token.
 
 Then **echo the `x-GD-RequestId` header** back and respond `200`/`201` with a
-`responseDetails` body, otherwise Green Dot treats the delivery as failed:
+`responseDetails` body, as Green Dot's docs require:
 
 ```json
 { "responseDetails": [{ "code": 0, "subCode": 0, "description": "<x-GD-RequestId>" }] }
@@ -85,7 +85,9 @@ Then **echo the `x-GD-RequestId` header** back and respond `200`/`201` with a
 
 ## Common Event Types
 
-The event name is the `eventType` field in the JSON body:
+The body is an envelope, `{ accounts: [{ accountIdentifier, events: [...] }] }`,
+and the event name is **each event's** `eventType` inside `accounts[].events[]`.
+One request can carry several events, so loop over both arrays:
 
 | `eventType` | Triggered when |
 |-------------|----------------|
@@ -97,8 +99,10 @@ The event name is the `eventType` field in the JSON body:
 | `directDepositSwitch` | A direct-deposit switch progresses |
 | `provisioning` | Account / card provisioning progresses |
 
-> Green Dot also emits statement-ready, interest-paid, NSF/failed-transfer, NOC,
-> eWallet, paper-check, P2P, ATM PIN, and adjustment events. The exact set is
+> Green Dot documents 28 event types with examples on its
+> [Webhook Events](https://developer.greendot.com/embedded-finance/docs/webhook-events)
+> page, including `statementReady`, `failedTransfer`, `achNOCAlert`, `p2pTransfer`,
+> `atmPinReset`, `checkDeposit` and `adjustmentFinalStatus`. The exact set is
 > **program-specific** — confirm the enabled `eventType` values with your Green
 > Dot representative.
 

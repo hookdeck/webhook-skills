@@ -9,19 +9,19 @@ Knock signs each outbound webhook with HMAC-SHA256. The signature travels in a s
 | `x-knock-signature` | `t=<timestamp_ms>,s=<base64_signature>` |
 
 - `t=` — the timestamp at which Knock generated the signature, in **milliseconds since the Unix epoch**.
-- `s=` — base64-encoded HMAC-SHA256 of `${timestamp_ms}.${raw_body}` using your endpoint's signing secret.
+- `s=` — base64-encoded HMAC-SHA256 of `${timestamp_ms}.${raw_body}` using your webhook's secret key.
 
 ## ⚠️ Critical: Milliseconds, not seconds
 
 > Knock's timestamp is in **milliseconds**. Stripe's `Stripe-Signature` header looks identical but uses **seconds**. If you copy a Stripe verifier without changing the unit, **every Knock signature check will silently fail** — the timestamp is wrong by a factor of 1,000, both inside the HMAC input string and in the freshness check.
 
-The recommended replay window is **5 minutes** (`300_000` milliseconds). Reject any payload whose `t=` timestamp is older than that.
+Knock suggests a **5 minute** replay window (`300_000` milliseconds): you may reject any payload whose `t=` timestamp is older than that.
 
 ## How to Verify
 
 ### No SDK helper is available
 
-The official Knock SDKs (`@knocklabs/node` on npm, `knockapi` on PyPI) do **not** ship an inbound webhook verification helper as of v1.32.0 / v1.25.0 respectively. There is no `webhooks.unwrap()` / `constructEvent()` / `verify()` to reach for. Verify with the standard library — do not pull in a third-party verifier.
+The official Knock SDKs (`@knocklabs/node` on npm, `knockapi` on PyPI) do **not** ship an inbound webhook verification helper (checked against v1.41.1 and v1.33.0 on 2026-11-27). There is no `webhooks.unwrap()` / `constructEvent()` / `verify()` to reach for. Verify with the standard library — do not pull in a third-party verifier.
 
 ### Node.js / Express / Next.js
 
@@ -129,9 +129,9 @@ Already covered above, but worth repeating: Knock's `t=` value is in **milliseco
 1. The freshness check (`Date.now() - ts < 5 * 60 * 1000`, not `Date.now() / 1000 - ts < 300`).
 2. The string fed into HMAC (use `${timestampMs}.${body}`, not `${timestampSeconds}.${body}`).
 
-### 3. The secret is the per-endpoint signing secret, not the API key
+### 3. The secret is the webhook's secret key, not the API key
 
-The signing secret is shown on each webhook endpoint's detail page in the Knock dashboard. It is distinct from your Knock account API key. Each endpoint has its own secret; rotating one does not affect the others.
+The secret key is shown on each webhook's **Overview** tab in the Knock dashboard. It is distinct from your Knock account API key. Each webhook has its own secret, and a webhook belongs to one environment.
 
 ### 4. Timing-safe comparison
 
@@ -139,7 +139,7 @@ Always use `crypto.timingSafeEqual` (Node) or `hmac.compare_digest` (Python). Pl
 
 ### 5. 5-minute replay window
 
-Knock's documentation recommends rejecting payloads older than 5 minutes. Apply this on top of the signature check. If your server clock is off by more than a few seconds, verification will start failing — sync clocks via NTP.
+Knock's documentation suggests rejecting payloads older than 5 minutes. Apply this on top of the signature check. If your server clock is off by more than a few seconds, verification will start failing — sync clocks via NTP.
 
 ## Debugging Verification Failures
 

@@ -48,7 +48,7 @@ The webhook route is available at `POST http://localhost:3000/webhooks/gocardles
   throwing `InvalidSignatureError` on mismatch.
 - A webhook is a **batch** of up to 250 events, each dispatched by `resource_type` +
   `action`. Return `204 No Content` to acknowledge; keep handlers **idempotent on
-  `event.id`** because delivery is at-least-once and manual retries replay the whole batch.
+  `event.id`** because delivery is at-least-once and the same event can appear in more than one webhook.
 
 ## Test
 

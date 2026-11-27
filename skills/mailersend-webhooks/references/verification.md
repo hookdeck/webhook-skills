@@ -65,27 +65,19 @@ def verify_signature(raw_body: bytes, signature: str, secret: str) -> bool:
 
 ### The official SDKs
 
-**Node (`mailersend`)** ships a `MailerSendUtils.verifyWebHook(rawBody, signature, signingSecret)`
-helper, but as of `mailersend@3.2.0`:
+**Node (`mailersend`)** ships `MailerSendUtils.verifyWebHook(rawBody, headersOrSignature, signingSecret)`.
+Older releases had problems (not exported from the entry point, no length guard,
+a README that read a non-existent `x-mailersend-signature` header); current
+releases (checked at 3.9.0) fix all three:
 
-- It is **not exported from the package entry point**. `require('mailersend').MailerSendUtils`
-  is `undefined`; you'd need the undocumented deep import
-  `require('mailersend/lib/services/mailersend.utils')`.
-- It calls `crypto.timingSafeEqual` **without a length guard**, so a malformed or
-  truncated `Signature` header throws `RangeError: Input buffers must have the
-  same byte length` instead of returning `false` — an unhandled 500 on
-  attacker-controlled input.
-- Its README's usage snippet reads the signature from
-  `request.headers['x-mailersend-signature']`. **No such header is sent.** The
-  API docs' Security section and all six of its language samples use `Signature`
-  (the Go sample calls `r.Header.Get("Signature")` outright), and that is the
-  header on real deliveries. Copy the SDK snippet verbatim and you pass
-  `undefined` as the signature, which the helper rejects with
-  `Error: No signature provided` — a 500 on every delivery.
+- `import { MailerSendUtils } from "mailersend"` works.
+- Pass the request headers (or a fetch `Headers`) and it reads `Signature`, or
+  pass the header value as a string.
+- It checks the length before `timingSafeEqual` and returns `false` on a mismatch.
+- It **throws** when the raw body, the signature or the secret is missing, so
+  wrap it in `try`/`catch` and answer 401.
 
-**Python (`mailersend`)** ships no webhook verification helper at all. As of
-`mailersend==2.0.3` the only signing-related thing in the package is a
-`signing_secret` field on the SMS-webhook model.
+**Python (`mailersend`)** doesn't document a webhook verification helper.
 
 Verify manually, as the official docs' own Node, Go and PHP samples do. That is
 what the examples in this skill do.
@@ -166,7 +158,8 @@ garbage input compare equal-length. Compare the hex **strings** (as UTF-8 bytes)
 instead, as above.
 
 **There's no timestamp, so you can't do replay protection at the transport
-layer.** Dedupe on `data.id` in your application instead. See
+layer.** Dedupe on `type` plus `data.id` in your application instead
+(`data.id` alone is shared by the unique and non-unique open and click events). See
 [idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md).
 
 **`data.meta` is `[]` when empty.** Not `{}`, not `null` — an empty JSON array.
@@ -212,4 +205,4 @@ got to it. Never leave that log in production; it discloses a valid signature.
 
 - [Webhook security](https://developers.mailersend.com/api/v1/account/webhooks.html#security)
 - [Account webhooks](https://developers.mailersend.com/api/v1/account/webhooks.html)
-- [SMS webhooks](https://developers.mailersend.com/api/v1/sms-webhooks.html)
+- [SMS webhooks](https://developers.mailersend.com/api/v1/sms/webhooks)

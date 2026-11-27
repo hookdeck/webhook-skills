@@ -1,22 +1,14 @@
 # Ordinal Webhooks - Express Example
 
-Minimal example of receiving [Ordinal](https://www.tryordinal.com/) (tryordinal.com)
-webhooks in Express, authenticated with a **static custom-header secret**.
-
-**Ordinal does not sign webhook deliveries.** There is no signature header, no HMAC, no
-signing secret and no timestamp. This example authenticates the *channel* by comparing a
-header **you** configured on the webhook (`headers`) against `ORDINAL_WEBHOOK_SECRET` using
-a constant-time compare, and **fails closed** when that secret is unset.
-
-Because nothing is signed over the body, there is **no raw-body requirement** —
-`express.json()` is mounted on the route and that is safe here. Do not copy the raw-body
-dance from a signed provider.
+Receives [Ordinal](https://www.tryordinal.com/) (tryordinal.com) webhooks in Express and
+verifies each delivery's Standard Webhooks signature with the `standardwebhooks` library,
+as Ordinal's docs recommend.
 
 ## Prerequisites
 
 - Node.js 18+
-- An Ordinal workspace and a workspace API key (Settings → Integrations → API, [app.tryordinal.com/settings/integrations/api](https://app.tryordinal.com/settings/integrations/api)) to register the webhook
-- A secret you generate yourself: `openssl rand -hex 32`
+- An Ordinal webhook and its `whsec_` signing secret (from the Create webhook response or
+  the webhook's configure page)
 
 ## Setup
 
@@ -25,28 +17,20 @@ dance from a signed provider.
    npm install
    ```
 
-2. Copy environment variables:
+2. Copy environment variables and set `ORDINAL_WEBHOOK_SECRET`:
    ```bash
    cp .env.example .env
    ```
 
-3. Generate a secret and put it in `.env` as `ORDINAL_WEBHOOK_SECRET`:
-   ```bash
-   openssl rand -hex 32
-   ```
-
-4. Register the webhook with that secret in its `headers`:
+3. Create the webhook in **Settings > Integrations > Webhooks**, or with the API:
    ```bash
    curl -X POST "https://app.tryordinal.com/api/v1/webhooks" \
      -H "Authorization: Bearer $ORDINAL_API_KEY" \
      -H "Content-Type: application/json" \
-     -d '{"name":"CRM Sync","url":"https://<your-tunnel>/webhooks/ordinal",
-          "topics":["post.published","post.publish_failed","post.approval.requested"],
-          "headers":{"X-Webhook-Secret":"<the secret from step 3>"}}'
+     -d '{"name":"CRM Sync","url":"https://<your-public-url>/webhooks/ordinal",
+          "topics":["post.published","post.publish_failed","post.approval.requested"]}'
    ```
-
-   The Create response omits `headers` — confirm with `GET /webhooks/{id}` if you want to
-   see them echoed back.
+   Save `signingSecret` from the response: later reads omit it.
 
 ## Run
 
@@ -58,23 +42,22 @@ Server runs on http://localhost:3000, endpoint `POST /webhooks/ordinal`.
 
 ## Test
 
-Run the test suite (no network, no Ordinal account needed):
-
 ```bash
 npm test
 ```
 
-Send a delivery by hand with a documented payload:
+The tests sign Ordinal's documented example payloads with a test secret, then check a
+changed body, a wrong secret, an old timestamp, missing headers and a rotation with two
+signatures.
 
-```bash
-curl -X POST http://localhost:3000/webhooks/ordinal \
-  -H "Content-Type: application/json" \
-  -H "X-Webhook-Secret: $ORDINAL_WEBHOOK_SECRET" \
-  -d '{"type":"post.published","data":{"post":{"id":"550e8400-e29b-41d4-a716-446655440001","title":"Q4 Product Launch Announcement","channel":"LinkedIn","postUrl":"https://www.linkedin.com/feed/update/urn:li:share:7123456789012345678"}},"createdAt":"2025-02-26T14:30:00.000Z"}'
-```
+## Notes
 
-Omit the header and you get `401`. Ordinal documents **no test or `ping` event**, so real
-traffic means performing the action in the app.
+- The route uses `express.raw()`. A JSON body parser in front of it changes the bytes and
+  breaks verification.
+- `webhook-id` is the same on a retry, so the example deduplicates on it.
+- `webhook-topic` repeats the event type but isn't signed. Route on `type` from the
+  verified body.
+- Ordinal documents no test or ping event. Perform the action in the app to trigger one.
 
 ## Receive webhooks locally
 
@@ -82,6 +65,5 @@ traffic means performing the action in the app.
 npx hookdeck-cli listen 3000 ordinal --path /webhooks/ordinal
 ```
 
-No account required — the CLI creates a guest account on first run and gives you a public
-HTTPS URL to use as the webhook's `url`, plus a web UI for inspecting and replaying
-requests.
+No account required. The CLI gives you a public HTTPS URL to use as the webhook's `url`,
+plus a web UI for inspecting and replaying requests.

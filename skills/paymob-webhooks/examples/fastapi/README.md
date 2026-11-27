@@ -1,12 +1,13 @@
 # Paymob Webhooks - FastAPI Example
 
-Minimal example of receiving Paymob **Transaction Processed Callbacks** with
+Minimal example of receiving Paymob **Transaction Processed Callbacks** and card
+token callbacks with
 HMAC-SHA512 signature verification.
 
 ## Prerequisites
 
 - Python 3.9+
-- A Paymob account with an HMAC secret (Dashboard → Settings → Account Info → HMAC)
+- A Paymob account with an HMAC secret (Dashboard > Settings > Developers > API Keys, main account user only)
 
 ## Setup
 
@@ -37,10 +38,9 @@ The webhook endpoint is `POST /webhooks/paymob`.
 
 ## How Verification Works
 
-Paymob does **not** ship a Python SDK with webhook verification, so this example
-verifies manually. Paymob does **not** sign the raw body — it computes
-HMAC-SHA512 (hex) over a fixed, ordered concatenation of 20 transaction fields
-and sends the result as the **`hmac` query parameter** (`?hmac=<hex>`). The
+Paymob does **not** sign the raw body — it computes
+HMAC-SHA512 (hex) over a fixed, ordered concatenation of keys from `obj` (20 for
+`TRANSACTION`, 8 for `TOKEN`) and sends the result as the **`hmac` query parameter** (`?hmac=<hex>`). The
 handler reads it from `request.query_params`, parses the JSON, rebuilds the
 string, and compares it with `hmac.compare_digest`. Note Python's
 `str(True)` is `"True"`, so booleans are converted to lowercase explicitly. See
@@ -53,9 +53,9 @@ field list and gotchas.
 pytest test_webhook.py -v
 ```
 
-The tests generate real signatures with the same HMAC-SHA512 algorithm Paymob
-uses and assert valid, invalid, missing, and tampered signatures are handled
-correctly.
+The tests check the string builder against the concatenated string Paymob's
+HMAC transaction page prints, verify Paymob's published card token example, and
+assert valid, invalid, missing, and tampered signatures are handled correctly.
 
 ## Receive Real Webhooks Locally
 

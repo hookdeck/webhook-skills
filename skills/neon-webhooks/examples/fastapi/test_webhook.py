@@ -132,6 +132,18 @@ class TestNeonWebhook:
         assert response.status_code == 200
         assert response.json() == {"received": True}
 
+    def test_before_create_returns_allowed(self):
+        payload = json.dumps({"event_type": "user.before_create"})
+        headers = sign_neon_webhook(payload.encode())
+
+        response = client.post(
+            "/webhooks/neon",
+            content=payload,
+            headers={**headers, "X-Neon-Event-Type": "user.before_create"},
+        )
+        assert response.status_code == 200
+        assert response.json() == {"allowed": True}
+
     def test_handles_all_event_types(self):
         event_types = [
             "send.otp",
@@ -139,11 +151,13 @@ class TestNeonWebhook:
             "user.before_create",
             "user.created",
             "phone_number.verified",
+            "organization.invitation.created",
+            "organization.invitation.accepted",
             "unknown.event",
         ]
 
         for event_type in event_types:
-            payload = json.dumps({"type": event_type})
+            payload = json.dumps({"event_type": event_type})
             headers = sign_neon_webhook(payload.encode())
 
             response = client.post(

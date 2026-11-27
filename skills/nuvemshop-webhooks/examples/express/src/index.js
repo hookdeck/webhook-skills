@@ -58,52 +58,52 @@ app.post('/webhooks/nuvemshop',
     switch (event) {
       case 'order/created':
         console.log('New order:', id);
-        // TODO: GET /v1/{storeId}/orders/{id}, start fulfillment, etc.
+        // Your code: GET /v1/{storeId}/orders/{id}, start fulfillment, etc.
         break;
 
       case 'order/paid':
         console.log('Order paid:', id);
-        // TODO: Trigger shipping, record revenue, etc.
+        // Your code: Trigger shipping, record revenue, etc.
         break;
 
       case 'order/cancelled':
         console.log('Order cancelled:', id);
-        // TODO: Restock, refund workflows, etc.
+        // Your code: Restock, refund workflows, etc.
         break;
 
       case 'order/updated':
         console.log('Order updated:', id);
-        // TODO: Re-sync order state, etc.
+        // Your code: Re-sync order state, etc.
         break;
 
       case 'order/fulfilled':
         console.log('Order fulfilled:', id);
-        // TODO: Send tracking to customer, etc.
+        // Your code: Send tracking to customer, etc.
         break;
 
       case 'product/created':
         console.log('New product:', id);
-        // TODO: Sync to external catalog, etc.
+        // Your code: Sync to external catalog, etc.
         break;
 
       case 'product/updated':
         console.log('Product updated:', id);
-        // TODO: Update external listings, pricing, etc.
+        // Your code: Update external listings, pricing, etc.
         break;
 
       case 'product/deleted':
         console.log('Product deleted:', id);
-        // TODO: Remove from external catalog, etc.
+        // Your code: Remove from external catalog, etc.
         break;
 
       case 'customer/created':
         console.log('New customer:', id);
-        // TODO: CRM sync, welcome email, etc.
+        // Your code: CRM sync, welcome email, etc.
         break;
 
       case 'app/uninstalled':
         console.log('App uninstalled from store:', storeId);
-        // TODO: Clean up store data, revoke tokens, etc.
+        // Your code: Clean up store data, revoke tokens, etc.
         break;
 
       default:

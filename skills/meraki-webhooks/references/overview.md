@@ -52,7 +52,7 @@ Default (non-templated) payload fields:
 | `organizationId` / `organizationName` / `organizationUrl` | Organization identifiers and Dashboard link |
 | `networkId` / `networkName` / `networkUrl` | Network identifiers and Dashboard link |
 | `deviceSerial` | Serial of the device that generated the alert (when applicable) |
-| `alertId` | Unique identifier for this alert occurrence |
+| `alertId` | ID for this alert message |
 | `alertType` | Human-readable alert label (e.g. `Motion detected`) |
 | `alertTypeId` | Stable machine identifier (e.g. `motion_alert`) — dispatch on this |
 | `alertLevel` | Severity/level of the alert (when applicable) |
@@ -60,30 +60,59 @@ Default (non-templated) payload fields:
 
 ### Example payload
 
+Meraki's sample `motion_alert` body, from the
+[Webhook Sample Alerts](https://developer.cisco.com/meraki/webhooks/webhook-sample-alerts/) page:
+
 ```json
 {
-  "version": "0.1",
-  "sharedSecret": "your_shared_secret",
-  "sentAt": "2026-07-23T18:04:20.123Z",
-  "organizationId": "2930418",
-  "organizationName": "My Organization",
-  "organizationUrl": "https://dashboard.meraki.com/o/VjjsAd/manage/organization/overview",
-  "networkId": "N_24329156",
-  "networkName": "Main Office",
-  "networkUrl": "https://n1.meraki.com/...",
-  "deviceSerial": "Q234-ABCD-5678",
-  "alertId": "0000000000000000",
-  "alertType": "Motion detected",
-  "alertTypeId": "motion_alert",
-  "alertLevel": "informational",
-  "occurredAt": "2026-07-23T18:02:53.000Z",
-  "alertData": {}
+    "version": "0.1",
+    "sharedSecret": "secret",
+    "sentAt": "2022-09-07T14:14:14.631232Z",
+    "organizationId": "2930418",
+    "organizationName": "My organization",
+    "organizationUrl": "https://dashboard.meraki.com/o/VjjsAd/manage/organization/overview",
+    "networkId": "N_24329156",
+    "networkName": "Main Office",
+    "networkUrl": "https://n1.meraki.com//n//manage/nodes/list",
+    "networkTags": [],
+    "deviceSerial": "Q234-ABCD-5678",
+    "deviceMac": "00:11:22:33:44:55",
+    "deviceName": "My camera",
+    "deviceUrl": "https://n1.meraki.com//n//manage/nodes/new_list/000000000000",
+    "deviceTags": [
+        "tag1",
+        "tag2"
+    ],
+    "deviceModel": "MV",
+    "alertId": "0000000000000000",
+    "alertType": "Motion detected",
+    "alertTypeId": "motion_alert",
+    "alertLevel": "informational",
+    "occurredAt": "2018-02-11T00:00:00.123450Z",
+    "alertData": {
+        "imageUrl": "https://XXXXXXXXXXXXXXXXXXXXXXXXXXX.jpg",
+        "timestamp": 1563499479.547,
+        "motionRecapEnabled": true,
+        "motionDetectorAllowsRecap": true,
+        "isSpyglass": false,
+        "imageEnabled": true
+    },
+    "enrollmentString": "my-enrollment-string",
+    "notes": "Additional description of the network",
+    "productTypes": [
+        "appliance",
+        "switch",
+        "wireless"
+    ]
 }
 ```
 
 ## Delivery & Reliability
 
 - **Timing:** Alerts are typically delivered within ~90 seconds of the event.
+- **Timeout:** Your endpoint must respond in under 2 seconds.
+- **Retries:** A failed delivery is retried up to two times (three attempts in
+  total).
 - **Test:** The "Send test" button on the HTTP server posts a sample payload.
 - **Auto-disable:** If delivery consistently fails for **more than 100 attempts
   in 24 hours**, Meraki disables the receiver and emails the administrators.

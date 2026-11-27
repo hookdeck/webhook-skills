@@ -6,7 +6,7 @@ Minimal example of receiving NMI (Network Merchants) webhooks with
 ## Prerequisites
 
 - Python 3.9+
-- An NMI gateway account with a **webhooks signing key** (Merchant Control Panel
+- An NMI gateway account with a **webhooks signing key** (Merchant Portal
   → Settings → Webhooks)
 
 ## Setup
@@ -50,7 +50,7 @@ npx hookdeck-cli listen 8000 nmi --path /webhooks/nmi
 ```
 
 Register the printed public URL as your endpoint under **Settings → Webhooks** in
-the Merchant Control Panel, then run a test transaction and watch the delivery
+the Merchant Portal, then run a test transaction and watch the delivery
 arrive.
 
 ## How It Works
@@ -58,7 +58,7 @@ arrive.
 - NMI does **not** use Standard Webhooks. There is no SDK, so verification is
   manual: read the **raw body**, parse `t` (nonce) and `s` (signature) from the
   `Webhook-Signature` header, and compare an HMAC-SHA256 you compute.
-- **`t` is a nonce, not a timestamp** — there is no replay window to enforce.
+- **NMI calls `t` a nonce** and documents no replay window to enforce.
 - The signed content is `"<nonce>.<raw_body>"`, keyed with `NMI_SIGNING_KEY`,
   hex-encoded (lowercase). Mismatch returns 401.
 - On success the handler dispatches on the `transaction.<action>.<result>` event

@@ -8,7 +8,7 @@ with the webhook's signing secret.
 
 - Node.js 18+
 - A MailerSend account with a verified sending domain
-- The webhook's **signing secret** (Email → Domains → Manage → Webhooks → your
+- The webhook's **signing secret** (Email → Domains → View domain → Webhooks → your
   webhook). This is not your API token.
 
 ## Setup
@@ -96,7 +96,7 @@ curl -i http://localhost:3000/webhooks/mailersend \
   exactly one attempt. That's intended — but it means a broken verifier silently
   drops every event.
 - **No delivery id, timestamp or nonce is sent**, so transport-level replay
-  protection is impossible. The example dedupes on `data.id`; use Redis or your
+  protection is impossible. The example dedupes on `type` plus `data.id` (`data.id` alone repeats across the unique and non-unique open and click events); use Redis or your
   database in production rather than the in-memory `Set`.
 - `data.meta` is an empty **array** `[]` when there's nothing to report, and an
   object otherwise. `normalizeMeta()` handles it.

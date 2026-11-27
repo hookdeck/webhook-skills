@@ -150,10 +150,15 @@ To verify:
 Mollie's TypeScript SDK (`mollie-api-typescript`) implements exactly this in its
 `SignatureValidator` helper.
 
-## Secret Rotation: Two Signatures
+## Secret Rotation
 
-After you rotate the signing secret, "each event will contain two signature
-headers for the next 24 hours":
+Mollie's next-gen guide says "Creating a new secret revokes the old one and
+activates the new secret in the same transaction", so rotation causes
+"signature failures immediately, with no overlap window". Update your stored
+secret as soon as you rotate it. (The older best-practices page says the old
+key expires "within a day".)
+
+The same section still shows a request carrying two signature headers:
 
 ```http
 X-Mollie-Signature: sha256=4a4c6f3ed4d15fee87ad44e07a7fa9b8
@@ -162,9 +167,8 @@ X-Mollie-Signature: sha256=a8994a2b90c785deeae0f7b0c6ae475f
 
 Node (`req.headers`) and the Fetch API (`request.headers.get`) join repeated
 headers into one comma-separated string; Starlette exposes them through
-`request.headers.getlist()`. Split on `,` and accept the request if **any**
-value matches. Checking only the first value breaks verification for 24 hours
-after every rotation.
+`request.headers.getlist()`. The examples split on `,` and accept the request if
+**any** value matches, so they handle that case too.
 
 ## Implementation
 
@@ -225,7 +229,8 @@ def verify_mollie_signature(raw_body: bytes, signature_headers: list[str], secre
   (The sample code on Mollie's best-practices page compares the whole header
   value against the bare hex digest, which never matches. Follow the manual
   verification steps instead.)
-- **Handle two signatures** during a rotation (see above).
+- **Update the secret when you rotate** and accept a match on any of several
+  signature values (see above).
 - **Never fail open.** If `MOLLIE_WEBHOOK_SECRET` is unset, reject the request
   rather than skipping verification.
 - **Act fast.** Return `200` within 15 seconds; Mollie retries up to 10 times

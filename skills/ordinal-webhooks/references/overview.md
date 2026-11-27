@@ -9,7 +9,8 @@ activity to your endpoint as JSON `POST` requests so you can sync posts into a C
 warehouse, route approval requests into Slack, or alert on a failed publish.
 
 Ordinal webhooks are **not** Bitcoin Ordinals / inscriptions, Ordinal Stats, or Ordinal
-Labs. There is **no official Ordinal npm or pip SDK**.
+Labs. There is **no official Ordinal npm or pip SDK**; Ordinal's docs point to the
+Standard Webhooks libraries for signature verification.
 
 Official docs:
 - [Webhooks introduction](https://docs.tryordinal.com/integrations/webhooks/introduction)
@@ -35,25 +36,37 @@ Every delivery uses exactly this envelope:
 
 Respond with **any 2xx** status to acknowledge receipt.
 
-### There Is No Event Id
+### Delivery Headers
 
-**No top-level event id and no delivery-id header are documented.** If you need dedupe,
-derive a key yourself — for example `type` + the resource id inside `data` + `createdAt`.
-That is a suggestion for your own bookkeeping, **not** a documented idempotency key.
+| Header | Meaning |
+|--------|---------|
+| `webhook-id` | Stable id for the event; the same id is sent again on a retry |
+| `webhook-timestamp` | Unix seconds when the delivery was signed |
+| `webhook-signature` | Standard Webhooks signature(s), `v1,<base64>` |
+| `webhook-topic` | The event type, matching `type`. Not covered by the signature |
+
+Plus any static headers you set in the webhook's `headers` field. See
+[verification.md](verification.md).
+
+### Deduplicate on `webhook-id`
+
+The body has no event id. `webhook-id` identifies the event and repeats on a retry, so use
+it as the idempotency key.
 
 ### What Is Not Documented
 
 Do not fabricate values for any of these. Ordinal's docs do not specify:
 
-- Retry policy or number of delivery attempts
+- Retry schedule, number of attempts, or what happens after the last one (retries exist:
+  the docs say the same `webhook-id` "is sent again on a retry")
 - Delivery timeout
 - Ordering guarantees
 - Source IP ranges (**there is no IP allowlist to enumerate**)
-- `User-Agent` string
-- Any Ordinal-specific delivery header
+- `User-Agent` or `Content-Type` values
+- How to start a secret rotation
 - A test or `ping` event (there is none)
 
-## All Event Types (20 topics)
+## All Event Types (24 topics)
 
 `data` carries **one key per family**. Reading `data.post` on a comment or approval event
 returns `undefined` — this is the single most common Ordinal handler bug.
@@ -80,6 +93,10 @@ returns `undefined` — this is the single most common Ordinal handler bug.
 | `campaign.approval.approved` | `data.approval` | An approver grants approval for a campaign | Campaign-level sign-off tracking |
 | `invite.created` | `data.invite` | A user is invited to the workspace | Seat/provisioning tracking |
 | `invite.accepted` | `data.invite` | A user accepts a workspace invite | Provision the user in your own systems |
+| `linkedin.monitoring.comment.created` | `data.comment` | Someone comments on (or replies under) a post by a connected company page or personal profile | Route engagement into a social inbox |
+| `linkedin.monitoring.comment.edited` | `data.comment` | A comment or reply on a connected company page post is edited (not sent for personal profiles) | Keep the inbox copy current |
+| `linkedin.monitoring.comment.deleted` | `data.comment` | A comment or reply on a connected company page or personal profile post is deleted | Remove it from the inbox |
+| `linkedin.monitoring.mention.created` | `data.mention` | A connected company page is mentioned in a LinkedIn post | Alert the social team |
 
 ### Behaviour Notes From the Docs
 
@@ -92,6 +109,13 @@ returns `undefined` — this is the single most common Ordinal handler bug.
   comments also emit `post.comment.created`.
 - **`invite.created`:** if the invitee already has an account they are added directly and
   **no email is sent**.
+- **LinkedIn Monitoring comment events** carry a `profile` object with `type`
+  `Organization` (company page) or `User` (personal profile). The older `companyPage`
+  object holds the same account and is deprecated.
+- **Personal profile comments are pulled, not pushed.** Ordinal polls LinkedIn once a day,
+  every 30 minutes for the first 8 hours after it publishes a post, and when someone
+  selects **Refresh Comments**, so a comment can reach you up to a day after it was
+  written. Company page comments arrive as LinkedIn reports them.
 
 ### Mixed Separators — Use the Exact Strings
 
@@ -167,6 +191,8 @@ e.g. `["LinkedIn"]` — plural, unlike `post.published`'s singular `channel`), `
 
 - **`linkedIn`** (nullable): `{ profile, copy, assets[] }`
 - **`x`** (nullable): `{ profile, tweets: [{ copy, assets }] }`
+- **`instagram`**, **`tikTok`**, **`youTubeShorts`**: present in the current example, all
+  `null` there, so their shape isn't shown
 
 ### `social_profile.connected`
 
@@ -195,12 +221,12 @@ instead of `post`.
 ## Full Event Reference
 
 For any event whose fields are not listed above, read its own docs page rather than
-guessing. Page URLs replace both dots and underscores with hyphens:
-
-`https://docs.tryordinal.com/integrations/webhooks/<type>` — e.g.
-[`post-publish-failed`](https://docs.tryordinal.com/integrations/webhooks/post-publish-failed),
-[`social-profile-reconnect-needed`](https://docs.tryordinal.com/integrations/webhooks/social-profile-reconnect-needed),
-[`post-inline-comment-created`](https://docs.tryordinal.com/integrations/webhooks/post-inline-comment-created).
+guessing. Pages sit under a family folder (`social-profile`, `posts`, `approvals`,
+`invites`, `linked-in-monitoring`), and the page name replaces dots and underscores with
+hyphens, e.g.
+[`posts/post-publish-failed`](https://docs.tryordinal.com/integrations/webhooks/posts/post-publish-failed),
+[`social-profile/social-profile-reconnect-needed`](https://docs.tryordinal.com/integrations/webhooks/social-profile/social-profile-reconnect-needed),
+[`linked-in-monitoring/linkedin-monitoring-comment-created`](https://docs.tryordinal.com/integrations/webhooks/linked-in-monitoring/linkedin-monitoring-comment-created).
 
 The canonical list lives at
 [docs.tryordinal.com/integrations/webhooks/event-types](https://docs.tryordinal.com/integrations/webhooks/event-types).

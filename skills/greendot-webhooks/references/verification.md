@@ -117,16 +117,17 @@ and:
   token (or the Certificate/mTLS transport), not from a payload signature.
 - **Do not invent an `x-gd-signature` HMAC.** Its algorithm is undocumented; a
   guessed check gives false confidence. Get the spec from your rep first.
-- **Don't treat `API-Key` as a signature.** It's your program's own static key,
-  echoed back unchanged — not proof the payload wasn't tampered with.
-- **Always echo `x-GD-RequestId`.** Omitting it (or the `responseDetails` body)
-  makes Green Dot treat the delivery as failed and retry it.
+- **Don't treat `API-Key` as a signature.** It's your program's API key, the
+  same on every delivery — not proof the payload wasn't tampered with.
+- **Always echo `x-GD-RequestId`.** Green Dot's docs require it, with a `200`/`201`
+  and a `responseDetails` JSON body, on every response. Retries are triggered by
+  `5xx`, timeouts, `401`/`403` and connection failures.
 - **Timing-safe compare**, and guard against unequal lengths (Node's
   `timingSafeEqual` throws on length mismatch).
 - **HTTPS only.** Bearer tokens are secrets in transit; never accept webhooks
   over plain HTTP.
 - **Idempotency.** Retries can redeliver the same event for up to 24 hours —
-  dedupe on `eventId` / `x-GD-RequestId`.
+  dedupe on each event's `eventIdentifier`.
 
 ## Debugging Verification Failures
 
@@ -134,4 +135,4 @@ and:
 |---------|--------------|
 | `401` on every request | Wrong `GREENDOT_WEBHOOK_TOKEN_SECRET`, expired token, or missing `post:webhook` scope |
 | `jwt malformed` / decode error | `Authorization` header not `Bearer <jwt>`, or token is opaque (use introspection instead) |
-| Green Dot keeps retrying | You did not return `200`/`201`, did not echo `x-GD-RequestId`, or omitted the `responseDetails` body |
+| Green Dot keeps retrying | Your endpoint returned a `5xx`, `401` or `403`, or timed out |

@@ -2,8 +2,10 @@
 
 ## Prerequisites
 
-- A Gemini API key from Google AI Studio (no extra IAM role is required to manage webhooks)
-- Your application's public webhook endpoint URL (HTTPS required in production)
+- A Gemini API key from Google AI Studio
+- Your application's public webhook endpoint URL
+
+Webhooks are in preview, and the WebhookService API is under `/v1beta/`.
 
 ## Static Webhooks (Project-Level)
 
@@ -12,13 +14,12 @@ event. They use a symmetric HMAC-SHA256 secret returned **only once** at creatio
 
 ### 1. Create a Webhook Endpoint
 
-Use the WebhookService API to register an endpoint. The cookbook treats the
-`google-genai` SDK as the primary path:
+Use the WebhookService API to register an endpoint, through the `google-genai` SDK:
 
 ```python
 from google import genai
 
-client = genai.Client()
+client = genai.Client(http_options={"api_version": "v1beta"})
 webhook = client.webhooks.create(
     name="production",
     uri="https://api.example.com/webhooks/gemini",
@@ -30,14 +31,14 @@ webhook = client.webhooks.create(
         "interaction.requires_action",
     ],
 )
-print(webhook.new_signing_secret)  # whsec_... — save this, returned only once
+print(webhook.new_signing_secret)  # save this, returned only once
 ```
 
 Or via REST:
 
 ```bash
 curl -X POST \
-  "https://generativelanguage.googleapis.com/v1/webhooks" \
+  "https://generativelanguage.googleapis.com/v1beta/webhooks" \
   -H "x-goog-api-key: $GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -53,57 +54,66 @@ curl -X POST \
   }'
 ```
 
-The response contains `new_signing_secret` — a `whsec_`-prefixed base64 string. **Save
-it immediately**: it is only returned once. Subsequent reads only expose a
-`truncated_secret` preview inside `signing_secrets[]`.
+Or with Google's `gemini-api` CLI:
 
-```json
-{
-  "name": "production",
-  "uri": "https://api.example.com/webhooks/gemini",
-  "subscribed_events": ["batch.succeeded", "..."],
-  "new_signing_secret": "whsec_xxxxxxxxxxxxxxxxxxxxxxxx",
-  "signing_secrets": [
-    { "truncated_secret": "whsec_xxxx…", "create_time": "2026-05-04T12:00:00Z" }
-  ]
-}
+```bash
+gemini-api webhooks create \
+  --name production \
+  --uri https://api.example.com/webhooks/gemini \
+  --subscribed-events '["batch.succeeded","batch.failed"]'
 ```
+
+The response contains `new_signing_secret`. **Save it immediately**: it is only
+returned on create. Later reads only expose `truncated_secret` and `expire_time` for each
+entry in `signing_secrets`. The secret starts with `whsec_`; Google's Java and Go
+examples strip that prefix and base64-decode the rest to get the HMAC key.
+
+The API reference lists seven subscribable events: `batch.succeeded`, `batch.expired`,
+`batch.failed`, `interaction.requires_action`, `interaction.completed`,
+`interaction.failed` and `video.generated`. The guide's event catalog also lists
+`batch.cancelled` and `interaction.cancelled`.
 
 Store the secret in your secret manager and expose it to your application as
 `GEMINI_WEBHOOK_SECRET`.
 
 ### 2. Rotate the Signing Secret
 
-Rotation is supported and Google publishes overlapping signatures during the cutover —
-the `webhook-signature` header carries `v1,<old> v1,<new>` so both validate
-simultaneously until you swap the env var. Consult the latest Gemini cookbook
-([quickstarts/Webhooks.ipynb](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Webhooks.ipynb))
-for the exact SDK call that re-issues a `new_signing_secret`.
+Rotate with `client.webhooks.rotate_signing_secret(id=..., revocation_behavior="revoke_previous_secrets_after_h24")`
+or `POST https://generativelanguage.googleapis.com/v1beta/webhooks/{id}:rotateSigningSecret`.
+The response's `secret` is the new signing secret, returned only once. Previous secrets
+are revoked immediately or after a 24-hour grace period, depending on
+`revocation_behavior`. Google's docs don't describe what the `webhook-signature` header
+carries during the grace period, so keep the handler accepting a match on any `v1` entry
+and switch `GEMINI_WEBHOOK_SECRET` as soon as you rotate.
 
 ### 3. List, Get, Update, Ping, Delete
 
 Manage webhooks via `client.webhooks.list / get / update / ping / delete` (or the
-matching REST verbs on `https://generativelanguage.googleapis.com/v1/webhooks`).
+matching REST calls on `https://generativelanguage.googleapis.com/v1beta/webhooks`).
+`ping` (`POST /v1beta/webhooks/{id}:ping`) sends a ping event to the webhook.
+
+A webhook has a `state`: `enabled`, `disabled`, or `disabled_due_to_failed_deliveries`.
+Check it if deliveries stop.
 
 ## Dynamic Webhooks (Per-Request)
 
-Dynamic webhooks are passed inline with the request that starts the LRO and only fire
-for that specific job. They are signed asymmetrically with an RS256 JWT.
+Dynamic webhooks are passed inline with the request that starts the job and only fire
+for that job. They are signed asymmetrically with an RS256 JWT. For the Interactions
+API, `background` must be `true` when `webhook_config` is set:
 
 ```json
 {
-  "contents": [{ "parts": [{ "text": "..." }] }],
+  "model": "gemini-4-hydrogen",
+  "input": "Tell me a short joke about programming.",
+  "background": true,
   "webhook_config": {
-    "url": "https://api.example.com/webhooks/gemini",
-    "user_metadata": {
-      "user_id": "u_42",
-      "job_id": "internal_job_99"
-    }
+    "uris": ["https://api.example.com/webhooks/gemini-dynamic"],
+    "user_metadata": {"job_group": "nightly-eval", "priority": "high"}
   }
 }
 ```
 
-Verify dynamic webhooks against Google's JWKS endpoint:
+Verify dynamic webhooks against Google's JWKS endpoint, which Google's code examples use:
 
 ```
 https://generativelanguage.googleapis.com/.well-known/jwks.json
@@ -113,9 +123,8 @@ See [verification.md](verification.md) for the JWT verification flow.
 
 ## Testing Your Endpoint
 
-You can trigger a real delivery by submitting a tiny Batch API job or a short video
-generation request that completes quickly. There is no separate "send test event"
-dashboard at launch — webhooks fire when real LROs change state.
+Call `ping` on a static webhook to send it a ping event, or trigger a real delivery by
+submitting a small Batch API job or a short video generation request.
 
 For local development, use a tunnel:
 
@@ -128,8 +137,6 @@ This gives you a public HTTPS URL, request inspection, and replay.
 
 ## Production Requirements
 
-- **HTTPS only** — Google does not deliver to plaintext HTTP
-- **Valid TLS certificate** — self-signed certs are rejected
 - **Fast response** — return 2xx within seconds; queue heavy work
 - **At-least-once delivery** — deduplicate on `webhook-id`
 - **24h retries with exponential backoff** — your endpoint must be idempotent

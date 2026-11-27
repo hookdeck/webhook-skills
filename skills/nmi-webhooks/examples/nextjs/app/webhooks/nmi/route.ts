@@ -10,8 +10,8 @@ import crypto from 'crypto';
  *
  *   Webhook-Signature: t=<nonce>,s=<lowercase-hex-hmac>
  *
- * IMPORTANT: `t` is a NONCE, not a Unix timestamp — there is no replay/age
- * window to enforce. The signature `s` is HMAC-SHA256 over "<nonce>.<raw_body>",
+ * IMPORTANT: NMI calls `t` a nonce and documents no replay/age window, so
+ * don't parse it as a Unix time. The signature `s` is HMAC-SHA256 over "<nonce>.<raw_body>",
  * keyed with the webhooks signing key, hex-encoded (lowercase). We must hash the
  * raw, unparsed body — re-serializing the JSON would break the HMAC.
  */
@@ -84,31 +84,31 @@ export async function POST(request: NextRequest) {
   const action = String(eventType || '').split('.')[1];
   switch (action) {
     case 'sale':
-      // TODO: fulfil order / send receipt on success, dunning on failure
+      // Your code: fulfil order / send receipt on success, dunning on failure
       break;
 
     case 'auth':
-      // TODO: hold order while funds are authorized
+      // Your code: hold order while funds are authorized
       break;
 
     case 'capture':
-      // TODO: mark order paid, fulfil
+      // Your code: mark order paid, fulfil
       break;
 
     case 'void':
-      // TODO: release hold, cancel order
+      // Your code: release hold, cancel order
       break;
 
     case 'refund':
-      // TODO: reverse fulfilment, notify customer
+      // Your code: reverse fulfilment, notify customer
       break;
 
     case 'credit':
-      // TODO: payout/adjustment bookkeeping
+      // Your code: payout/adjustment bookkeeping
       break;
 
     case 'validate':
-      // TODO: save card on file
+      // Your code: save card on file
       break;
 
     default:

@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
     return new Response('Bad request', { status: 400 });
   }
 
-  // A webhook is a BATCH of events (up to 250). Delivery is at-least-once and a manual retry replays the whole batch;
-  // any non-2xx, so handlers must be idempotent on event.id.
+  // A webhook is a BATCH of events (up to 250). Delivery is at-least-once and the same event can
+  // appear in more than one webhook, so handlers must be idempotent on event.id.
   for (const event of events) {
     handleEvent(event);
   }
@@ -60,7 +60,7 @@ function handleEvent(event: Event): void {
       switch (event.action) {
         case 'confirmed':
           console.log(`Payment ${links.payment} confirmed`);
-          // TODO: mark the payment as collected, fulfil the order, etc.
+          // Your code: mark the payment as collected, fulfil the order, etc.
           break;
         case 'paid_out':
           console.log(`Payment ${links.payment} paid out`);
@@ -86,7 +86,7 @@ function handleEvent(event: Event): void {
           break;
         case 'cancelled':
           console.log(`Mandate ${links.mandate} cancelled:`, event.details?.description);
-          // TODO: suspend the customer's subscription/membership, etc.
+          // Your code: suspend the customer's subscription/membership, etc.
           break;
         case 'failed':
           console.log(`Mandate ${links.mandate} failed`);
@@ -102,9 +102,7 @@ function handleEvent(event: Event): void {
     case 'payouts':
       if (event.action === 'paid') {
         console.log(`Payout ${links.payout} paid`);
-        // TODO: reconcile the payout against collected payments.
-      } else if (event.action === 'bounced') {
-        console.log(`Payout ${links.payout} bounced`);
+        // Your code: reconcile the payout against collected payments.
       } else {
         console.log(`Unhandled payouts action: ${event.action}`);
       }

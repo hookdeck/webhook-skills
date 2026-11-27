@@ -1,7 +1,6 @@
 # Setting Up Oura Webhooks
 
-Oura has **no dashboard UI for webhooks** — subscriptions are managed entirely through the
-REST API. This guide covers getting credentials, subscribing, completing the handshake, and
+Oura's docs manage subscriptions through the REST API. This guide covers getting credentials, subscribing, completing the handshake, and
 renewing.
 
 ## Prerequisites
@@ -58,7 +57,7 @@ Immediately after you call create, Oura verifies your endpoint owns the URL:
 3. On success the subscription becomes active and the create call returns the subscription
    (including its `id` and `expiration_time`).
 
-If the token doesn't match, respond `401` and the subscription is not created.
+If the token doesn't match, respond `401`. Oura activates the subscription only if verification succeeds.
 
 ## Step 3 — Manage Subscriptions
 
@@ -73,8 +72,8 @@ All routes use the `x-client-id` + `x-client-secret` headers.
 | Delete | `DELETE /v2/webhook/subscription/{id}` |
 | Renew | `PUT /v2/webhook/subscription/renew/{id}` |
 
-`PUT` (update) and `PUT .../renew` also trigger a fresh handshake, so keep your `GET`
-handler live.
+The update request also requires `verification_token`. Oura's docs don't say whether update or
+renew repeats the GET check, so keep your `GET` handler live.
 
 ## Step 4 — Renew Before Expiry
 
@@ -86,19 +85,19 @@ curl -X PUT https://api.ouraring.com/v2/webhook/subscription/renew/$SUBSCRIPTION
   -H "x-client-secret: $OURA_CLIENT_SECRET"
 ```
 
-Automate renewal (e.g. a scheduled job) so subscriptions never lapse. If a subscription
-expires, you stop receiving events until you re-subscribe.
+Automate renewal (e.g. a scheduled job) so subscriptions never lapse. Oura's docs give no
+lifetime and don't say what happens at expiry, so schedule renewal from the returned
+`expiration_time` and list subscriptions (`GET /v2/webhook/subscription`) to check them.
 
 ## Testing Locally
 
-Use the Hookdeck CLI to tunnel Oura deliveries to your local server (no account required):
+In your Hookdeck project, create an **Oura** source named `oura` and enter your Oura client secret. Use that source's URL as the subscription's `callback_url`: a Hookdeck Oura source answers Oura's GET check itself. Sign the CLI into the same project, then forward the source to your local server.
 
 ```bash
 npx hookdeck-cli listen 3000 oura --path /webhooks/oura
 ```
 
-Set the printed Hookdeck URL as your subscription's `callback_url`. Because the handshake is
-a plain `GET`, you can also test it directly:
+Because the handshake is a plain `GET`, you can test your own handler's answer directly:
 
 ```bash
 curl "http://localhost:3000/webhooks/oura?verification_token=your-token&challenge=hello"

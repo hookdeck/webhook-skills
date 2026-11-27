@@ -79,9 +79,9 @@ the incoming request has an `X-Front-Challenge` header, reply within 10 seconds 
 
 (You may also reply `text/plain` with just the value, or form-encoded `challenge=<value>`.)
 
-## Rule Webhooks Differ (Legacy)
+## Rule Webhooks Differ
 
-The older **rule webhooks** use **HMAC-SHA1** (base64) over the **body only**, keyed with
+**Rule webhooks** use **HMAC-SHA1** (base64) over the **body only**, keyed with
 the "API Secret" from the Webhooks app — no timestamp, 5s timeout, no retries. Do not use
 the SHA256 timestamp scheme above for rule webhooks.
 

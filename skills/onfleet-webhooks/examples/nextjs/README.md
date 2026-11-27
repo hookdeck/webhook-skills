@@ -50,7 +50,7 @@ The tests (Vitest) cover:
 - valid, missing, invalid and tampered signatures
 - regressions for the secret used as a UTF-8 string and for HMAC-SHA256
 - fail-closed `500` when the secret is unset or not hex
-- every documented trigger (ids 0-30, plus `taskPredictedDelay`) with `null` fields and `data: {}`
+- every documented trigger (ids 0-31, plus `taskPredictedDelay`) with `null` fields and `data: {}`
 - a known-good digest computed the same way as Onfleet's docs sample
 
 ## Receive webhooks locally

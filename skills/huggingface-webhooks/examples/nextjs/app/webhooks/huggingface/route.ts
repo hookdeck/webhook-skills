@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 // Hugging Face webhook payload types
-type RepoType = 'model' | 'dataset' | 'space';
+type RepoType = 'model' | 'dataset' | 'space' | 'bucket';
 
 interface RepoRef {
   type: RepoType;

@@ -43,42 +43,42 @@ function handleEvent(event) {
   switch (topic) {
     case 'event:klaviyo.opened_email':
       console.log('Email opened:', id);
-      // TODO: update engagement score, etc.
+      // Your code: update engagement score, etc.
       break;
 
     case 'event:klaviyo.clicked_email':
       console.log('Email clicked:', id);
-      // TODO: track link click, trigger follow-up, etc.
+      // Your code: track link click, trigger follow-up, etc.
       break;
 
     case 'event:klaviyo.bounced_email':
       console.log('Email bounced:', id);
-      // TODO: flag address, suppress future sends, etc.
+      // Your code: flag address, suppress future sends, etc.
       break;
 
     case 'event:klaviyo.marked_email_as_spam':
       console.log('Email marked as spam:', id);
-      // TODO: suppress profile, review content, etc.
+      // Your code: suppress profile, review content, etc.
       break;
 
     case 'event:klaviyo.unsubscribed_from_email_marketing':
       console.log('Unsubscribed from email marketing:', id);
-      // TODO: sync suppression to your system, etc.
+      // Your code: sync suppression to your system, etc.
       break;
 
     case 'event:klaviyo.sent_sms':
-      console.log('SMS sent:', id);
-      // TODO: record message delivery, etc.
+      console.log('Inbound SMS from profile:', id);
+      // Your code: route the inbound message to support, etc.
       break;
 
     case 'event:klaviyo.received_sms':
-      console.log('Inbound SMS received:', id);
-      // TODO: route to support, trigger reply flow, etc.
+      console.log('SMS received by recipient:', id);
+      // Your code: record that your message arrived, etc.
       break;
 
     case 'event:klaviyo.submitted_review':
       console.log('Review submitted:', id);
-      // TODO: sync review, notify team, etc.
+      // Your code: sync review, notify team, etc.
       break;
 
     default:

@@ -27,19 +27,19 @@ function handleEvent(event) {
   switch (event.eventType) {
     case 'user.lifecycle.create':
       console.log('User created:', event.target?.[0]?.alternateId);
-      // TODO: provision downstream account, send welcome flow, etc.
+      // Your code: provision downstream account, send welcome flow, etc.
       break;
     case 'user.session.start':
       console.log('User signed in:', event.actor?.alternateId);
-      // TODO: audit logging, anomaly detection, etc.
+      // Your code: audit logging, anomaly detection, etc.
       break;
     case 'user.account.lock':
       console.log('Account locked:', event.target?.[0]?.alternateId);
-      // TODO: security alerting, notify the user, etc.
+      // Your code: security alerting, notify the user, etc.
       break;
     case 'group.user_membership.add':
       console.log('User added to group:', event.target?.map((t) => t.alternateId));
-      // TODO: sync entitlements, update downstream roles, etc.
+      // Your code: sync entitlements, update downstream roles, etc.
       break;
     default:
       console.log('Unhandled event type:', event.eventType);

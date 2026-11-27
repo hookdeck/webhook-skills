@@ -36,9 +36,13 @@ function verifyOpenAISignature(payload, webhookId, webhookTimestamp, webhookSign
     return false;
   }
 
-  // Extract version and signature
-  const [version, signature] = webhookSignature.split(',');
-  if (version !== 'v1') {
+  // The header holds one or more space-delimited "v1,<base64>" entries
+  // (several while an old secret is still valid). Accept a match on any.
+  const signatures = webhookSignature
+    .split(' ')
+    .filter((entry) => entry.startsWith('v1,'))
+    .map((entry) => entry.slice(3));
+  if (signatures.length === 0) {
     return false;
   }
 
@@ -56,11 +60,12 @@ function verifyOpenAISignature(payload, webhookId, webhookTimestamp, webhookSign
     .update(signedContent, 'utf8')
     .digest('base64');
 
-  // Timing-safe comparison to prevent timing attacks
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  // Timing-safe comparison against each entry
+  const expected = Buffer.from(expectedSignature);
+  return signatures.some((signature) => {
+    const received = Buffer.from(signature);
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  });
 }
 
 // Usage in Express
@@ -108,9 +113,10 @@ def verify_openai_signature(
     if timestamp_diff > 300 or timestamp_diff < -300:
         return False
 
-    # Extract version and signature
-    version, signature = webhook_signature.split(',', 1)
-    if version != 'v1':
+    # The header holds one or more space-delimited "v1,<base64>" entries
+    # (several while an old secret is still valid). Accept a match on any.
+    signatures = [entry[3:] for entry in webhook_signature.split(' ') if entry.startswith('v1,')]
+    if not signatures:
         return False
 
     # Create signed content
@@ -129,8 +135,8 @@ def verify_openai_signature(
         ).digest()
     ).decode('utf-8')
 
-    # Timing-safe comparison
-    return hmac.compare_digest(signature, expected_signature)
+    # Timing-safe comparison against each entry
+    return any(hmac.compare_digest(signature, expected_signature) for signature in signatures)
 
 # Usage in FastAPI
 @app.post("/webhooks/openai")

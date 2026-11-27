@@ -45,9 +45,9 @@ See [verification.md](verification.md) for details.
 | `Authorization: Bearer <token>` | OAuth client_credentials token, scope `post:webhook` |
 | `x-GD-RequestId` | Correlation id — **you must echo this back** in your response |
 | `x-gd-signature` | May be present; algorithm undocumented — not verified by this skill |
-| `API-Key` | Your program's own static API key, echoed back — not a computed signature |
+| `API-Key` | Your program's API key, the same on every delivery — not a computed signature |
 | `User-Agent: greendot-baas/3.0.0` | Identifies Green Dot's delivery agent |
-| `Content-Type: application/json` | JSON body |
+| `Accept: application/json, text/plain, text/html` | The body is JSON; Green Dot doesn't document its Content-Type |
 
 ## Common Event Types
 
@@ -71,24 +71,25 @@ receive with your Green Dot rep.
 
 ## Event Payload Structure
 
-Payloads are JSON objects keyed by `eventType`. A representative shape:
+Every body has the same envelope. The event type is **each event's**
+`eventType`, inside `accounts[].events[]`, not a top-level field:
 
 ```json
 {
-  "eventType": "transaction",
-  "programCode": "MYPROGRAM",
-  "eventId": "1c1b0b2a-2f3e-4a5b-9c8d-0e1f2a3b4c5d",
-  "eventTimestamp": "2026-01-15T12:34:56Z",
-  "data": {
-    "accountId": "acct_123",
-    "amount": 42.50,
-    "currency": "USD",
-    "status": "posted"
-  }
+  "accounts": [
+    {
+      "accountIdentifier": "...",
+      "events": [ { "eventType": "...", ... } ]
+    }
+  ]
 }
 ```
 
-Field names inside `data` vary by `eventType`. Treat unknown fields defensively.
+Each event carries `eventIdentifier`, `eventType`, `eventDateTime` and an object
+named for the event (`account`, `transactions`, `transfer`, ...). Green Dot says
+a multi-clearing transaction can put several events in one POST, so loop over
+both arrays. Full examples for every event type are on Green Dot's
+[Webhook Events](https://developer.greendot.com/embedded-finance/docs/webhook-events) page.
 
 ## Acknowledging a Delivery
 
@@ -101,11 +102,13 @@ Your endpoint must respond `200` or `201` and:
 { "responseDetails": [{ "code": 0, "subCode": 0, "description": "<x-GD-RequestId>" }] }
 ```
 
-`code: 0` signals success. Anything else (or a non-2xx status / timeout) causes
-Green Dot to retry the delivery if retries are enabled for your program.
+`code: 0` signals success. A `5xx`, a timeout, a `401`/`403` or a connection
+failure causes Green Dot to retry the delivery if retries are enabled for your
+program.
 
 ## Full Event Reference
 
 For the complete, current list of events and payloads, see Green Dot's
-[Webhooks overview](https://developer.greendot.com/embedded-finance/docs/webhooks-overview)
-and confirm the enabled set with your Green Dot representative.
+[Webhook Events](https://developer.greendot.com/embedded-finance/docs/webhook-events)
+and [Webhooks overview](https://developer.greendot.com/embedded-finance/docs/webhooks-overview)
+pages, and confirm the enabled set with your Green Dot representative.

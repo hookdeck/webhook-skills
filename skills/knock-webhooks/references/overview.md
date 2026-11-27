@@ -12,7 +12,7 @@ Webhook endpoints are public URLs. Knock signs every request with HMAC-SHA256 an
 
 ## Event Taxonomy
 
-Knock publishes 27 event types across 7 categories.
+Knock documents 38 event types in five groups: messages, workflow runs, commits, branches and resources. Commit and branch events are only sent on accounts with environments enabled.
 
 ### Message lifecycle (14 events)
 
@@ -43,40 +43,39 @@ These fire as a notification moves through delivery and recipient interaction:
 | `workflow_recipient_run.completed` | A workflow run for a single recipient completed |
 | `workflow_recipient_run.error` | An error occurred during a workflow run for a single recipient |
 
-### Workflow events (2)
+### Commit events (1)
 
 | Event | Triggered When |
 |-------|----------------|
-| `workflow.updated` | A workflow draft was updated |
-| `workflow.committed` | A workflow was committed to an environment |
+| `commits.promoted` | Commits were promoted into an environment, including a branch merge. `data` is the promote group; Knock says to deduplicate on its `id` |
 
-### Email layout events (2)
+### Branch events (3)
 
-| Event | Triggered When |
-|-------|----------------|
-| `email_layout.updated` | An email layout draft was updated |
-| `email_layout.committed` | An email layout was committed to an environment |
-
-### Translation events (2)
+Sent to webhooks in the branch's parent environment (usually `development`).
 
 | Event | Triggered When |
 |-------|----------------|
-| `translation.updated` | A translation draft was updated |
-| `translation.committed` | A translation was committed to an environment |
+| `branch.created` | A branch was created |
+| `branch.deleted` | A branch was deleted |
+| `branch.rebased` | A branch was rebased onto its parent environment |
 
-### Source event action events (2)
+### Resource events (17)
 
-| Event | Triggered When |
-|-------|----------------|
-| `source_event_action.updated` | A source event action draft was updated |
-| `source_event_action.committed` | A source event action was committed to an environment |
+Knock sends `*.updated` when a resource changes in an environment and `*.committed` when that change is committed (`event_data.commit_id` carries the commit). Promoted commits don't send `*.committed`; subscribe to `commits.promoted` for those. Goals publish on save, so they send only `goal.updated`.
 
-### Partial events (2)
+| Resource | Events |
+|----------|--------|
+| Audiences | `audience.updated`, `audience.committed` |
+| Email layouts | `email_layout.updated`, `email_layout.committed` |
+| Goals | `goal.updated` |
+| Guides | `guide.updated`, `guide.committed` |
+| Message types | `message_type.updated`, `message_type.committed` |
+| Partials | `partial.updated`, `partial.committed` |
+| Reusable requests | `reusable_request.updated`, `reusable_request.committed` |
+| Translations | `translation.updated`, `translation.committed` |
+| Workflows | `workflow.updated`, `workflow.committed` |
 
-| Event | Triggered When |
-|-------|----------------|
-| `partial.updated` | A partial draft was updated |
-| `partial.committed` | A partial was committed to an environment |
+Knock removed `source_event_action.updated` and `source_event_action.committed` from its docs on 2026-10-27: they can't be subscribed to and are no longer sent.
 
 ## Event Payload Structure
 
@@ -104,9 +103,9 @@ There is **no event-level `id`** in the envelope. Each request also carries an `
 
 ## Delivery Semantics
 
-- **At-least-once:** Knock may deliver the same event more than once. The payload has no event-level `id`, so build an idempotency key from `type`, the entity in `data` (`data.id` for message events), and `created_at`.
+- **Duplicates:** Knock retries failed deliveries, so the same event can arrive more than once. The payload has no event-level `id`. For `commits.promoted`, deduplicate on the promote group ID (`data.id`), as Knock's docs say. For other events, `type` plus the entity ID repeats on real events (a second `message.read` after `message.unread`, each `message.delivery_attempted`), so write state changes as idempotent upserts. Knock doesn't document whether a retry repeats `created_at`.
 - **Retries:** Knock retries non-2xx responses "a handful of times" over a few hours; the exact count and intervals are not fixed. It **never** retries `301`, `302`, `303`, `400`, `401`, `402`, `403`, `404`, or `405`, and on a `429` it tries to respect a well-formed `Retry-After` header. Return `200` (or any 2xx) as soon as the signature is verified and the event is durably enqueued — do downstream work asynchronously, since a timeout also triggers a retry.
-- **Ordering:** Not guaranteed. Use `created_at` if you need to reconcile state.
+- **Ordering:** Knock doesn't document delivery order. Compare `created_at` (or the message's `updated_at`) with the last value you applied before changing state.
 
 ## Full Event Reference
 

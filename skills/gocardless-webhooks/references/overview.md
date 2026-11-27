@@ -12,9 +12,10 @@ an `events` array (up to 250 events per request). Each event describes one chang
 one resource. The request is signed with an HMAC-SHA256 signature in the
 `Webhook-Signature` header.
 
-Because delivery is at-least-once and a manual retry (GoCardless does not auto-retry) replays the whole batch
-response, your handler must be **idempotent** — dedupe on each `event.id` so replays
-don't double-process.
+Delivery is at-least-once: GoCardless retries a failed webhook (9 attempts in all),
+and the same event can appear in more than one webhook. Your handler must be
+**idempotent** — dedupe on each `event.id`, not on `meta.webhook_id`, which
+identifies the delivery attempt.
 
 ## Event Payload Structure
 
@@ -75,7 +76,7 @@ You typically dispatch on the combination of `resource_type` + `action`.
 | `confirmed` | Funds confirmed collected from the customer |
 | `paid_out` | Payment included in a payout to your bank account |
 | `failed` | Payment failed (e.g. insufficient funds) |
-| `cancelled` | Payment cancelled before submission |
+| `cancelled` | Payment cancelled |
 | `charged_back` | Customer charged the payment back |
 | `chargeback_settled` | Chargeback settled |
 | `late_failure_settled` | A late failure settled |
@@ -101,14 +102,16 @@ You typically dispatch on the combination of `resource_type` + `action`.
 | Action | Triggered When |
 |--------|----------------|
 | `paid` | Payout sent to your bank account |
-| `bounced` | Payout bounced |
+| `paid_again` | Payout sent again after it bounced |
+| `fx_rate_confirmed` | Payout exchange rate confirmed |
+| `tax_exchange_rates_confirmed` | Tax exchange rates for the payout's items confirmed |
 
 ### `refunds`
 
 | Action | Triggered When |
 |--------|----------------|
 | `created` | Refund created |
-| `paid` | Refund submitted to the customer |
+| `paid` | Refund paid to the customer |
 | `refund_settled` | Refund settled |
 | `failed` | Refund failed |
 | `funds_returned` | Refund funds returned |
@@ -128,5 +131,6 @@ You typically dispatch on the combination of `resource_type` + `action`.
 ## Full Event Reference
 
 For the complete list of resource types and actions, see GoCardless's
-[webhook documentation](https://docs.gocardless.com/api-reference/#appendix-webhooks)
-and [staying up to date with webhooks](https://docs.gocardless.com/getting-started/api/staying-up-to-date-with-webhooks/).
+[event types reference](https://docs.gocardless.com/docs/api-reference/events),
+the [webhooks reference](https://docs.gocardless.com/docs/api-reference/webhooks)
+and [stay up to date with webhooks](https://docs.gocardless.com/docs/getting-started/stay-up-to-date-with-webhooks).

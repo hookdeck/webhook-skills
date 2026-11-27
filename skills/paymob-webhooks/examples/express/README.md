@@ -1,12 +1,13 @@
 # Paymob Webhooks - Express Example
 
-Minimal example of receiving Paymob **Transaction Processed Callbacks** with
+Minimal example of receiving Paymob **Transaction Processed Callbacks** and card
+token callbacks with
 HMAC-SHA512 signature verification.
 
 ## Prerequisites
 
 - Node.js 18+
-- A Paymob account with an HMAC secret (Dashboard → Settings → Account Info → HMAC)
+- A Paymob account with an HMAC secret (Dashboard > Settings > Developers > API Keys, main account user only)
 
 ## Setup
 
@@ -37,7 +38,8 @@ Server runs on http://localhost:3000. The webhook endpoint is
 ## How Verification Works
 
 Paymob does **not** sign the raw body. It computes HMAC-SHA512 (hex) over a
-fixed, ordered concatenation of 20 transaction fields and sends the result as
+fixed, ordered concatenation of keys from `obj` (20 for `TRANSACTION`, 8 for
+`TOKEN`) and sends the result as
 the **`hmac` query parameter** (`?hmac=<hex>`). The handler parses the JSON,
 rebuilds that string, and compares it timing-safely. See
 [../../references/verification.md](../../references/verification.md) for the full
@@ -49,9 +51,10 @@ field list and gotchas.
 npm test
 ```
 
-The tests generate real signatures with the same HMAC-SHA512 algorithm Paymob
-uses and assert that valid, invalid, missing, and tampered signatures are
-handled correctly.
+The tests check the string builder against the concatenated string Paymob's
+HMAC transaction page prints, verify Paymob's published card token example, and
+assert that valid, invalid, missing, and tampered signatures are handled
+correctly.
 
 ## Receive Real Webhooks Locally
 

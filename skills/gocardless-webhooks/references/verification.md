@@ -28,13 +28,12 @@ it to the header using a **timing-safe** equality check.
 | Secret | Webhook endpoint secret from the Dashboard |
 | Comparison | Timing-safe (`crypto.timingSafeEqual` / `hmac.compare_digest`) |
 
-> **Verified against a live sandbox delivery and GoCardless's official SDK
-> (2026-08).** A real delivery's `Webhook-Signature` was reproduced exactly by
-> `HMAC-SHA256(rawBody, secret)` over the exact wire bytes, and it matches the
-> `gocardless-nodejs` SDK's own construction
+> GoCardless's [webhooks reference](https://docs.gocardless.com/docs/api-reference/webhooks)
+> documents this scheme: an HMAC SHA256 hex digest of the raw request body, keyed
+> with the webhook endpoint secret. It was also checked against a live sandbox
+> delivery and the `gocardless-nodejs` SDK's own construction
 > (`crypto.createHmac('sha256', secret).update(body).digest()` +
-> `timingSafeEqual`). GoCardless's prose still never names the algorithm — so
-> the algorithm is confirmed by evidence, not by their docs.
+> `timingSafeEqual`) in 2026-08.
 
 ## Implementation
 
@@ -69,8 +68,9 @@ the `webhookId` from the payload's `meta` field.
 
 ### Manual Verification (fallback — e.g. Python/FastAPI)
 
-GoCardless only ships a Node SDK for webhook parsing, so in other languages verify
-manually. The algorithm is straightforward:
+GoCardless's client libraries for Python, Ruby, PHP, Java, .NET and Go also parse and
+verify webhooks (for example `gocardless_pro.webhooks.parse(body, secret, signature)`
+in Python). Without a library, verify manually. The algorithm is straightforward:
 
 ```python
 import hmac
@@ -109,9 +109,9 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
   any exception as "invalid".
 - **Batches.** The body has an `events` array (up to 250 events). Verify once over the
   whole body, then iterate the events.
-- **Idempotency.** GoCardless does NOT auto-retry (see below), but delivery is
-  at-least-once and you (or a teammate) can manually redeliver, so still dedupe on
-  `event.id` to avoid double-processing.
+- **Idempotency.** Delivery is at-least-once: GoCardless retries failed webhooks,
+  the same event can appear in more than one webhook, and anyone can retry a webhook
+  from the Dashboard. Dedupe on `event.id` to avoid double-processing.
 
 ## Response Codes
 
@@ -122,9 +122,9 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 | Malformed body / unexpected error | `400` / `500` |
 
 GoCardless's documentation uses `204` for success and `498 Invalid Token` for a failed
-signature check. GoCardless does **not** automatically retry failed deliveries —
-redelivery is manual (see setup.md: `POST /webhooks/{id}/actions/retry` or the
-Dashboard). Still return `204` promptly and process asynchronously.
+signature check, which GoCardless logs and doesn't retry. Any other non-2xx, or no
+response within 10 seconds, is retried (9 attempts in all; see setup.md). Return
+`204` promptly and process asynchronously.
 
 ## Debugging Verification Failures
 

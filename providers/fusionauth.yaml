@@ -1,13 +1,14 @@
 name: fusionauth
 displayName: FusionAuth
 docs:
-  webhooks: https://fusionauth.io/docs/extend/events-and-webhooks/
-  events: https://fusionauth.io/docs/extend/events-and-webhooks/events/
-  verification: https://fusionauth.io/docs/extend/events-and-webhooks/signing
+  webhooks: https://fusionauth.io/docs/events/
+  events: https://fusionauth.io/docs/events/reference/
+  verification: https://fusionauth.io/docs/events/webhooks/signing
 notes: >
   Identity and access management platform. Uses JWT-based signature verification.
-  Signatures are RSA-signed JWTs in the X-FusionAuth-Signature header.
-  Verify using FusionAuth's public key from /.well-known/jwks.json endpoint.
+  Signing is opt-in (since 1.48.0). The X-FusionAuth-Signature-JWT header carries a JWT signed
+  with a Key Master key (HMAC, RSA, EC or EdDSA) whose request_body_sha256 claim is the base64
+  SHA-256 of the raw body. Asymmetric public keys are published at /.well-known/jwks.json.
 testScenario:
   events:
     - user.create

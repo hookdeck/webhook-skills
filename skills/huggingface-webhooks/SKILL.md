@@ -3,8 +3,8 @@ name: huggingface-webhooks
 description: >
   Receive and verify Hugging Face webhooks. Use when setting up Hugging Face
   webhook handlers, debugging X-Webhook-Secret verification, or handling
-  events on models, datasets, and Spaces — repo updates, new commits and tags
-  (repo.content), config changes (repo.config), discussions, Pull Requests,
+  events on models, datasets, Spaces, and buckets — repo updates, new commits,
+  tags, and bucket file changes (repo.content), config changes (repo.config), discussions, Pull Requests,
   and discussion comments.
 license: MIT
 metadata:
@@ -19,7 +19,7 @@ metadata:
 
 - Setting up Hugging Face webhook handlers
 - Debugging `X-Webhook-Secret` verification failures
-- Handling repo events on models, datasets, and Spaces
+- Handling repo events on models, datasets, Spaces, and buckets
 - Reacting to new commits, tags, or branches via `updatedRefs`
 - Building discussion or Pull Request bots on the Hub
 - Listening for comments on discussions
@@ -132,8 +132,8 @@ Hugging Face webhook events are identified by `event.scope` + `event.action`.
 
 | `event.scope` | `event.action` values | Description |
 |---------------|----------------------|-------------|
-| `repo` | `create`, `update`, `delete`, `move` | Global events on a repo (model, dataset, Space) |
-| `repo.content` | `update` | New commits, branches, or tags. `updatedRefs` is included |
+| `repo` | `create`, `update`, `delete`, `move` | Global events on a repo (model, dataset, Space, bucket) |
+| `repo.content` | `update` | New commits, branches, or tags (`updatedRefs`), or bucket files added or deleted (`updatedFiles`) |
 | `repo.config` | `update` | Settings, secrets, DOI, privacy changes. `updatedConfig` is included |
 | `discussion` | `create`, `update`, `delete` | Discussion or Pull Request opened, retitled, merged, or closed |
 | `discussion.comment` | `create`, `update` | Comment created or edited (or hidden — `content` is undefined when `hidden: true`) |
@@ -164,15 +164,17 @@ Hugging Face webhook events are identified by `event.scope` + `event.action`.
 }
 ```
 
-- `repo.headSha` is only sent on `repo.*` scopes (not on community events).
+- `repo.headSha` is only sent on `repo.*` scopes (not on community events, and not for buckets).
 - `updatedRefs[].oldSha` is `null` for newly created refs; `newSha` is `null` for deleted refs.
-- `repo.type` is `model`, `dataset`, or `space`.
+- `repo.type` is `model`, `dataset`, `space`, or `bucket`.
+- Bucket `repo.content` events carry `updatedFiles` instead of `updatedRefs`; above 10,000 entries the list is cut short and `updatedFilesTruncated` is `true`.
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
-| `X-Webhook-Secret` | Secret token configured in the webhook settings, sent verbatim. ASCII only. |
+| `X-Webhook-Secret` | Secret token configured in the webhook settings, sent verbatim. ASCII only. Not sent if the webhook has no secret. |
+| `Webhook-Id` | Unique per delivery. Retries and replays reuse it, so use it as an idempotency key. |
 
 The secret may alternatively be passed as a `?secret=XXX` query parameter on the handler URL.
 
@@ -181,6 +183,10 @@ The secret may alternatively be passed as a `?secret=XXX` query parameter on the
 ```bash
 HUGGINGFACE_WEBHOOK_SECRET=your_secret_value   # The secret you set in HF webhook settings
 ```
+
+## Delivery and Retries
+
+Answer with a `2xx` right away and process asynchronously. Any other status, or a connection error, counts as a failed delivery and is retried with a backoff; Hugging Face doesn't publish the schedule. A webhook whose deliveries keep failing is suspended and its owner is emailed; re-enable it in the webhook settings. Order is not guaranteed, so don't rely on arrival order.
 
 ## Rate Limiting
 

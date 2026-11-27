@@ -2,80 +2,106 @@
 
 ## What Are Paymob Webhooks?
 
-Paymob calls its webhooks **callbacks**. When a payment transaction reaches a
-result on Paymob's side, Paymob notifies your integration by calling the
-callback URLs you configured in the dashboard. Every callback carries an `hmac`
-value you must verify (see [verification.md](verification.md)) before trusting
-the payload.
-
-There are two callback kinds per integration, and both describe the **same
-transaction** using the **same fields**:
+Paymob calls its webhooks **callbacks**. Paymob sends a transaction callback
+when a transaction succeeds or is declined, and again after an action on it
+(refund, void, capture). When a customer saves a card, the same URL also gets a
+card token callback. Every callback carries an `hmac` query parameter you must
+verify (see [verification.md](verification.md)) before trusting the payload.
 
 | Callback | Method | Body / params | Purpose |
 |----------|--------|---------------|---------|
-| **Transaction Processed Callback** | POST (server-to-server) | JSON `{ "type": "TRANSACTION", "obj": { … } }` | The authoritative notification your backend should act on |
-| **Transaction Response Callback** | GET (browser redirect) | Flattened query params | Redirects the customer back to your site after payment |
+| **Transaction Processed Callback** | POST (server-to-server) | JSON `{ "type": "TRANSACTION", "obj": { … } }` | The notification your backend should act on |
+| **Card token callback** | POST (same URL) | JSON `{ "type": "TOKEN", "obj": { … } }` | A customer saved a card; `obj.token` is the token |
+| **Transaction Response Callback** | GET (browser redirect) | Query parameters | Redirects the customer back to your site after payment |
 
-Build your webhook handler on the **Transaction Processed Callback (POST)** — it
-is server-to-server and reliable. The GET callback is a browser redirect used
-for UX (showing the customer a result page).
+Build your handler on the POST URL: the integration ID's **Webhook URL**, or the
+`notification_url` you pass when you create an intention. Paymob says not to
+update order status from the GET redirect, because the customer may never
+complete it.
 
-## No Event Names — Read State From Booleans
+Subscriptions use their own callback, sent to a webhook you register on each
+subscription, with a `trigger_type` field and `hmac` in the body.
 
-Unlike most providers, Paymob does **not** send discrete event names like
-`payment.succeeded`. Every callback has the single `type` value **`TRANSACTION`**.
-You determine what happened by reading boolean fields on the transaction object:
+## No Event Names for Outcomes
+
+`type` tells a card token from a transaction, but a transaction's outcome has
+no event name. Read the booleans on `obj`:
 
 | Fields | Transaction state | Common use case |
 |--------|-------------------|-----------------|
-| `success: true`, `is_refunded: false`, `is_voided: false`, `pending: false` | **Succeeded** | Fulfil the order, mark paid |
-| `success: false`, `error_occured: true` | **Failed / declined** | Notify customer, release cart |
-| `pending: true` | **Pending** | Awaiting 3-D Secure or async completion |
+| `success: true` | **Succeeded** | Fulfil the order, mark paid |
+| `success: false`, `pending: false` | **Declined** | Notify customer, release cart |
+| `success: false`, `pending: true` | **Pending** | OTP page, kiosk reference or cash collection |
 | `success: true`, `is_auth: true`, `is_capture: false` | **Authorized** | Funds held; capture later |
-| `is_capture: true` | **Captured** | Complete a prior authorization |
-| `is_refunded: true` | **Refunded** | Reverse fulfilment, credit customer |
+| `is_captured: true` | **Captured** | `captured_amount` totals partial captures |
+| `is_refunded: true` | **Refunded** | `refunded_amount_cents` totals partial refunds |
 | `is_voided: true` | **Voided** | Cancel an uncaptured authorization |
 
-> Always check `success` together with `error_occured`, `pending`,
-> `is_refunded`, and `is_voided` — a single boolean is rarely enough.
+Use `obj.order.id` (Paymob's order ID) to find the order on your side.
 
-## Event Payload Structure
+## Payload Structure
 
-Transaction Processed Callback (POST) body:
+Transaction Processed Callback (POST) body, abridged to the signed fields, with
+values from Paymob's HMAC transaction callback example:
 
 ```json
 {
   "type": "TRANSACTION",
   "obj": {
-    "id": 123456789,
-    "amount_cents": 10000,
-    "created_at": "2026-07-27T10:15:30.123456",
-    "currency": "EGP",
-    "error_occured": false,
-    "has_parent_transaction": false,
-    "integration_id": 987654,
-    "is_3d_secure": true,
+    "id": 192036465,
+    "pending": false,
+    "amount_cents": 100000,
+    "success": true,
     "is_auth": false,
     "is_capture": false,
-    "is_refunded": false,
     "is_standalone_payment": true,
     "is_voided": false,
-    "pending": false,
-    "success": true,
-    "owner": 543210,
-    "order": { "id": 222333444 },
-    "source_data": { "pan": "2346", "sub_type": "MasterCard", "type": "card" }
+    "is_refunded": false,
+    "is_3d_secure": true,
+    "integration_id": 4097558,
+    "has_parent_transaction": false,
+    "order": { "id": 217503754 },
+    "created_at": "2024-06-13T11:33:44.592345",
+    "currency": "EGP",
+    "source_data": { "pan": "2346", "type": "card", "sub_type": "MasterCard" },
+    "error_occured": false,
+    "owner": 302852
   }
 }
 ```
 
-The 20 fields used for HMAC verification are (in order): `amount_cents`,
-`created_at`, `currency`, `error_occured`, `has_parent_transaction`, `obj.id`,
-`integration_id`, `is_3d_secure`, `is_auth`, `is_capture`, `is_refunded`,
-`is_standalone_payment`, `is_voided`, `order.id`, `owner`, `pending`,
-`source_data.pan`, `source_data.sub_type`, `source_data.type`, `success`.
+The full example also carries `order` details, `data`, `payment_key_claims`,
+`is_captured`, `captured_amount`, `refunded_amount_cents` and `updated_at`.
+
+Card token callback, abridged to the signed fields:
+
+```json
+{
+  "type": "TOKEN",
+  "obj": {
+    "id": 17233884,
+    "token": "<card token>",
+    "masked_pan": "xxxx-xxxx-xxxx-2346",
+    "merchant_id": 164295,
+    "card_subtype": "MasterCard",
+    "created_at": "2026-11-16T10:44:52.523591",
+    "email": "example.test@example.com",
+    "order_id": "655608785"
+  }
+}
+```
+
+## Delivery
+
+Paymob documents no timeout, retry schedule or ordering for callbacks. It names
+the Transaction Inquiry APIs (by transaction ID, order ID or merchant order ID)
+as the fallback when a callback is missed, and the Card Token Inquiry API
+returns a saved token by order ID.
 
 ## Full Event Reference
 
-- [Webhooks / callbacks & HMAC](https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac)
+- [Webhook (Callbacks) & HMAC](https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac)
+- [Transaction callbacks](https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/transaction-callbacks)
 - [HMAC transaction callback](https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-transaction-callback)
+- [HMAC for card tokens](https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-for-card-tokens)
+- [Subscription callback HMAC](https://developers.paymob.com/paymob-docs/hmac-calculation-for-subscription-callback)

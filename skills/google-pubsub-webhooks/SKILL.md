@@ -53,21 +53,25 @@ Configure OIDC. See [references/setup.md](references/setup.md).
 
 `POST` with `Content-Type: application/json`:
 
+Google's documented minimum example:
+
 ```json
 {
   "message": {
-    "attributes": { "eventType": "order.created" },
-    "data": "eyJvcmRlcklkIjoiMTIzIn0=",
+    "data": "SGVsbG8gQ2xvdWQgUHViL1N1YiEgSGVyZSBpcyBteSBtZXNzYWdlIQ==",
     "messageId": "2070443601311540",
-    "publishTime": "2026-08-13T19:13:12.201Z"
+    "message_id": "2070443601311540",
+    "publishTime": "2021-02-26T19:13:55.749Z",
+    "publish_time": "2021-02-26T19:13:55.749Z"
   },
-  "subscription": "projects/my-project/subscriptions/my-sub"
+  "subscription": "projects/myproject/subscriptions/mysubscription"
 }
 ```
 
-`data` is base64 and **may be absent** (messages can be published with
-attributes only). `attributes` is optional. `orderingKey` and `deliveryAttempt`
-appear only when enabled.
+`data` is base64 and **may be absent** (a message needs data or at least one
+attribute). `attributes` is an optional string map set by the publisher.
+`orderingKey` appears when the publisher set one, and a top-level
+`deliveryAttempt` when the subscription has a dead-letter topic.
 
 ## Verification (core)
 
@@ -171,16 +175,13 @@ testing always exercises the unauthenticated path.
 ## Using the Hookdeck `GOOGLE_PUBSUB` Source
 
 If you receive these through Hookdeck rather than at your own endpoint,
-**OIDC is mandatory** — the source type's verification takes exactly two
-required fields and there is no unauthenticated or URL-token option:
+turn on authentication for the push subscription and enter these two values
+on the source:
 
 | Field | Value |
 |-------|-------|
 | Audience | The subscription's `--push-auth-token-audience`, or the full push endpoint URL if the subscription sets none |
 | Service Account Email | The subscription's `--push-auth-service-account` |
-
-Your own endpoint sees each request once, live, so the examples here **do** let the library enforce
-`exp`. Do not copy the gateway's expiry behaviour into a direct receiver.
 
 ## Reference Materials
 

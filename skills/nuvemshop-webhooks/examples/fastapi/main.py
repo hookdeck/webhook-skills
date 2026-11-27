@@ -54,43 +54,43 @@ async def nuvemshop_webhook(request: Request):
     # Handle the event based on the resource/action event name
     if event == "order/created":
         print(f"New order: {resource_id}")
-        # TODO: GET /v1/{store_id}/orders/{id}, start fulfillment, etc.
+        # Your code: GET /v1/{store_id}/orders/{id}, start fulfillment, etc.
 
     elif event == "order/paid":
         print(f"Order paid: {resource_id}")
-        # TODO: Trigger shipping, record revenue, etc.
+        # Your code: Trigger shipping, record revenue, etc.
 
     elif event == "order/cancelled":
         print(f"Order cancelled: {resource_id}")
-        # TODO: Restock, refund workflows, etc.
+        # Your code: Restock, refund workflows, etc.
 
     elif event == "order/updated":
         print(f"Order updated: {resource_id}")
-        # TODO: Re-sync order state, etc.
+        # Your code: Re-sync order state, etc.
 
     elif event == "order/fulfilled":
         print(f"Order fulfilled: {resource_id}")
-        # TODO: Send tracking to customer, etc.
+        # Your code: Send tracking to customer, etc.
 
     elif event == "product/created":
         print(f"New product: {resource_id}")
-        # TODO: Sync to external catalog, etc.
+        # Your code: Sync to external catalog, etc.
 
     elif event == "product/updated":
         print(f"Product updated: {resource_id}")
-        # TODO: Update external listings, pricing, etc.
+        # Your code: Update external listings, pricing, etc.
 
     elif event == "product/deleted":
         print(f"Product deleted: {resource_id}")
-        # TODO: Remove from external catalog, etc.
+        # Your code: Remove from external catalog, etc.
 
     elif event == "customer/created":
         print(f"New customer: {resource_id}")
-        # TODO: CRM sync, welcome email, etc.
+        # Your code: CRM sync, welcome email, etc.
 
     elif event == "app/uninstalled":
         print(f"App uninstalled from store: {store_id}")
-        # TODO: Clean up store data, revoke tokens, etc.
+        # Your code: Clean up store data, revoke tokens, etc.
 
     else:
         print(f"Unhandled event: {event}")

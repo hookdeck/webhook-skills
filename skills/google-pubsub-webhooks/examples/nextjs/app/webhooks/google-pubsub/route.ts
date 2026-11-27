@@ -48,14 +48,14 @@ export async function POST(request: Request) {
   // across redeliveries of the same message.
   console.log('Pub/Sub message received:', message.messageId);
   console.log('Published at:', message.publishTime);
-  // TODO: if (await alreadyProcessed(message.messageId)) return new NextResponse(null, { status: ACK_STATUS });
+  // Your code: if (await alreadyProcessed(message.messageId)) return new NextResponse(null, { status: ACK_STATUS });
 
   // Pub/Sub defines no event catalog — any "event type" is whatever your
   // publisher put in `attributes`. Change the key to match your publisher.
   const eventType = attributes.eventType;
   if (eventType) {
     console.log('Event type attribute:', eventType);
-    // TODO: route on your publisher's own attribute values.
+    // Your code: route on your publisher's own attribute values.
   } else if (payload === null) {
     console.log('Attribute-only message (no data):', attributes);
   } else {

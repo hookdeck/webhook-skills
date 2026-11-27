@@ -202,8 +202,9 @@ Verification flow:
 3. Fetch and cache the JWKS document.
 4. Find the JWK with the matching `kid`.
 5. Verify the JWT signature with RS256 against that key.
-6. Validate `iss`, `aud` (your endpoint URL), and `exp`.
-7. The JWT payload contains the event; you can also recover `user_metadata`.
+6. Validate `aud` and `exp`. Google's example passes a placeholder audience
+   ("your-configured-audience", described as e.g. your project client ID); the docs don't name the value.
+7. Google's docs don't say which claims the token carries or how they relate to the body.
 
 ### Node.js (using `jose`)
 
@@ -217,7 +218,7 @@ const JWKS = createRemoteJWKSet(
 export async function verifyDynamicGeminiJWT(jwt, expectedAudience) {
   const { payload } = await jwtVerify(jwt, JWKS, {
     algorithms: ['RS256'],
-    audience: expectedAudience, // your webhook URL
+    audience: expectedAudience, // the audience you configured; Google's docs use a placeholder
   });
   return payload;
 }

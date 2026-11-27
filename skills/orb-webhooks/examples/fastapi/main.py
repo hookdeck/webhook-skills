@@ -14,7 +14,7 @@ load_dotenv()
 
 app = FastAPI()
 
-TOLERANCE_SECONDS = 300  # 5-minute replay window
+TOLERANCE_SECONDS = 300  # 5 minutes, the tolerance Orb's SDKs use
 
 
 def verify_orb_signature(
@@ -27,17 +27,20 @@ def verify_orb_signature(
 
     Orb signs `v1:{X-Orb-Timestamp}:{raw_body}` with HMAC-SHA256 using your
     per-endpoint signing secret. The hex digest arrives in `X-Orb-Signature`
-    prefixed with `v1=`.
+    prefixed with `v1=`. During a secret rotation the header can carry several
+    space-separated signatures; the delivery is valid if any one matches.
     """
     if not signature_header or not timestamp or not secret:
         return False
 
-    provided = signature_header[3:] if signature_header.startswith("v1=") else signature_header
-
     signed_content = f"v1:{timestamp}:".encode("utf-8") + raw_body
     expected = hmac.new(secret.encode("utf-8"), signed_content, hashlib.sha256).hexdigest()
 
-    return hmac.compare_digest(provided, expected)
+    for entry in signature_header.split(" "):
+        provided = entry[3:] if entry.startswith("v1=") else entry
+        if hmac.compare_digest(provided, expected):
+            return True
+    return False
 
 
 def is_timestamp_fresh(timestamp: str | None, tolerance_seconds: int = TOLERANCE_SECONDS) -> bool:
@@ -93,53 +96,53 @@ async def orb_webhook(request: Request):
 
     if event_type == "customer.created":
         print(f"Customer created: {resource_id('customer')} ({style})")
-        # TODO: Sync customer to CRM
+        # Your code: Sync customer to CRM
     elif event_type == "customer.credit_balance_dropped":
         print(
             f"Credit balance dropped for: {resource_id('customer')} "
             f"threshold: {props.get('balance_threshold')}"
         )
-        # TODO: Trigger top-up reminder
+        # Your code: Trigger top-up reminder
     elif event_type == "subscription.created":
         print(f"Subscription created: {resource_id('subscription')}")
-        # TODO: Provision access
+        # Your code: Provision access
     elif event_type == "subscription.started":
         print(f"Subscription started: {resource_id('subscription')}")
-        # TODO: Activate entitlements
+        # Your code: Activate entitlements
     elif event_type == "subscription.ended":
         print(f"Subscription ended: {resource_id('subscription')}")
-        # TODO: Revoke access
+        # Your code: Revoke access
     elif event_type == "subscription.plan_changed":
         print(
             f"Subscription plan changed: {resource_id('subscription')} "
             f"from plan: {props.get('previous_plan_id')}"
         )
-        # TODO: Update entitlements
+        # Your code: Update entitlements
     elif event_type == "subscription.usage_exceeded":
         print(
             f"Usage exceeded for: {resource_id('subscription')} "
             f"metric: {props.get('billable_metric_id')}"
         )
-        # TODO: Notify customer / throttle
+        # Your code: Notify customer / throttle
     elif event_type == "invoice.issued":
         # A standard payload omits line items — fetch the invoice if you need them.
         print(f"Invoice issued: {resource_id('invoice')} ({style})")
-        # TODO: Record receivable, email invoice
+        # Your code: Record receivable, email invoice
     elif event_type == "invoice.payment_succeeded":
         print(
             f"Invoice paid: {resource_id('invoice')} "
             f"via: {props.get('payment_provider')}"
         )
-        # TODO: Mark paid internally
+        # Your code: Mark paid internally
     elif event_type == "invoice.payment_failed":
         print(
             f"Invoice payment failed: {resource_id('invoice')} "
             f"via: {props.get('payment_provider')}"
         )
-        # TODO: Start dunning
+        # Your code: Start dunning
     elif event_type == "data_exports.transfer_success":
         print(f"Data export delivered: {event.get('id')}")
-        # TODO: Kick off downstream ETL
+        # Your code: Kick off downstream ETL
     else:
         print(f"Unhandled event type: {event_type}")
 

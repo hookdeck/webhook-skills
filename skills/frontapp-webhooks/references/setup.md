@@ -10,23 +10,26 @@
 
 ## Application Webhooks (recommended)
 
-Application webhooks are configured on a Front app and are the modern, signed, retrying
+Application webhooks are configured on a Front app, retry failed deliveries and are the
 webhook system this skill implements.
 
-### 1. Get Your Signing Key
+### 1. Add a Webhook Feature to Your App
 
-1. Go to the [Front Developer](https://dev.frontapp.com/) area and open (or create) your app.
-2. Add the **Webhooks** capability / feature to the app.
-3. Front provisions a **signing key** (also called the app "token") for the app. Copy it —
-   this is the HMAC key used to compute `X-Front-Signature`.
-4. Store it as `FRONT_WEBHOOK_SECRET` in your environment. Never commit it.
+1. On the Developers page in Front, open (or create) your app.
+2. Open the **Features** tab, click **Add feature**, then **Webhook**.
+3. Enter your endpoint as the **Webhook URL** (or pick a **Webhook Server** if you want
+   per-customer credentials), and under **Subscribed events** pick the events you need (e.g.
+   `inbound_received`, `outbound_sent`, `conversation_moved`, `assignee_changed`, `tag_added`,
+   `new_comment_added`, `message_delivery_failed`).
+4. Your server must already be live: saving the feature triggers the validation request
+   described below.
 
-### 2. Register Your Endpoint & Events
+### 2. Get Your Signing Key
 
-1. Add your endpoint URL to the app's webhook configuration.
-2. Subscribe to the events you care about (e.g. `inbound_received`, `outbound_sent`,
-   `conversation_moved`, `assignee_changed`, `tag_added`, `new_comment_added`,
-   `message_delivery_failed`).
+Front signs each request with your **application signing key**. Its verification steps call
+it the token provided during webhook configuration, and its Python example names it the
+application secret (apps show an **App secret** on their **Settings** tab). Store it as
+`FRONT_WEBHOOK_SECRET` in your environment. Never commit it.
 
 ### 3. The Subscription Validation Challenge
 
@@ -48,28 +51,30 @@ The examples in this skill detect the `X-Front-Challenge` header and reply autom
 
 Acknowledge fast (return `200` immediately) and do heavy processing asynchronously.
 
-## Rule Webhooks (legacy)
+## Rule Webhooks
 
 Rule webhooks are configured as a rule action, not on an app, and use a **different**
 verification scheme (HMAC-**SHA1**, base64, over the body only, keyed with the "API Secret"
 from the Webhooks app, 5s timeout, **no retries**). Useful for quick testing but not the
 target of this skill's examples.
 
-1. Front Settings → **Rules** → create/edit a rule.
-2. Add a **Send to webhook** action with your endpoint URL.
-3. Get the **API Secret** from Settings → **Integrations** → **Webhooks** (the "API Secret"
-   field) to verify the HMAC-SHA1 signature.
+1. Set up the rule's webhook action as described in Front's help center
+   ([Rule webhooks](https://dev.frontapp.com/docs/rule-webhooks)), choosing the full event or
+   an event preview.
+2. Get the **API secret**: in Front, click **Settings**, then under **Company** click
+   **App store**, open the **Webhooks** app, click **Configure app** and copy the API secret.
 
 ## Local Development
 
-Front must reach your endpoint over HTTPS. Use the Hookdeck CLI to tunnel to localhost —
-no account required, and it gives you a web UI to inspect and replay requests:
+Front must reach your endpoint over HTTPS. Create a Front source in Hookdeck Event Gateway
+(source type **Front**, with your app's signing key), then forward it to localhost with the
+Hookdeck CLI, where `frontapp` is the source's name:
 
 ```bash
 npx hookdeck-cli listen 3000 frontapp --path /webhooks/frontapp
 ```
 
-Use the printed HTTPS URL as your endpoint in the Front app webhook configuration.
+Use the source's URL as the Webhook URL in your Front app.
 
 ## Documentation
 

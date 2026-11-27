@@ -53,7 +53,7 @@ curl -X POST "https://onfleet.com/api/v2/webhooks" \
 | `url` | Yes | Your endpoint |
 | `name` | Yes | A label for the webhook |
 | `trigger` | Yes | Numeric trigger ID (see [overview.md](overview.md)) |
-| `threshold` | For triggers 1, 2, 12, 30 | See below |
+| `threshold` | For triggers 1, 2, 12, 30, 31 | See below |
 
 ### Thresholds
 
@@ -63,8 +63,9 @@ curl -X POST "https://onfleet.com/api/v2/webhooks" \
 | 2 `taskArrival` | Fire when the driver is at or within this many **meters** |
 | 12 `taskDelayed` | Fire when the task delay is at or above this many **seconds** |
 | 30 `predictedTaskDelay` | Fire when the predicted delay is at or above this many **seconds** |
+| 31 `taskPredictedEta` | Fire when the predicted ETA is at or above this many **seconds**, from 1800 to 28000 |
 
-Triggers 1, 2 and 12 are limited to 10 webhooks each. To get ETA alerts at
+Triggers 1, 2, 12 and 31 are limited to 10 webhooks each. To get ETA alerts at
 both 10 and 2 minutes, for example, create two `taskEta` webhooks with
 thresholds `600` and `120`.
 

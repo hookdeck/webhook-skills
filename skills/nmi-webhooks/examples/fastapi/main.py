@@ -22,8 +22,8 @@ def verify_nmi_webhook(raw_body: bytes, signature_header: str, signing_key: str)
 
         Webhook-Signature: t=<nonce>,s=<lowercase-hex-hmac>
 
-    IMPORTANT: ``t`` is a NONCE, not a Unix timestamp -- there is no replay/age
-    window to enforce. The signature ``s`` is HMAC-SHA256 over
+    IMPORTANT: NMI calls ``t`` a nonce and documents no replay/age window, so
+    don't parse it as a Unix time. The signature ``s`` is HMAC-SHA256 over
     "<nonce>.<raw_body>", keyed with the webhooks signing key, hex-encoded
     (lowercase). We hash the raw, unparsed body -- re-serializing the JSON would
     break the HMAC.
@@ -83,19 +83,19 @@ async def nmi_webhook(request: Request, webhook_signature: str = Header(default=
     action = parts[1] if len(parts) > 1 else ""
 
     if action == "sale":
-        pass  # TODO: fulfil order / send receipt on success, dunning on failure
+        pass  # Your code: fulfil order / send receipt on success, dunning on failure
     elif action == "auth":
-        pass  # TODO: hold order while funds are authorized
+        pass  # Your code: hold order while funds are authorized
     elif action == "capture":
-        pass  # TODO: mark order paid, fulfil
+        pass  # Your code: mark order paid, fulfil
     elif action == "void":
-        pass  # TODO: release hold, cancel order
+        pass  # Your code: release hold, cancel order
     elif action == "refund":
-        pass  # TODO: reverse fulfilment, notify customer
+        pass  # Your code: reverse fulfilment, notify customer
     elif action == "credit":
-        pass  # TODO: payout/adjustment bookkeeping
+        pass  # Your code: payout/adjustment bookkeeping
     elif action == "validate":
-        pass  # TODO: save card on file
+        pass  # Your code: save card on file
     else:
         print(f"Unhandled event type: {event_type}")
 

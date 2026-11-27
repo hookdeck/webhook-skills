@@ -10,8 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 // Classic (per-payment `webhookUrl`) webhooks are unsigned and handled by
 // app/webhooks/mollie/route.ts instead — Mollie recommends a separate URL for each.
 
-// During a secret rotation Mollie sends the header twice for 24 hours; the Fetch
-// API joins repeated headers as "sha256=<a>, sha256=<b>", so accept if any matches.
+// Mollie's rotation example shows the header sent twice; the Fetch API joins
+// repeated headers as "sha256=<a>, sha256=<b>", so accept if any matches.
 export function verifyMollieSignature(
   rawBody: string,
   signatureHeader: string | null,
@@ -41,7 +41,7 @@ function handleEvent(event: MollieEvent) {
   switch (event.type) {
     case 'payment.paid':
       console.log(`Payment ${event.entityId} paid`);
-      // TODO: fulfill the order
+      // Your code: fulfill the order
       break;
     case 'payment.authorized':
       console.log(`Payment ${event.entityId} authorized (capture to collect)`);

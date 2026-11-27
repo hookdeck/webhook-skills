@@ -87,8 +87,10 @@ FRONT_WEBHOOK_SECRET=your_app_signing_key   # App signing key from the Front app
 
 ## Local Development
 
+Create a Front source in Hookdeck Event Gateway (source type **Front**, with your app's
+signing key) and forward it to your local server, where `frontapp` is the source's name:
+
 ```bash
-# Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 frontapp --path /webhooks/frontapp
 ```
 

@@ -95,7 +95,7 @@ describe('POST /webhooks/gocardless', () => {
       .set('Content-Type', 'application/json')
       .send(body);
 
-    // No header -> SDK cannot verify -> treated as invalid (non-2xx triggers retry)
+    // No header -> SDK cannot verify -> treated as invalid
     expect(response.status).toBe(498);
   });
 
