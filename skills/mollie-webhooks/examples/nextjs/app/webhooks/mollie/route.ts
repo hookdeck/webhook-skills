@@ -38,7 +38,7 @@ function handlePayment(payment: { id: string; status: string }) {
   switch (payment.status) {
     case 'paid':
       console.log(`Payment ${payment.id} paid`);
-      // TODO: fulfill the order, send a receipt
+      // Your code: fulfill the order, send a receipt
       break;
     case 'authorized':
       console.log(`Payment ${payment.id} authorized (capture to collect)`);

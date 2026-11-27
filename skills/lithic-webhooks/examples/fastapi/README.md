@@ -28,7 +28,7 @@ Minimal example of receiving Lithic webhooks with signature verification using t
    cp .env.example .env
    ```
 
-4. Add your Lithic webhook signing secret (starts with `whsec_`) to `.env`. Copy it from the Lithic Dashboard when you create the event subscription.
+4. Add your Lithic webhook signing secret (starts with `whsec_`) to `.env`. Read it with `GET /v1/event_subscriptions/{event_subscription_token}/secret`.
 
 ## Run
 
@@ -52,7 +52,7 @@ Use the Hookdeck CLI — no account required, one paste-and-run line:
 npx hookdeck-cli listen 8000 lithic --path /webhooks/lithic
 ```
 
-The CLI prints a public URL. Register it as your event subscription URL in the Lithic Dashboard, then trigger events (or replay them from the Hookdeck UI).
+The CLI prints a public URL. Register it as your event subscription URL with `POST /v1/event_subscriptions`, then send a sandbox example with `POST /v1/simulate/event_subscriptions/{event_subscription_token}/send_example` (or replay events from the Hookdeck UI).
 
 ## Endpoint
 

@@ -23,16 +23,16 @@ specification — this is **not** Standard Webhooks. The trigger name is in the 
   "specversion": "1.0",
   "type": "message.created",
   "source": "/google/emails/realtime",
-  "id": "5b3c1f2e-...-9a8b",
-  "time": 1700000000,
+  "id": "<WEBHOOK_ID>",
+  "time": 1723821985,
   "webhook_delivery_attempt": 1,
   "data": {
-    "application_id": "APPLICATION_ID",
-    "grant_id": "GRANT_ID",
+    "application_id": "<NYLAS_APPLICATION_ID>",
     "object": {
-      "id": "MESSAGE_ID",
-      "subject": "Welcome",
-      "from": [{ "email": "sender@example.com" }]
+      "id": "<MESSAGE_ID>",
+      "grant_id": "<NYLAS_GRANT_ID>",
+      "object": "message",
+      "subject": "Let's send an attachment"
     }
   }
 }
@@ -45,9 +45,9 @@ specification — this is **not** Standard Webhooks. The trigger name is in the 
 | `source` | Origin path of the event, e.g. `/google/emails/realtime` |
 | `id` | Unique notification ID — use it for **idempotency / dedupe** |
 | `time` | Unix timestamp when the event occurred |
-| `webhook_delivery_attempt` | Delivery attempt number (1–3) |
+| `webhook_delivery_attempt` | Delivery attempt number (up to 5) |
 | `data.application_id` | Your Nylas application ID |
-| `data.grant_id` | The grant (connected account) the change belongs to |
+| `grant_id` | The grant (connected account): in `data.object` for most types, in `data` for booking, tracking, send-result and bounce types |
 | `data.object` | The changed resource (message, event, grant, etc.) |
 
 ## Common Event Types
@@ -74,17 +74,20 @@ specification — this is **not** Standard Webhooks. The trigger name is in the 
 ## Full Event Reference
 
 For the complete, authoritative list of triggers and their `data.object` schemas, see the
-[Nylas notification schemas](https://developer.nylas.com/docs/v3/notifications/notification-schemas/)
+[Nylas notification schemas](https://developer.nylas.com/docs/reference/notifications/)
 documentation.
 
 ## Delivery & Retries
 
 - Nylas retries **only** on temporary errors: `408`, `429`, `502`, `503`, `504`, `507`.
-- On those, it makes **2 retries (3 attempts total)** with exponential backoff; the last
-  attempt lands **10–20 minutes** after the first.
+- On those (and on a timeout, which is 20 seconds), it makes up to **5 attempts in total**
+  with exponential backoff; the last attempt lands **10–20 minutes** after the first. Then
+  the notification is dropped.
 - Any other non-2xx (e.g. `400`, `401`, `500`) is **not** retried.
-- If **95% of responses are non-200 over a 15-minute window**, the webhook is marked
-  **failing**. After **72 hours** of that state it is marked **failed** and must be
-  **manually reactivated** in the Dashboard.
+- If **more than 95% of deliveries fail across two consecutive 15-minute windows**, the
+  webhook is marked **failing**. If that lasts **72 hours** it is marked **failed**, delivery
+  stops, and you must reactivate it in the Dashboard or API.
+- Delivery is **at least once** and order isn't guaranteed: dedupe on the envelope `id`,
+  which stays the same across attempts.
 
 Return `200` quickly (acknowledge, then process asynchronously) to stay healthy.

@@ -53,10 +53,10 @@ function handleEvent(event: KlaviyoEvent): void {
       console.log('Unsubscribed from email marketing:', event.external_id);
       break;
     case 'event:klaviyo.sent_sms':
-      console.log('SMS sent:', event.external_id);
+      console.log('Inbound SMS from profile:', event.external_id);
       break;
     case 'event:klaviyo.received_sms':
-      console.log('Inbound SMS received:', event.external_id);
+      console.log('SMS received by recipient:', event.external_id);
       break;
     case 'event:klaviyo.submitted_review':
       console.log('Review submitted:', event.external_id);

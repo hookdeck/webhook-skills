@@ -49,13 +49,10 @@ def verify_openai_signature(
     except ValueError:
         return False
 
-    # Extract version and signature
-    parts = webhook_signature.split(',', 1)
-    if len(parts) != 2:
-        return False
-
-    version, signature = parts
-    if version != 'v1':
+    # The header holds one or more space-delimited "v1,<base64>" entries
+    # (several while an old secret is still valid). Accept a match on any.
+    signatures = [entry[3:] for entry in webhook_signature.split(' ') if entry.startswith('v1,')]
+    if not signatures:
         return False
 
     # Create signed content
@@ -78,7 +75,7 @@ def verify_openai_signature(
     ).decode('utf-8')
 
     # Timing-safe comparison to prevent timing attacks
-    return hmac.compare_digest(signature, expected_signature)
+    return any(hmac.compare_digest(signature, expected_signature) for signature in signatures)
 
 
 @app.post("/webhooks/openai")
@@ -117,40 +114,35 @@ async def openai_webhook(
 
     if event_type == "fine_tuning.job.succeeded":
         print(f"Fine-tuning job succeeded: {event_data.get('id')}")
-        print(f"Fine-tuned model: {event_data.get('fine_tuned_model')}")
-        # TODO: Deploy model, notify team, update database
+        # Your code: retrieve the job with client.fine_tuning.jobs.retrieve(event_data['id'])
 
     elif event_type == "fine_tuning.job.failed":
         print(f"Fine-tuning job failed: {event_data.get('id')}")
-        error = event_data.get('error', {})
-        print(f"Error: {error.get('message')}")
-        # TODO: Alert team, log error, retry if appropriate
+        # Your code: retrieve the job for its error, alert the team
 
     elif event_type == "fine_tuning.job.cancelled":
         print(f"Fine-tuning job cancelled: {event_data.get('id')}")
-        # TODO: Clean up resources, update status
+        # Your code: Clean up resources, update status
 
     elif event_type == "batch.completed":
         print(f"Batch completed: {event_data.get('id')}")
-        print(f"Output file: {event_data.get('output_file_id')}")
-        # TODO: Download results, process output, trigger next steps
+        # Your code: retrieve the batch with client.batches.retrieve(event_data['id']) for its output file
 
     elif event_type == "batch.failed":
         print(f"Batch failed: {event_data.get('id')}")
-        print(f"Error: {event_data.get('errors')}")
-        # TODO: Handle errors, retry failed items
+        # Your code: retrieve the batch for its errors
 
     elif event_type == "batch.cancelled":
         print(f"Batch cancelled: {event_data.get('id')}")
-        # TODO: Clean up resources, update status
+        # Your code: Clean up resources, update status
 
     elif event_type == "batch.expired":
         print(f"Batch expired: {event_data.get('id')}")
-        # TODO: Clean up resources, handle timeout
+        # Your code: Clean up resources, handle timeout
 
     elif event_type == "realtime.call.incoming":
-        print(f"Realtime call incoming: {event_data.get('id')}")
-        # TODO: Handle incoming call, connect client
+        print(f"Realtime call incoming: {event_data.get('call_id')}")
+        # Your code: accept or reject the call with data.call_id
 
     else:
         print(f"Unhandled event type: {event_type}")

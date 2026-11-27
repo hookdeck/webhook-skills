@@ -12,18 +12,17 @@ tampered with.
 Paymob is **not** Standard Webhooks, and it does **not** sign the raw request
 body. Instead:
 
-1. Paymob selects **20 specific fields** from the transaction.
-2. It concatenates their **string values in a fixed order**, with **no
-   separators**.
+1. It picks a **fixed list of keys** for the callback's `type`.
+2. It joins their **values in that order**, with **no separators**.
 3. It computes **HMAC-SHA512** of that string using your account **HMAC secret**.
 4. It **hex-encodes** the digest and sends it as the **`hmac` query parameter**
    (`?hmac=<hex>`). There is **no signature header**.
 
 You recompute the same value and compare (timing-safe) against the `hmac` param.
 
-### The 20 Fields, In Order
+### `TRANSACTION`: 20 keys, in order
 
-| # | POST key (Transaction Processed) | GET key (Transaction Response) |
+| # | POST key (Transaction Processed) | GET (Transaction Response) |
 |---|----------------------------------|--------------------------------|
 | 1 | `obj.amount_cents` | `amount_cents` |
 | 2 | `obj.created_at` | `created_at` |
@@ -38,84 +37,115 @@ You recompute the same value and compare (timing-safe) against the `hmac` param.
 | 11 | `obj.is_refunded` | `is_refunded` |
 | 12 | `obj.is_standalone_payment` | `is_standalone_payment` |
 | 13 | `obj.is_voided` | `is_voided` |
-| 14 | `obj.order.id` | `order_id` |
+| 14 | `obj.order.id` | `order_id` per the key list; `order` in Paymob's sample URL |
 | 15 | `obj.owner` | `owner` |
 | 16 | `obj.pending` | `pending` |
-| 17 | `obj.source_data.pan` | `source_data_pan` |
-| 18 | `obj.source_data.sub_type` | `source_data_sub_type` |
-| 19 | `obj.source_data.type` | `source_data_type` |
+| 17 | `obj.source_data.pan` | `source_data.pan` |
+| 18 | `obj.source_data.sub_type` | `source_data.sub_type` |
+| 19 | `obj.source_data.type` | `source_data.type` |
 | 20 | `obj.success` | `success` |
 
-The order is identical for both callbacks — only the key paths differ (nested for
-POST, flattened for GET).
+The GET column follows Paymob's sample redirect URL, which flattens nested keys
+with a dot (`source_data.pan=2346`) and carries the order as `order=`. Paymob's
+key list names `order_id` for the GET callback, so check what your redirect
+actually receives.
+
+### `TOKEN`: 8 keys, in order
+
+`obj.card_subtype`, `obj.created_at`, `obj.email`, `obj.id`, `obj.masked_pan`,
+`obj.merchant_id`, `obj.order_id`, `obj.token`.
+
+A card token callback arrives at the same URL as transaction callbacks, so
+route on `type` before you build the string.
 
 ## Implementation
 
-There is no first-party Node/Python Paymob SDK with a ready-made webhook
-verifier — the published `paymob` packages are minimal WIP helpers — so verify
-manually with the standard crypto library.
+Paymob publishes worked examples rather than an SDK verifier, so verify with
+the standard crypto library.
 
-### Node.js (Transaction Processed Callback / POST)
+### Node.js (POST callbacks)
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyPaymobHmac(obj, hmacParam, secret) {
-  const s = obj.source_data || {};
-  const signed = [
-    obj.amount_cents, obj.created_at, obj.currency, obj.error_occured,
-    obj.has_parent_transaction, obj.id, obj.integration_id, obj.is_3d_secure,
-    obj.is_auth, obj.is_capture, obj.is_refunded, obj.is_standalone_payment,
-    obj.is_voided, obj.order.id, obj.owner, obj.pending,
-    s.pan, s.sub_type, s.type, obj.success,
-  ].join(''); // Array.join renders booleans as "true"/"false", numbers as digits
+const HMAC_FIELDS = {
+  TRANSACTION: [
+    'amount_cents', 'created_at', 'currency', 'error_occured', 'has_parent_transaction',
+    'id', 'integration_id', 'is_3d_secure', 'is_auth', 'is_capture', 'is_refunded',
+    'is_standalone_payment', 'is_voided', 'order.id', 'owner', 'pending',
+    'source_data.pan', 'source_data.sub_type', 'source_data.type', 'success',
+  ],
+  TOKEN: [
+    'card_subtype', 'created_at', 'email', 'id', 'masked_pan', 'merchant_id',
+    'order_id', 'token',
+  ],
+};
+
+function verifyPaymobHmac(body, hmacParam, secret) {
+  const fields = HMAC_FIELDS[body.type];
+  if (!fields || !body.obj || !hmacParam) return false;
+  const signed = fields.map((f) => {
+    const v = f.split('.').reduce((o, k) => (o == null ? undefined : o[k]), body.obj);
+    return v == null ? '' : String(v);
+  }).join('');
   const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(hmacParam || ''));
-  } catch {
-    return false; // length mismatch → invalid
-  }
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(hmacParam).toLowerCase());
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 ```
 
-### Python (FastAPI / manual)
+### Python (POST callbacks)
 
 ```python
 import hmac, hashlib
 
-def _v(x):
-    # JSON booleans serialise to lowercase "true"/"false"
-    return "true" if x is True else "false" if x is False else str(x)
+HMAC_FIELDS = {
+    "TRANSACTION": [
+        "amount_cents", "created_at", "currency", "error_occured", "has_parent_transaction",
+        "id", "integration_id", "is_3d_secure", "is_auth", "is_capture", "is_refunded",
+        "is_standalone_payment", "is_voided", "order.id", "owner", "pending",
+        "source_data.pan", "source_data.sub_type", "source_data.type", "success",
+    ],
+    "TOKEN": [
+        "card_subtype", "created_at", "email", "id", "masked_pan", "merchant_id",
+        "order_id", "token",
+    ],
+}
 
-def verify_paymob_hmac(obj: dict, hmac_param: str, secret: str) -> bool:
-    s = obj.get("source_data") or {}
-    signed = "".join(_v(x) for x in [
-        obj["amount_cents"], obj["created_at"], obj["currency"], obj["error_occured"],
-        obj["has_parent_transaction"], obj["id"], obj["integration_id"], obj["is_3d_secure"],
-        obj["is_auth"], obj["is_capture"], obj["is_refunded"], obj["is_standalone_payment"],
-        obj["is_voided"], obj["order"]["id"], obj["owner"], obj["pending"],
-        s.get("pan"), s.get("sub_type"), s.get("type"), obj["success"],
-    ])
+def _value(obj, path):
+    for key in path.split("."):
+        obj = obj.get(key) if isinstance(obj, dict) else None
+    if obj is True:
+        return "true"
+    if obj is False:
+        return "false"
+    return "" if obj is None else str(obj)
+
+def verify_paymob_hmac(body: dict, hmac_param: str, secret: str) -> bool:
+    fields = HMAC_FIELDS.get(body.get("type"))
+    if not fields or not body.get("obj") or not hmac_param:
+        return False
+    signed = "".join(_value(body["obj"], f) for f in fields)
     expected = hmac.new(secret.encode(), signed.encode(), hashlib.sha512).hexdigest()
-    return hmac.compare_digest(expected, hmac_param or "")
+    return hmac.compare_digest(expected, hmac_param.lower())
 ```
 
-### Verifying the GET (Transaction Response) Callback
+### Testing against Paymob's worked examples
 
-Read the same 20 fields from the query string in the same order. The values are
-already strings (`"true"`/`"false"` for booleans), so concatenate them directly:
+- The HMAC transaction callback page prints its example's concatenated string:
+  `1000002024-06-13T11:33:44.592345EGPfalsefalse1920364654097558truefalsefalsefalsetruefalse217503754302852false2346MasterCardcardtrue`.
+  Your string builder should produce exactly this from that example.
+- The HMAC for card tokens page prints its example's string, the sample HMAC
+  secret it used and the resulting digest, so you can check the whole
+  computation. The example handlers' tests do both.
 
-```javascript
-const q = req.query; // Express
-const signed = [
-  q.amount_cents, q.created_at, q.currency, q.error_occured,
-  q.has_parent_transaction, q.id, q.integration_id, q.is_3d_secure,
-  q.is_auth, q.is_capture, q.is_refunded, q.is_standalone_payment,
-  q.is_voided, q.order_id, q.owner, q.pending,
-  q.source_data_pan, q.source_data_sub_type, q.source_data_type, q.success,
-].join('');
-const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex');
-```
+### Subscription callbacks (different scheme)
+
+A webhook registered on a subscription gets `hmac` **in the body**, computed
+over `{trigger_type}for{subscription_data.id}` (for example
+`suspendedfor1264`) with the same HMAC secret and SHA-512. Give these their own
+route.
 
 ## Common Gotchas
 
@@ -124,8 +154,10 @@ const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex'
 - **Hex, not base64.** Paymob hex-encodes the digest.
 - **The signature is a query parameter (`?hmac=`), not a header.** Read it from
   the URL query string.
-- **Exact field order matters.** The 20 fields must be concatenated in the order
-  above. Any reordering breaks the match.
+- **The key list depends on `type`.** `TRANSACTION` signs 20 keys and `TOKEN`
+  signs 8. Using the transaction list on a card token fails every time.
+- **Exact field order matters.** Join the keys in the documented order. Any
+  reordering breaks the match.
 - **No separators.** Values are joined with an empty string, not commas or `.`.
 - **Booleans must be lowercase `true`/`false`.** JavaScript `Array.join` and JSON
   already produce these; in Python, `str(True)` gives `"True"` — convert
@@ -133,16 +165,17 @@ const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex'
 - **Not the raw body.** Paymob is unusual: you must parse the JSON to extract the
   fields, then hash the concatenation — not the raw request bytes. Still verify
   before acting on the payload.
-- **POST vs GET key paths differ.** POST nests under `obj` with `obj.order.id`
-  and `obj.source_data.pan`; GET flattens to `order_id` and `source_data_pan`.
+- **POST vs GET key paths differ.** POST nests under `obj` (`obj.order.id`,
+  `obj.source_data.pan`); Paymob's sample GET redirect flattens them to `order`
+  and `source_data.pan`.
 
 ## How to Debug Verification Failures
 
 1. Log your computed HMAC and the received `hmac` param side by side.
 2. Confirm the digest length is **128** hex chars (SHA512). If it's 64, you're on
    SHA256.
-3. Print the concatenated string and check the field order and that booleans are
-   lowercase.
+3. Print the concatenated string and check the field order, that booleans are
+   lowercase, and that you used the list for the callback's `type`.
 4. Confirm you're using the **HMAC secret** from the dashboard, not the API key.
 5. Ensure numeric values (`amount_cents`, `id`, `integration_id`, `owner`) are
    stringified exactly as sent (no thousands separators, no trailing `.0`).

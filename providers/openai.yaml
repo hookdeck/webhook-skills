@@ -1,8 +1,8 @@
 name: openai
 displayName: OpenAI
 docs:
-  webhooks: https://platform.openai.com/docs/guides/webhooks
-  events: https://platform.openai.com/docs/guides/webhooks/events
+  webhooks: https://developers.openai.com/api/docs/guides/webhooks
+  events: https://developers.openai.com/api/reference/resources/webhooks
 notes: >
   AI platform webhooks for fine-tuning jobs, batch completions, and async events.
   Uses Standard Webhooks (Svix) format with headers: webhook-id, webhook-timestamp,

@@ -4,11 +4,20 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 const TOKEN_SECRET = "test_token_secret_at_least_32_bytes_long";
 const REQUEST_ID = "req-abc-123";
+// Trimmed from Green Dot's documented transaction example (Webhook Events page).
 const PAYLOAD = JSON.stringify({
-  eventType: "transaction",
-  programCode: "MYPROGRAM",
-  eventId: "evt-1",
-  data: { accountId: "acct_123", amount: 42.5 },
+  accounts: [
+    {
+      accountIdentifier: "f8e47e10-9ff9-449d-b3bc-d075947c9ff6",
+      events: [
+        {
+          eventIdentifier: "4c579f23-bbd9-4033-96d9-4605eff580b1",
+          eventType: "transaction",
+          eventDateTime: "2026-06-22T03:56:08.370Z",
+        },
+      ],
+    },
+  ],
 });
 
 function makeToken(scope = "post:webhook"): string {

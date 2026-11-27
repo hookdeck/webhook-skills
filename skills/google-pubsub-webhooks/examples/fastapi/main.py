@@ -163,14 +163,14 @@ async def pubsub_webhook(request: Request):
     # across redeliveries of the same message.
     print("Pub/Sub message received:", message["messageId"])
     print("Published at:", message.get("publishTime"))
-    # TODO: if already_processed(message["messageId"]): return Response(status_code=ACK_STATUS)
+    # Your code: if already_processed(message["messageId"]): return Response(status_code=ACK_STATUS)
 
     # Pub/Sub defines no event catalog — any "event type" is whatever your
     # publisher put in `attributes`. Change the key to match your publisher.
     event_type = attributes.get("eventType")
     if event_type:
         print("Event type attribute:", event_type)
-        # TODO: route on your publisher's own attribute values.
+        # Your code: route on your publisher's own attribute values.
     elif payload is None:
         print("Attribute-only message (no data):", attributes)
     else:

@@ -44,39 +44,45 @@ def verify_token(auth_header: str) -> dict:
 # over the raw body here, after verify_token.
 
 
+def events_in(body: dict) -> list:
+    """The body is an envelope: {accounts: [{accountIdentifier, events: [...]}]}.
+    One request can carry several events, so loop over both arrays."""
+    return [e for a in body.get("accounts") or [] for e in a.get("events") or []]
+
+
 def handle_event(event: dict) -> None:
-    """Dispatch on the ``eventType`` field of the JSON body."""
+    """Dispatch on one event's ``eventType``."""
     event_type = event.get("eventType")
-    event_id = event.get("eventId")
+    event_id = event.get("eventIdentifier")
 
     if event_type == "transaction":
         print(f"Transaction event: {event_id}")
-        # TODO: sync ledger, notify the customer, etc.
+        # Your code: sync ledger, notify the customer, etc.
     elif event_type == "accountUpdated":
         print(f"Account updated: {event_id}")
-        # TODO: refresh local account record.
+        # Your code: refresh local account record.
     elif event_type == "achTransfer":
         print(f"ACH transfer event: {event_id}")
-        # TODO: update funding / payout status.
+        # Your code: update funding / payout status.
     elif event_type == "cardUpdate":
         print(f"Card update: {event_id}")
-        # TODO: card lifecycle handling.
+        # Your code: card lifecycle handling.
     elif event_type == "billPayTransfer":
         print(f"Bill pay transfer: {event_id}")
-        # TODO: bill pay status / receipts.
+        # Your code: bill pay status / receipts.
     elif event_type == "directDepositSwitch":
         print(f"Direct deposit switch: {event_id}")
-        # TODO: DD onboarding funnel.
+        # Your code: DD onboarding funnel.
     elif event_type == "provisioning":
         print(f"Provisioning event: {event_id}")
-        # TODO: onboarding orchestration.
+        # Your code: onboarding orchestration.
     else:
         print(f"Unhandled eventType: {event_type}")
 
 
 def acknowledge(request_id: str | None, code: int = 0) -> Response:
     """Build the acknowledgement Green Dot expects: a ``responseDetails`` body
-    plus the echoed ``x-GD-RequestId`` header. Omitting either causes retries."""
+    plus the echoed ``x-GD-RequestId`` header. Green Dot's docs require both."""
     body = {
         "responseDetails": [
             {"code": code, "subCode": 0, "description": request_id or ""}
@@ -115,7 +121,8 @@ async def greendot_webhook(request: Request) -> Response:
 
     # 3) Handle the event.
     try:
-        handle_event(event)
+        for item in events_in(event):
+            handle_event(item)
     except Exception as err:  # noqa: BLE001
         print(f"Handler error: {err}")
         return Response(

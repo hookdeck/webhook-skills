@@ -74,57 +74,57 @@ app.post('/webhooks/fusionauth',
     switch (eventType) {
       case 'user.create':
         console.log('User created:', event.event.user?.id);
-        // TODO: Sync user to external systems, send welcome email, etc.
+        // Your code: Sync user to external systems, send welcome email, etc.
         break;
 
       case 'user.update':
         console.log('User updated:', event.event.user?.id);
-        // TODO: Sync user changes to external systems
+        // Your code: Sync user changes to external systems
         break;
 
       case 'user.delete':
         console.log('User deleted:', event.event.user?.id);
-        // TODO: Clean up user data, handle GDPR compliance
+        // Your code: Clean up user data, handle GDPR compliance
         break;
 
       case 'user.deactivate':
         console.log('User deactivated:', event.event.user?.id);
-        // TODO: Revoke access, notify admins
+        // Your code: Revoke access, notify admins
         break;
 
       case 'user.reactivate':
         console.log('User reactivated:', event.event.user?.id);
-        // TODO: Restore access
+        // Your code: Restore access
         break;
 
       case 'user.login.success':
         console.log('User logged in:', event.event.user?.id);
-        // TODO: Audit logging, session tracking
+        // Your code: Audit logging, session tracking
         break;
 
       case 'user.login.failed':
         console.log('Login failed for:', event.event.user?.email || 'unknown');
-        // TODO: Security monitoring, rate limiting
+        // Your code: Security monitoring, rate limiting
         break;
 
       case 'user.registration.create':
         console.log('User registered:', event.event.user?.id, 'for app:', event.event.applicationId);
-        // TODO: Provision app-specific access
+        // Your code: Provision app-specific access
         break;
 
       case 'user.registration.update':
         console.log('Registration updated:', event.event.user?.id);
-        // TODO: Sync role changes
+        // Your code: Sync role changes
         break;
 
       case 'user.registration.delete':
         console.log('Registration deleted:', event.event.user?.id);
-        // TODO: Revoke app access
+        // Your code: Revoke app access
         break;
 
       case 'user.email.verified':
         console.log('Email verified for:', event.event.user?.id);
-        // TODO: Enable features requiring verified email
+        // Your code: Enable features requiring verified email
         break;
 
       default:

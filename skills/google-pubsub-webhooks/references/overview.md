@@ -34,19 +34,23 @@ This skill covers **push** only. Pull subscriptions do not involve webhooks.
 Default ("wrapped") delivery sends `Content-Type: application/json` with this
 body:
 
+Google's documented maximum example:
+
 ```json
 {
+  "deliveryAttempt": 5,
   "message": {
     "attributes": {
-      "eventType": "order.created",
-      "publisherRegion": "eu-west1"
+      "key": "value"
     },
-    "data": "eyJvcmRlcklkIjoiMTIzIiwidG90YWwiOjQ5OTV9",
+    "data": "SGVsbG8gQ2xvdWQgUHViL1N1YiEgSGVyZSBpcyBteSBtZXNzYWdlIQ==",
     "messageId": "2070443601311540",
-    "publishTime": "2026-08-13T19:13:12.201Z",
-    "orderingKey": "customer-42"
+    "message_id": "2070443601311540",
+    "orderingKey": "key",
+    "publishTime": "2021-02-26T19:13:55.749Z",
+    "publish_time": "2021-02-26T19:13:55.749Z"
   },
-  "subscription": "projects/my-project/subscriptions/my-sub"
+  "subscription": "projects/myproject/subscriptions/mysubscription"
 }
 ```
 
@@ -82,11 +86,16 @@ for lightweight signals.
 
 ### Unwrapped delivery
 
-A subscription can be configured for **unwrapped** ("no wrapper") delivery, in
-which case the raw message body is the HTTP body and the attributes arrive as
-`X-Goog-Pubsub-*` headers instead. The examples in this skill assume the
-default wrapped format. If you enable unwrapping, there is no `message` object
-to parse.
+A subscription can be configured for **payload unwrapping** (`--push-no-wrapper`),
+in which case the decoded message data is the whole HTTP body and Pub/Sub sets
+no `Content-Type`. Message metadata and attributes are dropped unless you also
+enable **write metadata** (`--push-no-wrapper-write-metadata`): then the
+metadata arrives as `x-goog-pubsub-*` headers (`x-goog-pubsub-message-id`,
+`x-goog-pubsub-publish-time`, `x-goog-pubsub-subscription-name`,
+`x-goog-pubsub-ordering-key`) and each attribute as a header named after its
+own key. The examples in this skill assume the default wrapped format. If you
+enable unwrapping, there is no `message` object to parse. See
+[Payload unwrapping](https://cloud.google.com/pubsub/docs/payload-unwrapping).
 
 ## "Event Types" Come From Your Publisher
 

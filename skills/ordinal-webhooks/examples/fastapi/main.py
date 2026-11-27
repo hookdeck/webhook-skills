@@ -1,108 +1,94 @@
 # Generated with: ordinal-webhooks skill
 # https://github.com/hookdeck/webhook-skills
-import hmac
+"""Ordinal webhook receiver for FastAPI.
+
+Ordinal signs every delivery per Standard Webhooks:
+  webhook-id         stable id for the event (the same on a retry)
+  webhook-timestamp  Unix seconds when the delivery was signed
+  webhook-signature  "v1,<base64 HMAC-SHA256>", space-separated when two
+                     signatures arrive during a secret rotation
+  webhook-topic      the event type; NOT covered by the signature
+Signed content: f"{webhook-id}.{webhook-timestamp}.{raw_body}"
+Key: base64-decode of the signing secret after its `whsec_` prefix. The secret
+is in the Create webhook response (`signingSecret`) and on the webhook's
+configure page in the dashboard.
+"""
+
+import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
+from standardwebhooks.webhooks import Webhook
 
 load_dotenv()
 
-# ORDINAL DOES NOT SIGN WEBHOOK DELIVERIES.
-#
-# There is no signature header, no signing secret, no `whsec_` key, no timestamp
-# header, no HMAC and no Standard Webhooks / Svix headers. The Create webhook
-# response returns only id, name, url, topics, createdAt — no secret is ever
-# issued. Do NOT write an HMAC verifier: there are no inputs for one, and a
-# fabricated verifier rejects 100% of genuine deliveries. There is also no
-# official Ordinal Python SDK to defer to.
-#
-# The ONLY authentication mechanism is a STATIC custom header YOU configure on
-# the webhook via its optional `headers` field ("Optional custom headers to
-# include in webhook requests"). Ordinal adds those headers to every delivery.
-# The header NAME is your choice — it is NOT an Ordinal-defined header.
-#
-# This is a shared-secret CHANNEL check, not integrity protection: the value is
-# identical on every delivery, so it is only as good as TLS and secret hygiene.
-# It proves the caller knows the secret, NOT that the body is unmodified.
-# Rotate by PATCHing `headers` on the webhook.
-#
-# Because nothing is signed over the body, there is NO RAW-BODY REQUIREMENT.
-# Parsing JSON before authenticating is fine here — the opposite of Stripe /
-# Shopify / GitHub, where a body parser before verification breaks the HMAC.
+logger = logging.getLogger("ordinal-webhooks")
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Ordinal Webhook Handler")
 
+# In-memory dedupe for the demo. Use Redis or your database in production.
+# webhook-id is the same on every retry of an event.
+processed_event_ids: set = set()
 
-def secret_header_name() -> str:
+
+def signature_headers(get: Callable[[str], Optional[str]]) -> Optional[Dict[str, str]]:
+    """Read the three signed headers, or return None if any is missing."""
+    headers = {
+        "webhook-id": get("webhook-id"),
+        "webhook-timestamp": get("webhook-timestamp"),
+        "webhook-signature": get("webhook-signature"),
+    }
+    return headers if all(headers.values()) else None
+
+
+def verify_ordinal_webhook(raw_body: bytes, headers: Dict[str, str], secret: str) -> Dict[str, Any]:
+    """Verify an Ordinal delivery with the Standard Webhooks library.
+
+    It accepts a match on any `v1,` entry and raises if `webhook-timestamp` is
+    more than five minutes from now. Raises WebhookVerificationError on failure.
     """
-    The header name you set in the webhook's `headers` object.
-
-    Read at call time (not import time) so the value always reflects the running
-    environment. Starlette's request.headers lookup is case-insensitive, so
-    `X-Webhook-Secret` in the webhook config matches this lowercase name.
-    """
-    return os.getenv("ORDINAL_WEBHOOK_SECRET_HEADER", "x-webhook-secret").lower()
+    return Webhook(secret).verify(raw_body, headers)
 
 
-def verify_ordinal_secret(provided: Optional[str], expected: Optional[str]) -> bool:
-    """
-    Constant-time comparison of the inbound secret header.
-
-    FAILS CLOSED: an unconfigured `expected` returns False. Never `return True`
-    here — that would turn a misconfigured deploy into a fully open endpoint.
-
-    hmac.compare_digest performs the constant-time COMPARISON; it does not compute
-    an HMAC. A plain `==` short-circuits on the first differing byte and leaks the
-    secret prefix through timing.
-    """
-    if not expected:
-        return False  # fail closed on misconfiguration
-    if not provided:
-        return False
-    # Compare BYTES, not str: hmac.compare_digest() raises TypeError on str values
-    # containing non-ASCII characters, and the header is attacker-supplied.
-    return hmac.compare_digest(provided.encode("utf-8"), expected.encode("utf-8"))
-
-
-async def authenticate_ordinal(request: Request) -> None:
-    """
-    FastAPI dependency that authenticates the delivery before the handler runs.
-
-    Raises 500 when the secret is unconfigured (so an operator can tell "my server
-    is misconfigured" from "someone sent a bad secret") and 401 when the header is
-    missing or wrong — an authentication failure, not a malformed request.
-    """
-    header = secret_header_name()
-    secret = os.getenv("ORDINAL_WEBHOOK_SECRET")
-
+async def verified_ordinal_event(request: Request) -> Dict[str, Any]:
+    """FastAPI dependency: returns the verified Ordinal envelope or raises."""
+    secret = os.environ.get("ORDINAL_WEBHOOK_SECRET")
+    # Fail closed: never accept unverified deliveries because a secret is missing.
     if not secret:
-        print(
-            "ORDINAL_WEBHOOK_SECRET is not set — refusing to accept unauthenticated "
-            "webhooks. Generate one (openssl rand -hex 32) and set it on the webhook "
-            'via PATCH /api/v1/webhooks/{id} with {"headers":{"X-Webhook-Secret":"<secret>"}}.'
-        )
+        logger.error("ORDINAL_WEBHOOK_SECRET is not set; rejecting delivery")
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
-    if not verify_ordinal_secret(request.headers.get(header), secret):
-        print(f"Ordinal webhook rejected: {header} missing or mismatched")
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    headers = signature_headers(request.headers.get)
+    if headers is None:
+        raise HTTPException(status_code=400, detail="Missing webhook signature headers")
+
+    # Raw body: request.json() would re-serialise and break the HMAC.
+    raw_body = await request.body()
+
+    try:
+        event = verify_ordinal_webhook(raw_body, headers, secret)
+    except Exception as err:  # WebhookVerificationError, bad base64, etc.
+        logger.error("Ordinal webhook verification failed: %s", err)
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    request.state.event_id = headers["webhook-id"]
+    return event
 
 
-def resource_key_for(event_type: Optional[str]) -> Optional[str]:
-    """
-    The single key inside `data` depends on the event family. Reading data["post"]
-    on a comment or approval event raises KeyError — the most common Ordinal bug.
-    """
-    if not isinstance(event_type, str):
-        return None
+def resource_key_for(event_type: str) -> Optional[str]:
+    """The single key inside `data` depends on the event family."""
     if event_type.startswith("social_profile."):
         return "profile"
+    if event_type.startswith("linkedin.monitoring.mention."):
+        return "mention"
+    if event_type.startswith("linkedin.monitoring.comment."):
+        return "comment"
     if event_type in ("post.comment.created", "post.inline_comment.created"):
         return "comment"
-    # Covers post.approval.* AND campaign.approval.* — both use data["approval"].
-    if ".approval." in event_type:
+    if ".approval." in event_type:  # post.approval.* and campaign.approval.*
         return "approval"
     if event_type.startswith("invite."):
         return "invite"
@@ -111,165 +97,60 @@ def resource_key_for(event_type: Optional[str]) -> Optional[str]:
     return None
 
 
-def extract_resource(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Read the resource out of the envelope regardless of family."""
-    key = resource_key_for(event.get("type"))
-    data = event.get("data") or {}
-    value = data.get(key) if key else None
-    return value if isinstance(value, dict) else {}
+def handle_event(event: Dict[str, Any]) -> None:
+    event_type = event.get("type") or ""
+    key = resource_key_for(event_type)
+    r = ((event.get("data") or {}).get(key) if key else None) or {}
+
+    if event_type == "post.published":
+        # `postUrl` (the live link) may be null; `url` is the Ordinal app link.
+        logger.info("Post published: %s -> %s", r.get("title"), r.get("postUrl"))
+    elif event_type == "post.publish_failed":
+        logger.info("Publish failed: %s: %s", r.get("title"), r.get("error"))
+    elif event_type == "post.content.edited":
+        # Debounced per post; carries the latest content for every channel.
+        logger.info("Post content edited: %s", r.get("title"))
+    elif event_type == "post.approval.requested":
+        logger.info(
+            "Approval requested on %s from %d approver(s)",
+            (r.get("post") or {}).get("title"),
+            len(r.get("createdApprovals") or []),
+        )
+    elif event_type in ("post.comment.created", "post.inline_comment.created"):
+        logger.info("Comment on %s: %s", (r.get("post") or {}).get("title"), r.get("message"))
+    elif event_type == "social_profile.reconnect_needed":
+        logger.info("Profile needs reconnecting: %s (%s)", r.get("name"), r.get("channel"))
+    elif event_type.startswith("linkedin.monitoring.comment."):
+        logger.info("%s on %s: %s", event_type, (r.get("profile") or {}).get("name"), r.get("commentary"))
+    elif event_type == "linkedin.monitoring.mention.created":
+        logger.info("Company page mentioned: %s", r.get("postUrl"))
+    else:
+        logger.info("Ordinal event: %s", event_type)
 
 
-def idempotency_key_for(event: Dict[str, Any]) -> str:
-    """
-    Derive an idempotency key.
+@app.post("/webhooks/ordinal")
+async def ordinal_webhook(request: Request, event: Dict[str, Any] = Depends(verified_ordinal_event)):
+    event_id = request.state.event_id
+    if event_id in processed_event_ids:
+        return {"received": True, "duplicate": True}
 
-    ORDINAL SHIPS NO EVENT ID: the envelope has no top-level id and no delivery-id
-    header is documented. This composite of type + the resource id inside `data` +
-    `createdAt` is OUR OWN CONVENTION for dedupe, not a documented Ordinal key.
-    """
-    resource = extract_resource(event)
-    # Approvals nest the subject; fall back through the plausible id locations.
-    resource_id = (
-        resource.get("id")
-        or (resource.get("post") or {}).get("id")
-        or (resource.get("campaign") or {}).get("id")
-        or "unknown"
-    )
-    return f"{event.get('type')}:{resource_id}:{event.get('createdAt')}"
-
-
-@app.post("/webhooks/ordinal", dependencies=[Depends(authenticate_ordinal)])
-async def ordinal_webhook(request: Request) -> Dict[str, bool]:
-    """
-    Receive an Ordinal webhook.
-
-    The envelope is always {"type": ..., "data": {...}, "createdAt": ...}.
-    Any 2xx acknowledges receipt (docs: "Your endpoint should respond with a 2xx
-    status code to acknowledge receipt").
-    """
-    # Safe to parse: nothing is signed over the raw bytes.
     try:
-        event = await request.json()
+        # Any 2xx acknowledges the delivery. In production, enqueue the event here.
+        handle_event(event)
+        processed_event_ids.add(event_id)
     except Exception:
-        print("Ordinal webhook rejected: body is not valid JSON")
-        raise HTTPException(status_code=400, detail="Invalid JSON")
+        logger.exception("Error handling Ordinal event")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    if not isinstance(event, dict) or not isinstance(event.get("type"), str):
-        print("Ordinal webhook rejected: envelope missing a string `type`")
-        raise HTTPException(status_code=400, detail="Invalid payload")
-
-    idempotency_key = idempotency_key_for(event)
-    print(f"✓ Authenticated Ordinal webhook: {event['type']} ({idempotency_key})")
-
-    try:
-        handle_event(event, idempotency_key)
-    except Exception as err:  # noqa: BLE001
-        # Log and still acknowledge: Ordinal documents no retry policy, so a
-        # non-2xx has undefined consequences and re-delivery is not something to
-        # rely on for a bug in your own handler.
-        print(f"Error handling Ordinal event {idempotency_key}: {err}")
-
-    # Ordinal documents no delivery timeout, so acknowledge fast and enqueue slow
-    # work instead of doing it inline.
     return {"received": True}
 
 
-def handle_event(event: Dict[str, Any], idempotency_key: str) -> None:
-    """
-    Dispatch on the exact event type strings.
-
-    NOTE THE MIXED SEPARATORS: publish_failed, reconnect_needed,
-    permanently_deleted and inline_comment use UNDERSCORES inside an otherwise
-    dot-separated name. "post.publish.failed" and "post.publishFailed" are wrong.
-    """
-    # TODO: check idempotency_key against your store and return early if seen.
-    #   if store.has(idempotency_key): return
-
-    event_type = event["type"]
-    resource = extract_resource(event)
-
-    # --- Social profiles (data.profile) -------------------------------------
-    if event_type == "social_profile.connected":
-        print(f"🔗 Profile connected: {resource.get('name')} ({resource.get('channel')})")
-    elif event_type == "social_profile.disconnected":
-        print(f"🔌 Profile disconnected: {resource.get('name')}")
-    elif event_type == "social_profile.reconnect_needed":
-        # Act on this one — scheduled posts on this profile will start failing.
-        print(f"⚠️  Profile needs reconnecting: {resource.get('name')} ({resource.get('channel')})")
-
-    # --- Posts (data.post) --------------------------------------------------
-    elif event_type == "post.created":
-        # post.created uses `channels` (LIST), unlike post.published's singular
-        # `channel`. Per-channel content is in `linkedIn` and `x` (both nullable).
-        channels = ", ".join(resource.get("channels") or [])
-        print(f"📝 Post created: {resource.get('title')} [{channels}] status={resource.get('status')}")
-    elif event_type == "post.scheduled":
-        print(f"📅 Post scheduled: {resource.get('title')}")
-    elif event_type == "post.rescheduled":
-        print(f"🔄 Post rescheduled: {resource.get('title')}")
-    elif event_type == "post.unscheduled":
-        print(f"🚫 Post unscheduled: {resource.get('title')}")
-    elif event_type == "post.published":
-        # `postUrl` is the live link on the channel and MAY BE NULL; `url` is the
-        # Ordinal app link. `campaign` may be null too.
-        print(
-            f"🚀 Post published: {resource.get('title')} → "
-            f"{resource.get('postUrl') or '(no channel URL)'}"
-        )
-    elif event_type == "post.publish_failed":
-        # data.post.error carries the reason (e.g. "Token expired"), and this
-        # event has createdBy + failedAt rather than publishedBy + publishedAt.
-        print(f"❌ Publish failed: {resource.get('title')} — {resource.get('error')}")
-    elif event_type == "post.archived":
-        print(f"🗄️  Post archived (moved to trash): {resource.get('title')}")
-    elif event_type == "post.permanently_deleted":
-        print(f"🗑️  Post permanently deleted: {resource.get('id')}")
-    elif event_type == "post.content.edited":
-        # DEBOUNCED PER POST — fires ~5 minutes after edits and includes the
-        # latest content for ALL channels. Treat it as current state, not a diff.
-        print(f"✏️  Post content edited (debounced ~5m): {resource.get('title')}")
-
-    # --- Comments (data.comment, NOT data.post) -----------------------------
-    elif event_type == "post.comment.created":
-        # Post-level comment.
-        post = resource.get("post") or {}
-        print(f"💬 Comment on \"{post.get('title')}\": {resource.get('message')}")
-    elif event_type == "post.inline_comment.created":
-        # Text-anchored comment. One event per comment, INCLUDING replies in a
-        # thread (documented for inline comments); thread context is in `thread`.
-        post = resource.get("post") or {}
-        print(f"💬 Inline comment on \"{post.get('title')}\": {resource.get('message')}")
-
-    # --- Approvals (data.approval for BOTH post.* and campaign.*) -----------
-    elif event_type == "post.approval.requested":
-        post = resource.get("post") or {}
-        count = len(resource.get("createdApprovals") or [])
-        print(f"🔍 Approval requested on \"{post.get('title')}\" for {count} approver(s)")
-    elif event_type == "post.approval.approved":
-        post = resource.get("post") or {}
-        print(f"✅ Post approved: {post.get('title')}")
-    elif event_type == "campaign.approval.requested":
-        # Same data.approval key, but with `campaign` instead of `post`.
-        campaign = resource.get("campaign") or {}
-        print(f"🔍 Campaign approval requested: {campaign.get('name')}")
-    elif event_type == "campaign.approval.approved":
-        campaign = resource.get("campaign") or {}
-        print(f"✅ Campaign approved: {campaign.get('name')}")
-
-    # --- Invites (data.invite) ----------------------------------------------
-    elif event_type == "invite.created":
-        # If the invitee already has an account they are added directly and NO
-        # email is sent — don't promise "check your inbox" on this event.
-        print(f"✉️  Invite created for {resource.get('email')}")
-    elif event_type == "invite.accepted":
-        print(f"🎉 Invite accepted by {resource.get('email')}")
-
-    else:
-        # New topics may appear before this skill is updated. Log and move on
-        # rather than guessing the payload shape. There is no `ping` event.
-        print(f"ℹ️  Unhandled Ordinal event type: {event_type}")
-
-
 @app.get("/health")
-async def health() -> Dict[str, str]:
+async def health():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))

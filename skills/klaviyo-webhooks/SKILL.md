@@ -21,16 +21,19 @@ metadata:
 - How do I verify Klaviyo webhook signatures (the `Klaviyo-Signature` header)?
 - How do I handle Klaviyo system webhook events like `event:klaviyo.opened_email`?
 - Why is my Klaviyo webhook signature verification failing?
-- How do I secure a Klaviyo flow "Webhook" action that isn't signed?
+- How do I tell Klaviyo system webhooks from flow webhook actions?
 
 ## Verification (core)
 
 Klaviyo signs each **system webhook** with an HMAC-SHA256 over the **raw request
 body concatenated with the `Klaviyo-Timestamp` header value**, hex-encoded, using
-your endpoint secret (min 16 chars). The signature arrives in the
-`Klaviyo-Signature` header. Compute the same HMAC and compare timing-safe. There
-is no official SDK verification helper, so verify manually. Pass the **raw** body —
-don't `JSON.parse` first.
+the secret key you set on the webhook (at least 16 characters). The signature
+arrives in the `Klaviyo-Signature` header. Compute the same HMAC and compare
+timing-safe. There is no official SDK verification helper, so verify manually.
+Pass the **raw** body — don't `JSON.parse` first.
+
+Klaviyo also says to check that `meta.klaviyo_webhook_id` in the body equals the
+`Klaviyo-Webhook-Id` header, and not to process the request if they differ.
 
 Node:
 
@@ -67,14 +70,19 @@ def verify_klaviyo_webhook(raw_body: bytes, timestamp: str, signature: str, secr
 > - [examples/nextjs/](examples/nextjs/)
 > - [examples/fastapi/](examples/fastapi/)
 
-## Unsigned flow "Webhook" action
+## System webhooks vs flow webhook actions
 
-Signature verification above applies to **system webhooks** (created via the
-Webhooks API). Klaviyo's older flow **"Webhook" action** sends a custom JSON
-payload you define and is **not signed**. If signing is unavailable on your
-account, put a hard-to-guess secret token in the endpoint URL (e.g.
-`/webhooks/klaviyo?token=…`) and reject requests that don't match. See
-[references/verification.md](references/verification.md).
+Signature verification above applies to **system webhooks**, created under
+Data management > Webhooks or with the Webhooks API. Only Advanced KDP customers
+and Klaviyo app partners can create them. A flow **Webhook action** is a different
+feature: it POSTs a JSON body you write, with any headers you add and an
+`X-Klaviyo-Flow-ID` header, and it is **not signed**. Klaviyo's docs suggest adding
+headers "for authentication", so give it a secret header and check that instead.
+See [references/verification.md](references/verification.md).
+
+Respond with `200`, `201` or `202` within 5 seconds. Klaviyo treats anything else
+as a failure and retries with exponential backoff, and disables a webhook that
+stays in an error state for over 48 hours.
 
 ## Common Event Types (topics)
 
@@ -87,8 +95,8 @@ Each payload delivers a `data` array of events; every event carries a `topic`.
 | `event:klaviyo.bounced_email` | An email bounced |
 | `event:klaviyo.marked_email_as_spam` | Recipient marked an email as spam |
 | `event:klaviyo.unsubscribed_from_email_marketing` | Profile unsubscribed from email |
-| `event:klaviyo.received_sms` | An inbound SMS was received |
-| `event:klaviyo.sent_sms` | An SMS was sent |
+| `event:klaviyo.received_sms` | A recipient received an SMS you sent |
+| `event:klaviyo.sent_sms` | A profile texted your Klaviyo sending number (inbound) |
 | `event:klaviyo.submitted_review` | A review was submitted |
 
 > **For the full topic list**, see [references/overview.md](references/overview.md)
@@ -97,7 +105,7 @@ Each payload delivers a `data` array of events; every event carries a `topic`.
 ## Environment Variables
 
 ```bash
-KLAVIYO_WEBHOOK_SECRET=your_endpoint_secret_min_16_chars   # Set when creating the webhook
+KLAVIYO_WEBHOOK_SECRET=your_endpoint_secret_min_16_chars   # The webhook's secret key, set when you create it
 ```
 
 ## Local Development
@@ -110,7 +118,7 @@ npx hookdeck-cli listen 3000 klaviyo --path /webhooks/klaviyo
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Klaviyo webhook concepts, full topic list, payload structure
-- [references/setup.md](references/setup.md) - Create a webhook via the API, get the endpoint secret
+- [references/setup.md](references/setup.md) - Create a webhook in Klaviyo or via the API, set the secret key
 - [references/verification.md](references/verification.md) - Signature verification details and gotchas
 
 ## Attribution

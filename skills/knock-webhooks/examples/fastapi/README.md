@@ -5,7 +5,7 @@ Minimal example of receiving Knock outbound webhooks with `x-knock-signature` ve
 ## Prerequisites
 
 - Python 3.9+
-- A Knock webhook endpoint with its per-endpoint signing secret (Platform → Webhooks → webhook detail page)
+- A Knock webhook endpoint with its per-endpoint signing secret (Platform → Webhooks → your webhook → Overview tab)
 
 ## Setup
 

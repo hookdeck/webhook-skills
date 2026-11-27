@@ -93,7 +93,9 @@ function normalizeMeta(meta) {
 
 /**
  * MailerSend sends no delivery id, timestamp or nonce, so transport-level
- * replay protection is impossible. Dedupe on `data.id` instead. Use a shared,
+ * replay protection is impossible. Dedupe on `type` plus `data.id` instead:
+ * `data.id` alone is shared by e.g. activity.opened and activity.opened_unique,
+ * and some events (maintenance.*, reputation changes) have no `data.id` at all. Use a shared,
  * durable store (Redis, Postgres) in production — an in-memory Set is per-process
  * and lost on restart.
  */
@@ -121,55 +123,55 @@ function handleEvent(event) {
   switch (event.type) {
     // --- Activity events ---------------------------------------------------
     case 'activity.sent':
-      console.log(`Sent to ${data.email} (message ${data.message_id})`);
-      // TODO: mark queued -> sent
+      console.log(`Sent to ${data.recipient} (message ${data.message_id})`);
+      // Your code: mark queued -> sent
       break;
 
     case 'activity.delivered':
-      console.log(`Delivered to ${data.email} at ${occurredAt?.toISOString()}`);
-      // TODO: confirm delivery
+      console.log(`Delivered to ${data.recipient} at ${occurredAt?.toISOString()}`);
+      // Your code: confirm delivery
       break;
 
     case 'activity.soft_bounced':
-      console.log(`Soft bounce for ${data.email}`, meta);
-      // TODO: count consecutive soft bounces; suppress after a threshold
+      console.log(`Soft bounce for ${data.recipient}`, meta);
+      // Your code: count consecutive soft bounces; suppress after a threshold
       break;
 
     case 'activity.hard_bounced':
-      console.log(`HARD bounce for ${data.email}`, meta);
-      // TODO: suppress this address immediately — it will never deliver
+      console.log(`HARD bounce for ${data.recipient}`, meta);
+      // Your code: suppress this address immediately — it will never deliver
       break;
 
     case 'activity.deferred':
       // Paid plans only
-      console.log(`Deferred for ${data.email}`, meta);
+      console.log(`Deferred for ${data.recipient}`, meta);
       break;
 
     case 'activity.opened':
     case 'activity.opened_unique':
-      console.log(`Open (${event.type}) by ${data.email}`);
-      // TODO: engagement scoring. `opened` fires per open, `opened_unique` once
+      console.log(`Open (${event.type}) by ${data.recipient}`);
+      // Your code: engagement scoring. `opened` fires per open, `opened_unique` once
       break;
 
     case 'activity.clicked':
     case 'activity.clicked_unique':
-      console.log(`Click (${event.type}) by ${data.email}`, meta);
-      // TODO: link analytics. `clicked` fires per click, `clicked_unique` once
+      console.log(`Click (${event.type}) by ${data.recipient}`, meta);
+      // Your code: link analytics. `clicked` fires per click, `clicked_unique` once
       break;
 
     case 'activity.unsubscribed':
-      console.log(`Unsubscribe from ${data.email}`);
-      // TODO: update consent and stop sending
+      console.log(`Unsubscribe from ${data.recipient}`);
+      // Your code: update consent and stop sending
       break;
 
     case 'activity.spam_complaint':
-      console.log(`SPAM COMPLAINT from ${data.email}`);
-      // TODO: suppress immediately — this damages sending reputation
+      console.log(`SPAM COMPLAINT from ${data.recipient}`);
+      // Your code: suppress immediately — this damages sending reputation
       break;
 
     case 'activity.survey_opened':
     case 'activity.survey_submitted':
-      console.log(`Survey event ${event.type} for ${data.email}`, meta);
+      console.log(`Survey event ${event.type} for ${data.recipient}`, meta);
       break;
 
     // --- Account and platform events ---------------------------------------
@@ -180,12 +182,12 @@ function handleEvent(event) {
 
     case 'maintenance.start':
       console.log('MailerSend maintenance started', occurredAt?.toISOString());
-      // TODO: pause non-urgent sends
+      // Your code: pause non-urgent sends
       break;
 
     case 'maintenance.end':
       console.log('MailerSend maintenance ended', occurredAt?.toISOString());
-      // TODO: resume sends
+      // Your code: resume sends
       break;
 
     case 'inbound_forward.failed':
@@ -292,8 +294,9 @@ app.post(
     // slow belongs in a background job, not in this request.
     res.status(200).json({ received: true });
 
-    if (alreadyProcessed(event.data?.id)) {
-      console.log(`Duplicate event ${event.data.id}, skipping`);
+    const dedupeKey = event.data?.id ? `${event.type}:${event.data.id}` : null;
+    if (alreadyProcessed(dedupeKey)) {
+      console.log(`Duplicate event ${dedupeKey}, skipping`);
       return;
     }
 

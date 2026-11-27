@@ -16,17 +16,17 @@ webhook. See [verification.md](verification.md).
 
 ## Two Webhook Surfaces, One Security Model
 
-| | **Email / account webhooks** | **SMS webhooks** |
-|---|---|---|
-| Configured at | Domains → Manage → Webhooks | SMS → Webhooks |
-| Docs | [Account webhooks](https://developers.mailersend.com/api/v1/account/webhooks.html) | [SMS webhooks](https://developers.mailersend.com/api/v1/sms-webhooks.html) |
-| Header | `Signature` | `Signature` |
-| Algorithm | HMAC-SHA256 hex over the raw body | HMAC-SHA256 hex over the raw body |
-| Secret | per-webhook Signing Secret | per-webhook Signing Secret |
-| Test ping | `webhook.test`, fixed public secret | `webhook.test`, fixed public secret |
-| Events | the 23 below | `sms.sent`, `sms.delivered`, `sms.failed` |
+| | **Email / account webhooks** | **SMS webhooks** | **WhatsApp webhooks** |
+|---|---|---|---|
+| Configured at | Domains → View domain → Webhooks, or the API | SMS → Webhooks, or the API | WhatsApp → Phone numbers → sender → Webhooks (dashboard only) |
+| Docs | [Account webhooks](https://developers.mailersend.com/api/v1/account/webhooks) | [SMS webhooks](https://developers.mailersend.com/api/v1/sms/webhooks) | [WhatsApp webhooks](https://developers.mailersend.com/api/v1/whatsapp/webhooks) |
+| Header | `Signature` | `Signature` | `Signature` |
+| Algorithm | HMAC-SHA256 hex over the raw body | HMAC-SHA256 hex over the raw body | HMAC-SHA256 hex over the raw body |
+| Secret | per-webhook Signing Secret | per-webhook Signing Secret | per-webhook Signing Secret |
+| Test ping | `webhook.test`, fixed public secret | `webhook.test`, fixed public secret | none documented |
+| Events | the 27 below | `sms.sent`, `sms.delivered`, `sms.failed` | `whatsapp.sent`, `.delivered`, `.read`, `.failed`, `.inbound` |
 
-The security model is identical, so **one verifier handles both**. The examples
+The security model is identical, so **one verifier handles all three**. The examples
 in this skill target the email/activity events.
 
 **Out of scope:** MailerSend *Inbound Routing* forwards parsed inbound email to
@@ -125,7 +125,7 @@ Full example:
     "email_id": "6892766a8d52ba62543d5e71",
     "type": "sent",
     "subject": "Test email",
-    "email": "test@mailersend.com",
+    "recipient": "test@mailersend.com",
     "tags": ["test", "test2"],
     "meta": []
   }
@@ -151,8 +151,8 @@ all.
 
 | Format | Example | Used by |
 |--------|---------|---------|
-| Microsecond ISO-8601, `Z` suffix | `2025-08-05T21:23:54.000000Z` | activity and inbound events, `webhook.test` |
-| Space-separated, no timezone | `2025-08-05 22:27:14` | `sender_identity.verified`, `maintenance.start`, `maintenance.end` |
+| Microsecond ISO-8601, `Z` suffix | `2025-08-05T21:23:54.000000Z` | activity, `inbound_message.rejected`, on-hold, reputation and `email_list.created` events, `webhook.test` |
+| Space-separated, no timezone | `2025-08-05 22:27:14` | `sender_identity.verified`, `maintenance.*`, `inbound_forward.failed`, `email_single.verified`, `email_list.verified`, `bulk_email.completed` |
 
 Parse defensively. In JavaScript, `new Date("2025-08-05 22:27:14")` is
 implementation-defined and is interpreted as **local time** where it works at
@@ -185,7 +185,8 @@ const meta = Array.isArray(data.meta) ? {} : (data.meta || {});
 - MailerSend explicitly recommends acknowledging with 2xx immediately and moving
   processing to an async background job.
 - There is **no delivery-id header**, **no timestamp**, and **no nonce**. Dedupe
-  on `data.id`.
+  on `type` plus `data.id`; `data.id` alone is shared by the unique and
+  non-unique open and click events, and some events have no `data.id`.
 - There is **no documented source-IP allowlist** and **no `X-MailerSend-*`
   header**. Don't build either into your receiver.
 
@@ -193,4 +194,5 @@ const meta = Array.isArray(data.meta) ? {} : (data.meta || {});
 
 - [Account webhooks](https://developers.mailersend.com/api/v1/account/webhooks.html)
 - [Webhook security](https://developers.mailersend.com/api/v1/account/webhooks.html#security)
-- [SMS webhooks](https://developers.mailersend.com/api/v1/sms-webhooks.html)
+- [SMS webhooks](https://developers.mailersend.com/api/v1/sms/webhooks)
+- [WhatsApp webhooks](https://developers.mailersend.com/api/v1/whatsapp/webhooks)

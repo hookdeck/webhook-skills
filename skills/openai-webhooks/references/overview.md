@@ -8,8 +8,9 @@ OpenAI webhooks are HTTP callbacks that notify your application when asynchronou
 
 - **Fine-tuning Jobs**: Get notified when model fine-tuning completes
 - **Batch API**: Receive alerts when batch processing finishes
-- **Realtime API**: Handle session lifecycle events
-- **Async Operations**: Track long-running API operations
+- **Background responses**: Know when a `background: true` response completes, fails or is cancelled
+- **Evals**: Learn when an eval run finishes
+- **Realtime API**: Accept or reject incoming SIP calls
 
 ## Common Event Types
 
@@ -22,7 +23,8 @@ OpenAI webhooks are HTTP callbacks that notify your application when asynchronou
 | `batch.failed` | Batch API request fails | Handle errors, retry failed items |
 | `batch.cancelled` | Batch is cancelled | Clean up, refund credits |
 | `batch.expired` | Batch API request expires | Clean up, handle timeout |
-| `realtime.call.incoming` | Realtime API incoming call | Handle incoming call, connect client |
+| `realtime.call.incoming` | Incoming SIP call is ready for the Realtime API | Accept or reject the call with `data.call_id` |
+| `response.completed` | Background response finishes | Retrieve the response output |
 
 ## Event Payload Structure
 
@@ -30,37 +32,32 @@ All OpenAI webhook events follow this structure:
 
 ```json
 {
-  "id": "evt_123abc",
-  "type": "fine_tuning.job.succeeded",
-  "created_at": 1234567890,
-  "data": {
-    "id": "ftjob-ABC123",
-    "object": "fine_tuning.job",
-    "model": "gpt-3.5-turbo-0125",
-    "created_at": 1234567890,
-    "finished_at": 1234567900,
-    "fine_tuned_model": "ft:gpt-3.5-turbo-0125:my-org:custom-model:8ABC123",
-    "organization_id": "org-123",
-    "status": "succeeded",
-    // Additional fields specific to event type
-  }
+  "object": "event",
+  "id": "evt_685343a1381c819085d44c354e1b330e",
+  "type": "response.completed",
+  "created_at": 1750287018,
+  "data": { "id": "resp_abc123" }
 }
 ```
+
+Payloads are thin: for most events `data` holds only the ID of the response, batch, job or eval run, so retrieve the object from the API for its details. SIP call events (`realtime.call.incoming`) carry `call_id` and `sip_headers` instead.
 
 ## Key Fields
 
 - **`id`**: Unique identifier for the webhook event
 - **`type`**: The event type (e.g., "fine_tuning.job.succeeded")
 - **`created_at`**: Unix timestamp when the event was created
-- **`data`**: Object containing event-specific data
+- **`data`**: Usually just the affected object's `id`
 
 ## Event Delivery
 
 - Events are delivered via HTTP POST to your configured endpoint
-- OpenAI expects a 2xx status code within 20 seconds
-- Failed deliveries are retried with exponential backoff
+- OpenAI expects a 2xx status code within a few seconds
+- Failed deliveries are retried with exponential backoff for up to 72 hours
+- 3xx redirects are not followed and count as failures
+- Duplicates are rare but possible; use the `webhook-id` header as the idempotency key
 - Events include Standard Webhooks headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`) for verification
 
 ## Full Event Reference
 
-For the complete list of events and their payloads, see [OpenAI's webhook documentation](https://platform.openai.com/docs/guides/webhooks).
+For the complete list of events and their payloads, see [OpenAI's webhook events reference](https://developers.openai.com/api/reference/resources/webhooks).

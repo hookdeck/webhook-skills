@@ -14,7 +14,7 @@ Before Nylas activates a webhook — whether you create it in the **Dashboard** 
 
 1. Nylas sends a **GET** request to your webhook URL with a `challenge` query parameter:
    `GET https://your-app.com/webhooks/nylas?challenge=abc123`
-2. Your endpoint must respond within **10 seconds** with:
+2. Your endpoint must respond within **20 seconds** with:
    - HTTP status **200**
    - A body containing **only the exact challenge value** (`abc123`) — plain text, no
      quotes, no JSON, no trailing newline added by your framework.
@@ -65,13 +65,14 @@ challenge handshake when you make this call, or creation fails.
 - The **`webhook_secret` is returned only on creation** and when you **rotate** it — it is
   unique per destination and is **not** shown again in listings.
 - Rotate with the SDK (`nylas.webhooks.rotateSecret(webhookId)`) or
-  `PUT /v3/webhooks/rotate-secret/{id}`. Update `NYLAS_WEBHOOK_SECRET` immediately after.
+  `POST /v3/webhooks/rotate-secret/{id}`. Nylas stops using the old secret immediately, so
+  update `NYLAS_WEBHOOK_SECRET` straight after.
 
 ## IP Allowlisting (optional)
 
-Nylas publishes the source IPs it sends webhooks from. Retrieve them with
-`GET /v3/webhooks/ip-addresses` (or `nylas.webhooks.ipAddresses()`) and allowlist them at
-your firewall/proxy. This complements — but does not replace — signature verification.
+The Nylas SDKs have an `ipAddresses()` method (`GET /v3/webhooks/ip-addresses`) for the
+source IPs, but the current webhook docs don't describe that endpoint. Treat any allowlist
+as a complement to signature verification, never a replacement.
 
 ## Environment Variables
 

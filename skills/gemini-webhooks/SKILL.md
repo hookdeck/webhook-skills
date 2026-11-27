@@ -31,7 +31,7 @@ Each delivery includes three headers:
 
 - `webhook-id` — unique message id (use for idempotency)
 - `webhook-timestamp` — Unix seconds (reject if > 5 minutes old)
-- `webhook-signature` — one or more space-separated `v1,<base64-hmac-sha256>` entries over `webhook-id.webhook-timestamp.body` (multiple entries appear during secret rotation)
+- `webhook-signature` — one or more space-separated `v1,<base64-hmac-sha256>` entries over `webhook-id.webhook-timestamp.body` (the Standard Webhooks spec allows several entries, so accept a match on any)
 
 The signing secret is returned once when the webhook is created via the WebhookService API
 and is base64-encoded, prefixed with `whsec_`.
@@ -241,6 +241,8 @@ async def gemini_webhook(
 | `interaction.cancelled` | Interactions API call was cancelled |
 
 > **For the full event reference**, see [Gemini API webhooks](https://ai.google.dev/gemini-api/docs/webhooks).
+> Webhooks are in preview. The API reference's list of subscribable events has seven entries and leaves out
+> `batch.cancelled` and `interaction.cancelled`, which the guide's event catalog still lists.
 
 ## Static vs Dynamic Webhooks
 
@@ -252,8 +254,8 @@ Gemini supports two delivery modes:
 - **Dynamic webhooks** — per-job endpoint passed in the request `webhook_config`. Signed
   asymmetrically with an RS256 JWT in the `Webhook-Signature` header; verify against
   Google's JWKS at `https://generativelanguage.googleapis.com/.well-known/jwks.json`.
-  Useful for per-request routing via `user_metadata`. See
-  [references/verification.md](references/verification.md) for the JWT verification flow.
+  The request can carry `user_metadata`; Google's docs don't say whether it comes back in
+  the delivery. See [references/verification.md](references/verification.md) for the JWT verification flow.
 
 ## Environment Variables
 

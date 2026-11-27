@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import PlainTextResponse
@@ -29,7 +30,7 @@ def verify_nylas_signature(raw_body: bytes, signature_header: str | None, secret
 
 # --- Challenge handshake (endpoint verification) ---------------------------
 # When the webhook is created, Nylas GETs this URL with ?challenge=<value>.
-# Echo the exact value back as plain text with 200 within 10 seconds.
+# Echo the exact value back as plain text with 200 within 20 seconds.
 @app.get("/webhooks/nylas")
 async def nylas_challenge(challenge: str = "") -> PlainTextResponse:
     return PlainTextResponse(content=challenge, status_code=200)
@@ -55,15 +56,18 @@ async def nylas_webhook(request: Request) -> Response:
         return PlainTextResponse("Invalid payload", status_code=400)
 
     # Nylas payloads follow CloudEvents 1.0: trigger in `type`, resource in `data.object`.
-    trigger = event.get("type")
+    # `type` can carry suffixes you didn't subscribe to: `.truncated` (body
+    # removed, fetch the message by ID) and `.transformed` (customized fields).
+    trigger = re.sub(r"(\.(?:truncated|transformed))+$", "", str(event.get("type")))
     data = event.get("data") or {}
     obj = data.get("object") or {}
-    grant_id = data.get("grant_id")
+    # Some types put grant_id in `data`, most in `data.object`.
+    grant_id = data.get("grant_id") or obj.get("grant_id")
     print(f"Received {trigger} (id: {event.get('id')}, grant: {grant_id})")
 
     if trigger == "message.created":
         print("New message:", obj.get("subject"))
-        # TODO: parse the email, run automation, notify, etc.
+        # Your code: parse the email, run automation, notify, etc.
     elif trigger == "message.updated":
         print("Message updated:", obj.get("id"))
     elif trigger == "message.opened":

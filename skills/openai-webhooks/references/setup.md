@@ -2,87 +2,57 @@
 
 ## Prerequisites
 
-- OpenAI account with API access
-- Organization owner or member with webhook configuration permissions
-- Your application's webhook endpoint URL (must be HTTPS in production)
-
-## Get Your Signing Secret
-
-1. Go to [OpenAI Platform](https://platform.openai.com) → Settings → Webhooks
-2. Click "Add endpoint" if creating new, or select existing endpoint
-3. Your signing secret will be displayed (format: `whsec_...`)
-4. Copy and save this secret securely - you'll need it to verify webhook signatures
+- An OpenAI API project
+- A public URL for your webhook endpoint
 
 ## Register Your Endpoint
 
-1. In the OpenAI Platform, go to Settings → Webhooks
-2. Click "Add endpoint"
-3. Configure your endpoint:
-   - **URL**: Your webhook endpoint (e.g., `https://api.example.com/webhooks/openai`)
-   - **Events**: Select the events you want to receive:
-     - Fine-tuning events: `fine_tuning.job.*`
-     - Batch events: `batch.*`
-     - Realtime events: `realtime.session.*`
-   - **Description**: Optional description for your reference
-4. Click "Create endpoint"
-5. Copy the signing secret that's displayed
+1. Open the project [webhook settings page](https://platform.openai.com/settings/project/webhooks) (Settings → Project → Webhooks)
+2. Click **Create**
+3. Configure three things:
+   - **Name**: for your reference
+   - **URL**: a public URL to your server (e.g., `https://api.example.com/webhooks/openai`)
+   - **Event types**: one or more, for example:
+     - Background responses: `response.completed`, `response.failed`, `response.cancelled`, `response.incomplete`
+     - Batch: `batch.completed`, `batch.failed`, `batch.cancelled`, `batch.expired`
+     - Fine-tuning: `fine_tuning.job.succeeded`, `fine_tuning.job.failed`, `fine_tuning.job.cancelled`
+     - Evals: `eval.run.succeeded`, `eval.run.failed`, `eval.run.canceled` (one "l")
+     - Realtime SIP calls: `realtime.call.incoming`
+4. Save the signing secret shown after creation (format: `whsec_...`). You can't view it again.
+
+The full list, including the Live API, safety and beta Agents API events, is in the [webhook events reference](https://developers.openai.com/api/reference/resources/webhooks).
+
+Safety warning and deactivation notices (`safety.warning_issued`, `safety.deactivation_issued`) go to organization-level endpoints, created in the [organization webhook settings](https://platform.openai.com/settings/organization/webhooks).
 
 ## Testing Your Endpoint
 
-OpenAI provides test events to verify your endpoint is working:
+- Trigger test events with sample data from the webhook settings page.
+- Or produce a real event: create a response with `background: true` and wait for `response.completed`.
 
-1. Go to your webhook endpoint in the dashboard
-2. Click "Send test event"
-3. Select an event type to test
-4. Click "Send test"
-5. Verify your endpoint receives and processes the test event
+## Local Development
 
-## Development vs Production
-
-### Local Development
-
-For local testing, use a tunneling service like Hookdeck CLI:
+OpenAI needs a public URL. Its docs suggest ngrok or a cloud development environment. The Hookdeck CLI also works:
 
 ```bash
 # Create tunnel to your local server
 npx hookdeck-cli listen 3000 openai --path /webhooks/openai
 ```
 
-This provides:
-- Public HTTPS URL for OpenAI to send webhooks
-- Request inspection and replay capabilities
-- No account required for basic usage
+## Delivery Behaviour
 
-### Production Requirements
+- **Response time**: return a 2xx within a few seconds, or the delivery is retried
+- **Retries**: exponential backoff for up to 72 hours
+- **Redirects**: 3xx responses aren't followed and count as failures; register the final URL
+- **Duplicates**: rare but possible; dedupe on the `webhook-id` header
 
-- **HTTPS Required**: OpenAI only sends webhooks to HTTPS endpoints
-- **Valid SSL Certificate**: Self-signed certificates are not accepted
-- **Response Time**: Must respond within 20 seconds
-- **IP Allowlist**: Not required - OpenAI doesn't publish static IPs
+## Rotating the Secret
 
-## Multiple Endpoints
-
-You can configure multiple webhook endpoints for different purposes:
-
-- Separate endpoints for different environments (dev, staging, prod)
-- Different endpoints for different event types
-- Failover endpoints for redundancy
-
-Each endpoint has its own signing secret.
-
-## Event Filtering
-
-Configure which events to receive at the endpoint level:
-
-- **Fine-tuning**: All events related to fine-tuning jobs
-- **Batch**: Events for batch API operations
-- **Realtime**: Session lifecycle events
-- **All Events**: Receive all current and future event types
+If you lose or expose the signing secret, rotate it from the webhook settings page, then update `OPENAI_WEBHOOK_SECRET` everywhere you verify.
 
 ## Webhook Security
 
-1. **Always verify signatures** - Never trust incoming webhooks without verification
-2. **Use environment variables** - Store signing secret securely
-3. **Timestamp validation** - OpenAI uses Standard Webhooks with timestamp validation to prevent replay attacks. Always verify the webhook-timestamp header is within 5 minutes of the current time
-4. **Return quickly** - Process events asynchronously if needed
-5. **Idempotency** - Handle duplicate events gracefully using event IDs
+1. **Always verify signatures** - Verification is optional on OpenAI's side, but without it anyone can POST to your endpoint
+2. **Use environment variables** - Store the signing secret as `OPENAI_WEBHOOK_SECRET`
+3. **Timestamp validation** - OpenAI's SDK `unwrap()` rejects timestamps more than 5 minutes from your clock by default; do the same in a hand-written verifier
+4. **Return quickly** - Process events asynchronously
+5. **Idempotency** - Use the `webhook-id` header to handle duplicate events

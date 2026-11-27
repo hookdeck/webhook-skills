@@ -7,7 +7,8 @@ description: >
   validation ping, or handling MailerSend activity events like activity.sent,
   activity.delivered, activity.hard_bounced, activity.opened,
   activity.clicked and activity.spam_complaint. Also covers MailerSend SMS
-  webhooks (sms.sent, sms.delivered, sms.failed). MailerSend is the
+  webhooks (sms.sent, sms.delivered, sms.failed) and WhatsApp webhooks
+  (whatsapp.delivered, whatsapp.inbound and others). MailerSend is the
   transactional email/SMS API — not MailerLite, Mailgun, Mailchimp or Resend.
 license: MIT
 metadata:
@@ -66,17 +67,17 @@ if (!signedByYou && !signedByPing) return res.status(401).send('Invalid signatur
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-The official Node SDK (`mailersend`) ships `MailerSendUtils.verifyWebHook()`, but
-it is **not exported from the package entry point**, it calls `timingSafeEqual`
-without a length guard (throws `RangeError` on a malformed header), and its
-README snippet reads a `x-mailersend-signature` header that MailerSend does not
-send. Verify manually as above — it matches the docs' own Node/Go/PHP samples.
-See [references/verification.md](references/verification.md).
+The official Node SDK (`mailersend`) ships `MailerSendUtils.verifyWebHook(rawBody, headersOrSignature, signingSecret)`,
+exported from the package entry point in current releases (3.9.0). It reads the
+`Signature` header, guards the length before `timingSafeEqual`, and works for
+email, SMS and WhatsApp webhooks. It **throws** when the body, header or secret
+is missing, so wrap it in `try`/`catch` and answer 401. Verifying manually, as
+above, is equivalent. See [references/verification.md](references/verification.md).
 
 ## The `webhook.test` Ping (read this before your first webhook fails to save)
 
-When you create or update a webhook, MailerSend immediately calls the URL to
-validate it. **If that request does not get a 2xx, the webhook is not saved.**
+When you create or update an email or SMS webhook, MailerSend immediately calls
+the URL to validate it. **If that request does not get a 2xx, the webhook is not saved.**
 
 ```json
 {
@@ -113,24 +114,32 @@ Real events:
     "email_id": "6892766a8d52ba62543d5e71",
     "type": "sent",
     "subject": "Test email",
-    "email": "test@mailersend.com",
+    "recipient": "test@mailersend.com",
     "tags": ["test", "test2"],
     "meta": []
   }
 }
 ```
 
+- This is the **version 2** payload. Email webhooks have a `version` setting:
+  version 1 (nested `data.email` object) **stops working on December 1, 2026**.
+  Dashboard webhooks default to 2, but the create-webhook API still defaults to
+  `1`, so send `"version": 2`. A version 2 webhook can't go back to 1.
 - `data.type` is the **bare** activity name (`sent`), without the `activity.` prefix.
+  The unique events print the non-unique word (`opened`, `clicked`).
 - `data.meta` is an **empty ARRAY `[]`** when there is nothing to report, and an
   object otherwise. This breaks naive typed deserialisation — normalise it.
-- `created_at` comes in **two** documented formats: microsecond ISO-8601 with `Z`
-  (`2025-08-05T21:23:54.000000Z`) for activity and inbound events, and
-  space-separated (`2025-08-05 22:27:14`) for `sender_identity.verified` and the
-  `maintenance.*` events. Parse defensively.
+- `created_at` comes in **two** formats in the docs' examples: microsecond ISO-8601
+  with `Z` (`2025-08-05T21:23:54.000000Z`) on most events, and space-separated
+  (`2025-08-05 22:27:14`) on `sender_identity.verified`, `maintenance.*`,
+  `inbound_forward.failed`, `email_single.verified`, `email_list.verified` and
+  `bulk_email.completed`. Parse defensively.
+- SMS events add `sms_number_id`, `sms_webhook_id` and `url` at the top level;
+  WhatsApp events add `webhook_id`.
 
 ## Event Types
 
-23 documented events, plus the `webhook.test` ping.
+27 documented email/account events, plus the `webhook.test` ping.
 
 | Event | Fires when |
 |-------|------------|
@@ -145,6 +154,7 @@ Real events:
 | `activity.unsubscribed` | Recipient unsubscribed |
 | `activity.spam_complaint` | Recipient marked the email as spam — suppress immediately |
 | `activity.deferred` | Temporarily delayed (**paid plans only**) |
+| `activity.suppressed` | Not sent: recipient is on a suppression list (**paid plans only**) |
 | `activity.survey_opened` | Survey email opened for the first time |
 | `activity.survey_submitted` | Survey submitted, or 30-minute idle timeout |
 | `sender_identity.verified` | A sender identity finished verification |
@@ -153,10 +163,13 @@ Real events:
 | `inbound_forward.failed` | Inbound forwarding to your URL failed |
 | `inbound_message.rejected` | Inbound message rejected (`unsupported_attachment_type` or `attachment_size_exceeded`) |
 | `email_single.verified` | Single email address verification finished |
+| `email_list.created` | Email verification list created |
 | `email_list.verified` | Email list verification finished |
 | `bulk_email.completed` | Bulk send finished processing |
 | `recipient.on_hold_added` | Recipient placed on the on-hold list |
 | `recipient.on_hold_removed` | Recipient removed from the on-hold list |
+| `domain.reputation_changed` | Domain reputation status changed (Starter plans and above) |
+| `account.reputation_changed` | Account reputation status changed |
 | `webhook.test` | URL validation ping — see above |
 
 **SMS webhooks** are configured separately (SMS → Webhooks) with an **identical**
@@ -164,6 +177,13 @@ security model — same `Signature` header, same HMAC-SHA256 hex over the raw
 body, same per-webhook signing secret, same fixed test secret. One verifier
 handles both surfaces. They add three event names: `sms.sent`, `sms.delivered`,
 `sms.failed`.
+
+**WhatsApp webhooks** are created only in the dashboard (WhatsApp → Phone
+numbers → your sender → Webhooks), one per sender, with the same `Signature`
+scheme and their own secret. Events: `whatsapp.sent`, `whatsapp.delivered`,
+`whatsapp.read`, `whatsapp.failed`, `whatsapp.inbound`. The docs describe no
+`webhook.test` ping for them, and their dashboard test events are signed with
+the webhook's own secret.
 
 Full list: [references/overview.md](references/overview.md).
 
@@ -179,7 +199,9 @@ Full list: [references/overview.md](references/overview.md).
   rejection therefore gets exactly one attempt — that is intended.
 - **No replay-protection material is sent** (no timestamp, no nonce, no delivery
   id header), so a timestamp tolerance check is impossible. Use
-  application-level idempotency keyed on `data.id` instead.
+  application-level idempotency keyed on `type` plus `data.id`: `data.id` alone
+  is shared by `activity.opened`/`activity.opened_unique` (and the click pair),
+  and maintenance, inbound, on-hold and reputation events have no `data.id`.
 - MailerSend documents **no source-IP allowlist and no `X-MailerSend-*` headers**.
   Don't build either into your receiver.
 
@@ -187,7 +209,8 @@ Full list: [references/overview.md](references/overview.md).
 
 ```bash
 # The per-webhook Signing Secret MailerSend generates when the webhook is
-# created (Dashboard -> Domains -> Manage -> Webhooks, or the Webhooks API).
+# created (Dashboard -> Domains -> View domain -> Webhooks, or the `secret`
+# field the Webhooks API returns).
 # This is NOT your MailerSend API token.
 MAILERSEND_WEBHOOK_SECRET=your_webhook_signing_secret
 

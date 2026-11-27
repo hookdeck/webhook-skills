@@ -34,11 +34,11 @@ Every subscription is bound to exactly one `event_type`:
 ## Data Types (`data_type`)
 
 A subscription is one `data_type` + `event_type` combination — subscribe separately for
-each pairing you need. The full enum (17 values):
+each pairing you need. The full enum (16 values):
 
 | `data_type` | Description |
 |-------------|-------------|
-| `tag` | User-created tag |
+| `tag` | User-created tag (deprecated by Oura; use `enhanced_tag`) |
 | `enhanced_tag` | Enhanced tag with start/end times |
 | `workout` | Workout activity |
 | `session` | Guided/unguided session (e.g. breathing, meditation) |
@@ -54,7 +54,6 @@ each pairing you need. The full enum (17 values):
 | `daily_cardiovascular_age` | Daily cardiovascular age |
 | `daily_resilience` | Daily resilience |
 | `vo2_max` | VO2 max estimate |
-| `meal` | Logged meal |
 
 ## Event Payload Structure
 
@@ -84,10 +83,10 @@ To get the full record, call the matching Oura API route with `object_id`, e.g.
 ## Delivery, Retries, and Expiration
 
 - **Respond within 10 seconds** with a `2xx` status. Do heavy work asynchronously.
-- Oura **retries up to 10 times** on `4xx`, `5xx`, or timeout — handle events idempotently.
+- Oura **retries up to 10 times** on `4xx`, `5xx`, or timeout, for about an hour — handle events idempotently.
 - Respond **`410 Gone`** to have Oura auto-cancel the subscription.
 - Subscriptions have an `expiration_time` and must be **renewed** before they expire
-  (see [setup.md](setup.md)).
+  (see [setup.md](setup.md)). Oura's docs don't give the lifetime, so read `expiration_time`.
 
 ## Full Event Reference
 

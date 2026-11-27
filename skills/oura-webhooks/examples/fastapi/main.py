@@ -41,7 +41,7 @@ async def oura_handshake(
 ):
     """Subscription handshake (GET).
 
-    Oura calls this when a subscription is created, updated, or renewed.
+    Oura calls this when you create a subscription.
     """
     if verification_token and verification_token == os.environ.get("OURA_VERIFICATION_TOKEN"):
         # Echo the challenge back as JSON to activate the subscription
@@ -77,19 +77,19 @@ async def oura_webhook(request: Request):
     # using object_id, e.g. GET /v2/usercollection/{data_type}/{object_id}.
     if data_type == "sleep":
         print(f"Sleep {event_type} at {event_time}")
-        # TODO: fetch GET /v2/usercollection/sleep/{object_id}
+        # Your code: fetch GET /v2/usercollection/sleep/{object_id}
     elif data_type == "daily_sleep":
         print(f"Daily sleep summary {event_type}")
-        # TODO: fetch GET /v2/usercollection/daily_sleep/{object_id}
+        # Your code: fetch GET /v2/usercollection/daily_sleep/{object_id}
     elif data_type == "daily_readiness":
         print(f"Daily readiness {event_type}")
-        # TODO: fetch GET /v2/usercollection/daily_readiness/{object_id}
+        # Your code: fetch GET /v2/usercollection/daily_readiness/{object_id}
     elif data_type == "daily_activity":
         print(f"Daily activity {event_type}")
-        # TODO: fetch GET /v2/usercollection/daily_activity/{object_id}
+        # Your code: fetch GET /v2/usercollection/daily_activity/{object_id}
     elif data_type == "workout":
         print(f"Workout {event_type}")
-        # TODO: fetch GET /v2/usercollection/workout/{object_id}
+        # Your code: fetch GET /v2/usercollection/workout/{object_id}
     else:
         print(f"Unhandled data_type: {data_type}")
 

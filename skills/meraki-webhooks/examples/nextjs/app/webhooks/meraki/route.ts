@@ -14,7 +14,7 @@ let warnedNoSecretConfigured = false;
  * `sharedSecret`. Verification is a timing-safe string compare on that field.
  *
  * The shared secret is OPTIONAL in Meraki: leave it blank on the HTTP server and
- * deliveries carry no `sharedSecret` at all. So handle the two cases explicitly
+ * deliveries carry no secret value. So handle the two cases explicitly
  * rather than comparing '' to '' and silently passing:
  *   - No secret configured -> accept, but warn that TLS is the only protection.
  *   - Secret configured    -> the payload MUST carry a matching `sharedSecret`.
@@ -78,22 +78,22 @@ export async function POST(request: NextRequest) {
   switch (alertTypeId) {
     case 'motion_alert':
       console.log(`Motion detected on device ${payload.deviceSerial}`);
-      // TODO: capture snapshot, notify security, etc.
+      // Your code: capture snapshot, notify security, etc.
       break;
 
     case 'settings_changed':
       console.log(`Settings changed in ${payload.networkName}`);
-      // TODO: audit the change, alert compliance, etc.
+      // Your code: audit the change, alert compliance, etc.
       break;
 
     case 'sensor_alert':
       console.log(`Sensor alert on ${payload.deviceSerial}:`, payload.alertData);
-      // TODO: create incident, page facilities, etc.
+      // Your code: create incident, page facilities, etc.
       break;
 
     case 'stopped_reporting':
       console.log(`Device(s) stopped reporting in ${payload.networkName}`);
-      // TODO: open uptime incident, page on-call, etc.
+      // Your code: open uptime incident, page on-call, etc.
       break;
 
     default:

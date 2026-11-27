@@ -65,42 +65,42 @@ app.post(
     switch (eventType) {
       case 'inbound_received':
         console.log('Inbound message received:', event.payload?.id);
-        // TODO: triage, sync to CRM, alert, etc.
+        // Your code: triage, sync to CRM, alert, etc.
         break;
 
       case 'outbound_sent':
         console.log('Outbound message sent:', event.payload?.id);
-        // TODO: log reply, track SLA, etc.
+        // Your code: log reply, track SLA, etc.
         break;
 
       case 'conversation_moved':
         console.log('Conversation moved:', event.payload?.conversation?.id);
-        // TODO: routing analytics, notifications, etc.
+        // Your code: routing analytics, notifications, etc.
         break;
 
       case 'assignee_changed':
         console.log('Assignee changed:', event.payload?.conversation?.id);
-        // TODO: workload tracking, escalation, etc.
+        // Your code: workload tracking, escalation, etc.
         break;
 
       case 'conversation_archived':
         console.log('Conversation archived:', event.payload?.conversation?.id);
-        // TODO: close-out workflow, metrics, etc.
+        // Your code: close-out workflow, metrics, etc.
         break;
 
       case 'tag_added':
         console.log('Tag added:', event.payload?.conversation?.id);
-        // TODO: categorization, automation, etc.
+        // Your code: categorization, automation, etc.
         break;
 
       case 'new_comment_added':
         console.log('Comment added:', event.payload?.conversation?.id);
-        // TODO: internal collaboration hooks, etc.
+        // Your code: internal collaboration hooks, etc.
         break;
 
       case 'message_delivery_failed':
         console.log('Message delivery failed:', event.payload?.id);
-        // TODO: bounce handling, list hygiene, etc.
+        // Your code: bounce handling, list hygiene, etc.
         break;
 
       default:

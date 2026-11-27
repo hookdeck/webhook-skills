@@ -68,8 +68,9 @@ def verify_nylas_signature(raw_body: bytes, signature_header: str, secret: str) 
 
 When a webhook destination is created (Dashboard or `POST /v3/webhooks`), Nylas sends a
 **GET** with a `challenge` query parameter. Echo the **exact** value back — plain text,
-nothing else — with `200` within 10 seconds (no chunked encoding). The `webhook_secret`
-is returned only on creation/rotation, so store it then.
+nothing else — with `200` within 20 seconds (no chunked encoding). The `webhook_secret`
+is returned only on creation/rotation, so store it then. Rotating it retires the old
+secret immediately, with no overlap.
 
 ```javascript
 // GET /webhooks/nylas?challenge=abc123  ->  200 "abc123"
@@ -84,7 +85,9 @@ app.get('/webhooks/nylas', (req, res) => res.status(200).send(req.query.challeng
 ## Common Event Types
 
 Nylas payloads follow **CloudEvents 1.0**: the trigger is in `type`, and the changed
-resource is in `data.object`.
+resource is in `data.object`. `type` can carry suffixes you never subscribed to:
+`.truncated` (a `message.*` payload over 1 MB, body removed: fetch the message by ID) and
+`.transformed` (customized payload fields). Strip them before routing.
 
 | Trigger (`type`) | Fires When |
 |------------------|------------|
@@ -100,7 +103,7 @@ resource is in `data.object`.
 | `grant.expired` | A grant's credentials expire — re-auth required |
 | `grant.deleted` | A grant is deleted (account disconnected) |
 
-> **For the full trigger reference and payload schemas**, see [Nylas notification schemas](https://developer.nylas.com/docs/v3/notifications/notification-schemas/).
+> **For the full trigger reference and payload schemas**, see [Nylas notification schemas](https://developer.nylas.com/docs/reference/notifications/).
 
 ## Payload Structure (CloudEvents 1.0)
 
@@ -114,8 +117,7 @@ resource is in `data.object`.
   "webhook_delivery_attempt": 1,
   "data": {
     "application_id": "app-uuid",
-    "grant_id": "grant-uuid",
-    "object": { "id": "message-id", "subject": "Hello" }
+    "object": { "id": "message-id", "grant_id": "grant-uuid", "object": "message", "subject": "Hello" }
   }
 }
 ```

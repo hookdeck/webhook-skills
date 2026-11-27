@@ -46,7 +46,7 @@ function verifyNylasSignature(rawBody, signatureHeader, secret) {
 
 // --- Challenge handshake (endpoint verification) ---------------------------
 // When the webhook is created, Nylas GETs this URL with ?challenge=<value>.
-// Echo the exact value back as plain text with 200 within 10 seconds.
+// Echo the exact value back as plain text with 200 within 20 seconds.
 app.get('/webhooks/nylas', (req, res) => {
   res.status(200).type('text/plain').send(req.query.challenge);
 });
@@ -92,15 +92,19 @@ app.post(
 
     // Nylas payloads follow CloudEvents 1.0: trigger in `type`,
     // resource in `data.object`.
-    const { type, id, data } = json;
+    // `type` can carry suffixes you didn't subscribe to: `.truncated` (body
+    // removed, fetch the message by ID) and `.transformed` (customized fields).
+    const { id, data } = json;
+    const type = String(json.type).replace(/(\.(?:truncated|transformed))+$/, '');
     const object = data?.object;
-    const grantId = data?.grant_id;
+    // Some types put grant_id in `data`, most in `data.object`.
+    const grantId = data?.grant_id ?? object?.grant_id;
     console.log(`Received ${type} (id: ${id}, grant: ${grantId})`);
 
     switch (type) {
       case 'message.created':
         console.log('New message:', object?.subject);
-        // TODO: parse the email, run automation, notify, etc.
+        // Your code: parse the email, run automation, notify, etc.
         break;
 
       case 'message.updated':
@@ -109,7 +113,7 @@ app.post(
 
       case 'message.opened':
         console.log('Tracked message opened:', object?.message_id ?? object?.id);
-        // TODO: record open, update engagement analytics
+        // Your code: record open, update engagement analytics
         break;
 
       case 'message.link_clicked':
@@ -118,12 +122,12 @@ app.post(
 
       case 'message.bounce_detected':
         console.log('Message bounced:', object?.id);
-        // TODO: add to suppression list, alert deliverability
+        // Your code: add to suppression list, alert deliverability
         break;
 
       case 'event.created':
         console.log('Calendar event created:', object?.title ?? object?.id);
-        // TODO: sync booking, update availability
+        // Your code: sync booking, update availability
         break;
 
       case 'event.updated':
@@ -136,17 +140,17 @@ app.post(
 
       case 'grant.created':
         console.log('Grant created (account connected):', grantId);
-        // TODO: provision user, kick off initial sync
+        // Your code: provision user, kick off initial sync
         break;
 
       case 'grant.expired':
         console.log('Grant expired — re-auth required:', grantId);
-        // TODO: prompt the user to reconnect their account
+        // Your code: prompt the user to reconnect their account
         break;
 
       case 'grant.deleted':
         console.log('Grant deleted (account disconnected):', grantId);
-        // TODO: deprovision, clean up
+        // Your code: deprovision, clean up
         break;
 
       default:

@@ -108,10 +108,11 @@ secret. To verify: strip the `sha256=` prefix, compute the HMAC over the raw
 body, and compare with a timing-safe function. Parse the JSON only after the
 signature checks out.
 
-When you rotate the secret, Mollie sends **two** `X-Mollie-Signature` headers for
-24 hours (one per secret). Node and the Fetch API join repeated headers into one
-comma-separated string, so split on `,` and accept the request if any value
-matches.
+Update your stored secret as soon as you rotate it: Mollie's next-gen guide says
+a new secret revokes the old one at once, "with no overlap window". Its example
+request still shows two `X-Mollie-Signature` headers, and Node and the Fetch API
+join repeated headers into one comma-separated string, so the code below splits
+on `,` and accepts the request if any value matches.
 
 ```javascript
 const crypto = require('crypto');
@@ -196,8 +197,8 @@ supported across all accounts":
 | `balance-transaction.created` | A balance transaction was created |
 | `business-account-transfer.*` | Business account transfer lifecycle |
 
-Refund, chargeback, capture, dispute, file and unmatched-credit-transfer events
-are listed as **beta** (request access from Mollie support). Subscribe with
+Refund, chargeback, capture, connect-balance-transfer, dispute, file and
+unmatched-credit-transfer events are listed as **beta** (request access from Mollie support). Subscribe with
 `eventTypes`, or `*` for all. The same Mollie page still recommends classic
 webhooks for payment updates in its classic section; see
 [references/overview.md](references/overview.md#next-gen-event-types).

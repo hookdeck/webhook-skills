@@ -64,7 +64,9 @@ def verify_nuvemshop_webhook(raw_body: bytes, hmac_header: str, client_secret: s
 
 > **Important**: Respond with a `2XX` status within **3 seconds**. Nuvemshop
 > retries on timeout/non-2XX (immediately, then ~5/10/15 min, then exponential
-> backoff ×1.4, up to 18 attempts over 48h). Do slow work asynchronously.
+> backoff ×1.4, up to 16 notifications over 48h). Do slow work asynchronously.
+> Webhooks created through the API are signed; the docs don't say whether the
+> required privacy webhooks set in the Partners Portal are.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -76,10 +78,12 @@ def verify_nuvemshop_webhook(raw_body: bytes, hmac_header: str, client_secret: s
 Nuvemshop payloads are intentionally minimal. A typical body is:
 
 ```json
-{ "store_id": 123456, "event": "order/created", "id": 999888 }
+{ "store_id": 123, "event": "product/created", "id": 1948209 }
 ```
 
-Only `store_id`, `event`, and (for resource events) a resource `id` are sent. To
+Every body has `store_id` and `event`; resource events add the resource `id`, and
+most events also send `event_launch_ts` (Unix seconds).
+Fulfillment events send `order_id` and `fulfillment_id` instead of `id`. To
 get the full record, call the REST API scoped to that store, e.g.
 `GET https://api.tiendanube.com/v1/{store_id}/orders/{id}` with the store's
 access token.
@@ -102,7 +106,7 @@ Events use `resource/action` format.
 | `app/uninstalled` | App uninstalled from the store |
 
 > **For the full event list**, see [references/overview.md](references/overview.md)
-> and [Nuvemshop's webhook docs](https://tiendanube.github.io/api-documentation/resources/webhook).
+> and [Nuvemshop's webhook docs](https://nuvemshop.dev/en-US/api/resources/2026-11/webhook).
 
 ## Environment Variables
 
@@ -137,7 +141,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Nuvemshop retries up to 18 times)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Nuvemshop sends a notification up to 16 times)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

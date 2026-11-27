@@ -102,4 +102,4 @@ Most events are scoped to a tenant, but some are system-level:
 
 ## Full Event Reference
 
-For the complete list of events and payload schemas, see [FusionAuth Webhook Events Documentation](https://fusionauth.io/docs/extend/events-and-webhooks/events/).
+For the complete list of events and payload schemas, see [FusionAuth Webhook Events Documentation](https://fusionauth.io/docs/events/reference/).

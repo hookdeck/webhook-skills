@@ -19,8 +19,8 @@ const { createMollieClient } = require('@mollie/api-client');
 //    `X-Mollie-Signature: sha256=<hex HMAC-SHA256 of the raw body>`.
 
 // Verify a next-gen X-Mollie-Signature header against the raw body.
-// During a secret rotation Mollie sends the header twice for 24 hours; Node joins
-// repeated headers as "sha256=<a>, sha256=<b>", so accept if any value matches.
+// Mollie's rotation example shows the header sent twice; Node joins repeated
+// headers as "sha256=<a>, sha256=<b>", so accept if any value matches.
 function verifyMollieSignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
@@ -40,7 +40,7 @@ function handleEvent(event) {
   switch (event.type) {
     case 'payment.paid':
       console.log(`Payment ${event.entityId} paid`);
-      // TODO: fulfill the order
+      // Your code: fulfill the order
       break;
     case 'payment.authorized':
       console.log(`Payment ${event.entityId} authorized (capture to collect)`);
@@ -49,7 +49,7 @@ function handleEvent(event) {
     case 'payment.expired':
     case 'payment.failed':
       console.log(`Payment ${event.entityId} did not complete: ${event.type}`);
-      // TODO: release reserved stock
+      // Your code: release reserved stock
       break;
     case 'payment-link.paid':
       console.log(`Payment link ${event.entityId} paid`);
@@ -92,23 +92,23 @@ function handlePayment(payment) {
   switch (payment.status) {
     case 'paid':
       console.log(`Payment ${payment.id} paid:`, payment.amount);
-      // TODO: fulfill the order, send a receipt
+      // Your code: fulfill the order, send a receipt
       break;
     case 'authorized':
       console.log(`Payment ${payment.id} authorized (capture to collect)`);
-      // TODO: capture the payment when ready to collect funds
+      // Your code: capture the payment when ready to collect funds
       break;
     case 'canceled':
       console.log(`Payment ${payment.id} canceled`);
-      // TODO: release reserved stock
+      // Your code: release reserved stock
       break;
     case 'expired':
       console.log(`Payment ${payment.id} expired`);
-      // TODO: release reserved stock, optionally prompt a retry
+      // Your code: release reserved stock, optionally prompt a retry
       break;
     case 'failed':
       console.log(`Payment ${payment.id} failed`);
-      // TODO: notify the customer, offer a retry
+      // Your code: notify the customer, offer a retry
       break;
     case 'pending':
       console.log(`Payment ${payment.id} pending`);

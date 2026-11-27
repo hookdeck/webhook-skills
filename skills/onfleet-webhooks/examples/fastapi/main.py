@@ -103,13 +103,15 @@ def handle_onfleet_event(event: Dict[str, Any]) -> None:
     elif trigger == "taskUnassigned":
         logger.info("Task unassigned: %s", task_id)
     elif trigger == "taskDelayed":
-        logger.info("Task delayed: %s delay (s): %s", task_id, event.get("delay"))
+        logger.info("Task delayed: %s delay: %s", task_id, event.get("delay"))
     elif trigger == "taskCloned":
         logger.info("Task cloned: %s", task_id)
     # The trigger table names id 30 `predictedTaskDelay`; the published sample
     # payload carries `taskPredictedDelay`. Accept both (or route on triggerId 30).
     elif trigger in ("predictedTaskDelay", "taskPredictedDelay"):
         logger.info("Predicted task delay: %s delayTime: %s", task_id, task.get("delayTime"))
+    elif trigger == "taskPredictedEta":
+        logger.info("Predicted ETA: %s predictedArrivalTime: %s", task_id, task.get("predictedArrivalTime"))
 
     # Workers (data.worker)
     elif trigger == "workerDuty":

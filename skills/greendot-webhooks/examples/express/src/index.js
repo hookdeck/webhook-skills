@@ -44,7 +44,7 @@ function verifyToken(authHeader) {
 
 /**
  * Build the acknowledgement Green Dot expects: a `responseDetails` body plus the
- * echoed `x-GD-RequestId` header. Omitting either causes Green Dot to retry.
+ * echoed `x-GD-RequestId` header. Green Dot's docs require both on a 200 or 201.
  */
 function acknowledge(res, requestId, code = 0) {
   if (requestId) res.set('x-GD-RequestId', requestId);
@@ -53,36 +53,45 @@ function acknowledge(res, requestId, code = 0) {
   });
 }
 
-/** Dispatch on the `eventType` field of the JSON body. */
+/**
+ * The body is an envelope: { accounts: [{ accountIdentifier, events: [...] }] }.
+ * Each event carries eventIdentifier, eventType and eventDateTime, and one
+ * request can carry several events, so loop over both arrays.
+ */
+function eventsIn(body) {
+  return (body.accounts || []).flatMap((account) => account.events || []);
+}
+
+/** Dispatch on each event's `eventType`. */
 function handleEvent(event) {
   switch (event.eventType) {
     case 'transaction':
-      console.log(`Transaction event: ${event.eventId}`);
-      // TODO: sync ledger, notify the customer, etc.
+      console.log(`Transaction event: ${event.eventIdentifier}`);
+      // Your code: sync ledger, notify the customer, etc.
       break;
     case 'accountUpdated':
-      console.log(`Account updated: ${event.eventId}`);
-      // TODO: refresh local account record.
+      console.log(`Account updated: ${event.eventIdentifier}`);
+      // Your code: refresh local account record.
       break;
     case 'achTransfer':
-      console.log(`ACH transfer event: ${event.eventId}`);
-      // TODO: update funding / payout status.
+      console.log(`ACH transfer event: ${event.eventIdentifier}`);
+      // Your code: update funding / payout status.
       break;
     case 'cardUpdate':
-      console.log(`Card update: ${event.eventId}`);
-      // TODO: card lifecycle handling.
+      console.log(`Card update: ${event.eventIdentifier}`);
+      // Your code: card lifecycle handling.
       break;
     case 'billPayTransfer':
-      console.log(`Bill pay transfer: ${event.eventId}`);
-      // TODO: bill pay status / receipts.
+      console.log(`Bill pay transfer: ${event.eventIdentifier}`);
+      // Your code: bill pay status / receipts.
       break;
     case 'directDepositSwitch':
-      console.log(`Direct deposit switch: ${event.eventId}`);
-      // TODO: DD onboarding funnel.
+      console.log(`Direct deposit switch: ${event.eventIdentifier}`);
+      // Your code: DD onboarding funnel.
       break;
     case 'provisioning':
-      console.log(`Provisioning event: ${event.eventId}`);
-      // TODO: onboarding orchestration.
+      console.log(`Provisioning event: ${event.eventIdentifier}`);
+      // Your code: onboarding orchestration.
       break;
     default:
       console.log(`Unhandled eventType: ${event.eventType}`);
@@ -116,7 +125,7 @@ app.post(
 
     // 3) Handle the event, then acknowledge.
     try {
-      handleEvent(event);
+      eventsIn(event).forEach(handleEvent);
     } catch (err) {
       console.error('Handler error:', err);
       return res.status(500).json({ error: 'Handler error' });

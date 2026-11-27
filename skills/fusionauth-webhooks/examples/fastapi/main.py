@@ -67,47 +67,47 @@ async def fusionauth_webhook(request: Request):
 
     if event_type == "user.create":
         print(f"User created: {user.get('id')}")
-        # TODO: Sync user to external systems, send welcome email, etc.
+        # Your code: Sync user to external systems, send welcome email, etc.
 
     elif event_type == "user.update":
         print(f"User updated: {user.get('id')}")
-        # TODO: Sync user changes to external systems
+        # Your code: Sync user changes to external systems
 
     elif event_type == "user.delete":
         print(f"User deleted: {user.get('id')}")
-        # TODO: Clean up user data, handle GDPR compliance
+        # Your code: Clean up user data, handle GDPR compliance
 
     elif event_type == "user.deactivate":
         print(f"User deactivated: {user.get('id')}")
-        # TODO: Revoke access, notify admins
+        # Your code: Revoke access, notify admins
 
     elif event_type == "user.reactivate":
         print(f"User reactivated: {user.get('id')}")
-        # TODO: Restore access
+        # Your code: Restore access
 
     elif event_type == "user.login.success":
         print(f"User logged in: {user.get('id')}")
-        # TODO: Audit logging, session tracking
+        # Your code: Audit logging, session tracking
 
     elif event_type == "user.login.failed":
         print(f"Login failed for: {user.get('email', 'unknown')}")
-        # TODO: Security monitoring, rate limiting
+        # Your code: Security monitoring, rate limiting
 
     elif event_type == "user.registration.create":
         print(f"User registered: {user.get('id')} for app: {application_id}")
-        # TODO: Provision app-specific access
+        # Your code: Provision app-specific access
 
     elif event_type == "user.registration.update":
         print(f"Registration updated: {user.get('id')}")
-        # TODO: Sync role changes
+        # Your code: Sync role changes
 
     elif event_type == "user.registration.delete":
         print(f"Registration deleted: {user.get('id')}")
-        # TODO: Revoke app access
+        # Your code: Revoke app access
 
     elif event_type == "user.email.verified":
         print(f"Email verified for: {user.get('id')}")
-        # TODO: Enable features requiring verified email
+        # Your code: Enable features requiring verified email
 
     else:
         print(f"Unhandled event type: {event_type}")

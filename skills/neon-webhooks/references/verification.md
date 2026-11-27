@@ -153,6 +153,9 @@ def verify_neon_webhook(raw_body: bytes, headers, jwks, tolerance_ms=5 * 60 * 10
   between the dots is expected; a non-empty middle section means it isn't detached JWS.
 - **Wrong key**: always select the JWK by `kid` from `X-Neon-Signature-Kid`; JWKS may
   contain multiple keys during rotation. Cache by `kid`.
+- **Neon Functions endpoint**: Neon strips client-set `X-Neon-*` headers from requests
+  to functions. Read the `Neon-Better-Auth-Signature`, `Neon-Better-Auth-Signature-Kid`
+  and `Neon-Better-Auth-Timestamp` copies instead.
 - **No secret / no Svix**: don't look for a `whsec_` secret or use the `svix` package —
   this scheme is public-key only.
 

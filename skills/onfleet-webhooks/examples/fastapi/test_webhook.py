@@ -37,7 +37,7 @@ def post_signed(body: bytes, signature: str = None):
     )
 
 
-# Every trigger name from the Onfleet trigger table (ids 0-30; 11 and 21 are
+# Every trigger name from the Onfleet trigger table (ids 0-31; 11 and 21 are
 # not documented), plus `taskPredictedDelay`, the name the published sample
 # payload for trigger 30 carries.
 TRIGGERS = [
@@ -71,6 +71,7 @@ TRIGGERS = [
     (29, "routePlanDelayed"),
     (30, "predictedTaskDelay"),
     (30, "taskPredictedDelay"),
+    (31, "taskPredictedEta"),
 ]
 
 # Shape of the documented taskCreated sample, trimmed. Note the null fields,

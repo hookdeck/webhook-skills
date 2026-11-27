@@ -60,8 +60,8 @@ For asymmetric keys (RSA, EC, EdDSA), the public key can be fetched from FusionA
 | Field | Description |
 |-------|-------------|
 | **URL** | Your webhook endpoint (e.g., `https://your-app.com/webhooks/fusionauth`) |
-| **Connect timeout** | HTTP connect timeout in milliseconds (default: 1000) |
-| **Read timeout** | HTTP read timeout in milliseconds (default: 2000) |
+| **Connect timeout** | HTTP connect timeout in milliseconds (required) |
+| **Read timeout** | HTTP read timeout in milliseconds (required); a timeout counts as a failed delivery |
 | **Description** | Optional description |
 
 ### Security Settings
@@ -121,6 +121,6 @@ If your webhook fails and transaction settings require success, the originating 
 ## Full Documentation
 
 For complete setup instructions, see:
-- [FusionAuth Webhooks Documentation](https://fusionauth.io/docs/extend/events-and-webhooks/)
-- [Securing Webhooks](https://fusionauth.io/docs/extend/events-and-webhooks/securing)
-- [Signing Webhooks](https://fusionauth.io/docs/extend/events-and-webhooks/signing)
+- [FusionAuth Webhooks Documentation](https://fusionauth.io/docs/events/)
+- [Securing Webhooks](https://fusionauth.io/docs/events/webhooks/securing)
+- [Signing Webhooks](https://fusionauth.io/docs/events/webhooks/signing)

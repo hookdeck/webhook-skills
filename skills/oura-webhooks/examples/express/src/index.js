@@ -39,7 +39,7 @@ function verifyOuraSignature(rawBody, signature, timestamp, clientSecret) {
 
 /**
  * Subscription handshake (GET).
- * Oura calls this when a subscription is created, updated, or renewed.
+ * Oura calls this when you create a subscription.
  */
 app.get('/webhooks/oura', (req, res) => {
   const { verification_token, challenge } = req.query;
@@ -80,27 +80,27 @@ app.post('/webhooks/oura',
     switch (data_type) {
       case 'sleep':
         console.log(`Sleep ${event_type} at ${event_time}`);
-        // TODO: fetch GET /v2/usercollection/sleep/{object_id}
+        // Your code: fetch GET /v2/usercollection/sleep/{object_id}
         break;
 
       case 'daily_sleep':
         console.log(`Daily sleep summary ${event_type}`);
-        // TODO: fetch GET /v2/usercollection/daily_sleep/{object_id}
+        // Your code: fetch GET /v2/usercollection/daily_sleep/{object_id}
         break;
 
       case 'daily_readiness':
         console.log(`Daily readiness ${event_type}`);
-        // TODO: fetch GET /v2/usercollection/daily_readiness/{object_id}
+        // Your code: fetch GET /v2/usercollection/daily_readiness/{object_id}
         break;
 
       case 'daily_activity':
         console.log(`Daily activity ${event_type}`);
-        // TODO: fetch GET /v2/usercollection/daily_activity/{object_id}
+        // Your code: fetch GET /v2/usercollection/daily_activity/{object_id}
         break;
 
       case 'workout':
         console.log(`Workout ${event_type}`);
-        // TODO: fetch GET /v2/usercollection/workout/{object_id}
+        // Your code: fetch GET /v2/usercollection/workout/{object_id}
         break;
 
       default:

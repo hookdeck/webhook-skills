@@ -83,9 +83,9 @@ async def knock_webhook(request: Request):
     data = event.get("data") or {}
     event_data = event.get("event_data") or {}
 
-    # Knock delivers at-least-once and retries non-2xx responses. The payload has
-    # no event-level id, so in real handlers build an idempotency key from
-    # type + data["id"] (or data["key"]) + created_at.
+    # Knock retries non-2xx responses, so an event can arrive more than once. The
+    # payload has no event-level id, and type + data["id"] repeats on real events
+    # (message.read after message.unread), so make state changes idempotent.
     if event_type == "message.sent":
         print(f"Message sent: {data.get('id')}")
     elif event_type == "message.delivered":
@@ -128,13 +128,9 @@ async def knock_webhook(request: Request):
         print(
             f"Translation {event_type.split('.')[1]}: {data.get('locale_code')}"
         )
-    elif event_type in (
-        "source_event_action.updated",
-        "source_event_action.committed",
-    ):
-        print(
-            f"Source event action {event_type.split('.')[1]}: {data.get('key')}"
-        )
+    elif event_type == "commits.promoted":
+        # data["id"] is the promote group ID, which Knock says to deduplicate on.
+        print(f"Commits promoted: {data.get('id')}")
     elif event_type in ("partial.updated", "partial.committed"):
         print(f"Partial {event_type.split('.')[1]}: {data.get('key')}")
     else:

@@ -99,27 +99,22 @@ configured by different people.
 A **flat map of submitted field key → value**. The keys are **the form's own field labels**,
 so there is no fixed schema — the payload differs per form.
 
-urlencoded (default):
-
-```
-FormID=1234567&UniqueID=9876543210&Name=Jane+Smith&Email=jane%40example.com&Message=Hello
-```
-
-JSON:
+Formstack publishes no example delivery. The v2025 API reference's
+`WebhookOpenApiDefinitionDto` schema gives this `properties` example, with types and no values:
 
 ```json
-{
-  "FormID": "1234567",
-  "UniqueID": "9876543210",
-  "Name": "Jane Smith",
-  "Email": "jane@example.com",
-  "Message": "Hello"
-}
+{"FormID":{"type":"string"},"UniqueID":{"type":"string"},"Name":{"type":"string"},"Email":{"type":"string"},"Message":{"type":"string"}}
 ```
 
-That JSON mirrors the example in the v2025 API reference's own
-`WebhookOpenApiDefinitionDto` schema, whose `properties` example is
-`{"FormID":{"type":"string"},"UniqueID":{"type":"string"},"Name":{"type":"string"},"Email":{"type":"string"},"Message":{"type":"string"}}`.
+A real urlencoded delivery from a form with no answer fields and a Shared Secret set, captured
+on 2026-09-25, was exactly:
+
+```
+FormID=6606394&UniqueID=1500878955&HandshakeKey=test
+```
+
+On a real form, the form's own field keys appear alongside these. The JSON content type is
+documented, but no JSON delivery has been captured yet, so its exact shape is unconfirmed.
 
 ### Metadata keys — what is and isn't confirmed
 

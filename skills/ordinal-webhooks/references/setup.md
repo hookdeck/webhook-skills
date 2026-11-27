@@ -4,39 +4,19 @@
 
 - An Ordinal workspace at [app.tryordinal.com](https://app.tryordinal.com) with permission
   to manage integrations
-- A **workspace API key** if you are using the API (Settings → Integrations → API, [app.tryordinal.com/settings/integrations/api](https://app.tryordinal.com/settings/integrations/api), sent as
-  `Authorization: Bearer <api key>`)
+- A **workspace API key** if you are using the API (Settings → Integrations → API,
+  [app.tryordinal.com/settings/integrations/api](https://app.tryordinal.com/settings/integrations/api)),
+  sent as `Authorization: Bearer <api key>`
 - A publicly reachable HTTPS endpoint (for local development, use the Hookdeck CLI below)
 
-## There Is No Signing Secret to Collect
+## Register the Webhook in the Dashboard
 
-Unlike Stripe, Shopify or GitHub, **Ordinal issues no signing secret**. The
-`POST /webhooks` response returns only `id`, `name`, `url`, `topics` and `createdAt` —
-there is no `whsec_` key, no secret field, and nothing to copy out of the dashboard.
+Go to **Settings → Integrations → Webhooks**
+([app.tryordinal.com/settings/integrations/webhooks](https://app.tryordinal.com/settings/integrations/webhooks)),
+set the name, URL and event topics, and save. Copy the **signing secret** from the
+webhook's configure page and store it as `ORDINAL_WEBHOOK_SECRET`.
 
-**You generate the secret.** Ordinal's only authentication mechanism is the webhook's
-optional `headers` field — *"Optional custom headers to include in webhook requests"* —
-which Ordinal adds to every delivery verbatim.
-
-### Step 1 — Generate a secret
-
-```bash
-openssl rand -hex 32
-```
-
-Store it as `ORDINAL_WEBHOOK_SECRET` in your app's environment.
-
-### Step 2 — Choose a header name
-
-The header **name is entirely your choice**; it is **not** an Ordinal-defined header. The
-examples in this skill read `x-webhook-secret`, overridable via
-`ORDINAL_WEBHOOK_SECRET_HEADER`. Ordinal's own docs example simply shows
-`"headers": { "X-Custom-Header": "value" }`.
-
-Inbound header names are case-insensitive and arrive lowercased in Node and Starlette, so
-`X-Webhook-Secret` in the webhook config matches `x-webhook-secret` in your handler.
-
-## Register the Webhook via the API (recommended)
+## Register the Webhook via the API
 
 Base URL: `https://app.tryordinal.com/api/v1`
 
@@ -48,10 +28,13 @@ curl -X POST "https://app.tryordinal.com/api/v1/webhooks" \
     "name": "CRM Sync",
     "description": "Mirror published posts into the CRM",
     "url": "https://example.com/webhooks/ordinal",
-    "topics": ["post.published", "post.archived"],
-    "headers": { "X-Webhook-Secret": "<the secret from step 1>" }
+    "topics": ["post.published", "post.archived"]
   }'
 ```
+
+The response includes `signingSecret` (it starts with `whsec_`). **Save it now**:
+`GET /webhooks` and `GET /webhooks/{id}` omit it. You can copy it again later from the
+webhook's configure page in the dashboard.
 
 ### `POST /webhooks` body
 
@@ -60,48 +43,29 @@ curl -X POST "https://app.tryordinal.com/api/v1/webhooks" \
 | `name` | Yes | string | Display name for the webhook |
 | `url` | Yes | string (uri) | Your HTTPS endpoint |
 | `description` | No | string | Free text |
-| `topics` | Yes | `string[]` (min 1) | The event types to subscribe to |
-| `headers` | No | object | Header name → value, added to every delivery |
+| `topics` | Yes | `string[]` | The event types to subscribe to |
+| `headers` | No | object | Optional static headers added to every delivery |
 
-The **Create response omits `description`, `headers` and `createdBy`** — call
-`GET /webhooks/{id}` for the full object, where `headers` is `object | null`.
+The Create response returns `id`, `name`, `url`, `topics`, `signingSecret` and
+`createdAt`. It omits `description`, `headers` and `createdBy`; call `GET /webhooks/{id}`
+for those.
 
 ### All webhook management endpoints
 
 | Method | Path | Notes |
 |--------|------|-------|
-| `GET` | `/webhooks` | List webhooks |
-| `POST` | `/webhooks` | Create |
-| `GET` | `/webhooks/{id}` | Full object, including `headers` |
-| `PATCH` | `/webhooks/{id}` | Update — **all fields optional** |
+| `GET` | `/webhooks` | List webhooks (no `signingSecret`) |
+| `POST` | `/webhooks` | Create; returns `signingSecret` |
+| `GET` | `/webhooks/{id}` | Full object (no `signingSecret`) |
+| `PATCH` | `/webhooks/{id}` | Update; all fields optional |
 | `DELETE` | `/webhooks/{id}` | Delete |
 
-**`Authorization: Bearer <api key>` is for *calling* Ordinal.** It is never something
-Ordinal sends to you, and it is not a webhook secret. Do not compare inbound requests
-against your API key.
-
-## Register the Webhook via the Dashboard
-
-Webhooks can also be managed at **Settings → Integrations → Webhooks**
-([app.tryordinal.com/settings/integrations/webhooks](https://app.tryordinal.com/settings/integrations/webhooks)):
-set the name, URL and the event topics you want.
-
-**The `headers` field is documented on the API; whether the dashboard form exposes custom
-headers is not documented.** If the UI has no place to enter headers, set them via the API
-instead — `POST /webhooks` when creating, or `PATCH /webhooks/{id}` to add headers to a
-webhook you already created in the UI:
-
-```bash
-curl -X PATCH "https://app.tryordinal.com/api/v1/webhooks/{id}" \
-  -H "Authorization: Bearer your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{"headers": {"X-Webhook-Secret": "<the secret>"}}'
-```
+**`Authorization: Bearer <api key>` is for calling Ordinal.** Ordinal never sends it to
+you, and it isn't the webhook's signing secret.
 
 ## Choosing Topics
 
-Subscribe only to what you handle — every topic in `topics` costs you a delivery to
-acknowledge. Common starting sets:
+Subscribe only to what you handle. Common starting sets:
 
 | Goal | Topics |
 |------|--------|
@@ -110,42 +74,28 @@ acknowledge. Common starting sets:
 | Calendar sync | `post.scheduled`, `post.rescheduled`, `post.unscheduled`, `post.content.edited` |
 | Review workflow | `post.approval.requested`, `post.approval.approved`, `post.comment.created`, `post.inline_comment.created` |
 | Seat provisioning | `invite.created`, `invite.accepted` |
+| LinkedIn engagement | `linkedin.monitoring.comment.created`, `linkedin.monitoring.comment.deleted`, `linkedin.monitoring.mention.created` |
 
-Use the **exact** strings — the underscores in `publish_failed`, `reconnect_needed`,
-`permanently_deleted` and `inline_comment` are load-bearing. See
-[overview.md](overview.md) for the full list.
+Use the **exact** strings: the underscores in `publish_failed`, `reconnect_needed`,
+`permanently_deleted` and `inline_comment` matter. See [overview.md](overview.md).
 
 ## Rotating the Secret
 
-Because the secret is a value **you** put in `headers`, rotation is a `PATCH`:
-
-1. Deploy your handler so it accepts **either** the old or the new secret (keep two env
-   vars temporarily and check both with the same constant-time compare).
-2. `PATCH /webhooks/{id}` with `{"headers": {"X-Webhook-Secret": "<new secret>"}}`.
-3. Confirm deliveries are arriving with the new value, then drop the old secret from your
-   handler.
-
-Ordinal documents no rotation window or dual-secret support, and doesn't say whether a
-`PATCH` merges into or replaces the existing `headers` object. Send the complete `headers`
-object you want (including any other custom headers you rely on), then `GET /webhooks/{id}`
-to confirm the result. Step 1 is what prevents a gap.
+Ordinal's docs say that during a secret rotation `webhook-signature` can carry two
+signatures, and a request is valid when either matches. They don't say how to start a
+rotation or how long the old secret keeps signing. Update `ORDINAL_WEBHOOK_SECRET` as
+soon as you have the new secret.
 
 ## Testing
 
-**Ordinal documents no test or `ping` event and no "send test request" button.** To
-exercise your handler:
+**Ordinal documents no test or `ping` event.** To exercise your handler:
 
 - Perform the real action in the app (create a post, request an approval, add a comment).
-- Or replay a saved delivery from your gateway (Hookdeck retains and replays requests).
-- Or `curl` your own endpoint with a documented payload from [overview.md](overview.md)
-  plus your secret header:
-
-```bash
-curl -X POST http://localhost:3000/webhooks/ordinal \
-  -H "Content-Type: application/json" \
-  -H "X-Webhook-Secret: $ORDINAL_WEBHOOK_SECRET" \
-  -d '{"type":"post.published","data":{"post":{"id":"550e8400-e29b-41d4-a716-446655440001","title":"Q4 Product Launch Announcement","channel":"LinkedIn"}},"createdAt":"2025-02-26T14:30:00.000Z"}'
-```
+- Run the example's test suite, which signs Ordinal's documented payloads with a test
+  secret.
+- Replay a saved delivery from your gateway. A delivery replayed more than five minutes
+  after it was signed fails the library's timestamp check; see
+  [verification.md](verification.md) for a verifier with your own window.
 
 ## Local Development
 
@@ -153,24 +103,15 @@ curl -X POST http://localhost:3000/webhooks/ordinal \
 npx hookdeck-cli listen 3000 ordinal --path /webhooks/ordinal
 ```
 
-Use `8000` for the FastAPI example. No account required — the CLI creates a guest account
-on first run, gives you a public HTTPS URL to paste into the webhook's `url`, and a web UI
-for inspecting and replaying requests.
+Use `8000` for the FastAPI example. No account required: the CLI gives you a public HTTPS
+URL to paste into the webhook's `url`, plus a web UI for inspecting and replaying requests.
+Your handler verifies the signature with the webhook's own secret.
 
-Hookdeck's `ORDINAL` source type offers **Basic Auth** and **API Key** checks. Configure the
-API Key check with the same header name and value you put in Ordinal's `headers` and Hookdeck
-will check it. There is no HMAC check because Ordinal sends no body-dependent signature.
+## Optional Custom Headers
 
-## Securing an Endpoint With No Signature
-
-The static header proves the caller knows your secret; it does **not** prove the body is
-unmodified, because nothing is signed over the body. Add defence in depth:
-
-- **HTTPS only.** The secret is replayable in full if it ever travels in clear text.
-- **Never log the header value** or the full request headers at info level.
-- **Use an unguessable path** (`/webhooks/ordinal/8f3c…`) so the endpoint is not trivially
-  discoverable.
-- **Rate-limit and WAF** the route. Ordinal publishes **no source IP ranges**, so an IP
-  allowlist is not available — do not invent one.
-- **Fail closed** when `ORDINAL_WEBHOOK_SECRET` is unset. See
-  [verification.md](verification.md).
+The `headers` field adds static headers to every delivery. They're separate from the
+signature and cover nothing in the body, but you can use one as an extra check (for
+example, an API key header that a gateway checks before your handler). Send the complete
+`headers` object on `PATCH /webhooks/{id}`, then confirm with `GET /webhooks/{id}`: the
+docs don't say whether a `PATCH` merges into or replaces it, or whether the dashboard form
+can set headers.

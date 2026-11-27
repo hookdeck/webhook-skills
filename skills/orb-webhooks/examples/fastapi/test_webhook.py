@@ -59,6 +59,15 @@ class TestVerifyOrbSignature:
         bare = signature[3:]  # strip "v1="
         assert verify_orb_signature(payload.encode("utf-8"), bare, timestamp, WEBHOOK_SECRET)
 
+    def test_accepts_any_matching_signature_during_rotation(self):
+        payload = '{"id":"evt_1"}'
+        signature, timestamp = generate_orb_signature(payload, WEBHOOK_SECRET)
+        header = f"v1={'0' * 64} {signature}"
+        assert verify_orb_signature(payload.encode("utf-8"), header, timestamp, WEBHOOK_SECRET)
+        assert not verify_orb_signature(
+            payload.encode("utf-8"), f"v1={'0' * 64} v1=deadbeef", timestamp, WEBHOOK_SECRET
+        )
+
 
 class TestIsTimestampFresh:
     def test_accepts_current_timestamp(self):

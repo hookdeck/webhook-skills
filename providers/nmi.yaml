@@ -6,18 +6,22 @@ docs:
 notes: >
   NMI (Network Merchants) payment gateway. Does NOT use Standard Webhooks. Each delivery
   carries a single header, Webhook-Signature, of the form "t=<nonce>,s=<signature>"
-  (comma-separated). *** CRITICAL: the t= value is a NONCE, not a Unix timestamp — do NOT
-  parse it as a time or enforce any replay/age window; NMI documents none. *** Verify by
+  (comma-separated). *** CRITICAL: NMI's sample calls the t= value a nonce, and the docs don't
+  say whether it is a timestamp — do NOT parse it as a time or enforce any replay/age window;
+  NMI documents none. *** Verify by
   computing HMAC-SHA256 over "<nonce>.<raw_request_body>" (nonce + literal "." + raw body)
   keyed with the webhooks signing key, hex-encode (lowercase), and compare timing-safe to the
   s= value. You MUST use the raw, unparsed body — re-serializing the JSON breaks the HMAC.
-  The signing key comes from the Merchant Control Panel under Settings > Webhooks (distinct
-  from the gateway API/security key). Parse the header by splitting each segment at the first
-  "=" (don't rely on order). Payload envelope is {event_id, event_type, event_body}; event_id
-  supports idempotency. Event names are dotted lowercase transaction.<action>.<result> where
-  action is one of sale/auth/capture/void/refund/credit/validate and result is
-  success/failure/unknown. The documented catalog is transaction-lifecycle only — there are NO
-  distinct chargeback event names. NMI retries non-2xx deliveries, so respond 200 quickly.
+  The signing key is shown in the Merchant Portal under Settings > Webhooks (not one of the
+  API keys under Settings > Security Keys). Parse the header by splitting each segment at the first
+  "=" (don't rely on order). Payload envelope is {event_id, event_type, event_body}; NMI's examples reuse
+  event_id across event types, so dedupe on event_type + event_id. 36 Payment Gateway events in
+  six categories: transaction.<action>.<result> (action sale/auth/capture/void/refund/credit/
+  validate, result success/failure/unknown), transaction.check.status.settle/return/latereturn,
+  recurring.plan.* and recurring.subscription.* (add/update/delete), settlement.batch.complete/
+  failure, chargeback.batch.complete, and acu.summary.*. NMI retries anything other than HTTP 200
+  up to 20 times over about 3 days, so respond exactly 200 quickly. The Merchant Sign-Up API's
+  application.*/merchant.* events use a different Signature header and are out of scope.
   Source IPs are 104.192.32.81–104.192.32.87 and 104.192.36.81–104.192.36.87 (defence in depth
   only; the HMAC is authoritative). No official npm/pip SDK — verify manually in every framework.
 testScenario:
@@ -29,9 +33,9 @@ testScenario:
     Create a {framework} webhook handler for NMI (Network Merchants). Verify the
     Webhook-Signature header ("t=<nonce>,s=<hex>") by computing HMAC-SHA256 over
     "<nonce>.<raw_body>" with the NMI webhooks signing key and comparing timing-safe (hex) to
-    the s= value. The t= value is a NONCE, not a timestamp — do not enforce a replay window.
+    the s= value. NMI calls the t= value a nonce; do not enforce a replay window.
     Use the raw, unparsed body. Then dispatch on the dotted event_type
     (transaction.<action>.<result>) and return 2xx quickly. If you use any skills to help with
     this, add a comment noting which skill(s) you referenced.
 catalog:
-  summary: Verify NMI (Network Merchants) `Webhook-Signature` (`t=<nonce>,s=<sig>`, HMAC-SHA256 over `<nonce>.<raw_body>`, hex) where `t` is a nonce not a timestamp, handle `transaction.sale.success`, `transaction.auth.success`, `transaction.refund.success`, and `transaction.void.success` events
+  summary: Verify NMI (Network Merchants) `Webhook-Signature` (`t=<nonce>,s=<sig>`, HMAC-SHA256 over `<nonce>.<raw_body>`, hex) where NMI calls `t` a nonce, handle `transaction.sale.success`, `transaction.auth.success`, `transaction.refund.success`, and `transaction.void.success` events

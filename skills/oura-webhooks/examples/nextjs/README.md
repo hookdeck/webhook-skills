@@ -49,11 +49,11 @@ event dispatch with real signatures.
 
 ### Receive real webhooks locally
 
-Use the Hookdeck CLI to tunnel Oura deliveries to your local server (no account required):
+In your Hookdeck project, create an **Oura** source named `oura` and enter your Oura client secret. Use that source's URL as the subscription's `callback_url`: a Hookdeck Oura source answers Oura's GET check itself. Sign the CLI into the same project, then forward the source to your local server.
 
 ```bash
 npx hookdeck-cli listen 3000 oura --path /webhooks/oura
 ```
 
-Set the printed Hookdeck URL as the `callback_url` when you create a subscription (see
+Create the subscription with the source's URL as `callback_url` (see
 `../../references/setup.md`).

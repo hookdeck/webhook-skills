@@ -30,20 +30,22 @@ notes: >
   JavaScript example uses crypto.createHmac directly. Manual HMAC-SHA256
   verification is the canonical path; do not pull in a third-party library.
 
-  Event taxonomy (27 events across 7 categories):
-  - Message lifecycle (14): message.sent, message.delivered,
+  Event taxonomy (38 events in five groups, reorganised by Knock 2026-10-27):
+  - Messages (14): message.sent, message.delivered,
     message.delivery_attempted, message.undelivered, message.bounced,
     message.complaint, message.seen, message.unseen, message.read, message.unread,
     message.archived, message.unarchived, message.interacted,
     message.link_clicked
-  - Workflow recipient run (3): workflow_recipient_run.started,
+  - Workflow runs (3): workflow_recipient_run.started,
     workflow_recipient_run.completed, workflow_recipient_run.error
-  - Workflow (2): workflow.updated, workflow.committed
-  - Email layout (2): email_layout.updated, email_layout.committed
-  - Translation (2): translation.updated, translation.committed
-  - Source event action (2): source_event_action.updated,
-    source_event_action.committed
-  - Partial (2): partial.updated, partial.committed
+  - Commits (1): commits.promoted (environments enabled only)
+  - Branches (3): branch.created, branch.deleted, branch.rebased
+    (environments enabled only)
+  - Resources (17): audience, email_layout, guide, message_type, partial,
+    reusable_request, translation and workflow each send .updated and
+    .committed; goal sends only goal.updated.
+  source_event_action.updated/.committed were removed: Knock no longer sends
+  them and they can't be subscribed to.
 
   Payload base shape is `{ __typename: "Event", type, created_at, data,
   event_data }` — there is NO top-level event `id`. `data` is typed by event
@@ -51,8 +53,11 @@ notes: >
   carries no extra context. Headers also include `x-knock-event` (mirrors
   `type`) and `x-knock-environment-id`. Retries: "a handful of times" over a
   few hours on non-2xx (count/intervals not fixed); never retries 301-303 or
-  400-405; respects Retry-After on 429. At-least-once delivery — recommend an
-  idempotency key built from type + data.id (or data.key) + created_at.
+  400-405; respects Retry-After on 429. No event id: type + data.id repeats on
+  real events (read after unread), so recommend idempotent state writes; for
+  commits.promoted Knock says to dedupe on the promote group ID (data.id).
+  Secret key is on the webhook's Overview tab (or secret_key, returned once,
+  from Management API POST /v1/webhooks).
   Dashboard: Platform > Webhooks > Create webhook; webhooks are created in
   the current environment only.
 testScenario:

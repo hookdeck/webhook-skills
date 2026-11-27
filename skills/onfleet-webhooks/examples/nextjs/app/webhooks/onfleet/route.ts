@@ -24,6 +24,7 @@ interface OnfleetEvent {
       container?: { type?: string } | null;
       completionDetails?: { failureReason?: string } | null;
       delayTime?: number | null;
+      predictedArrivalTime?: number | null;
     } | null;
     worker?: { id?: string } | null;
     dispatch?: { id?: string } | null;
@@ -31,7 +32,7 @@ interface OnfleetEvent {
   } | null;
   etaSeconds?: number; // SECONDS, fractional (not ms)
   distance?: number; // meters
-  delay?: number; // seconds
+  delay?: number; // unit not stated by Onfleet
   status?: number | string; // workerDuty: 0/1; taskBatchCreateJobCompleted: string
   tasksCreated?: number;
   tasksErrored?: number;
@@ -124,7 +125,7 @@ export function handleOnfleetEvent(event: OnfleetEvent): void {
       console.log('Task unassigned:', taskId);
       break;
     case 'taskDelayed':
-      console.log('Task delayed:', taskId, 'delay (s):', event.delay);
+      console.log('Task delayed:', taskId, 'delay:', event.delay);
       break;
     case 'taskCloned':
       console.log('Task cloned:', taskId);
@@ -134,6 +135,9 @@ export function handleOnfleetEvent(event: OnfleetEvent): void {
     case 'predictedTaskDelay':
     case 'taskPredictedDelay':
       console.log('Predicted task delay:', taskId, 'delayTime:', event.data?.task?.delayTime);
+      break;
+    case 'taskPredictedEta':
+      console.log('Predicted ETA:', taskId, 'predictedArrivalTime:', event.data?.task?.predictedArrivalTime);
       break;
 
     // Workers (data.worker)

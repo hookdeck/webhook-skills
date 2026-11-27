@@ -89,37 +89,50 @@ export async function POST(request: NextRequest) {
   const eventType = request.headers.get('x-neon-event-type');
 
   // Handle the event based on type. Blocking events (send.otp, send.magic_link,
-  // user.before_create) pause the auth flow until this responds — keep them fast.
+  // user.before_create) pause the auth flow until this responds, so keep them fast.
   switch (eventType) {
     case 'send.otp':
       console.log('Send OTP (blocking):', eventId);
-      // TODO: deliver the OTP via your own SMS/email provider.
+      // Your code: deliver event_data.otp_code via your own SMS/email provider.
       break;
 
     case 'send.magic_link':
       console.log('Send magic link (blocking):', eventId);
-      // TODO: deliver the magic link via your own channel.
+      // Your code: deliver event_data.link_url via your own channel.
       break;
 
     case 'user.before_create':
       console.log('User before create (blocking):', eventId);
-      // TODO: validate the signup; return a 400 to reject it.
-      break;
+      // Neon reads this response: a 2xx with a JSON `allowed` field. Any other
+      // response, or a failed delivery, rejects the signup.
+      // Your code: decide whether to allow the signup, for example:
+      // return NextResponse.json({ allowed: false, error_message: 'Signups from this domain are not allowed.', error_code: 'DOMAIN_BLOCKED' });
+      return NextResponse.json({ allowed: true });
 
     case 'user.created':
       console.log('User created:', eventId);
-      // TODO: sync the user to your database, CRM, analytics, etc.
+      // Your code: sync the user to your database, CRM, analytics, etc.
       break;
 
     case 'phone_number.verified':
       console.log('Phone number verified:', eventId);
-      // TODO: unlock features, update profile state, etc.
+      // Your code: unlock features, update profile state, etc.
+      break;
+
+    case 'organization.invitation.created':
+      console.log('Organization invitation created:', eventId);
+      // Your code: send a custom invitation email to event_data.invitee_email.
+      break;
+
+    case 'organization.invitation.accepted':
+      console.log('Organization invitation accepted:', eventId);
+      // Your code: provision resources for the new member.
       break;
 
     default:
       console.log(`Unhandled event type: ${eventType}`);
   }
 
-  // Return 2xx to acknowledge receipt (and, for blocking events, allow the flow).
+  // Return 2xx to acknowledge receipt. Neon ignores the body for these events.
   return NextResponse.json({ received: true });
 }

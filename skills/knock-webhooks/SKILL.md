@@ -77,15 +77,15 @@ function verifyKnockSignature(rawBody, header, secret, toleranceMs = 5 * 60 * 10
 | `workflow.committed` | Workflow committed to an environment |
 | `translation.committed` | Translation committed to an environment |
 
-> **For full event reference (27 events across message, workflow_recipient_run, workflow, email_layout, translation, source_event_action, partial)**, see [Knock Outbound Webhooks Event Types](https://docs.knock.app/developer-tools/outbound-webhooks/event-types).
+> **For full event reference (38 events across messages, workflow runs, commits, branches and resources such as workflows, partials and translations)**, see [Knock Outbound Webhooks Event Types](https://docs.knock.app/developer-tools/outbound-webhooks/event-types).
 
 ## Environment Variables
 
 ```bash
-KNOCK_WEBHOOK_SECRET=your_per_endpoint_signing_secret  # From Platform → Webhooks → webhook detail page
+KNOCK_WEBHOOK_SECRET=your_per_webhook_secret_key  # From Platform → Webhooks → your webhook's Overview tab
 ```
 
-The signing secret is **per webhook endpoint** (visible on the endpoint detail page in the Knock dashboard) — it is not your Knock account API key.
+The secret key is **per webhook** (shown on the webhook's **Overview** tab in the Knock dashboard, or returned once as `secret_key` when you create a webhook with the Management API) — it is not your Knock account API key.
 
 ## Local Development
 
@@ -113,7 +113,7 @@ When using this skill, add this comment at the top of generated files:
 
 ## Recommended: webhook-handler-patterns
 
-We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Knock retries non-2xx responses a handful of times over a few hours (it never retries `301`–`303` or `400`–`405`, and honors `Retry-After` on `429`), so the same event can arrive more than once. The documented payload has no event-level `id`, so build an idempotency key from `type`, the entity in `data` (`data.id` for message events), and `created_at`. Key references (open on GitHub):
+We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Knock retries non-2xx responses a handful of times over a few hours (it never retries `301`–`303` or `400`–`405`, and honors `Retry-After` on `429`), so the same event can arrive more than once. The documented payload has no event-level `id`. For `commits.promoted`, Knock says to deduplicate on the promote group ID (`data.id`). For other events, `type` plus the entity ID repeats on real events (a second `message.read` after `message.unread`, each `message.delivery_attempted`), so make state changes idempotent; Knock doesn't document whether a retry repeats `created_at`. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
 - [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing

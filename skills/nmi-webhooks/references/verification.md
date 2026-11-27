@@ -16,8 +16,8 @@ header:
 Webhook-Signature: t=<nonce>,s=<signature>
 ```
 
-- **`t`** — a **nonce**: a random per-delivery value. It is **not** a Unix
-  timestamp, so there is no age/replay window to enforce.
+- **`t`** — what NMI's sample calls the **nonce**. The docs don't say what it
+  holds or whether it is a timestamp, and document no age/replay window.
 - **`s`** — the signature: **lowercase hex** HMAC-SHA256.
 
 The signed content is the nonce, a literal `.`, and the **raw request body**:
@@ -109,7 +109,7 @@ def verify_nmi_webhook(raw_body: bytes, signature_header: str, signing_key: str)
 
 ## Common Gotchas
 
-- **`t` is a nonce, not a timestamp.** Do not parse it as a Unix time and do not
+- **`t` is what NMI calls a nonce.** Do not parse it as a Unix time and do not
   reject "old" deliveries — NMI documents no timestamp/replay window.
 - **Use the raw body.** If your framework parses JSON before you verify, the raw
   bytes are gone. Use `express.raw()`, `await request.text()`, or
@@ -119,8 +119,8 @@ def verify_nmi_webhook(raw_body: bytes, signature_header: str, signing_key: str)
   cause of a mismatch.
 - **Lowercase hex.** NMI sends `s` as lowercase hex. `digest('hex')` /
   `.hexdigest()` already produce lowercase; do not uppercase.
-- **The signing key is the webhooks signing key, not your API/security key.**
-  They are different values from different places in the Merchant Control Panel.
+- **The signing key is the webhooks signing key, not an API key.** It's shown
+  on Settings → Webhooks; API keys live under Settings → Security Keys.
 - **Timing-safe compare.** Use `crypto.timingSafeEqual` / `hmac.compare_digest`,
   never `==`. Wrap the Node comparison in try/catch — mismatched buffer lengths
   throw.

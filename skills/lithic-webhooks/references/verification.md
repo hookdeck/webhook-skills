@@ -8,17 +8,14 @@ from Lithic and that the body was not tampered with in transit.
 
 ## How It Works
 
-Lithic implements the [Standard Webhooks](https://www.standardwebhooks.com/) spec
-(powered by Svix). Each delivery includes three headers:
+Lithic signs webhooks with the [Standard Webhooks](https://www.standardwebhooks.com/)
+layout. Each delivery includes three headers:
 
 | Header | Meaning |
 |--------|---------|
-| `webhook-id` | Unique message id (equals the event `token`) |
-| `webhook-timestamp` | Unix seconds when the webhook was sent |
+| `webhook-id` | Message id: the event token, unchanged when the message is resent |
+| `webhook-timestamp` | Unix seconds of this delivery attempt |
 | `webhook-signature` | Space-delimited list of `v1,<base64sig>` values |
-
-Svix also emits `svix-id` / `svix-timestamp` / `svix-signature` aliases; Lithic's
-docs use the `webhook-*` names. The SDK accepts either.
 
 The signature is computed as:
 
@@ -28,9 +25,16 @@ key           = base64Decode(secret without the "whsec_" prefix)
 signature     = base64( HMAC_SHA256(key, signedContent) )
 ```
 
-Verification also checks that `webhook-timestamp` is within a **~5-minute**
-tolerance to prevent replay attacks. Multiple signatures may appear (space
-separated) during secret rotation — a match against any one is valid.
+Lithic leaves the timestamp tolerance to you; its example code and the SDKs
+reject a `webhook-timestamp` more than **5 minutes** from your clock. Multiple
+signatures may appear (space separated) after a secret rotation, and a match
+against any one is valid.
+
+Lithic's docs include a test vector: webhook-id `65a9dad4-1b60-4686-83fd-65b25078a4b4`,
+timestamp `1698031907`, secret `aDeFC3Zn55XB3PDD2zF0JP9cyrDHdV/18VOmkTcuyto=`
+(already without `whsec_`) and body
+`{"acquirer_fee":0,"amount":2000,"authorization_amount":2000}` give
+`OGBiqPtc/O2sWacUsuS4pvTdfFBv6dqxYX/4UFzrbGk=`.
 
 ## Implementation
 
@@ -52,7 +56,7 @@ const event = lithic.webhooks.unwrap(
   headers,                          // req.headers or Object.fromEntries(request.headers)
   process.env.LITHIC_WEBHOOK_SECRET
 );
-// event.event_type, event.token, event.payload
+// event.event_type plus the resource's fields (a flat body, no envelope)
 ```
 
 **Python (FastAPI):**
@@ -117,8 +121,9 @@ function verifyLithicSignature(rawBody, headers, secret) {
   after `whsec_`, not the literal string. The SDK does this for you.
 - **Header casing.** HTTP header names are case-insensitive; most frameworks
   lowercase them (`webhook-id`). The SDK normalizes casing.
-- **Timestamp tolerance.** Deliveries older than ~5 minutes are rejected as
-  replays — ensure your server clock is accurate (NTP).
+- **Timestamp tolerance.** The SDK rejects deliveries more than 5 minutes from
+  your clock, so keep your server clock accurate (NTP). Each retry carries a new
+  timestamp.
 - **Signature is a list.** During secret rotation the header can carry multiple
   space-separated `v1,<sig>` values; accept a match against any one.
 
@@ -130,7 +135,7 @@ function verifyLithicSignature(rawBody, headers, secret) {
 | Fails after a proxy/gateway | Body re-encoded or headers stripped upstream |
 | Intermittent failures | Server clock drift beyond the 5-minute tolerance |
 | Fails only in Python | `standardwebhooks` not installed (`pip install "lithic[webhooks]"`) |
-| Fails right after rotating | Old secret still in use; support both during overlap |
+| Fails right after rotating | Old secret still deployed; the previous secret is only valid for 24 hours |
 
 Return **HTTP 400** on verification failure and **200** once processed. Lithic
-retries non-2xx responses with backoff.
+treats a non-200 response as a failed attempt and retries it.

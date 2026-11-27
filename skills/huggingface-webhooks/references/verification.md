@@ -151,7 +151,7 @@ curl -X POST http://localhost:3000/webhooks/huggingface \
 
 ### 4. Use the Activity tab
 
-Hugging Face logs every delivery in **Settings → Webhooks → Activity** with the full request/response. Use **Replay** to retry against your current endpoint after fixing a bug.
+Hugging Face logs every delivery in **Settings → Webhooks → Activity** with the HTTP status code and payload. Use **Replay** to retry against your current endpoint after fixing a bug.
 
 ## No SDK Required
 

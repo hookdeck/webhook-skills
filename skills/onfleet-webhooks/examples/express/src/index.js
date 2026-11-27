@@ -97,7 +97,7 @@ function handleOnfleetEvent(event) {
       console.log('Task unassigned:', taskId);
       break;
     case 'taskDelayed':
-      console.log('Task delayed:', taskId, 'delay (s):', event.delay);
+      console.log('Task delayed:', taskId, 'delay:', event.delay);
       break;
     case 'taskCloned':
       console.log('Task cloned:', taskId);
@@ -107,6 +107,9 @@ function handleOnfleetEvent(event) {
     case 'predictedTaskDelay':
     case 'taskPredictedDelay':
       console.log('Predicted task delay:', taskId, 'delayTime:', event.data?.task?.delayTime);
+      break;
+    case 'taskPredictedEta':
+      console.log('Predicted ETA:', taskId, 'predictedArrivalTime:', event.data?.task?.predictedArrivalTime);
       break;
 
     // Workers (data.worker)

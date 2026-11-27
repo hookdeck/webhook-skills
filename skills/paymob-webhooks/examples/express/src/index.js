@@ -6,70 +6,90 @@ const crypto = require('crypto');
 
 const app = express();
 
-/**
- * Build the ordered string Paymob signs, from a transaction object.
- * The 20 fields are concatenated in a fixed order with no separators.
- * Array.join renders booleans as "true"/"false" and numbers as their digits,
- * which matches Paymob's JSON serialization.
- *
- * @param {object} obj - The `obj` (transaction) field from the callback body
- * @returns {string}
- */
-function buildSignedString(obj) {
-  const s = obj.source_data || {};
-  return [
-    obj.amount_cents,
-    obj.created_at,
-    obj.currency,
-    obj.error_occured,
-    obj.has_parent_transaction,
-    obj.id,
-    obj.integration_id,
-    obj.is_3d_secure,
-    obj.is_auth,
-    obj.is_capture,
-    obj.is_refunded,
-    obj.is_standalone_payment,
-    obj.is_voided,
-    obj.order.id,
-    obj.owner,
-    obj.pending,
-    s.pan,
-    s.sub_type,
-    s.type,
-    obj.success,
-  ].join('');
+// The keys Paymob signs, in the documented order, per callback `type`.
+// TRANSACTION: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-transaction-callback
+// TOKEN: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-for-card-tokens
+const HMAC_FIELDS = {
+  TRANSACTION: [
+    'amount_cents',
+    'created_at',
+    'currency',
+    'error_occured',
+    'has_parent_transaction',
+    'id',
+    'integration_id',
+    'is_3d_secure',
+    'is_auth',
+    'is_capture',
+    'is_refunded',
+    'is_standalone_payment',
+    'is_voided',
+    'order.id',
+    'owner',
+    'pending',
+    'source_data.pan',
+    'source_data.sub_type',
+    'source_data.type',
+    'success',
+  ],
+  TOKEN: [
+    'card_subtype',
+    'created_at',
+    'email',
+    'id',
+    'masked_pan',
+    'merchant_id',
+    'order_id',
+    'token',
+  ],
+};
+
+function getPath(obj, path) {
+  return path.split('.').reduce((cur, key) => (cur == null ? undefined : cur[key]), obj);
 }
 
 /**
- * Verify a Paymob Transaction Processed Callback (POST).
- * Paymob computes HMAC-SHA512 (hex) over the concatenated fields above and
- * sends it as the `hmac` query parameter (NOT a header, NOT the raw body).
+ * Build the string Paymob signs for a callback: the values of the keys for its
+ * `type`, read from `obj`, joined in order with no separator. String() renders
+ * booleans as "true"/"false" and numbers as their digits, as the docs' worked
+ * examples do.
  *
- * @param {object} obj - Transaction object (request body `obj`)
+ * @param {string} type - The callback's `type` ("TRANSACTION" or "TOKEN")
+ * @param {object} obj - The callback's `obj`
+ * @returns {string|null} null for a type with no documented key list
+ */
+function buildSignedString(type, obj) {
+  const fields = HMAC_FIELDS[type];
+  if (!fields) return null;
+  return fields
+    .map((field) => {
+      const value = getPath(obj, field);
+      return value === undefined || value === null ? '' : String(value);
+    })
+    .join('');
+}
+
+/**
+ * Verify a Paymob callback. Paymob computes HMAC-SHA512 (hex) over the string
+ * above and sends it as the `hmac` query parameter (not a header, not the raw body).
+ *
+ * @param {object} body - Parsed callback body ({ type, obj })
  * @param {string} hmacParam - Value of the `?hmac=` query parameter
  * @param {string} secret - Paymob HMAC secret
  * @returns {boolean}
  */
-function verifyPaymobHmac(obj, hmacParam, secret) {
-  const expected = crypto
-    .createHmac('sha512', secret)
-    .update(buildSignedString(obj))
-    .digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(hmacParam || '')
-    );
-  } catch {
-    return false; // length mismatch = invalid
-  }
+function verifyPaymobHmac(body, hmacParam, secret) {
+  const signed = buildSignedString(body.type, body.obj || {});
+  if (signed === null || !hmacParam || !secret) return false;
+  const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex');
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(hmacParam).toLowerCase());
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 /**
- * Derive a human-readable transaction state from the boolean fields.
- * Paymob has no discrete event names — every callback `type` is "TRANSACTION".
+ * A transaction's state, from its booleans. Paymob sends no event name for the
+ * outcome: success false with pending false is a decline.
  */
 function transactionState(obj) {
   if (obj.is_refunded) return 'refunded';
@@ -77,57 +97,61 @@ function transactionState(obj) {
   if (obj.pending) return 'pending';
   if (obj.success && obj.is_auth && !obj.is_capture) return 'authorized';
   if (obj.is_capture) return 'captured';
-  if (obj.success && !obj.error_occured) return 'succeeded';
-  return 'failed';
+  if (obj.success) return 'succeeded';
+  return 'declined';
 }
 
-// Paymob POSTs JSON. We parse it (verification needs the fields), then verify.
+// Paymob POSTs JSON. Verification needs the parsed fields, so parse first.
 app.post('/webhooks/paymob', express.json({ type: '*/*' }), (req, res) => {
-  const hmacParam = req.query.hmac;
   const body = req.body || {};
 
-  if (body.type !== 'TRANSACTION' || !body.obj) {
+  if (!body.obj || !HMAC_FIELDS[body.type]) {
     return res.status(400).send('Unexpected callback payload');
   }
 
-  const obj = body.obj;
-
-  if (!hmacParam || !verifyPaymobHmac(obj, hmacParam, process.env.PAYMOB_HMAC_SECRET)) {
+  if (!verifyPaymobHmac(body, req.query.hmac, process.env.PAYMOB_HMAC_SECRET)) {
     console.error('Paymob HMAC verification failed');
     return res.status(400).send('Invalid signature');
   }
 
-  // Signature is valid — act on the transaction state.
+  const obj = body.obj;
+
+  if (body.type === 'TOKEN') {
+    // A customer saved a card. Your code: store obj.token against obj.order_id.
+    console.log(`Card token ${obj.id} for order ${obj.order_id}`);
+    return res.status(200).send('OK');
+  }
+
   const state = transactionState(obj);
-  console.log(`Transaction ${obj.id} (order ${obj.order.id}): ${state}`);
+  console.log(`Transaction ${obj.id} (order ${obj.order && obj.order.id}): ${state}`);
 
   switch (state) {
     case 'succeeded':
-      // TODO: mark order paid, fulfil, send receipt
+      // Your code: mark the order paid, fulfil, send a receipt
       break;
-    case 'failed':
-      // TODO: notify customer, release reservation
+    case 'declined':
+      // Your code: tell the customer, release the reservation
       break;
     case 'pending':
-      // TODO: await final callback (e.g. 3-D Secure)
+      // Your code: wait for a later callback (OTP page, kiosk or cash payment)
       break;
     case 'authorized':
-      // TODO: funds held; capture when ready
+      // Your code: funds held; capture when ready
       break;
     case 'captured':
-      // TODO: complete a prior authorization
+      // Your code: complete a prior authorization
       break;
     case 'refunded':
-      // TODO: reverse fulfilment, credit customer
+      // Your code: reverse fulfilment, credit the customer
       break;
     case 'voided':
-      // TODO: cancel an uncaptured authorization
+      // Your code: cancel an uncaptured authorization
       break;
     default:
       console.log(`Unhandled state for transaction ${obj.id}`);
   }
 
-  // Acknowledge quickly so Paymob does not retry.
+  // Acknowledge quickly; do slow work in the background.
   res.status(200).send('OK');
 });
 
@@ -137,7 +161,7 @@ app.get('/health', (req, res) => {
 });
 
 // Export for testing
-module.exports = { app, verifyPaymobHmac, buildSignedString, transactionState };
+module.exports = { app, HMAC_FIELDS, verifyPaymobHmac, buildSignedString, transactionState };
 
 // Start server only when run directly (not when imported for testing)
 if (require.main === module) {

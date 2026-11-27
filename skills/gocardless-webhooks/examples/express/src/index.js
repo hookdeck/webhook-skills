@@ -32,7 +32,7 @@ app.post(
     } catch (err) {
       if (err instanceof InvalidSignatureError) {
         console.error('Invalid GoCardless webhook signature');
-        // Any non-2xx makes GoCardless retry; 498 is the documented "invalid token".
+        // 498 is GoCardless's documented response to a bad signature: it's logged, not retried.
         return res.status(498).send('Invalid signature');
       }
       console.error('Failed to parse GoCardless webhook:', err.message);
@@ -40,8 +40,8 @@ app.post(
     }
 
     // A single webhook is a BATCH of events (up to 250). Process each one.
-    // Delivery is at-least-once and a manual retry replays the whole batch, so handlers must be
-    // idempotent on event.id.
+    // Delivery is at-least-once and the same event can appear in more than one webhook, so
+    // handlers must be idempotent on event.id.
     for (const event of events) {
       handleEvent(event);
     }
@@ -83,14 +83,14 @@ function handlePayment(event) {
   switch (event.action) {
     case 'confirmed':
       console.log(`Payment ${event.links?.payment} confirmed`);
-      // TODO: mark the payment as collected, fulfil the order, etc.
+      // Your code: mark the payment as collected, fulfil the order, etc.
       break;
     case 'paid_out':
       console.log(`Payment ${event.links?.payment} paid out`);
       break;
     case 'failed':
       console.log(`Payment ${event.links?.payment} failed:`, event.details?.description);
-      // TODO: notify the customer, schedule a retry, etc.
+      // Your code: notify the customer, schedule a retry, etc.
       break;
     case 'cancelled':
       console.log(`Payment ${event.links?.payment} cancelled`);
@@ -110,7 +110,7 @@ function handleMandate(event) {
       break;
     case 'cancelled':
       console.log(`Mandate ${event.links?.mandate} cancelled:`, event.details?.description);
-      // TODO: suspend the customer's subscription/membership, etc.
+      // Your code: suspend the customer's subscription/membership, etc.
       break;
     case 'failed':
       console.log(`Mandate ${event.links?.mandate} failed`);
@@ -127,10 +127,7 @@ function handlePayout(event) {
   switch (event.action) {
     case 'paid':
       console.log(`Payout ${event.links?.payout} paid`);
-      // TODO: reconcile the payout against collected payments.
-      break;
-    case 'bounced':
-      console.log(`Payout ${event.links?.payout} bounced`);
+      // Your code: reconcile the payout against collected payments.
       break;
     default:
       console.log(`Unhandled payouts action: ${event.action}`);

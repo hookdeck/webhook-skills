@@ -237,4 +237,4 @@ For HMAC keys, you must coordinate secret rotation manually:
 
 ## Full Documentation
 
-For complete details, see [FusionAuth Webhook Signing Documentation](https://fusionauth.io/docs/extend/events-and-webhooks/signing).
+For complete details, see [FusionAuth Webhook Signing Documentation](https://fusionauth.io/docs/events/webhooks/signing).

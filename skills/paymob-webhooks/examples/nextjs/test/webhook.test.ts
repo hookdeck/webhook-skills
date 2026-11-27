@@ -1,106 +1,144 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
 
-// Realistic test secret (any string works; Paymob's is an opaque key)
 beforeAll(() => {
   process.env.PAYMOB_HMAC_SECRET = 'test_hmac_secret';
 });
 
-import { POST, buildSignedString, transactionState } from '../app/webhooks/paymob/route';
+import {
+  POST,
+  buildSignedString,
+  verifyPaymobHmac,
+  transactionState,
+} from '../app/webhooks/paymob/route';
 
 const SECRET = 'test_hmac_secret';
 
+// The signed fields of the transaction in Paymob's HMAC transaction callback example
+// (other fields omitted). The docs print the concatenated string below for it.
 function makeObj(overrides: Record<string, unknown> = {}) {
   return {
-    id: 123456789,
-    amount_cents: 10000,
-    created_at: '2026-07-27T10:15:30.123456',
-    currency: 'EGP',
-    error_occured: false,
-    has_parent_transaction: false,
-    integration_id: 987654,
-    is_3d_secure: true,
+    id: 192036465,
+    pending: false,
+    amount_cents: 100000,
+    success: true,
     is_auth: false,
     is_capture: false,
-    is_refunded: false,
     is_standalone_payment: true,
     is_voided: false,
-    pending: false,
-    success: true,
-    owner: 543210,
-    order: { id: 222333444 },
-    source_data: { pan: '2346', sub_type: 'MasterCard', type: 'card' },
+    is_refunded: false,
+    is_3d_secure: true,
+    integration_id: 4097558,
+    has_parent_transaction: false,
+    order: { id: 217503754 },
+    created_at: '2024-06-13T11:33:44.592345',
+    currency: 'EGP',
+    source_data: { pan: '2346', type: 'card', sub_type: 'MasterCard' },
+    error_occured: false,
+    owner: 302852,
     ...overrides,
   };
 }
+const DOC_TRANSACTION_STRING =
+  '1000002024-06-13T11:33:44.592345EGPfalsefalse1920364654097558truefalsefalsefalsetruefalse217503754302852false2346MasterCardcardtrue';
 
-// Generate a valid HMAC exactly as Paymob does: SHA512 hex over the ordered fields.
-function sign(obj: any, secret = SECRET): string {
+// Paymob's card token callback example, with the HMAC secret and digest its HMAC page prints.
+const DOC_TOKEN = {
+  type: 'TOKEN',
+  obj: {
+    id: 17233884,
+    token: '0c045bd5330aa3d666d72830d4bcf0e60e10902df9fb2340af978bbf',
+    masked_pan: 'xxxx-xxxx-xxxx-2346',
+    merchant_id: 164295,
+    card_subtype: 'MasterCard',
+    created_at: '2026-11-16T10:44:52.523591',
+    email: 'example.test@example.com',
+    order_id: '655608785',
+    user_added: false,
+    next_payment_intention: 'pi_test_243ec1d9c065458e8f61adad564d3d10',
+    cardholder_name: 'TEST ACCOUNT',
+    expiry_month: '01',
+    expiry_year: '39',
+    card_funding_type: 'CREDIT',
+  },
+};
+const DOC_TOKEN_SECRET = '04DC1A9490B8CC2094C011FC055ADCDB';
+const DOC_TOKEN_HMAC =
+  '57982fed57b47d82ddaf9b104a6b75acb35fed1bb629ed29959b88db2699dda5dc7845423a5f58f8dc6dd794b3727e5fb28b95d896dfce5dd9d3b2845c4a04e4';
+
+function sign(type: string, obj: any, secret = SECRET): string {
   return crypto
     .createHmac('sha512', secret)
-    .update(buildSignedString(obj))
+    .update(buildSignedString(type, obj) as string)
     .digest('hex');
 }
 
-function makeRequest(obj: any, hmac: string | null) {
+function makeRequest(body: unknown, hmac: string | null) {
   const url = hmac
     ? `https://example.com/webhooks/paymob?hmac=${hmac}`
     : 'https://example.com/webhooks/paymob';
   return new Request(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'TRANSACTION', obj }),
+    body: JSON.stringify(body),
   }) as any;
 }
 
 describe('Paymob webhook handler', () => {
-  it('accepts a callback with a valid HMAC', async () => {
+  it("reproduces the docs' transaction concatenated string", () => {
+    expect(buildSignedString('TRANSACTION', makeObj())).toBe(DOC_TRANSACTION_STRING);
+  });
+
+  it("verifies the docs' card token example", () => {
+    expect(verifyPaymobHmac(DOC_TOKEN, DOC_TOKEN_HMAC, DOC_TOKEN_SECRET)).toBe(true);
+  });
+
+  it('accepts a transaction callback with a valid HMAC', async () => {
     const obj = makeObj();
-    const res = await POST(makeRequest(obj, sign(obj)));
+    const res = await POST(makeRequest({ type: 'TRANSACTION', obj }, sign('TRANSACTION', obj)));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true });
   });
 
-  it('rejects a callback with an invalid HMAC', async () => {
-    const obj = makeObj();
-    const res = await POST(makeRequest(obj, 'deadbeef'));
+  it('accepts a card token callback with a valid HMAC', async () => {
+    const res = await POST(makeRequest(DOC_TOKEN, sign('TOKEN', DOC_TOKEN.obj)));
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects an invalid HMAC', async () => {
+    const res = await POST(makeRequest({ type: 'TRANSACTION', obj: makeObj() }, 'deadbeef'));
     expect(res.status).toBe(400);
   });
 
-  it('rejects a callback when the hmac param is missing', async () => {
-    const obj = makeObj();
-    const res = await POST(makeRequest(obj, null));
+  it('rejects a callback without the hmac parameter', async () => {
+    const res = await POST(makeRequest({ type: 'TRANSACTION', obj: makeObj() }, null));
     expect(res.status).toBe(400);
   });
 
   it('rejects a tampered payload (amount changed after signing)', async () => {
-    const obj = makeObj();
-    const hmac = sign(obj);
-    const tampered = makeObj({ amount_cents: 1 });
-    const res = await POST(makeRequest(tampered, hmac));
+    const hmac = sign('TRANSACTION', makeObj());
+    const res = await POST(
+      makeRequest({ type: 'TRANSACTION', obj: makeObj({ amount_cents: 1 }) }, hmac)
+    );
     expect(res.status).toBe(400);
   });
 
-  it('rejects a non-transaction payload', async () => {
-    const req = new Request('https://example.com/webhooks/paymob?hmac=abc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'SOMETHING_ELSE' }),
-    }) as any;
-    const res = await POST(req);
+  it('rejects a card token signed with the transaction keys', async () => {
+    const res = await POST(makeRequest(DOC_TOKEN, sign('TRANSACTION', DOC_TOKEN.obj)));
     expect(res.status).toBe(400);
   });
 
-  it('uses SHA512 (128-char hex digest)', () => {
-    expect(sign(makeObj())).toHaveLength(128);
+  it('rejects an unknown type', async () => {
+    const res = await POST(makeRequest({ type: 'SOMETHING_ELSE', obj: {} }, 'abc'));
+    expect(res.status).toBe(400);
   });
 
   it('derives the transaction state from boolean fields', () => {
-    expect(transactionState(makeObj() as any)).toBe('succeeded');
-    expect(transactionState(makeObj({ success: false, error_occured: true }) as any)).toBe('failed');
-    expect(transactionState(makeObj({ pending: true }) as any)).toBe('pending');
-    expect(transactionState(makeObj({ is_auth: true, is_capture: false }) as any)).toBe('authorized');
-    expect(transactionState(makeObj({ is_refunded: true }) as any)).toBe('refunded');
-    expect(transactionState(makeObj({ is_voided: true }) as any)).toBe('voided');
+    expect(transactionState(makeObj())).toBe('succeeded');
+    expect(transactionState(makeObj({ success: false, pending: false }))).toBe('declined');
+    expect(transactionState(makeObj({ success: false, pending: true }))).toBe('pending');
+    expect(transactionState(makeObj({ is_auth: true, is_capture: false }))).toBe('authorized');
+    expect(transactionState(makeObj({ is_refunded: true }))).toBe('refunded');
+    expect(transactionState(makeObj({ is_voided: true }))).toBe('voided');
   });
 });

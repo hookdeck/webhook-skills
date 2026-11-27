@@ -2,27 +2,30 @@
 
 ## Prerequisites
 
-- Orb account (sandbox works for development)
+- Orb account (test mode works for development)
 - Your application's webhook endpoint URL (must be HTTPS in production)
 
 ## Register Your Endpoint
 
-1. Open the [Orb Dashboard](https://app.withorb.com/) and navigate to **Developers → Webhooks**.
-2. Click **Add endpoint**.
-3. Enter your endpoint URL (e.g., `https://your-app.com/webhooks/orb`).
-4. (Optional) Select **Summary webhooks** if you want the minified payload variant.
-5. (Optional) Filter the events your endpoint should receive — or subscribe to all.
-6. Save the endpoint.
+1. Open the [webhooks portal](https://app.withorb.com/webhooks) in Orb, or call the [Create webhook endpoint](https://docs.withorb.com/api-reference/webhook-endpoint/create-webhook-endpoint) API.
+2. Enter your endpoint URL (e.g., `https://your-app.com/webhooks/orb`). Production endpoints must use `https`.
+3. Choose the endpoint's payload style, `standard` (the default for new endpoints) or `expanded`. See [overview.md](overview.md#payload-styles-standard-vs-expanded).
+4. (Optional) Limit the events it receives with `enabled_event_types`. If omitted, every event type is sent.
+
+An account can have at most 20 webhook endpoints by default.
 
 ## Get Your Signing Secret
 
-Each Orb webhook endpoint has its **own** signing secret — distinct from your account API key.
+Each Orb webhook endpoint has its **own** secret, which Orb uses to sign every event sent to it — distinct from your account API key.
 
-1. In the Orb Dashboard, open the webhook endpoint you just created.
-2. Reveal the **Signing secret** for that endpoint.
-3. Copy the secret into your application's environment as `ORB_WEBHOOK_SECRET`.
+- The Create webhook endpoint API returns the secret in its response, and no other endpoint returns it again, so store it when you create the endpoint.
+- Copy it into your application's environment as `ORB_WEBHOOK_SECRET`, which Orb's SDKs read by default.
 
-If you rotate the secret, update `ORB_WEBHOOK_SECRET` and redeploy before the previous secret is revoked.
+During a secret rotation, `X-Orb-Signature` can carry several space-separated signatures, and a delivery is valid when any one matches. The handlers in `examples/` accept that.
+
+## Testing and Resending
+
+From the webhooks portal you can send a test event (`resource_event.test`) to an endpoint, and resend any past event.
 
 ## Recommended Events
 
@@ -45,9 +48,9 @@ If you rotate the secret, update `ORB_WEBHOOK_SECRET` and redeploy before the pr
 **Data exports:**
 - `data_exports.transfer_success`
 
-## Sandbox vs Production
+## Test Mode
 
-Orb maintains separate webhook endpoints and signing secrets for sandbox and production environments. Use the sandbox to wire up your handler and test the verification path, then promote to production with a new endpoint and secret.
+Orb has a test mode with test data kept apart from live billing, and its webhooks are sent from the same IP addresses as live ones. Wire up and test your handler there first.
 
 ## Local Development
 

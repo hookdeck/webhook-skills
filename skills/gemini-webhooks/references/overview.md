@@ -54,8 +54,8 @@ full output. For batch jobs, follow `data.output_file_uri` to fetch results. For
 generation, follow `data.output_file_uri` (with `data.file_name` for the filename).
 Failure events include `error_code` and `error_message` inside `data`.
 
-Dynamic webhooks may also include `user_metadata` (provided in the original request) so
-you can route the callback to the right user, tenant, or job in your system.
+A dynamic webhook request can carry `user_metadata`. Google's docs don't say whether it comes
+back in the delivery, so don't rely on it for routing until you've seen it in a real payload.
 
 ## Key Fields
 
@@ -78,5 +78,5 @@ you can route the callback to the right user, tenant, or job in your system.
 
 ## Full Event Reference
 
-For the complete list of events, payload fields, and lifecycle diagrams, see the
+For the complete list of events and payload fields, see the
 [Gemini API webhooks documentation](https://ai.google.dev/gemini-api/docs/webhooks).

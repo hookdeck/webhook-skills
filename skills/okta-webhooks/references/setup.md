@@ -73,7 +73,7 @@ After creating the hook, you must verify ownership of the endpoint:
 2. Okta sends a **GET** request to your URL with an `x-okta-verification-challenge` header.
 3. Your endpoint must respond `200` with body `{"verification": "<challenge value>"}`.
 
-Once verified, the hook becomes **ACTIVE** and Okta starts delivering events. If
+Once verified, the hook shows as **VERIFIED** and Okta starts delivering events. If
 verification fails, confirm your GET handler reads the header (case-insensitive)
 and returns the exact JSON shape.
 
@@ -87,16 +87,22 @@ Okta doesn't have a separate "test mode" for event hooks. To exercise your handl
 
 ## Local Development
 
-Expose your local server with the Hookdeck CLI — no account or install required:
+Create an Okta source in Hookdeck Event Gateway, then forward it to your local
+server with the Hookdeck CLI, where `okta` is the source's name:
 
 ```bash
 npx hookdeck-cli listen 3000 okta --path /webhooks/okta
 ```
 
-Use the public URL it prints as your event hook endpoint URL in the Admin Console.
+Use the source URL as your event hook endpoint URL in the Admin Console, then click
+**Verify**. Hookdeck answers Okta's verification GET itself (Okta's
+[Hookdeck guide](https://developer.okta.com/docs/guides/event-hook-hookdeck/main/)
+says no code is needed in your local app), so your local GET handler isn't called.
 
 ## Retries
 
-Okta expects a `2xx` response. If your endpoint returns an error or times out,
-Okta retries delivery (once, shortly after). Return `2xx` quickly and process work
-asynchronously so you don't miss the retry window.
+Okta expects a `2xx` response within its three-second default timeout. It
+retries a `5xx` response at most once and never retries a `4xx`; it doesn't
+document the delay. Return `2xx` quickly and
+process work asynchronously, and reconcile missed events from the System Log API,
+where failed deliveries are recorded as `event_hook.delivery` events.

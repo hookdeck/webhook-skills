@@ -46,13 +46,13 @@ npm test
 
 ### Receive real webhooks locally
 
-Use the Hookdeck CLI to tunnel Oura deliveries to your local server (no account required):
+In your Hookdeck project, create an **Oura** source named `oura` and enter your Oura client secret. Use that source's URL as the subscription's `callback_url`: a Hookdeck Oura source answers Oura's GET check itself. Sign the CLI into the same project, then forward the source to your local server.
 
 ```bash
 npx hookdeck-cli listen 3000 oura --path /webhooks/oura
 ```
 
-Set the printed Hookdeck URL as the `callback_url` when you create a subscription:
+Create the subscription with the source's URL as `callback_url`:
 
 ```bash
 curl -X POST https://api.ouraring.com/v2/webhook/subscription \
@@ -60,14 +60,14 @@ curl -X POST https://api.ouraring.com/v2/webhook/subscription \
   -H "x-client-secret: $OURA_CLIENT_SECRET" \
   -H "Content-Type: application/json" \
   -d '{
-    "callback_url": "https://<your-hookdeck-url>/webhooks/oura",
+    "callback_url": "https://<your-oura-source-url>",
     "verification_token": "your_verification_token_here",
     "event_type": "update",
     "data_type": "sleep"
   }'
 ```
 
-You can also test the handshake directly:
+You can also test your server's own handshake answer directly:
 
 ```bash
 curl "http://localhost:3000/webhooks/oura?verification_token=your_verification_token_here&challenge=hello"

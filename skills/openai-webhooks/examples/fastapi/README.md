@@ -65,8 +65,8 @@ pytest test_webhook.py -v
 ## Example Events
 
 The webhook handler processes these OpenAI events:
-- `fine_tuning.job.completed` - Fine-tuning job finished
+- `fine_tuning.job.succeeded` - Fine-tuning job finished
 - `fine_tuning.job.failed` - Fine-tuning job failed
 - `batch.completed` - Batch processing completed
 - `batch.failed` - Batch processing failed
-- `realtime.session.created` - Realtime session created
+- `realtime.call.incoming` - Incoming SIP call ready for the Realtime API

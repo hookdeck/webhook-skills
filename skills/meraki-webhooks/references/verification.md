@@ -23,7 +23,7 @@ a bearer token in the body, not a cryptographic signature over the payload.
 ## The Secret Is Optional — Branch On It Explicitly
 
 Meraki's shared secret is genuinely optional: leave it blank on the HTTP server
-and deliveries carry no `sharedSecret` at all, with TLS as the only protection.
+and deliveries carry no secret value, with TLS as the only protection.
 That makes the naive implementation dangerous, because "no secret configured" and
 "no secret in the payload" both coerce to `''` and compare equal — an unsecured
 endpoint then **silently accepts everything** while looking like it verifies.
@@ -144,5 +144,5 @@ def verify_meraki_webhook(raw_body: bytes, secret: str) -> bool:
 | Every request rejected | `MERAKI_WEBHOOK_SECRET` doesn't match the Dashboard "Shared secret" | Copy the exact value from the HTTP server config |
 | `sharedSecret` is `undefined` | Secret left blank in the Dashboard, or a custom template dropped it | Set a shared secret on the HTTP server; keep the default template |
 | "No shared-secret verification is configured" warning at startup/first delivery | `MERAKI_WEBHOOK_SECRET` is unset, so the handler is in TLS-only mode | Set a shared secret on the HTTP server and in the env var |
-| Works for "Send test" but not real alerts | Custom template applied only to some alerts | Standardize the payload template |
+| Works for "Send test" but no real alerts arrive | The alert isn't assigned to the HTTP server | Select the HTTP server as a recipient for the alert under Network-wide > Alerts |
 | Handler throws 500 on bad input | Parsing before validating | Wrap `JSON.parse` in try/catch and return 400 |

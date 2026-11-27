@@ -33,16 +33,16 @@ def handle_event(event: dict) -> None:
 
     if event_type == "user.lifecycle.create":
         print("User created:", target[0].get("alternateId") if target else None)
-        # TODO: provision downstream account, send welcome flow, etc.
+        # Your code: provision downstream account, send welcome flow, etc.
     elif event_type == "user.session.start":
         print("User signed in:", actor.get("alternateId"))
-        # TODO: audit logging, anomaly detection, etc.
+        # Your code: audit logging, anomaly detection, etc.
     elif event_type == "user.account.lock":
         print("Account locked:", target[0].get("alternateId") if target else None)
-        # TODO: security alerting, notify the user, etc.
+        # Your code: security alerting, notify the user, etc.
     elif event_type == "group.user_membership.add":
         print("User added to group:", [t.get("alternateId") for t in target])
-        # TODO: sync entitlements, update downstream roles, etc.
+        # Your code: sync entitlements, update downstream roles, etc.
     else:
         print("Unhandled event type:", event_type)
 

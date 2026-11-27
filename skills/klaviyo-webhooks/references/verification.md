@@ -9,7 +9,7 @@ genuinely came from Klaviyo and wasn't tampered with in transit.
 ## How It Works
 
 - **Algorithm:** HMAC-SHA256
-- **Key:** your endpoint **secret** (min 16 chars), set when the webhook was created
+- **Key:** the webhook's **secret key** (at least 16 characters), set when you created it
 - **Signed content:** the **raw request body** with the **`Klaviyo-Timestamp`**
   header value **appended** — i.e. `HMAC(secret, raw_body + timestamp)`
 - **Encoding:** lowercase **hex**
@@ -71,8 +71,11 @@ def verify_klaviyo_webhook(raw_body: bytes, timestamp: str, signature: str, secr
 - **Hex, not base64.** Klaviyo uses `.hexdigest()` — don't base64-encode.
 - **Timing-safe compare.** Use `crypto.timingSafeEqual` / `hmac.compare_digest`,
   not `===`, to avoid timing attacks. Guard against length-mismatch throws.
-- **Return 2xx quickly.** Acknowledge with a 200 as soon as the signature checks
-  out; do heavy processing asynchronously so Klaviyo doesn't retry.
+- **Check the webhook ID.** Klaviyo says `meta.klaviyo_webhook_id` in the body
+  must equal the `Klaviyo-Webhook-Id` header, and not to process the request if
+  they differ.
+- **Return 200, 201 or 202 within 5 seconds.** Klaviyo counts any other status, or
+  a slower response, as a failure and retries. Do heavy processing asynchronously.
 - **Batched events.** One request may contain up to 1,000 events in `data`. The
   signature covers the whole body — verify once, then iterate over `data`.
 
@@ -86,19 +89,22 @@ def verify_klaviyo_webhook(raw_body: bytes, timestamp: str, signature: str, secr
 | Always invalid | Wrong secret (must match the `secret_key` set on the webhook) |
 | Intermittent | Proxy/middleware mutating the body before your handler |
 
-## Unsigned Flow "Webhook" Action
+## Unsigned Flow Webhook Action
 
-The flow **"Webhook" action** sends a custom payload and is **not signed** — there
-is no `Klaviyo-Signature` header. If signing isn't available on your account,
-protect the endpoint with a secret token in the URL and reject mismatches:
+A flow **Webhook action** sends a JSON body you write and is **not signed**: there
+is no `Klaviyo-Signature` header. Klaviyo lets you add headers to the action
+"for authentication", so add one with a long random value and check it
+timing-safe:
 
 ```javascript
-// e.g. endpoint_url = https://your-app.com/webhooks/klaviyo?token=LONG_RANDOM_TOKEN
-const token = new URL(req.url, 'http://x').searchParams.get('token');
-if (!token || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(process.env.KLAVIYO_URL_TOKEN))) {
+// Flow action header, e.g. X-Webhook-Token: <long random value>
+const token = req.get('X-Webhook-Token') || '';
+const expected = process.env.KLAVIYO_FLOW_TOKEN;
+if (token.length !== expected.length ||
+    !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))) {
   return res.status(401).send('Unauthorized');
 }
 ```
 
-Prefer signed system webhooks whenever your account supports them.
-</content>
+Flow requests also carry an `X-Klaviyo-Flow-ID` header with the ID of the flow
+that sent them.

@@ -1,14 +1,14 @@
 ---
 name: paymob-webhooks
 description: >
-  Receive and verify Paymob webhook callbacks (transaction callbacks). Use when
-  setting up Paymob webhook handlers, debugging HMAC-SHA512 signature
-  verification, or handling payment transaction states like success, refund,
-  void, and auth/capture from the Transaction Processed Callback.
+  Receive and verify Paymob webhook callbacks (transaction and card token
+  callbacks). Use when setting up Paymob webhook handlers, debugging HMAC-SHA512
+  signature verification, or handling payment transaction states like success,
+  refund, void, and auth/capture from the Transaction Processed Callback.
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.1.1"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
@@ -16,7 +16,7 @@ metadata:
 
 ## When to Use This Skill
 
-- How do I receive Paymob webhooks (transaction callbacks)?
+- How do I receive Paymob webhooks (transaction and card token callbacks)?
 - How do I verify a Paymob HMAC signature?
 - Why is my Paymob HMAC verification failing?
 - How do I tell if a Paymob transaction succeeded, was refunded, or voided?
@@ -25,37 +25,53 @@ metadata:
 ## Verification (core)
 
 Paymob does **not** use Standard Webhooks, and it does **not** sign the raw body.
-Instead it computes **HMAC-SHA512** over a **fixed, ordered concatenation of 20
-specific fields** (no separators), hex-encodes it, and sends the result as the
-**`hmac` query parameter** on the callback URL (`?hmac=<hex>`). Use the HMAC
-secret from your Paymob dashboard.
+It computes **HMAC-SHA512** over the values of a **fixed, ordered list of keys**
+from `obj`, joined with no separator, hex-encodes it, and sends the result as
+the **`hmac` query parameter** (`?hmac=<hex>`). Use the HMAC secret from your
+Paymob dashboard (Settings > Developers > API Keys).
 
-The 20 fields, in this exact order, are read from the transaction object (`obj`
-in the POST payload): `amount_cents`, `created_at`, `currency`, `error_occured`,
-`has_parent_transaction`, `id`, `integration_id`, `is_3d_secure`, `is_auth`,
-`is_capture`, `is_refunded`, `is_standalone_payment`, `is_voided`, `order.id`,
-`owner`, `pending`, `source_data.pan`, `source_data.sub_type`,
-`source_data.type`, `success`.
+The key list depends on the callback's `type`, and both types arrive at the
+same URL:
 
-Node (Transaction Processed Callback / POST, JSON body):
+- **`TRANSACTION`** (20 keys): `amount_cents`, `created_at`, `currency`,
+  `error_occured`, `has_parent_transaction`, `id`, `integration_id`,
+  `is_3d_secure`, `is_auth`, `is_capture`, `is_refunded`,
+  `is_standalone_payment`, `is_voided`, `order.id`, `owner`, `pending`,
+  `source_data.pan`, `source_data.sub_type`, `source_data.type`, `success`.
+- **`TOKEN`** (8 keys, card token callback when a customer saves a card):
+  `card_subtype`, `created_at`, `email`, `id`, `masked_pan`, `merchant_id`,
+  `order_id`, `token`.
+
+Node:
 
 ```javascript
 const crypto = require('crypto');
 
-// obj = parsed request body `obj` field; hmacParam = req.query.hmac
-function verifyPaymobHmac(obj, hmacParam, secret) {
-  const s = obj.source_data || {};
-  const signed = [
-    obj.amount_cents, obj.created_at, obj.currency, obj.error_occured,
-    obj.has_parent_transaction, obj.id, obj.integration_id, obj.is_3d_secure,
-    obj.is_auth, obj.is_capture, obj.is_refunded, obj.is_standalone_payment,
-    obj.is_voided, obj.order.id, obj.owner, obj.pending,
-    s.pan, s.sub_type, s.type, obj.success,
-  ].join(''); // JS renders booleans as "true"/"false", numbers as their digits
+const HMAC_FIELDS = {
+  TRANSACTION: [
+    'amount_cents', 'created_at', 'currency', 'error_occured', 'has_parent_transaction',
+    'id', 'integration_id', 'is_3d_secure', 'is_auth', 'is_capture', 'is_refunded',
+    'is_standalone_payment', 'is_voided', 'order.id', 'owner', 'pending',
+    'source_data.pan', 'source_data.sub_type', 'source_data.type', 'success',
+  ],
+  TOKEN: [
+    'card_subtype', 'created_at', 'email', 'id', 'masked_pan', 'merchant_id',
+    'order_id', 'token',
+  ],
+};
+
+// body = parsed JSON ({ type, obj }); hmacParam = req.query.hmac
+function verifyPaymobHmac(body, hmacParam, secret) {
+  const fields = HMAC_FIELDS[body.type];
+  if (!fields || !body.obj || !hmacParam) return false;
+  const signed = fields.map((f) => {
+    const v = f.split('.').reduce((o, k) => (o == null ? undefined : o[k]), body.obj);
+    return v == null ? '' : String(v); // booleans become "true"/"false"
+  }).join('');
   const expected = crypto.createHmac('sha512', secret).update(signed).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(hmacParam || ''));
-  } catch { return false; }
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(hmacParam).toLowerCase());
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 ```
 
@@ -64,20 +80,39 @@ Python:
 ```python
 import hmac, hashlib
 
-def verify_paymob_hmac(obj: dict, hmac_param: str, secret: str) -> bool:
-    s = obj.get("source_data") or {}
-    def v(x):  # JSON booleans must be lowercase "true"/"false"
-        return "true" if x is True else "false" if x is False else str(x)
-    signed = "".join(v(x) for x in [
-        obj["amount_cents"], obj["created_at"], obj["currency"], obj["error_occured"],
-        obj["has_parent_transaction"], obj["id"], obj["integration_id"], obj["is_3d_secure"],
-        obj["is_auth"], obj["is_capture"], obj["is_refunded"], obj["is_standalone_payment"],
-        obj["is_voided"], obj["order"]["id"], obj["owner"], obj["pending"],
-        s.get("pan"), s.get("sub_type"), s.get("type"), obj["success"],
-    ])
+HMAC_FIELDS = {
+    "TRANSACTION": [
+        "amount_cents", "created_at", "currency", "error_occured", "has_parent_transaction",
+        "id", "integration_id", "is_3d_secure", "is_auth", "is_capture", "is_refunded",
+        "is_standalone_payment", "is_voided", "order.id", "owner", "pending",
+        "source_data.pan", "source_data.sub_type", "source_data.type", "success",
+    ],
+    "TOKEN": [
+        "card_subtype", "created_at", "email", "id", "masked_pan", "merchant_id",
+        "order_id", "token",
+    ],
+}
+
+def _value(obj: dict, path: str) -> str:
+    for key in path.split("."):
+        obj = obj.get(key) if isinstance(obj, dict) else None
+    if obj is True:
+        return "true"   # not Python's "True"
+    if obj is False:
+        return "false"
+    return "" if obj is None else str(obj)
+
+def verify_paymob_hmac(body: dict, hmac_param: str, secret: str) -> bool:
+    fields = HMAC_FIELDS.get(body.get("type"))
+    if not fields or not body.get("obj") or not hmac_param:
+        return False
+    signed = "".join(_value(body["obj"], f) for f in fields)
     expected = hmac.new(secret.encode(), signed.encode(), hashlib.sha512).hexdigest()
-    return hmac.compare_digest(expected, hmac_param or "")
+    return hmac.compare_digest(expected, hmac_param.lower())
 ```
+
+Paymob's HMAC pages print a worked example for each list (the concatenated
+string and its digest), so test your code against them.
 
 > **For complete handlers with route wiring, state dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -86,33 +121,43 @@ def verify_paymob_hmac(obj: dict, hmac_param: str, secret: str) -> bool:
 
 ## Callback Types & Transaction States
 
-Paymob has one callback `type` — **`TRANSACTION`** — and no discrete event
-names. You determine the outcome by reading boolean fields on the transaction
-object:
+The processed-callback URL receives two `type` values:
 
-| Fields | Transaction state |
+- **`TRANSACTION`**: when a transaction succeeds or is declined, and again after
+  an action on it (refund, void, capture). There's no event name for the
+  outcome: read the booleans on `obj`.
+- **`TOKEN`**: when a customer saves a card. Store `obj.token` against
+  `obj.order_id`.
+
+| Fields on a `TRANSACTION` | Transaction state |
 |--------|-------------------|
-| `success: true`, `is_refunded: false`, `is_voided: false`, `pending: false` | Payment succeeded |
-| `success: false`, `error_occured: true` | Payment failed / declined |
-| `pending: true` | Awaiting completion (e.g. 3-D Secure) |
+| `success: true` | Payment succeeded |
+| `success: false`, `pending: false` | Declined |
+| `success: false`, `pending: true` | Pending (OTP page, kiosk reference or cash collection) |
 | `success: true`, `is_auth: true`, `is_capture: false` | Authorized (funds held, not captured) |
-| `is_capture: true` | Captured |
-| `is_refunded: true` | Refunded |
+| `is_captured: true` / `captured_amount` | Captured (partial captures add up) |
+| `is_refunded: true` / `refunded_amount_cents` | Refunded (partial refunds add up) |
 | `is_voided: true` | Voided |
 
-Two callback kinds share these fields (configure both in the dashboard):
+Where the URL comes from:
 
-- **Transaction Processed Callback** — server-to-server **POST**, JSON body
-  `{ "type": "TRANSACTION", "obj": { … } }`. Nested keys: `obj.id`,
-  `obj.order.id`, `obj.source_data.pan`. This is the one to build your handler on.
-- **Transaction Response Callback** — client-redirect **GET** with flattened
-  query params (`id`, `order_id`, `source_data_pan`, …). Same 20 fields, same
-  order, same `hmac` param. See [references/verification.md](references/verification.md).
+- **Webhook URL** on the integration ID (Settings > Payment Integrations > the
+  integration ID), or `notification_url` on a create-intention request, which
+  overrides it. This is the server-to-server **POST** to build your handler on.
+- **Redirect URL** on the integration ID, or `redirection_url` on the intention:
+  the customer's browser **GET** with the transaction as query parameters and
+  `hmac` among them. Paymob says not to update order status from it, because
+  the customer may never complete the redirect. See
+  [references/verification.md](references/verification.md).
+
+Subscriptions are separate: a webhook registered on a subscription receives
+callbacks with `trigger_type` and the `hmac` **in the body**, signed over
+`{trigger_type}for{subscription_data.id}`.
 
 ## Environment Variables
 
 ```bash
-PAYMOB_HMAC_SECRET=your_hmac_secret_here   # Dashboard → Settings → Account Info → HMAC
+PAYMOB_HMAC_SECRET=your_hmac_secret_here   # Dashboard > Settings > Developers > API Keys (main user only)
 ```
 
 ## Local Development
@@ -142,7 +187,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Paymob retries and sends both POST + GET callbacks)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (a transaction gets a callback for its result and another after each refund, void or capture)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

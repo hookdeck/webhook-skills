@@ -12,13 +12,14 @@
 
 1. Log in to MailerSend.
 2. Go to **Email → Domains**.
-3. Click **Manage** on the domain you want events for.
+3. Click **View domain** on the domain you want events for.
 4. Scroll to **Webhooks** and click **Add webhook**.
 5. Enter a **name** (max 50 characters) and your **endpoint URL** (max 191
    characters).
-6. Select the **webhook version** — MailerSend recommends **V2**. (The docs list
-   `1 Legacy, 2 Recommended` but do not document what differs between them; use
-   V2 for new integrations.)
+6. Keep the **webhook version** at **2.0 (Recommended)**, the dashboard default.
+   Version 2 sends a lighter, flat `data` object; version 1 (nested `data.email`)
+   is deprecated and **stops working on December 1, 2026**. Over the API, the
+   `version` parameter still defaults to `1`, so send `"version": 2`.
 7. Select the events to subscribe to, or choose **receive all events**.
 8. Click **Save webhook**.
 
@@ -29,7 +30,8 @@ MailerSend webhook won't save.
 ## Get Your Signing Secret
 
 After the webhook saves, open it from the webhook management page (Domains →
-Manage → Webhooks → your webhook). The **signing secret** is shown there — copy
+View domain → Webhooks → your webhook). The webhooks API also returns it as
+`secret` on the webhook object. The **signing secret** is shown there — copy
 it into your app as `MAILERSEND_WEBHOOK_SECRET`.
 
 ```bash
@@ -96,7 +98,7 @@ curl -X POST https://api.mailersend.com/v1/webhooks/ \
 | `domain_id` | Yes | The sending domain |
 | `enabled` | No | Boolean |
 | `editable` | No | Boolean |
-| `version` | No | `1` (legacy) or `2` (recommended) |
+| `version` | No | `1` (deprecated, stops December 1, 2026; the default) or `2` (recommended) |
 
 The response includes the generated `signing_secret`.
 

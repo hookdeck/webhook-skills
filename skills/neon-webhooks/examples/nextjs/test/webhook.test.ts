@@ -109,6 +109,17 @@ describe('POST /webhooks/neon', () => {
     expect(await res.json()).toEqual({ received: true });
   });
 
+  it('answers user.before_create with an allowed decision', async () => {
+    const payload = JSON.stringify({ event_type: 'user.before_create' });
+    const headers = signNeonWebhook(payload);
+
+    const res = await POST(
+      makeRequest(payload, { ...headers, 'X-Neon-Event-Type': 'user.before_create' })
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ allowed: true });
+  });
+
   it('handles all Neon event types', async () => {
     const eventTypes = [
       'send.otp',
@@ -116,11 +127,13 @@ describe('POST /webhooks/neon', () => {
       'user.before_create',
       'user.created',
       'phone_number.verified',
+      'organization.invitation.created',
+      'organization.invitation.accepted',
       'unknown.event',
     ];
 
     for (const eventType of eventTypes) {
-      const payload = JSON.stringify({ type: eventType });
+      const payload = JSON.stringify({ event_type: eventType });
       const headers = signNeonWebhook(payload);
 
       const res = await POST(

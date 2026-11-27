@@ -6,7 +6,7 @@ Minimal example of receiving NMI (Network Merchants) webhooks with
 ## Prerequisites
 
 - Node.js 18+
-- An NMI gateway account with a **webhooks signing key** (Merchant Control Panel
+- An NMI gateway account with a **webhooks signing key** (Merchant Portal
   → Settings → Webhooks)
 
 ## Setup
@@ -49,13 +49,13 @@ npx hookdeck-cli listen 3000 nmi --path /webhooks/nmi
 ```
 
 Register the printed public URL as your endpoint under **Settings → Webhooks** in
-the Merchant Control Panel, then run a test transaction and watch the delivery
+the Merchant Portal, then run a test transaction and watch the delivery
 arrive.
 
 ## How It Works
 
 - NMI POSTs the event body with a `Webhook-Signature: t=<nonce>,s=<hex>` header.
-- **`t` is a nonce, not a timestamp** — there is no replay window to enforce.
+- **NMI calls `t` a nonce** and documents no replay window to enforce.
 - The handler reads the **raw body**, computes
   `HMAC-SHA256(NMI_SIGNING_KEY, "<nonce>.<raw_body>")`, hex-encodes it, and
   compares to `s` (401 on mismatch).

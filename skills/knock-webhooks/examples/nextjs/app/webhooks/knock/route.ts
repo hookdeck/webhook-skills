@@ -102,9 +102,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Knock delivers at-least-once and retries non-2xx responses. The payload has
-  // no event-level id, so in real handlers build an idempotency key from
-  // type + data.id (or data.key) + created_at.
+  // Knock retries non-2xx responses, so an event can arrive more than once. The
+  // payload has no event-level id, and type + data.id repeats on real events
+  // (message.read after message.unread), so make state changes idempotent.
   switch (event.type) {
     case 'message.sent':
       console.log('Message sent:', event.data?.id);
@@ -171,12 +171,9 @@ export async function POST(request: NextRequest) {
         event.data?.locale_code
       );
       break;
-    case 'source_event_action.updated':
-    case 'source_event_action.committed':
-      console.log(
-        `Source event action ${event.type.split('.')[1]}:`,
-        event.data?.key
-      );
+    case 'commits.promoted':
+      // data.id is the promote group ID, which Knock says to deduplicate on.
+      console.log('Commits promoted:', event.data?.id);
       break;
     case 'partial.updated':
     case 'partial.committed':

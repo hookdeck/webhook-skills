@@ -6,8 +6,8 @@ description: >
   transaction events like transaction.sale.success, transaction.auth.success,
   transaction.refund.success, and transaction.void.success. Note: NMI does NOT
   use Standard Webhooks — the Webhook-Signature header is "t=<nonce>,s=<sig>"
-  (comma-separated) where t is a NONCE (not a Unix timestamp), and the signature
-  is HMAC-SHA256 over "<nonce>.<raw_body>", lowercase hex.
+  (comma-separated), where NMI's sample calls t a nonce, and the signature is
+  HMAC-SHA256 over "<nonce>.<raw_body>", lowercase hex.
 license: MIT
 metadata:
   author: hookdeck
@@ -36,10 +36,10 @@ Webhook-Signature: t=f3c1e9a2b7d84c15,s=9b7c...e10a
 
 Two facts drive everything below:
 
-1. **`t` is a NONCE, not a timestamp.** It is a random value NMI generates per
-   delivery and includes in the signed content. Because it is not a timestamp,
-   NMI documents **no replay/timestamp tolerance window** — do not try to reject
-   "old" deliveries by parsing `t` as a Unix time.
+1. **`t` is what NMI's sample calls a nonce.** It is part of the signed
+   content. NMI's docs don't say what it holds or whether it is a timestamp,
+   and they document **no replay/timestamp tolerance window**, so do not try to
+   reject "old" deliveries by parsing `t` as a Unix time.
 2. **The signature signs `"<nonce>.<raw_body>"`.** You verify by computing
    HMAC-SHA256 over the nonce, a literal `.`, and the **raw, unparsed** request
    body, keyed with your **signing key**, hex-encoding it, and comparing (timing
@@ -62,7 +62,7 @@ The payload envelope is `{ "event_id", "event_type", "event_body" }`. The
 const crypto = require('crypto');
 
 // Header: "Webhook-Signature: t=<nonce>,s=<lowercase-hex-hmac>"
-// t is a NONCE (not a timestamp); the signed content is `<nonce>.<rawBody>`.
+// NMI calls t a nonce; the signed content is `<nonce>.<rawBody>`.
 function verifyNmiWebhook(rawBody, signatureHeader, signingKey) {
   const parts = {};
   for (const seg of String(signatureHeader || '').split(',')) {
@@ -96,33 +96,41 @@ checks out.
 
 ## Common Event Types
 
-Event names are dotted lowercase `transaction.<action>.<result>`, where
-`action` is one of `sale`, `auth`, `capture`, `void`, `refund`, `credit`, or
-`validate`, and `result` is `success`, `failure`, or `unknown`.
+NMI's Payment Gateway sends 36 events in six categories: transactions, check
+status, recurring, settlement, chargebacks and the Automatic Card Updater.
+Transaction event names are dotted lowercase `transaction.<action>.<result>`,
+where `action` is one of `sale`, `auth`, `capture`, `void`, `refund`, `credit`,
+or `validate`, and `result` is `success`, `failure`, or `unknown`.
 
 | Event | Fires When | Common Use Cases |
 |-------|------------|------------------|
 | `transaction.sale.success` | A sale (auth + capture) is approved | Fulfil order, send receipt |
-| `transaction.sale.failure` | A sale is declined | Notify customer, retry/dunning |
+| `transaction.sale.failure` | A sale fails | Notify customer, retry/dunning |
 | `transaction.auth.success` | An authorization is approved | Reserve funds, hold order |
 | `transaction.capture.success` | A prior auth is captured | Mark order paid, fulfil |
-| `transaction.void.success` | A transaction is voided before settlement | Release hold, cancel order |
-| `transaction.refund.success` | A settled transaction is refunded | Reverse fulfilment, notify |
-| `transaction.credit.success` | An unreferenced credit is issued | Payout/adjustment bookkeeping |
-| `transaction.validate.success` | A card validation succeeds | Save card on file |
+| `transaction.void.success` | A transaction is voided | Release hold, cancel order |
+| `transaction.refund.success` | A refund succeeds | Reverse fulfilment, notify |
+| `transaction.credit.success` | A credit transaction succeeds | Payout/adjustment bookkeeping |
+| `transaction.validate.success` | A validation transaction succeeds | Save card on file |
+| `transaction.check.status.settle` | An electronic check settles | Mark check payment final |
+| `recurring.subscription.add` | A recurring subscription is created | Provision the plan |
+| `settlement.batch.complete` | A settlement batch completes | Reconcile `transaction_ids` |
+| `chargeback.batch.complete` | A batch with chargebacks completes (if your processor reports them) | Open disputes |
 
-The `.failure` and `.unknown` result variants exist for every action. See
-[references/overview.md](references/overview.md) for the full matrix and the
+The `.failure` and `.unknown` result variants exist for every transaction
+action. A `.unknown` result means the gateway has no final outcome: look the
+transaction up before fulfilling or charging again. See
+[references/overview.md](references/overview.md) for the full list and the
 `event_body` payload structure.
 
 ## Environment Variables
 
 ```bash
-NMI_SIGNING_KEY=your_webhook_signing_key   # Merchant Control Panel → Settings → Webhooks
+NMI_SIGNING_KEY=your_webhook_signing_key   # Merchant Portal → Settings → Webhooks
 ```
 
-The signing key is generated in the NMI Merchant Control Panel under
-**Settings → Webhooks**. It is distinct from your gateway API/security key.
+The webhooks signing key is shown in the NMI Merchant Portal under
+**Settings → Webhooks**. It isn't one of the API keys under Settings → Security Keys.
 
 ## Local Development
 
@@ -132,12 +140,13 @@ npx hookdeck-cli listen 3000 nmi --path /webhooks/nmi
 ```
 
 Register the printed public URL as the endpoint URL under **Settings → Webhooks**
-in the Merchant Control Panel, then run a test transaction to see a delivery.
+in the Merchant Portal, then run a transaction to see a delivery. Events start
+as soon as the URL is saved; NMI documents no test send.
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Event types, the `transaction.<action>.<result>` matrix, payload structure
-- [references/setup.md](references/setup.md) - Merchant Control Panel configuration, getting the signing key
+- [references/overview.md](references/overview.md) - Event types, the `transaction.<action>.<result>` matrix, payload structure, delivery behaviour
+- [references/setup.md](references/setup.md) - Merchant Portal configuration, getting the signing key
 - [references/verification.md](references/verification.md) - Webhook-Signature verification in depth and gotchas
 
 ## Attribution
@@ -153,10 +162,10 @@ When using this skill, add this comment at the top of generated files:
 
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
-- [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify fast, dispatch, respond 2xx quickly
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — NMI retries failed deliveries, so the same `event_id` can arrive twice
+- [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify fast, dispatch, respond 200 quickly
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — NMI retries failed deliveries, and its examples reuse an `event_id` across event types, so deduplicate on `event_type` plus `event_id`
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
-- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Return 2xx quickly; NMI retries non-2xx responses
+- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Return 200 quickly; NMI retries any response other than HTTP 200, up to 20 times over about 3 days
 
 ## Related Skills
 

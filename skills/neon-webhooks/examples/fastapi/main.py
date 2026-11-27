@@ -104,31 +104,43 @@ async def neon_webhook(request: Request):
     event_type = request.headers.get("x-neon-event-type")
 
     # Handle the event based on type. Blocking events (send.otp, send.magic_link,
-    # user.before_create) pause the auth flow until this responds — keep them fast.
+    # user.before_create) pause the auth flow until this responds, so keep them fast.
     if event_type == "send.otp":
         print(f"Send OTP (blocking): {event_id}")
-        # TODO: deliver the OTP via your own SMS/email provider.
+        # Your code: deliver event_data.otp_code via your own SMS/email provider.
 
     elif event_type == "send.magic_link":
         print(f"Send magic link (blocking): {event_id}")
-        # TODO: deliver the magic link via your own channel.
+        # Your code: deliver event_data.link_url via your own channel.
 
     elif event_type == "user.before_create":
         print(f"User before create (blocking): {event_id}")
-        # TODO: validate the signup; raise HTTPException(400) to reject it.
+        # Neon reads this response: a 2xx with a JSON `allowed` field. Any other
+        # response, or a failed delivery, rejects the signup.
+        # Your code: decide whether to allow the signup, for example:
+        # return {"allowed": False, "error_message": "Signups from this domain are not allowed.", "error_code": "DOMAIN_BLOCKED"}
+        return {"allowed": True}
 
     elif event_type == "user.created":
         print(f"User created: {event_id}")
-        # TODO: sync the user to your database, CRM, analytics, etc.
+        # Your code: sync the user to your database, CRM, analytics, etc.
 
     elif event_type == "phone_number.verified":
         print(f"Phone number verified: {event_id}")
-        # TODO: unlock features, update profile state, etc.
+        # Your code: unlock features, update profile state, etc.
+
+    elif event_type == "organization.invitation.created":
+        print(f"Organization invitation created: {event_id}")
+        # Your code: send a custom invitation email to event_data.invitee_email.
+
+    elif event_type == "organization.invitation.accepted":
+        print(f"Organization invitation accepted: {event_id}")
+        # Your code: provision resources for the new member.
 
     else:
         print(f"Unhandled event type: {event_type}")
 
-    # Return 2xx to acknowledge receipt (and, for blocking events, allow the flow).
+    # Return 2xx to acknowledge receipt. Neon ignores the body for these events.
     return {"received": True}
 
 

@@ -1,9 +1,9 @@
 name: mailersend
 displayName: MailerSend
 docs:
-  webhooks: https://developers.mailersend.com/api/v1/account/webhooks.html
-  verification: https://developers.mailersend.com/api/v1/account/webhooks.html#security
-  events: https://developers.mailersend.com/api/v1/account/webhooks.html
+  webhooks: https://developers.mailersend.com/api/v1/account/webhooks
+  verification: https://developers.mailersend.com/api/v1/account/webhooks#security
+  events: https://developers.mailersend.com/api/v1/account/webhooks
   api: https://developers.mailersend.com/api/v1/webhooks
 notes: >
   Transactional email and SMS API from the MailerLite group. NOT MailerLite (the
@@ -19,9 +19,13 @@ notes: >
   DOCUMENTED secret `test_Am3L1GuOIc4blLUuHqAPxxwkZaJyEk8G` rather than the webhook's own
   signing secret. Handlers must accept both secrets, but because the test secret is public
   a test-secret signature must only ever authorise a `webhook.test` payload — never
-  privileged work. Real envelope is {type, created_at, data}. `created_at` has TWO
-  documented formats: microsecond ISO-8601 with Z for activity/inbound events, and
-  space-separated `2025-08-05 22:27:14` for sender_identity.verified and maintenance.*.
+  privileged work. Real envelope is {type, created_at, data}. Email webhooks have a
+  payload `version`: 2 (flat data with `recipient`, `message_id`, `email_id`) is the
+  dashboard default; 1 (nested data.email) stops working on 2026-12-01 and is still the
+  create-webhook API's default, so send "version": 2. `created_at` has TWO formats in
+  the doc examples: microsecond ISO-8601 with Z on most events, and space-separated
+  `2025-08-05 22:27:14` on sender_identity.verified, maintenance.*, inbound_forward.failed,
+  email_single.verified, email_list.verified and bulk_email.completed.
   `data.meta` is an empty ARRAY `[]` when empty (not an object), which breaks naive typed
   deserialisation. `data.type` is the bare activity name (`sent`) without the `activity.`
   prefix. Delivery: respond within 3 seconds or the attempt fails; exponential backoff
@@ -29,19 +33,24 @@ notes: >
   auto-paused and must be re-enabled from the dashboard — the docs never tie that threshold
   to the retry window, so do not assert they are the same deadline. 4xx other than 429 and
   DNS failures are never retried. No delivery-id header, no source-IP allowlist, no X-MailerSend-*
-  headers — dedupe on data.id. The official Node SDK ships MailerSendUtils.verifyWebHook
-  but it is NOT exported from the package entry point and calls timingSafeEqual without a
-  length guard (throws RangeError); the Python SDK has no verification helper — verify
-  manually. SMS webhooks (SMS -> Webhooks, /v1/sms-webhooks) use an identical security
-  model and add sms.sent, sms.delivered, sms.failed. Inbound Routing is a separate
+  headers — dedupe on type plus data.id (data.id alone is shared by the unique and
+  non-unique open/click events, and maintenance, inbound, on-hold and reputation events
+  have none). The official Node SDK's MailerSendUtils.verifyWebHook is exported, reads
+  the `Signature` header and guards the length in current releases (3.9.0); it throws on
+  missing inputs. The Python SDK documents no verification helper. SMS webhooks
+  (SMS -> Webhooks, /v1/sms-webhooks) use an identical security model and add sms.sent,
+  sms.delivered, sms.failed. WhatsApp webhooks (dashboard only, one per sender) use the
+  same scheme and add whatsapp.sent, whatsapp.delivered, whatsapp.read, whatsapp.failed,
+  whatsapp.inbound; no webhook.test ping is documented for them. Inbound Routing is a separate
   surface with its own `secret` field and is out of scope. Events: activity.sent,
   activity.delivered, activity.soft_bounced, activity.hard_bounced, activity.deferred
   (paid plans only), activity.opened, activity.opened_unique, activity.clicked,
   activity.clicked_unique, activity.unsubscribed, activity.spam_complaint,
-  activity.survey_opened, activity.survey_submitted, sender_identity.verified,
+  activity.suppressed (paid plans only), activity.survey_opened, activity.survey_submitted, sender_identity.verified,
   maintenance.start, maintenance.end, inbound_forward.failed, inbound_message.rejected,
-  email_single.verified, email_list.verified, bulk_email.completed,
-  recipient.on_hold_added, recipient.on_hold_removed, plus webhook.test.
+  email_single.verified, email_list.created, email_list.verified, bulk_email.completed,
+  recipient.on_hold_added, recipient.on_hold_removed, domain.reputation_changed,
+  account.reputation_changed, plus webhook.test.
 sdks:
   npm: ["mailersend"]
   pip: ["mailersend"]

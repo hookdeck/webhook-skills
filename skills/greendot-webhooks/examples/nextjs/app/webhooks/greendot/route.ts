@@ -6,9 +6,20 @@ import { NextRequest, NextResponse } from "next/server";
 const REQUIRED_SCOPE = process.env.GREENDOT_WEBHOOK_SCOPE || "post:webhook";
 
 interface GreenDotEvent {
+  eventIdentifier?: string;
   eventType?: string;
-  eventId?: string;
+  eventDateTime?: string;
   [key: string]: unknown;
+}
+
+/** The body is an envelope: { accounts: [{ accountIdentifier, events: [...] }] }. */
+interface GreenDotBody {
+  accounts?: { accountIdentifier?: string; events?: GreenDotEvent[] }[];
+}
+
+/** One request can carry several events, so loop over both arrays. */
+function eventsIn(body: GreenDotBody): GreenDotEvent[] {
+  return (body.accounts || []).flatMap((account) => account.events || []);
 }
 
 /**
@@ -45,29 +56,29 @@ function verifyToken(authHeader: string | null): void {
 // representative gives you the exact signature spec and key, implement the check
 // over the raw body here, after verifyToken.
 
-/** Dispatch on the `eventType` field of the JSON body. */
+/** Dispatch on each event's `eventType`. */
 function handleEvent(event: GreenDotEvent): void {
   switch (event.eventType) {
     case "transaction":
-      console.log(`Transaction event: ${event.eventId}`);
+      console.log(`Transaction event: ${event.eventIdentifier}`);
       break;
     case "accountUpdated":
-      console.log(`Account updated: ${event.eventId}`);
+      console.log(`Account updated: ${event.eventIdentifier}`);
       break;
     case "achTransfer":
-      console.log(`ACH transfer event: ${event.eventId}`);
+      console.log(`ACH transfer event: ${event.eventIdentifier}`);
       break;
     case "cardUpdate":
-      console.log(`Card update: ${event.eventId}`);
+      console.log(`Card update: ${event.eventIdentifier}`);
       break;
     case "billPayTransfer":
-      console.log(`Bill pay transfer: ${event.eventId}`);
+      console.log(`Bill pay transfer: ${event.eventIdentifier}`);
       break;
     case "directDepositSwitch":
-      console.log(`Direct deposit switch: ${event.eventId}`);
+      console.log(`Direct deposit switch: ${event.eventIdentifier}`);
       break;
     case "provisioning":
-      console.log(`Provisioning event: ${event.eventId}`);
+      console.log(`Provisioning event: ${event.eventIdentifier}`);
       break;
     default:
       console.log(`Unhandled eventType: ${event.eventType}`);
@@ -76,7 +87,7 @@ function handleEvent(event: GreenDotEvent): void {
 
 /**
  * Build the acknowledgement Green Dot expects: a `responseDetails` body plus the
- * echoed `x-GD-RequestId` header. Omitting either causes Green Dot to retry.
+ * echoed `x-GD-RequestId` header. Green Dot's docs require both on a 200 or 201.
  */
 function acknowledge(requestId: string | null, code = 0): NextResponse {
   const res = NextResponse.json({
@@ -103,16 +114,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Note: x-gd-signature is not verified — see the note above.
 
   // 2) Parse only AFTER authentication succeeds.
-  let event: GreenDotEvent;
+  let body: GreenDotBody;
   try {
-    event = JSON.parse(rawBody);
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   // 3) Handle the event.
   try {
-    handleEvent(event);
+    eventsIn(body).forEach(handleEvent);
   } catch (err) {
     console.error("Handler error:", err);
     return NextResponse.json({ error: "Handler error" }, { status: 500 });

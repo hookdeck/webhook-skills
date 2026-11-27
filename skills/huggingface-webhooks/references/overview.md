@@ -2,7 +2,7 @@
 
 ## What Are Hugging Face Webhooks?
 
-Hugging Face webhooks are HTTP POST requests sent by the Hub when events occur on repositories (models, datasets, Spaces) or in their associated discussions and Pull Requests. They are a foundation for MLOps automation: auto-convert models, build community / discussion bots, trigger CI for datasets, kick off training jobs when data changes, and more.
+Hugging Face webhooks are HTTP POST requests sent by the Hub when events occur on repositories (models, datasets, Spaces, and buckets) or in their associated discussions and Pull Requests. They are a foundation for MLOps automation: auto-convert models, build community / discussion bots, trigger CI for datasets, kick off training jobs when data changes, and more.
 
 A single webhook can watch:
 
@@ -18,10 +18,10 @@ Hugging Face identifies events by a pair: `event.scope` and `event.action`.
 | `event.scope` | `event.action` | Triggered When | Common Use Cases |
 |---------------|----------------|----------------|------------------|
 | `repo` | `create` | A repo is created | Index new models, welcome bots |
-| `repo` | `update` | A repo's metadata is updated | Sync external catalogs |
+| `repo` | `update` | A repo is updated | Sync external catalogs |
 | `repo` | `delete` | A repo is deleted | Clean up downstream resources |
 | `repo` | `move` | A repo is renamed / transferred | Update references |
-| `repo.content` | `update` | New commits, tags, or branches (incl. new PR refs). `updatedRefs` is included | Trigger CI/CD, mirror commits, retrain models |
+| `repo.content` | `update` | New commits, tags, or branches (incl. new PR refs), with `updatedRefs`; for buckets, files added or deleted, with `updatedFiles` | Trigger CI/CD, mirror commits, retrain models |
 | `repo.config` | `update` | Settings, secrets, DOI, privacy changes. `updatedConfig` is included | Track config drift, audit changes |
 | `discussion` | `create` | A discussion or Pull Request is opened | Discussion bots, PR triage |
 | `discussion` | `update` | A discussion title or status is updated, or a PR is merged | Auto-label, notify |
@@ -56,7 +56,7 @@ Every payload has at minimum a top-level `event`, `repo`, and `webhook` object:
 }
 ```
 
-`repo.type` is one of `model`, `dataset`, or `space`. `repo.headSha` is only sent when `event.scope` starts with `repo` (not on `discussion` / `discussion.comment` events).
+`repo.type` is one of `model`, `dataset`, `space`, or `bucket`. `repo.headSha` is only sent when `event.scope` starts with `repo` (not on `discussion` / `discussion.comment` events, and not for buckets, which have no Git history).
 
 ### Code change events (`repo.content`)
 

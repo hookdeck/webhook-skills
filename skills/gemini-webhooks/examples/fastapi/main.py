@@ -98,43 +98,43 @@ async def gemini_webhook(
     if event_type == "batch.succeeded":
         print(f"Batch succeeded: {event_data.get('id')}")
         print(f"Output: {event_data.get('output_file_uri')}")
-        # TODO: Download output, fan out results
+        # Your code: Download output, fan out results
 
     elif event_type == "batch.failed":
         print(f"Batch failed: {event_data.get('id')}")
         print(f"Error: {event_data.get('error_code')} {event_data.get('error_message')}")
-        # TODO: Alert team, decide whether to retry
+        # Your code: Alert team, decide whether to retry
 
     elif event_type == "batch.cancelled":
         print(f"Batch cancelled: {event_data.get('id')}")
-        # TODO: Clean up resources, update status
+        # Your code: Clean up resources, update status
 
     elif event_type == "batch.expired":
         print(f"Batch expired: {event_data.get('id')}")
-        # TODO: Resubmit or surface to user
+        # Your code: Resubmit or surface to user
 
     elif event_type == "video.generated":
         print(f"Video generated: {event_data.get('id')}")
         print(f"Video URI: {event_data.get('output_file_uri')}")
         print(f"File name: {event_data.get('file_name')}")
-        # TODO: Fetch the rendered video, notify the user
+        # Your code: Fetch the rendered video, notify the user
 
     elif event_type == "interaction.completed":
         print(f"Interaction completed: {event_data.get('id')}")
-        # TODO: Consume LRO result, continue flow
+        # Your code: Consume LRO result, continue flow
 
     elif event_type == "interaction.requires_action":
         print(f"Interaction requires action: {event_data.get('id')}")
-        # TODO: Run the requested function call, submit the result back
+        # Your code: Run the requested function call, submit the result back
 
     elif event_type == "interaction.failed":
         print(f"Interaction failed: {event_data.get('id')}")
         print(f"Error: {event_data.get('error_code')} {event_data.get('error_message')}")
-        # TODO: Surface error to user
+        # Your code: Surface error to user
 
     elif event_type == "interaction.cancelled":
         print(f"Interaction cancelled: {event_data.get('id')}")
-        # TODO: Update UI / state
+        # Your code: Update UI / state
 
     else:
         print(f"Unhandled event type: {event_type}")

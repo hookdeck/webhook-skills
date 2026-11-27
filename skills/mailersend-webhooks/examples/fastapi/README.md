@@ -12,7 +12,7 @@ and PHP samples.
 
 - Python 3.9+
 - A MailerSend account with a verified sending domain
-- The webhook's **signing secret** (Email → Domains → Manage → Webhooks → your
+- The webhook's **signing secret** (Email → Domains → View domain → Webhooks → your
   webhook). This is not your API token.
 
 ## Setup

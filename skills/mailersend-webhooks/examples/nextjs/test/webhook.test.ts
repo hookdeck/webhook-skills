@@ -52,7 +52,7 @@ function activityEvent(type = 'activity.sent', id = crypto.randomUUID()): string
       email_id: '6892766a8d52ba62543d5e71',
       type: type.replace('activity.', ''),
       subject: 'Test email',
-      email: 'test@mailersend.com',
+      recipient: 'test@mailersend.com',
       tags: ['test', 'test2'],
       meta: [],
     },

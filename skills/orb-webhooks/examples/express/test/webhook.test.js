@@ -61,6 +61,14 @@ describe('verifyOrbSignature', () => {
     const bare = signature.slice(3); // strip "v1="
     expect(verifyOrbSignature(payload, bare, timestamp, webhookSecret)).toBe(true);
   });
+
+  it('accepts any matching signature when several are sent during a rotation', () => {
+    const payload = '{"id":"evt_1"}';
+    const { signature, timestamp } = generateOrbSignature(payload, webhookSecret);
+    const header = `v1=${'0'.repeat(64)} ${signature}`;
+    expect(verifyOrbSignature(payload, header, timestamp, webhookSecret)).toBe(true);
+    expect(verifyOrbSignature(payload, `v1=${'0'.repeat(64)} v1=deadbeef`, timestamp, webhookSecret)).toBe(false);
+  });
 });
 
 describe('isTimestampFresh', () => {

@@ -98,10 +98,10 @@ Each subscription is one `data_type` + `event_type` combination. `event_type` is
 | `session` | A moment/session (e.g. breathing) is recorded |
 | `daily_stress` | Daily stress summary is available |
 
-Full `data_type` enum (17): `tag`, `enhanced_tag`, `workout`, `session`, `sleep`,
+Full `data_type` enum (16): `tag`, `enhanced_tag`, `workout`, `session`, `sleep`,
 `daily_sleep`, `daily_readiness`, `daily_activity`, `daily_spo2`, `sleep_time`,
 `rest_mode_period`, `ring_configuration`, `daily_stress`, `daily_cardiovascular_age`,
-`daily_resilience`, `vo2_max`, `meal`.
+`daily_resilience`, `vo2_max`. Oura has deprecated `tag` in favour of `enhanced_tag`.
 
 > **For the full reference**, see [references/overview.md](references/overview.md) and the
 > [Oura Webhook docs](https://cloud.ouraring.com/v2/docs#tag/Webhook-Subscription-Routes).
@@ -120,8 +120,9 @@ is a secret string **you** choose and pass as `verification_token` when creating
 
 ## Local Development
 
+In your Hookdeck project, create an **Oura** source named `oura` and enter your Oura client secret. Use that source's URL as the subscription's `callback_url`: a Hookdeck Oura source answers Oura's GET check itself. Sign the CLI into the same project, then forward the source to your local server.
+
 ```bash
-# Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 oura --path /webhooks/oura
 ```
 

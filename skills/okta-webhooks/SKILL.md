@@ -112,9 +112,12 @@ OKTA_WEBHOOK_SECRET=your-shared-secret   # The Authorization header value you re
 ## Local Development
 
 ```bash
-# Start tunnel (no account needed)
+# Forward an Okta source in Hookdeck Event Gateway (named "okta") to your machine
 npx hookdeck-cli listen 3000 okta --path /webhooks/okta
 ```
+
+Hookdeck answers Okta's one-time verification GET itself, so behind Hookdeck your
+GET handler isn't called. See [references/setup.md](references/setup.md).
 
 ## Reference Materials
 

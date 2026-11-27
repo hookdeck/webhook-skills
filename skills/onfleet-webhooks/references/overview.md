@@ -46,10 +46,11 @@ Before a webhook is saved, Onfleet validates the URL with an unsigned
 | 28 | `routePlanAssigned` | A route plan is assigned | `routePlan`, `worker` |
 | 29 | `routePlanDelayed` | A route plan is delayed | `routePlan`, `worker` |
 | 30 | `predictedTaskDelay` | Predicted delay is at or above `threshold` **seconds** (assigned tasks, evaluated when queued tasks start) | `task` |
+| 31 | `taskPredictedEta` | Predicted ETA is at or above `threshold` **seconds** (1800 to 28000) | `task` |
 
 IDs **11 and 21 aren't documented**. Don't assume they're free or reserved.
 
-Triggers 1, 2 and 12 are limited to 10 webhooks each.
+Triggers 1, 2, 12 and 31 are limited to 10 webhooks each.
 
 ### `predictedTaskDelay` vs `taskPredictedDelay`
 
@@ -104,7 +105,7 @@ Things to expect:
 |---|---|
 | `taskEta` | `etaSeconds`: **seconds**, fractional |
 | `taskArrival` | `distance`: meters |
-| `taskDelayed` | `delay`: seconds |
+| `taskDelayed` | `delay`: unit not stated (see Units) |
 | `workerDuty` | `status`: `0` off duty, `1` on duty |
 | `SMSRecipientOptOut` | `recipient` (`id`, `name`), `SMS`, `timestamp` |
 | `smsRecipientResponseMissed` | `from`, `to`, `body` |
@@ -115,7 +116,9 @@ Things to expect:
 ## Units
 
 All time fields are **milliseconds** (`time`, task timestamps), except
-`etaSeconds` and `delay`, which are **seconds**. `etaSeconds` is fractional.
+`etaSeconds`, which is **seconds** and fractional. Onfleet doesn't state the unit
+of `taskDelayed`'s `delay`: its threshold is set in seconds and the published
+example prints `522.6378813476563`, so check it before you compare.
 Mixing these up is easy: `etaSeconds: 284.5` is just under five minutes.
 
 ## Delivery Behaviour

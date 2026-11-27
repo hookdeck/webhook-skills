@@ -118,7 +118,9 @@ def normalize_meta(meta: Any) -> dict:
 # === Event handling ========================================================
 
 # MailerSend sends no delivery id, timestamp or nonce, so transport-level replay
-# protection is impossible. Dedupe on `data.id` instead. Use a shared, durable
+# protection is impossible. Dedupe on `type` plus `data.id` instead: `data.id`
+# alone is shared by e.g. activity.opened and activity.opened_unique, and some
+# events (maintenance.*, reputation changes) have no `data.id` at all. Use a shared, durable
 # store (Redis, Postgres) in production — this set is per-process and lost on
 # restart.
 _processed_event_ids: set[str] = set()
@@ -144,24 +146,25 @@ def handle_event(event: dict) -> None:
     data = event.get("data") or {}
     meta = normalize_meta(data.get("meta"))
     occurred_at = parse_created_at(event.get("created_at"))
-    email = data.get("email")
+    # Activity events name the address in `recipient`; on-hold events in `email`.
+    email = data.get("recipient") or data.get("email")
 
     # --- Activity events ---------------------------------------------------
     if event_type == "activity.sent":
         print(f"Sent to {email} (message {data.get('message_id')})")
-        # TODO: mark queued -> sent
+        # Your code: mark queued -> sent
 
     elif event_type == "activity.delivered":
         print(f"Delivered to {email} at {occurred_at}")
-        # TODO: confirm delivery
+        # Your code: confirm delivery
 
     elif event_type == "activity.soft_bounced":
         print(f"Soft bounce for {email}: {meta}")
-        # TODO: count consecutive soft bounces; suppress after a threshold
+        # Your code: count consecutive soft bounces; suppress after a threshold
 
     elif event_type == "activity.hard_bounced":
         print(f"HARD bounce for {email}: {meta}")
-        # TODO: suppress this address immediately — it will never deliver
+        # Your code: suppress this address immediately — it will never deliver
 
     elif event_type == "activity.deferred":
         # Paid plans only
@@ -177,11 +180,11 @@ def handle_event(event: dict) -> None:
 
     elif event_type == "activity.unsubscribed":
         print(f"Unsubscribe from {email}")
-        # TODO: update consent and stop sending
+        # Your code: update consent and stop sending
 
     elif event_type == "activity.spam_complaint":
         print(f"SPAM COMPLAINT from {email}")
-        # TODO: suppress immediately — this damages sending reputation
+        # Your code: suppress immediately — this damages sending reputation
 
     elif event_type in ("activity.survey_opened", "activity.survey_submitted"):
         print(f"Survey event {event_type} for {email}: {meta}")
@@ -193,11 +196,11 @@ def handle_event(event: dict) -> None:
 
     elif event_type == "maintenance.start":
         print(f"MailerSend maintenance started at {occurred_at}")
-        # TODO: pause non-urgent sends
+        # Your code: pause non-urgent sends
 
     elif event_type == "maintenance.end":
         print(f"MailerSend maintenance ended at {occurred_at}")
-        # TODO: resume sends
+        # Your code: resume sends
 
     elif event_type == "inbound_forward.failed":
         print(f"Inbound forward failed: {data}")
@@ -292,8 +295,9 @@ async def mailersend_webhook(
         return JSONResponse(status_code=401, content={"error": "Invalid signature"})
 
     data = event.get("data") or {}
-    if already_processed(data.get("id")):
-        print(f"Duplicate event {data.get('id')}, skipping")
+    dedupe_key = f"{event.get('type')}:{data['id']}" if data.get("id") else None
+    if already_processed(dedupe_key):
+        print(f"Duplicate event {dedupe_key}, skipping")
         return JSONResponse(status_code=200, content={"received": True})
 
     try:

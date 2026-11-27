@@ -175,11 +175,12 @@ It returns a generated OpenAPI schema for **that form's** webhook payload.
 
 ### Metadata keys
 
-The API reference's own example webhook schema shows `FormID` and `UniqueID` (both
-strings) alongside the form's field keys:
+The API reference's own example webhook schema (`WebhookOpenApiDefinitionDto`) lists
+`FormID` and `UniqueID` (both strings) alongside an example form's field keys. It prints
+types, not values:
 
 ```json
-{ "FormID": "1234567", "UniqueID": "9876543210", "Name": "Jane Smith", "Email": "jane@example.com" }
+{ "FormID": { "type": "string" }, "UniqueID": { "type": "string" }, "Name": { "type": "string" }, "Email": { "type": "string" }, "Message": { "type": "string" } }
 ```
 
 Real deliveries confirm both, as strings, ahead of the field keys. A delivery from a form

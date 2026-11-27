@@ -2,8 +2,9 @@
 
 ## How It Works
 
-Nuvemshop signs every webhook request so you can confirm it genuinely came from
-Nuvemshop and was not tampered with.
+Nuvemshop signs webhooks created through the API so you can confirm they came
+from Nuvemshop and were not tampered with. The docs don't say whether the required
+privacy webhooks set in the Partners Portal are signed.
 
 - **Algorithm:** HMAC-SHA256
 - **Key:** your app's **client secret** (the OAuth app secret)
@@ -63,8 +64,9 @@ def verify_nuvemshop_webhook(raw_body: bytes, hmac_header: str, client_secret: s
 - **Hex, not base64.** The digest is hex-encoded (unlike Shopify, which uses
   base64). Don't base64-decode the header.
 - **No timestamp.** There's nothing to check for replay tolerance in the
-  signature itself. If you need replay protection, dedupe on the payload's
-  `store_id` + `event` + `id`.
+  signature itself. If you need replay protection, dedupe on the whole body,
+  including `event_launch_ts` where it's sent: `store_id` + `event` + `id` alone
+  repeats across real changes to the same resource.
 - **Constant-time compare.** Use `crypto.timingSafeEqual` /
   `hmac.compare_digest`, and guard against buffer length mismatches (they throw
   in Node).
@@ -84,5 +86,5 @@ def verify_nuvemshop_webhook(raw_body: bytes, hmac_header: str, client_secret: s
 ## Respond Quickly
 
 Nuvemshop waits only **3 seconds** for a `2XX`. Verify, enqueue any heavy work,
-and return `200` immediately. Non-2XX or timeouts trigger retries (up to 18
-attempts over 48h), so make handlers idempotent.
+and return `200` immediately. Non-2XX or timeouts trigger retries (up to 16
+notifications over 48h), so make handlers idempotent.

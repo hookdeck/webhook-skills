@@ -2,7 +2,7 @@ const request = require('supertest');
 const crypto = require('crypto');
 
 // Set test environment before importing the app.
-// Svix-style secrets are 'whsec_' + a base64-encoded key. The value below is a
+// Lithic secrets are 'whsec_' + a base64-encoded key. The value below is a
 // throwaway test key, not a real credential.
 process.env.LITHIC_WEBHOOK_SECRET = 'whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw';
 process.env.LITHIC_API_KEY = 'test-api-key';
@@ -98,9 +98,9 @@ describe('POST /webhooks/lithic', () => {
 
   it('returns 200 for a valid signature', async () => {
     const payload = JSON.stringify({
-      token: 'evt_valid',
       event_type: 'card.created',
-      payload: { token: 'card_123' },
+      card_token: '00000000-0000-0000-0000-000000000001',
+      replacement_for: null,
     });
     const headers = signPayload(payload);
 
@@ -117,9 +117,8 @@ describe('POST /webhooks/lithic', () => {
   it('handles every documented event type', async () => {
     for (const eventType of EVENT_TYPES) {
       const payload = JSON.stringify({
-        token: `evt_${eventType.replace(/\./g, '_')}`,
         event_type: eventType,
-        payload: { token: 'obj_1' },
+        token: 'obj_1',
       });
       const headers = signPayload(payload);
 

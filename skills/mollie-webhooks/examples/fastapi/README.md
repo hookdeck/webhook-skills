@@ -14,8 +14,8 @@ acts on the authoritative status it returns.
 
 Next-gen webhooks carry `X-Mollie-Signature: sha256=<hex>`, an HMAC-SHA256 of the
 raw request body keyed with the webhook's signing secret. The handler verifies it
-before parsing the JSON, and accepts either of the two signatures Mollie sends
-for 24 hours after a secret rotation.
+before parsing the JSON, and accepts a match on any of several signature values (Mollie's
+rotation example shows two headers).
 
 The classic handler calls the REST API directly with `httpx`, authenticating with
 the API key as a Bearer token (Mollie also publishes an official Python library,

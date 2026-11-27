@@ -1,28 +1,30 @@
 name: klaviyo
 displayName: Klaviyo
 docs:
-  webhooks: https://developers.klaviyo.com/en/docs/webhooks
-  verification: https://developers.klaviyo.com/en/docs/webhooks#verify-a-webhook-signature
+  webhooks: https://developers.klaviyo.com/en/docs/working_with_system_webhooks
+  verification: https://developers.klaviyo.com/en/docs/working_with_system_webhooks#hmac-signature-verification
 notes: >
-  Marketing automation / CDP platform. Klaviyo delivers webhooks (e.g. from a flow "Webhook"
-  action) and signs them: verify the signature header by computing HMAC-SHA256 over the raw
-  request body using the endpoint secret and comparing timing-safe (confirm the exact header name
-  and encoding against current Klaviyo docs during generation, as this feature is evolving).
-  Return 2xx quickly. Payload is JSON. Cover both the signed case and the recommendation to keep
-  the endpoint secret in the URL if signing is unavailable on the account.
+  Marketing automation / CDP platform. Klaviyo system webhooks (created under Data management >
+  Webhooks or with the Webhooks API; Advanced KDP customers and app partners only) are signed:
+  Klaviyo-Signature is the hex HMAC-SHA256 of the raw body followed by the Klaviyo-Timestamp header
+  value, keyed with the secret key set on the webhook. Each request batches up to 1,000 events in a
+  data array, each with a topic and external_id. Respond 200, 201 or 202 within 5 seconds. Flow
+  webhook actions are a separate, unsigned feature with a body the user writes; secure them with a
+  custom header.
 testScenario:
   events:
-    - webhook action payload
+    - event:klaviyo.opened_email
   prompt: >
     Create a {framework} webhook handler for Klaviyo. Verify the webhook signature by computing
-    HMAC-SHA256 over the raw body with the endpoint secret (confirm the exact header/encoding
-    against Klaviyo's current docs) using a timing-safe comparison, then process the JSON payload
+    HMAC-SHA256 over the raw body followed by the Klaviyo-Timestamp header value, with the webhook's
+    secret key, hex-encoded and compared timing-safe with Klaviyo-Signature, then process each event
+    in the data array
     and return 2xx. If you use any skills to help with this, add a comment noting which skill(s)
     you referenced.
 catalog:
-  summary: Verify Klaviyo webhook signatures (HMAC-SHA256), handle flow-triggered webhook events
+  summary: Verify Klaviyo webhook signatures (HMAC-SHA256), handle system webhook events
   marketplace:
-    description: Verify Klaviyo webhook signatures (HMAC-SHA256), handle flow-triggered webhook events.
+    description: Verify Klaviyo webhook signatures (HMAC-SHA256), handle system webhook events.
     keywords:
     - webhooks
     - klaviyo

@@ -2,75 +2,100 @@
 
 ## Prerequisites
 
-- A Lithic account with dashboard access
-- Your application's public webhook endpoint URL (e.g. `https://api.example.com/webhooks/lithic`)
+- A Lithic API key (sandbox or production)
+- Your application's public HTTPS endpoint URL (e.g. `https://api.example.com/webhooks/lithic`)
 
 ## Create an Event Subscription
 
-Lithic delivers events to **event subscriptions**. Each subscription has its own
-URL and its own signing secret.
+Lithic delivers events to **event subscriptions**, which you manage with the
+[Events API](https://docs.lithic.com/docs/events-api):
 
-1. Go to the [Lithic Dashboard](https://dashboard.lithic.com/) → **Developers** →
-   **Webhooks / Event Subscriptions**.
-2. Click **Add / Create subscription**.
-3. Enter your endpoint URL.
-4. Select the event types you want to receive (see
-   [overview.md](overview.md) for the full list) — subscribe only to what you
-   handle to reduce noise.
-5. Save the subscription.
+```bash
+curl https://api.lithic.com/v1/event_subscriptions \
+  -X POST \
+  -H "Authorization: $LITHIC_API_KEY" \
+  -H 'content-type: application/json' \
+  -d '{
+    "url": "https://api.example.com/webhooks/lithic",
+    "description": "Card and transaction events",
+    "event_types": ["card.created", "card_transaction.updated"]
+  }'
+```
 
-You can also manage subscriptions programmatically via the Events API
-(`POST /event_subscriptions`).
+- `url` must be a valid HTTPS address.
+- Leave `event_types` out to receive every type, including new ones Lithic adds
+  later. Subscribe only to what you handle to reduce noise.
+- List, update and delete subscriptions with `GET`, `PATCH` and `DELETE` on
+  `/v1/event_subscriptions[/{event_subscription_token}]`.
 
 ## Get Your Signing Secret
 
-After creating the subscription, Lithic shows a **signing secret** that starts
-with `whsec_`. This secret is **per-subscription** — each subscription has a
-distinct secret.
+```bash
+curl https://api.lithic.com/v1/event_subscriptions/{event_subscription_token}/secret \
+  -H "Authorization: $LITHIC_API_KEY"
+# {"key": "whsec_..."}
+```
 
-1. Copy the `whsec_...` secret.
+1. Copy the `whsec_...` value.
 2. Store it as `LITHIC_WEBHOOK_SECRET` in your environment (never commit it).
 
-The secret is used to compute the HMAC — the part after the `whsec_` prefix is
-base64-decoded to form the HMAC key (the official SDK handles this for you).
+The part after the `whsec_` prefix is base64-decoded to form the HMAC key (the
+official SDK does this for you). Lithic's verification docs also say secrets are
+configured per program, so if you run several programs, use each program's
+secret.
 
 ## Environment Variables
 
 ```bash
-LITHIC_WEBHOOK_SECRET=whsec_xxxxx   # Per-subscription signing secret
+LITHIC_WEBHOOK_SECRET=whsec_xxxxx   # From GET /v1/event_subscriptions/{token}/secret
 LITHIC_API_KEY=your_api_key         # Only needed to call the Lithic API
 ```
 
-The API key is **not** required to verify webhooks — verification only needs the
+The API key is **not** required to verify webhooks; verification only needs the
 signing secret. It is included because the official SDK client reads it and you
 often call the API to fetch related resources.
 
-## Test Mode vs Live Mode
+## Sandbox vs Production
 
-Lithic provides **sandbox** and **production** environments with separate
-dashboards, API keys, and event subscriptions. Configure a subscription in each
-environment you use. Test end-to-end in sandbox before pointing production
-traffic at your endpoint.
+Sandbox (`https://sandbox.lithic.com`) and production (`https://api.lithic.com`)
+use different API keys. Create a subscription through each host you use, and
+test end to end in sandbox first.
+
+Send a sample event to a sandbox subscription:
+
+```bash
+curl https://sandbox.lithic.com/v1/simulate/event_subscriptions/{event_subscription_token}/send_example \
+  -X POST \
+  -H "Authorization: $LITHIC_SANDBOX_API_KEY" \
+  -H 'content-type: application/json' \
+  -d '{"event_type": "dispute_transaction.created"}'
+```
+
+Not every event type can be simulated; the response says when one isn't supported.
 
 ## Rotating Secrets
 
-Rotate the signing secret from the subscription's settings in the dashboard. To
-rotate without downtime:
+```bash
+curl -X POST https://api.lithic.com/v1/event_subscriptions/{event_subscription_token}/secret/rotate \
+  -H "Authorization: $LITHIC_API_KEY"
+```
 
-1. Generate/roll a new secret in the dashboard.
-2. Deploy code that accepts **either** the old or new secret during a short
-   overlap window.
-3. Once all in-flight deliveries use the new secret, remove the old one.
+The previous secret stays valid for 24 hours, and during that time the
+`webhook-signature` header can carry a signature for each secret. Read the new
+secret, deploy it, and check that your verifier accepts a match on any entry in
+the header (the SDK does).
 
 ## Delivery Failures
 
-Failed deliveries retry with exponential backoff. A subscription that fails
-continuously for **5 days** is automatically disabled — monitor your endpoint's
-health and re-enable subscriptions after an outage.
+Lithic retries a failed delivery up to 8 times over about 27 hours (immediately,
+then +5s, +5m, +30m, +2h, +5h, +10h, +10h). A subscription that fails for
+**5 days** in a row is disabled; re-enable it by updating it with
+`"disabled": false`. After an outage, recover failed messages with
+`POST /v1/event_subscriptions/{token}/recover?begin=...`.
 
 ## Receiving Webhooks Locally
 
-Use the Hookdeck CLI to tunnel events to your machine — no account required:
+Use the Hookdeck CLI to tunnel events to your machine, no account required:
 
 ```bash
 npx hookdeck-cli listen 3000 lithic --path /webhooks/lithic

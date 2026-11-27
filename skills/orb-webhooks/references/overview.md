@@ -12,9 +12,9 @@ Webhooks are essential for keeping downstream systems (your application database
 |-------|----------------|------------------|
 | `customer.created` | A new customer is created in Orb | Sync to internal CRM, send welcome email |
 | `customer.credit_balance_dropped` | A customer's prepaid credit balance falls below a configured threshold | Trigger top-up reminder, alert account manager |
-| `customer.accounting_sync_succeeded` | Orb successfully synced a customer to your accounting integration | Mark CRM record as synced |
+| `customer.accounting_sync_succeeded` | A customer syncs to your accounting integration (sent only when Accounting Sync is set up) | Mark CRM record as synced |
 | `subscription.created` | A new subscription is created | Provision access, kick off onboarding |
-| `subscription.started` | A subscription's billing period begins | Activate entitlements |
+| `subscription.started` | A subscription begins | Activate entitlements |
 | `subscription.ended` | A subscription ends | Revoke access, send retention email |
 | `subscription.plan_changed` | A subscription moves to a different plan | Update entitlements, recalculate quotas |
 | `subscription.edited` | A subscription is edited (price overrides, adjustments) | Reconcile internal records |
@@ -22,7 +22,7 @@ Webhooks are essential for keeping downstream systems (your application database
 | `invoice.issued` | An invoice is finalized and issued to the customer | Record receivable, send invoice email |
 | `invoice.payment_succeeded` | An invoice is paid | Mark paid in internal systems |
 | `invoice.payment_failed` | An invoice payment attempt fails | Start dunning, notify customer |
-| `invoice.edited` | An invoice is edited after issuance | Re-sync accounting |
+| `invoice.edited` | A draft invoice is edited | Re-sync accounting |
 | `data_exports.transfer_success` | A scheduled data export was delivered successfully | Trigger downstream ETL |
 
 ## Payload Styles (`standard` vs `expanded`)
@@ -47,20 +47,16 @@ Orb's SDKs expose one parsing method per style — `unwrap()` for expanded and `
 
 ## Event Payload Structure
 
-Orb webhook events follow a common envelope:
+Orb webhook events follow a common envelope. This is the example on Orb's payload styles page; `{ ... }` stands for the serialized subscription:
 
 ```json
 {
   "id": "o4mmewpfNNTnjfZc",
   "created_at": "2026-10-22T15:42:29+00:00",
-  "type": "invoice.issued",
+  "type": "subscription.created",
   "payload_style": "standard",
-  "invoice": {
-    "id": "invoice_01HABCDXXXXX"
-  },
-  "properties": {
-    "automatically_marked_as_paid": false
-  }
+  "subscription": { ... },
+  "properties": {}
 }
 ```
 
@@ -76,4 +72,4 @@ Key fields:
 
 ## Full Event Reference
 
-For the complete list of events and payload schemas, see [Orb's webhook documentation](https://docs.withorb.com/integrations-and-exports/webhooks).
+For the complete list of events, see Orb's [event types page](https://docs.withorb.com/integrations-and-exports/webhooks/event-types); each event links to its payload schema in the API reference. A few types, such as `billing_entity.created` and `plan.migration_scheduled`, appear only in the API reference.

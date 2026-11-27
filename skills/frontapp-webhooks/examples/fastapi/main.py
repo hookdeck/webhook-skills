@@ -64,35 +64,35 @@ async def front_webhook(request: Request):
 
     if event_type == "inbound_received":
         print(f"Inbound message received: {payload.get('id')}")
-        # TODO: triage, sync to CRM, alert, etc.
+        # Your code: triage, sync to CRM, alert, etc.
 
     elif event_type == "outbound_sent":
         print(f"Outbound message sent: {payload.get('id')}")
-        # TODO: log reply, track SLA, etc.
+        # Your code: log reply, track SLA, etc.
 
     elif event_type == "conversation_moved":
         print(f"Conversation moved: {conversation.get('id')}")
-        # TODO: routing analytics, notifications, etc.
+        # Your code: routing analytics, notifications, etc.
 
     elif event_type == "assignee_changed":
         print(f"Assignee changed: {conversation.get('id')}")
-        # TODO: workload tracking, escalation, etc.
+        # Your code: workload tracking, escalation, etc.
 
     elif event_type == "conversation_archived":
         print(f"Conversation archived: {conversation.get('id')}")
-        # TODO: close-out workflow, metrics, etc.
+        # Your code: close-out workflow, metrics, etc.
 
     elif event_type == "tag_added":
         print(f"Tag added: {conversation.get('id')}")
-        # TODO: categorization, automation, etc.
+        # Your code: categorization, automation, etc.
 
     elif event_type == "new_comment_added":
         print(f"Comment added: {conversation.get('id')}")
-        # TODO: internal collaboration hooks, etc.
+        # Your code: internal collaboration hooks, etc.
 
     elif event_type == "message_delivery_failed":
         print(f"Message delivery failed: {payload.get('id')}")
-        # TODO: bounce handling, list hygiene, etc.
+        # Your code: bounce handling, list hygiene, etc.
 
     else:
         print(f"Unhandled event type: {event_type}")
