@@ -7689,7 +7689,7 @@
     },
     {
       "name": "klaviyo-webhooks",
-      "description": "Verify Klaviyo webhook signatures (HMAC-SHA256), handle flow-triggered webhook events.",
+      "description": "Verify Klaviyo webhook signatures (HMAC-SHA256), handle system webhook events.",
       "source": "./skills/klaviyo-webhooks",
       "strict": false,
       "skills": [
@@ -8588,7 +8588,7 @@
     },
     {
       "name": "mailersend-webhooks",
-      "description": "Receive and verify MailerSend webhooks. Use when setting up MailerSend webhook handlers, debugging MailerSend signature verification with the `Signature` header (HMAC-SHA256 hex over the raw body), handling the `webhook.test` URL validation ping, or handling MailerSend activity events like activity.sent, activity.delivered, activity.hard_bounced, activity.opened, activity.clicked and activity.spam_complaint. Also covers MailerSend SMS webhooks (sms.sent, sms.delivered, sms.failed). MailerSend is the transactional email/SMS API — not MailerLite, Mailgun, Mailchimp or Resend.",
+      "description": "Receive and verify MailerSend webhooks. Use when setting up MailerSend webhook handlers, debugging MailerSend signature verification with the `Signature` header (HMAC-SHA256 hex over the raw body), handling the `webhook.test` URL validation ping, or handling MailerSend activity events like activity.sent, activity.delivered, activity.hard_bounced, activity.opened, activity.clicked and activity.spam_complaint. Also covers MailerSend SMS webhooks (sms.sent, sms.delivered, sms.failed) and WhatsApp webhooks (whatsapp.delivered, whatsapp.inbound and others). MailerSend is the transactional email/SMS API — not MailerLite, Mailgun, Mailchimp or Resend.",
       "source": "./skills/mailersend-webhooks",
       "strict": false,
       "skills": [
@@ -9799,7 +9799,7 @@
     },
     {
       "name": "neon-webhooks",
-      "description": "Receive and verify Neon Auth webhooks. Use when setting up Neon webhook handlers, debugging Ed25519 / detached JWS signature verification, or handling Neon Auth events like user.created, user.before_create, send.otp, send.magic_link, or phone_number.verified.",
+      "description": "Receive and verify Neon Auth (Managed Better Auth) webhooks. Use when setting up Neon webhook handlers, debugging Ed25519 / detached JWS signature verification, or handling Neon Auth events like user.created, user.before_create, send.otp, send.magic_link, phone_number.verified, or organization.invitation.created.",
       "source": "./skills/neon-webhooks",
       "strict": false,
       "skills": [
@@ -9968,7 +9968,7 @@
     },
     {
       "name": "nmi-webhooks",
-      "description": "Receive and verify NMI (Network Merchants) webhooks. Use when setting up NMI webhook handlers, debugging Webhook-Signature verification, or handling transaction events like transaction.sale.success, transaction.auth.success, transaction.refund.success, and transaction.void.success. Note: NMI does NOT use Standard Webhooks — the Webhook-Signature header is \"t=<nonce>,s=<sig>\" (comma-separated) where t is a NONCE (not a Unix timestamp), and the signature is HMAC-SHA256 over \"<nonce>.<raw_body>\", lowercase hex.",
+      "description": "Receive and verify NMI (Network Merchants) webhooks. Use when setting up NMI webhook handlers, debugging Webhook-Signature verification, or handling transaction events like transaction.sale.success, transaction.auth.success, transaction.refund.success, and transaction.void.success. Note: NMI does NOT use Standard Webhooks — the Webhook-Signature header is \"t=<nonce>,s=<sig>\" (comma-separated), where NMI's sample calls t a nonce, and the signature is HMAC-SHA256 over \"<nonce>.<raw_body>\", lowercase hex.",
       "source": "./skills/nmi-webhooks",
       "strict": false,
       "skills": [
@@ -10617,7 +10617,7 @@
     },
     {
       "name": "ordinal-webhooks",
-      "description": "Receive Ordinal (tryordinal.com) webhooks — the social-media / LinkedIn content planning, approval and scheduling platform for marketing teams. Use when building an Ordinal webhook receiver, because Ordinal does NOT sign its deliveries: there is no HMAC, no signature header, no signing secret and no timestamp, so do not write a signature verifier. The only authentication is a STATIC custom header you configure yourself via the webhook's `headers` field (e.g. `X-Webhook-Secret`), compared in constant time. Use when handling `post.published`, `post.publish_failed`, `post.created`, `post.approval.requested`, `post.comment.created`, `social_profile.reconnect_needed` or `invite.accepted`, unwrapping the `{ type, data, createdAt }` envelope, or managing webhooks via `POST /api/v1/webhooks`. Not Bitcoin Ordinals/inscriptions, not Ordinal Labs.",
+      "description": "Receive and verify Ordinal (tryordinal.com) webhooks, the social-media and LinkedIn content planning, approval and scheduling platform. Deliveries are signed per Standard Webhooks (webhook-id, webhook-timestamp, webhook-signature) with a whsec_ secret from the Create webhook response or the webhook's configure page. Use when building an Ordinal webhook receiver, debugging signature verification, deduplicating on webhook-id, unwrapping the `{ type, data, createdAt }` envelope, or handling `post.published`, `post.publish_failed`, `post.approval.requested`, `post.comment.created`, `social_profile.reconnect_needed` or `linkedin.monitoring.comment.created`. Not Bitcoin Ordinals/inscriptions, not Ordinal Labs.",
       "source": "./skills/ordinal-webhooks",
       "strict": false,
       "skills": [
@@ -11107,7 +11107,7 @@
     },
     {
       "name": "paymob-webhooks",
-      "description": "Receive and verify Paymob webhook callbacks (transaction callbacks). Use when setting up Paymob webhook handlers, debugging HMAC-SHA512 signature verification, or handling payment transaction states like success, refund, void, and auth/capture from the Transaction Processed Callback.",
+      "description": "Receive and verify Paymob webhook callbacks (transaction and card token callbacks). Use when setting up Paymob webhook handlers, debugging HMAC-SHA512 signature verification, or handling payment transaction states like success, refund, void, and auth/capture from the Transaction Processed Callback.",
       "source": "./skills/paymob-webhooks",
       "strict": false,
       "skills": [
